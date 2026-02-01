@@ -1,0 +1,224 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Shield, Calendar, Target, Flame, PawPrint, Lock, Zap, Heart,
+  Bell, CheckCircle2, AlertCircle, Truck, Users, LogIn, Clock, 
+  ChevronRight, ClipboardList, Plus, Search, Pencil, Trash2, Check, X,
+  Bone, Package
+} from 'lucide-react';
+
+// --- 獨立的狗狗管理組件 ---
+const K9Card = ({ dog, onUpdateStatus, onUpdateName, onDelete }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(dog.name);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+
+  const handleSave = () => {
+    if (editValue.trim()) {
+      onUpdateName(dog.id, editValue);
+      setIsEditing(false);
+    }
+  };
+
+  return (
+    <div className={`relative bg-white/5 rounded-[2rem] border transition-all duration-300 ${isConfirmingDelete ? 'border-red-500 bg-red-500/10' : 'border-white/5 hover:border-white/20'}`}>
+      {isConfirmingDelete && (
+        <div className="absolute inset-0 z-40 bg-black/95 flex flex-col items-center justify-center p-6 text-center rounded-[2rem] animate-in fade-in">
+          <AlertCircle size={32} className="text-red-500 mb-2" />
+          <p className="font-bold text-white">移除 {dog.name}？</p>
+          <div className="flex space-x-2 mt-4 w-full px-4">
+            <button onClick={() => setIsConfirmingDelete(false)} className="flex-1 py-2 bg-white/10 rounded-xl font-bold text-xs text-white">取消</button>
+            <button onClick={() => onDelete(dog.id)} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-bold text-xs">確定移除</button>
+          </div>
+        </div>
+      )}
+
+      <div className="absolute top-4 right-4 z-10 flex space-x-2">
+        <button onClick={() => setIsEditing(true)} className="p-2 bg-black/40 rounded-xl text-blue-400 hover:text-white transition-colors"><Pencil size={14} /></button>
+        <button onClick={() => setIsConfirmingDelete(true)} className="p-2 bg-black/40 rounded-xl text-red-400 hover:text-white transition-colors"><Trash2 size={14} /></button>
+      </div>
+
+      <div className="p-8">
+        <div className="w-14 h-14 rounded-2xl bg-orange-500/20 flex items-center justify-center text-orange-500 mb-6 shadow-lg shadow-orange-900/20">
+          <PawPrint size={28} />
+        </div>
+        
+        <div className="min-h-[40px]">
+          {isEditing ? (
+            <div className="flex items-center space-x-2">
+              <input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-full px-3 py-1 bg-blue-900/30 border border-blue-500 rounded-lg text-white font-bold outline-none" autoFocus />
+              <button onClick={handleSave} className="p-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"><Check size={16}/></button>
+            </div>
+          ) : (
+            <h3 className="text-2xl font-black text-white italic tracking-tight">{dog.name}</h3>
+          )}
+        </div>
+        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">{dog.breed}</p>
+
+        <div className="mt-6 p-4 bg-black/40 rounded-2xl border border-white/5">
+          <p className="text-[10px] text-slate-600 font-black uppercase mb-1 tracking-widest">健康日誌</p>
+          <p className="text-xs font-medium text-slate-400 italic leading-relaxed">"{dog.healthNote}"</p>
+        </div>
+
+        <div className="mt-8 flex gap-2">
+          {['healthy', 'observation', 'sick'].map((s) => (
+            <button key={s} onClick={() => onUpdateStatus(dog.id, s)} className={`flex-1 py-2.5 rounded-xl text-[10px] font-black border transition-all ${dog.status === s ? 'bg-white text-black border-white shadow-lg shadow-white/10' : 'bg-transparent text-slate-500 border-white/5 hover:border-white/20'}`}>
+              {s === 'healthy' ? '健康' : s === 'observation' ? '觀察' : '就醫'}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- 主應用程式 ---
+export default function App() {
+  const [activeTab, setActiveTab] = useState('mission');
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [isAdding, setIsAdding] = useState(false);
+  
+  const [dogs, setDogs] = useState([
+    { id: 'D1', name: '柔', breed: '台灣犬', status: 'healthy', healthNote: '計畫核心執行者，全時監控中', avatarColor: 'bg-orange-500' },
+    { id: 'D2', name: '歐告', breed: '黑犬', status: 'observation', healthNote: '注意右後腿腳步，持續觀察', avatarColor: 'bg-gray-800' },
+  ]);
+
+  const [visitors, setVisitors] = useState([
+    { id: 'V1', name: '王先生', reason: '電力維護', time: '13:45', status: 'in' },
+  ]);
+
+  const [logistics, setLogistics] = useState([
+    { id: 'L1', plate: 'ABC-1234', company: '黑貓物流', driver: '李大華', time: '14:20', type: '送貨' },
+  ]);
+
+  const [staff, setStaff] = useState([
+    { id: 'S1', name: '小黑哥', role: '指揮官', time: '08:00', status: 'on-duty' },
+  ]);
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleAddData = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const now = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' });
+
+    if (activeTab === 'visitors') {
+      setVisitors([{ id: `V${Date.now()}`, name: formData.get('name'), reason: formData.get('reason'), time: now, status: 'in' }, ...visitors]);
+    } else if (activeTab === 'vehicles') {
+      setLogistics([{ id: `L${Date.now()}`, plate: formData.get('plate'), company: formData.get('company'), driver: formData.get('driver'), type: formData.get('type'), time: now }, ...logistics]);
+    } else if (activeTab === 'staff') {
+      setStaff([{ id: `S${Date.now()}`, name: formData.get('name'), role: formData.get('role'), time: now, status: 'on-duty' }, ...staff]);
+    }
+    setIsAdding(false); e.target.reset();
+  };
+
+  const handleUpdateDogName = (id, name) => setDogs(dogs.map(d => d.id === id ? { ...d, name } : d));
+  const handleUpdateDogStatus = (id, status) => setDogs(dogs.map(d => d.id === id ? { ...d, status } : d));
+  const handleDeleteDog = (id) => setDogs(dogs.filter(d => d.id !== id));
+  const handleAddDog = (e) => {
+    e.preventDefault();
+    const name = e.target.dogName.value;
+    if (name) { setDogs([...dogs, { id: Date.now().toString(), name, breed: 'K9 戰隊成員', status: 'healthy', healthNote: '新夥伴報到', avatarColor: 'bg-blue-600' }]); e.target.reset(); }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0c] text-slate-300 font-sans selection:bg-blue-500/30 overflow-x-hidden">
+      <header className="border-b border-white/5 bg-black/60 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="p-2.5 bg-blue-600 rounded-xl shadow-lg shadow-blue-900/40"><Shield className="text-white" size={24} /></div>
+            <div>
+              <h1 className="text-xl font-black tracking-widest text-white uppercase italic leading-none">System Guard</h1>
+              <p className="text-[9px] text-blue-500 font-bold tracking-[0.2em] uppercase mt-1">Operational Readiness: Level 1</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-6 font-mono">
+            <div className="hidden md:flex flex-col items-end">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">任務啟動日：2/1</span>
+              <span className="text-xs font-bold text-blue-400">{currentTime.toLocaleTimeString([], { hour12: false })}</span>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center font-black text-white shadow-inner">黑</div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col lg:flex-row gap-8">
+        <aside className="w-full lg:w-64 space-y-1.5">
+          {[
+            { id: 'mission', icon: Target, label: '任務簡報' },
+            { id: 'visitors', icon: Users, label: '1. 訪客登記' },
+            { id: 'vehicles', icon: Truck, label: '2/3. 物流車輛' },
+            { id: 'k9', icon: PawPrint, label: '4. K9 健康管理' },
+            { id: 'staff', icon: LogIn, label: '5. 員工登記' },
+          ].map(item => (
+            <button key={item.id} onClick={() => { setActiveTab(item.id); setIsAdding(false); }} className={`w-full flex items-center space-x-3 px-5 py-4 rounded-2xl transition-all duration-200 ${activeTab === item.id ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/20' : 'hover:bg-white/5 text-slate-500'}`}><item.icon size={18} /><span className="font-bold text-sm tracking-tight">{item.label}</span></button>
+          ))}
+          <div className="mt-8 p-6 bg-gradient-to-b from-indigo-900/10 to-transparent border border-indigo-500/10 rounded-[2.5rem] relative overflow-hidden">
+             <Heart className="text-indigo-500/10 absolute -right-4 -bottom-4" size={90} /><p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">計畫核心</p>
+          </div>
+        </aside>
+
+        <main className="flex-1 space-y-8 overflow-hidden">
+          {activeTab === 'mission' && (
+            <div className="space-y-8 animate-in fade-in duration-500">
+              <div className="bg-[#111319] p-10 rounded-[3rem] border border-white/5 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-10 transition-opacity"><Shield size={180} /></div>
+                <div className="relative z-10 max-w-2xl">
+                  <h2 className="text-4xl font-black text-white italic tracking-tighter leading-tight">System Guard 指揮中心</h2>
+                  <div className="mt-8 flex items-center space-x-6">
+                    <div className="flex -space-x-3">
+                      <div className="w-11 h-11 rounded-full bg-blue-600 border-2 border-[#111319] flex items-center justify-center shadow-lg"><Heart size={18} className="text-white"/></div>
+                      <div className="w-11 h-11 rounded-full bg-indigo-600 border-2 border-[#111319] flex items-center justify-center text-white font-black text-[11px] shadow-lg">2/1</div>
+                    </div>
+                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.25em]">守護狀態：全時運轉</span>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="bg-white/5 p-8 rounded-[3rem] border border-white/5">
+                  <h3 className="text-base font-black text-white flex items-center space-x-2 mb-8 uppercase tracking-widest"><Zap className="text-yellow-400" size={18} /><span>即時執行項目</span></h3>
+                  <div className="space-y-3">
+                    {[{ title: '園區全域掃描', status: '完成', desc: '確保感測網絡覆蓋率 100%' }, { title: 'K9 戰隊配置', status: '啟動', desc: '「柔」與夥伴們已進入警戒位置' }, { title: '任務週期同步', status: '持續', desc: '2/1 核心指令集執行中' }, { title: '系統防禦提升', status: '啟動', desc: '啟用高級加密與動態監控' }].map((item, i) => (
+                      <div key={i} className="p-5 bg-black/30 rounded-2xl border border-white/5 flex items-start space-x-4"><div className={`mt-1.5 w-2 h-2 rounded-full ${item.status === '完成' ? 'bg-green-500' : 'bg-blue-500 animate-pulse'}`} /><div><p className="text-sm font-black text-white tracking-tight">{item.title}</p><p className="text-[10px] text-slate-500 mt-1 font-medium">{item.desc}</p></div></div>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-white/5 p-8 rounded-[3rem] border border-white/5 flex flex-col justify-between">
+                  <div className="mb-10"><h3 className="text-base font-black text-white flex items-center space-x-2 mb-2 uppercase tracking-widest"><PawPrint className="text-orange-500" size={18} /><span>K9 戰術部署</span></h3><p className="text-[11px] text-slate-500 font-bold italic tracking-tight">「柔」已整合入指揮中心。</p></div>
+                  <div onClick={() => setActiveTab('k9')} className="bg-orange-500/10 p-6 rounded-[2.5rem] border border-orange-500/20 cursor-pointer hover:bg-orange-500/20 transition-all group"><div className="flex justify-between items-center mb-6"><span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">當前部署</span><ChevronRight className="text-orange-500 group-hover:translate-x-1 transition-transform" size={16} /></div><div className="flex items-center space-x-4"><div className="w-14 h-14 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-orange-900/40"><PawPrint size={28} /></div><div><p className="text-lg font-black text-white italic">柔 (Rou)</p><p className="text-[10px] text-orange-300 font-bold uppercase mt-0.5">狀態：健康 | 全力守護中</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {(activeTab === 'visitors' || activeTab === 'vehicles' || activeTab === 'staff') && (
+            <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
+              <div className="flex justify-between items-end"><h2 className="text-4xl font-black text-white italic tracking-tighter leading-none">{activeTab === 'visitors' ? '1. 訪客進出登記' : activeTab === 'vehicles' ? '2/3. 物流車輛監控' : '5. 員工進出登記'}</h2>{!isAdding && <button onClick={() => setIsAdding(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3.5 rounded-2xl font-black text-xs uppercase shadow-2xl shadow-blue-900/40 flex items-center space-x-2 transition-all active:scale-95"><Plus size={16} /><span>新增紀錄</span></button>}</div>
+              {isAdding && (
+                <div className="bg-[#111319] p-8 rounded-[3rem] border border-blue-500/30 animate-in zoom-in-95 duration-200 shadow-2xl shadow-blue-900/10"><div className="flex justify-between items-center mb-8"><h3 className="text-lg font-black text-white uppercase tracking-widest flex items-center gap-2"><Plus className="text-blue-500" size={18}/><span>輸入登記資訊</span></h3><button onClick={() => setIsAdding(false)} className="text-slate-500 hover:text-white"><X size={20}/></button></div><form onSubmit={handleAddData} className="grid grid-cols-1 md:grid-cols-2 gap-6">{activeTab === 'visitors' && (<><div className="space-y-2"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">訪客姓名</label><input name="name" required placeholder="例如：王大明" className="w-full p-4 bg-black/40 rounded-2xl border border-white/5 font-bold focus:border-blue-500 outline-none transition-all" /></div><div className="space-y-2"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">訪問事由</label><input name="reason" required placeholder="維修、會議..." className="w-full p-4 bg-black/40 rounded-2xl border border-white/5 font-bold focus:border-blue-500 outline-none transition-all" /></div></>)}{activeTab === 'vehicles' && (<><div className="space-y-2"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">車牌號碼</label><input name="plate" required placeholder="ABC-1234" className="w-full p-4 bg-black/40 rounded-2xl border border-white/5 font-bold focus:border-blue-500 outline-none transition-all uppercase" /></div><div className="space-y-2"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">類型</label><select name="type" className="w-full p-4 bg-black/40 rounded-2xl border border-white/5 font-bold focus:border-blue-500 outline-none transition-all text-slate-300"><option value="送貨">送貨 (外部)</option><option value="收貨">收貨 (物流)</option></select></div></>)}{activeTab === 'staff' && (<><div className="space-y-2"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">員工姓名</label><input name="name" required placeholder="姓名" className="w-full p-4 bg-black/40 rounded-2xl border border-white/5 font-bold focus:border-blue-500 outline-none transition-all" /></div></>)}<div className="md:col-span-2 pt-4"><button type="submit" className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-sm uppercase shadow-xl shadow-blue-900/30 flex items-center justify-center gap-2 hover:bg-blue-500 transition-all"><Check size={18} /><span>確認送出紀錄</span></button></div></form></div>
+              )}
+              <div className="bg-[#111319] rounded-[3rem] border border-white/5 overflow-hidden shadow-xl"><div className="p-6 border-b border-white/5 flex items-center space-x-4 bg-black/20"><div className="flex-1 bg-black/40 px-4 py-3 rounded-xl border border-white/5 flex items-center space-x-3 text-slate-500 focus-within:border-blue-500/50 transition-all"><Search size={18} /><input className="bg-transparent border-none outline-none text-sm font-bold w-full" placeholder="搜尋歷史紀錄..." /></div></div><div className="overflow-x-auto"><table className="w-full text-left"><thead className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-white/5"><tr><th className="px-8 py-5">時間</th><th className="px-8 py-5">資訊</th><th className="px-8 py-5 text-right">管理</th></tr></thead><tbody className="divide-y divide-white/5">{activeTab === 'visitors' && visitors.map(v => (<tr key={v.id} className="hover:bg-white/[0.02] group"><td className="px-8 py-6 text-sm font-bold text-blue-400 font-mono">{v.time}</td><td className="px-8 py-6 font-black text-white">{v.name} - <span className="text-slate-500 text-xs">{v.reason}</span></td><td className="px-8 py-6 text-right"><button className="p-2 text-slate-600 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={16}/></button></td></tr>))}{activeTab === 'vehicles' && logistics.map(l => (<tr key={l.id} className="hover:bg-white/[0.02] group"><td className="px-8 py-6 text-sm font-bold text-blue-400 font-mono">{l.time}</td><td className="px-8 py-6 font-black text-white">{l.plate} - <span className="text-slate-500 text-xs">{l.company}</span></td><td className="px-8 py-6 text-right"><button className="p-2 text-slate-600 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={16}/></button></td></tr>))}</tbody></table></div></div>
+            </div>
+          )}
+
+          {activeTab === 'k9' && (
+            <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="flex justify-between items-end"><h2 className="text-4xl font-black text-white italic tracking-tighter leading-none">4. K9 警衛犬健康控管</h2><button className="bg-white/5 border border-white/10 text-white p-3 rounded-xl hover:bg-white/10 transition-colors"><Bone size={20}/></button></div>
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8"><div className="lg:col-span-1"><form onSubmit={handleAddDog} className="bg-[#111319] p-8 rounded-[3rem] border border-white/5 sticky top-24 shadow-2xl"><h3 className="font-black text-white flex items-center space-x-2 mb-6 tracking-widest uppercase"><Plus className="text-blue-500" size={18}/><span>新增夥伴</span></h3><div className="space-y-5"><div><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block px-1">狗狗名字</label><input name="dogName" required placeholder="例如：柔" className="w-full p-4 bg-black/40 rounded-2xl border border-white/5 font-bold focus:border-blue-500 outline-none transition-all" /></div><button className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-900/40 hover:bg-blue-500 transition-all flex items-center justify-center gap-2"><CheckCircle2 size={18}/><span>確認加入</span></button></div></form></div><div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">{dogs.map(dog => (<K9Card key={dog.id} dog={dog} onUpdateName={handleUpdateDogName} onUpdateStatus={handleUpdateDogStatus} onDelete={handleDeleteDog} />))}</div></div>
+            </div>
+          )}
+        </main>
+      </div>
+
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/10 p-4 flex justify-around items-center z-[100] safe-area-bottom">
+        <button onClick={() => { setActiveTab('mission'); setIsAdding(false); }} className={`p-3 rounded-2xl transition-all ${activeTab === 'mission' ? 'text-blue-500 bg-blue-500/10' : 'text-slate-500'}`}><Target size={22}/></button>
+        <button onClick={() => { setActiveTab('k9'); setIsAdding(false); }} className={`p-3 rounded-2xl transition-all ${activeTab === 'k9' ? 'text-orange-500 bg-orange-500/10' : 'text-slate-500'}`}><PawPrint size={22}/></button>
+        <button onClick={() => setIsAdding(true)} className="p-4 bg-blue-600 text-white rounded-full shadow-2xl shadow-blue-900/50 -translate-y-6 border-[6px] border-[#0a0a0c] active:scale-90 transition-all"><Plus size={24}/></button>
+        <button onClick={() => { setActiveTab('visitors'); setIsAdding(false); }} className={`p-3 rounded-2xl transition-all ${activeTab === 'visitors' ? 'text-blue-500 bg-blue-500/10' : 'text-slate-500'}`}><Users size={22}/></button>
+        <button onClick={() => { setActiveTab('vehicles'); setIsAdding(false); }} className={`p-3 rounded-2xl transition-all ${activeTab === 'vehicles' ? 'text-purple-500 bg-purple-500/10' : 'text-slate-500'}`}><Truck size={22}/></button>
+      </nav>
+    </div>
+  );
+}
