@@ -1,338 +1,166 @@
-import React, { useState, useEffect } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import { Shield, Truck, UserCheck, Users, Dog, Database, ArrowLeft, Send, Search, Phone, Activity, Clock, LogOut, ChevronRight } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Field Utility Station</title>
+    <!-- 核心載入：React 與 Tailwind -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #0f172a; color: #94a3b8; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .stealth-card { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(51, 65, 85, 0.5); backdrop-filter: blur(10px); }
+        .btn-active:active { transform: scale(0.97); background: rgba(51, 65, 85, 0.9); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        @keyframes scan { 0% { top: -10%; } 100% { top: 110%; } }
+        .scanner::after { content: ""; position: absolute; width: 100%; height: 1px; background: rgba(59, 130, 246, 0.2); animation: scan 4s linear infinite; pointer-events: none; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden select-none scanner">
+    <div id="root"></div>
 
-/**
- * System Guard v11.0 - 廠區勤務終極對接雲端版 (Stealth HUD)
- * 1. 訪客/車輛/員工三大表單精準還原 (100% 依據照片欄位)。
- * 2. 內建全廠區分機快速檢索系統 (偽裝為 Comms Port)。
- * 3. 雲端同步、補登出廠功能。
- */
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-// Firebase 配置
-const firebaseConfig = JSON.parse(__firebase_config);
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // --- Firebase 配置 (由環境自動處理) ---
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-export default function App() {
-  const [user, setUser] = useState(null);
-  const [view, setView] = useState('dashboard');
-  const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [unlockCount, setUnlockCount] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
+        // --- SVG 圖標組件 ---
+        const Icon = ({ d, size = 22, color = "currentColor" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d={d} />
+            </svg>
+        );
 
-  // 統合表單狀態 (對應照片欄位)
-  const [formData, setFormData] = useState({
-    name: '', people: '1', company: '', host: '', purpose: '', phone: '', badge: '',
-    plate: '', driver: '', item: '', reason: ''
-  });
+        const PATHS = {
+            search: "M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.35-4.35",
+            visitor: "M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M8.5 7a4 4 0 100-8 4 4 0 000 8z",
+            truck: "M1 3h15v13H1V3zm15 5h4l3 3v5h-7V8zM5.5 18.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm13 0a2.5 2.5 0 100-5 2.5 2.5 0 000 5z",
+            staff: "M17 21v-2a4 4 0 00-3-3.87M9 7a4 4 0 100-8 4 4 0 000 8zM9 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2",
+            back: "M19 12H5M12 19l-7-7 7-7",
+            node: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+        };
 
-  // 分機表數據 (根據照片提取之樣本)
-  const directory = [
-    { d: '生產部', n: '經理室', e: '8000', p: 'P-8000' },
-    { d: '生產部', n: '財務室', e: '1101', p: 'P-1101' },
-    { d: '管理部', n: '警衛室', e: '9', p: 'P-0009' },
-    { d: '研發部', n: '組長室', e: '3101', p: 'P-3101' },
-    { d: '品保部', n: '課長室', e: '4301', p: 'P-4301' },
-    { d: '資材部', n: '出貨組', e: '6618', p: 'P-6618' },
-    { d: '生技部', n: '技術組', e: '4101', p: 'P-4101' },
-  ];
+        const App = () => {
+            const [view, setView] = useState('dashboard');
+            const [logs, setLogs] = useState([]);
+            const [queryStr, setQueryStr] = useState('');
+            const [formData, setFormData] = useState({});
+            const [secretCount, setSecretCount] = useState(0);
 
-  useEffect(() => {
-    const initAuth = async () => {
-      try { await signInAnonymously(auth); } catch (e) { console.error(e); }
-    };
-    initAuth();
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
+            // 分機表數據 (根據照片校對)
+            const directory = [
+                { d: '生產部', n: '經理室', e: '8000' }, { d: '生產部', n: '財務室', e: '1101' },
+                { d: '管理部', n: '警衛室', e: '9' }, { d: '資材部', n: '出貨組', e: '6618' },
+                { d: '研發部', n: '組長室', e: '3101' }, { d: '品保部', n: '課長室', e: '4301' }
+            ];
 
-  useEffect(() => {
-    if (!user) return;
-    const q = collection(db, 'artifacts', appId, 'public', 'data', 'duty_logs');
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      const sorted = data.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-      setLogs(sorted.slice(0, 15));
-    });
-    return () => unsubscribe();
-  }, [user]);
+            const commitData = (cat) => {
+                const now = new Date();
+                const time = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+                const summary = cat === 'VISIT' ? `${formData.name} (找 ${formData.host})` : `${formData.plate || formData.name} [Logged]`;
+                const newLog = { id: Date.now(), cat, time, summary, date: `${now.getMonth()+1}/${now.getDate()}` };
+                setLogs([newLog, ...logs].slice(0, 15));
+                setFormData({}); setView('dashboard');
+            };
 
-  const commitEntry = async (category) => {
-    if (!user || loading) return;
-    setLoading(true);
-    try {
-      const now = new Date();
-      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-      
-      const payload = {
-        category,
-        details: formData,
-        entryTime: timeStr,
-        date: `${now.getMonth()+1}/${now.getDate()}`,
-        exitTime: null,
-        timestamp: serverTimestamp(),
-        summary: generateSummary(category, formData)
-      };
+            const Dashboard = () => (
+                <div className="p-4 space-y-4 animate-in fade-in pb-24">
+                    <div className="bg-slate-800 p-5 rounded-[2.5rem] border border-slate-700 shadow-2xl">
+                        <div className="flex items-center gap-2 mb-3 px-2">
+                            <Icon d={PATHS.search} color="#4b5563" size={14} />
+                            <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest leading-none">COMM_QUERY_MODULE</p>
+                        </div>
+                        <input type="text" placeholder="搜尋單位或分機..." onChange={e => setQueryStr(e.target.value)} className="w-full bg-slate-900/50 p-4 rounded-2xl border border-slate-700 text-blue-400 font-bold outline-none placeholder:text-slate-800" />
+                        {queryStr && (
+                            <div className="mt-3 space-y-1.5 max-h-40 overflow-y-auto">
+                                {directory.filter(i => i.n.includes(queryStr) || i.e.includes(queryStr)).map(i => (
+                                    <div key={i.e} className="bg-slate-900/40 p-3 rounded-xl flex justify-between items-center border border-white/5 animate-in slide-in-from-top-1">
+                                        <span className="text-sm font-bold text-slate-300">{i.n} ({i.d})</span>
+                                        <span className="text-xl font-black text-blue-600 mono">#{i.e}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
-      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'duty_logs'), payload);
-      setFormData({ name: '', people: '1', company: '', host: '', purpose: '', phone: '', badge: '', plate: '', driver: '', item: '', reason: '' });
-      setView('dashboard');
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  };
+                    <div className="grid grid-cols-1 gap-3">
+                        <button onClick={() => setView('visit')} className="bg-white p-6 rounded-[2.5rem] border-b-4 border-slate-200 flex items-center gap-5 active:translate-y-1 active:border-b-0 transition-all shadow-lg">
+                            <div className="bg-indigo-50 p-3 rounded-2xl text-indigo-500"><Icon d={PATHS.visitor} size={28} /></div>
+                            <div className="text-left leading-tight"><h3 className="font-black text-slate-700 text-lg">訪客進出登記</h3><p className="text-[9px] text-slate-400 font-mono tracking-widest uppercase">Protocol_Visit</p></div>
+                        </button>
+                        <button onClick={() => setView('truck')} className="bg-white p-6 rounded-[2.5rem] border-b-4 border-slate-200 flex items-center gap-5 active:translate-y-1 active:border-b-0 transition-all shadow-lg">
+                            <div className="bg-blue-50 p-3 rounded-2xl text-blue-500"><Icon d={PATHS.truck} size={28} /></div>
+                            <div className="text-left leading-tight"><h3 className="font-black text-slate-700 text-lg">車輛物品登記</h3><p className="text-[9px] text-slate-400 font-mono tracking-widest uppercase">Protocol_Truck</p></div>
+                        </button>
+                    </div>
 
-  const generateSummary = (cat, data) => {
-    if (cat === 'VISITOR') return `${data.name} [${data.company}] > ${data.host}`;
-    if (cat === 'VEHICLE') return `${data.plate} (${data.company}) - ${data.driver}`;
-    if (cat === 'EMPLOYEE') return `${data.name} [${data.reason}]`;
-    return "Event Logged";
-  };
-
-  const setExit = async (id) => {
-    const now = new Date();
-    const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    try {
-      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'duty_logs', id), { exitTime: time });
-    } catch (e) { console.error(e); }
-  };
-
-  // --- UI 組件 ---
-
-  const Dashboard = () => (
-    <div className="p-4 space-y-4 animate-in fade-in duration-500 pb-24">
-      {/* 分機查詢區 */}
-      <div className="bg-slate-800 p-5 rounded-[2.5rem] border border-slate-700 shadow-2xl">
-        <div className="flex justify-between items-center mb-3 px-2">
-            <div className="flex items-center gap-2">
-                <Search size={14} className="text-blue-500" />
-                <p className="text-[10px] font-mono font-black text-slate-500 uppercase tracking-widest">COMMS_PORT_QUERY</p>
-            </div>
-            <div className={`w-2 h-2 rounded-full ${user ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-red-500'}`}></div>
-        </div>
-        <input 
-            type="text" 
-            placeholder="搜尋人名、單位或分機..." 
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-900/50 p-4 rounded-2xl border border-slate-700 text-blue-400 font-bold outline-none placeholder:text-slate-700 placeholder:italic"
-        />
-        {searchQuery && (
-          <div className="mt-3 space-y-2 max-h-48 overflow-y-auto hide-scrollbar">
-            {directory.filter(i => i.d.includes(searchQuery) || i.n.includes(searchQuery) || i.e.includes(searchQuery)).map(i => (
-              <div key={i.e} className="bg-slate-900 p-3 rounded-xl border border-white/5 flex justify-between items-center">
-                <div>
-                  <span className="text-[10px] text-slate-600 font-mono uppercase">{i.d}</span>
-                  <p className="text-sm font-bold text-slate-200">{i.n}</p>
+                    <div className="space-y-2">
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest italic ml-2">Kernel_Data_History</p>
+                        {logs.map(log => (
+                            <div key={log.id} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 flex flex-col gap-1 shadow-xl">
+                                <div className="flex justify-between items-center"><span className="text-[8px] font-mono text-slate-600 bg-slate-800 px-2 py-0.5 rounded tracking-widest uppercase">{log.cat}</span><span className="text-[10px] font-mono text-blue-900 font-bold">{log.date} {log.time}</span></div>
+                                <p className="text-sm font-bold text-slate-200 tracking-tight">{log.summary}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] text-slate-700 font-mono block">{i.p}</span>
-                  <span className="text-xl font-black text-blue-600 mono">#{i.e}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+            );
 
-      <div className="grid grid-cols-1 gap-3">
-        <button onClick={() => setView('visitor')} className="bg-white p-5 rounded-[2rem] border-b-4 border-slate-200 flex items-center gap-5 active:translate-y-1 active:border-b-0 transition-all">
-          <div className="bg-indigo-50 p-3 rounded-2xl text-indigo-500"><UserCheck size={26} /></div>
-          <div className="text-left leading-tight">
-            <h3 className="font-black text-slate-700 text-lg">訪客進出登記</h3>
-            <p className="text-[9px] text-slate-400 font-mono uppercase tracking-widest italic mt-1">Visit_Protocol_V11</p>
-          </div>
-        </button>
+            return (
+                <div className="max-w-md mx-auto h-screen bg-slate-900 flex flex-col relative shadow-2xl">
+                    <header className="p-6 pt-12 border-b border-slate-800 bg-slate-900/90 flex justify-between items-center z-50">
+                        <div className="flex items-center gap-3">
+                            <Icon d={PATHS.node} color="#3b82f6" size={24} />
+                            <div>
+                                <h1 className="text-white text-xs font-mono font-black tracking-widest uppercase italic leading-none">FIELD_UTILITY_V12</h1>
+                                <p className="text-[8px] text-slate-600 font-mono mt-1">SECURED_BY_ROU | CMD_BLACK</p>
+                            </div>
+                        </div>
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    </header>
 
-        <button onClick={() => setView('vehicle')} className="bg-white p-5 rounded-[2rem] border-b-4 border-slate-200 flex items-center gap-5 active:translate-y-1 active:border-b-0 transition-all">
-          <div className="bg-blue-50 p-3 rounded-2xl text-blue-500"><Truck size={26} /></div>
-          <div className="text-left leading-tight">
-            <h3 className="font-black text-slate-700 text-lg">車輛物品登記</h3>
-            <p className="text-[9px] text-slate-400 font-mono uppercase tracking-widest italic mt-1">Logi_Protocol_V11</p>
-          </div>
-        </button>
+                    <main className="flex-1 overflow-y-auto relative bg-[#f1f5f9]">
+                        {view === 'dashboard' && <Dashboard />}
+                        {['visit', 'truck'].includes(view) && (
+                            <div className="p-4 space-y-6 animate-in slide-in-from-right">
+                                <button onClick={() => setView('dashboard')} className="text-slate-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"><Icon d={PATHS.back} size={14} /> EXIT</button>
+                                <div className="bg-white p-8 rounded-[3.5rem] shadow-2xl space-y-4 border border-slate-200 text-slate-800">
+                                    <h2 className="text-center font-black text-2xl border-b pb-4 uppercase italic">{view}_Register</h2>
+                                    <div className="space-y-4">
+                                        <input type="text" placeholder="輸入名稱/內容" onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-50 p-6 rounded-3xl border-2 font-black text-2xl text-center outline-none focus:border-blue-500" />
+                                        <button onClick={() => commitData(view.toUpperCase())} className="w-full mt-4 bg-slate-900 text-white p-6 rounded-3xl font-black text-xl active:scale-95 transition-all">Confirm_Entry</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {view === 'vault' && (
+                            <div className="fixed inset-0 bg-slate-950 z-[100] p-12 flex flex-col items-center justify-center text-center animate-in zoom-in">
+                                <div className="text-6xl mb-10 opacity-20">🙏</div>
+                                <h2 className="text-2xl font-black text-white mb-10 tracking-[0.3em] border-b border-slate-800 pb-5 uppercase italic">Private_Vault</h2>
+                                <div className="space-y-8 text-slate-500 italic text-xl leading-loose">
+                                    <p>「永遠記住祖先與觀世音姐姐」</p>
+                                    <p>「這輩子好好的彌補，完成承諾」</p>
+                                </div>
+                                <button onClick={() => setView('dashboard')} className="mt-20 text-[10px] text-slate-800 font-mono tracking-widest uppercase border border-slate-900 px-6 py-2 rounded-full italic">Vault_Close</button>
+                            </div>
+                        )}
+                    </main>
 
-        <button onClick={() => setView('employee')} className="bg-white p-5 rounded-[2rem] border-b-4 border-slate-200 flex items-center gap-5 active:translate-y-1 active:border-b-0 transition-all">
-          <div className="bg-emerald-50 p-3 rounded-2xl text-emerald-500"><Users size={26} /></div>
-          <div className="text-left leading-tight">
-            <h3 className="font-black text-slate-700 text-lg">員工加班/進出</h3>
-            <p className="text-[9px] text-slate-400 font-mono uppercase tracking-widest italic mt-1">Empl_Protocol_V11</p>
-          </div>
-        </button>
-      </div>
+                    <footer className="p-8 bg-slate-900 text-center border-t border-slate-800" onClick={() => { setSecretCount(prev => prev+1 >= 5 ? (setView('vault'), 0) : prev+1); }}>
+                        <p className="text-[9px] text-slate-600 font-mono font-bold tracking-[0.4em] uppercase italic">Diagnostic_Node_Active_V12</p>
+                    </footer>
+                </div>
+            );
+        };
 
-      <div className="mt-6 pb-20">
-        <div className="flex items-center gap-2 mb-3 px-1">
-          <Database size={14} className="text-slate-500" />
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Live Cloud Duty History</p>
-        </div>
-        <div className="space-y-2">
-          {logs.map(log => (
-            <div key={log.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-1.5 shadow-xl">
-              <div className="flex justify-between items-center">
-                <span className="text-[9px] font-mono text-slate-500 bg-slate-800 px-2 py-0.5 rounded uppercase tracking-widest italic">{log.category}</span>
-                <span className="text-[10px] font-mono text-blue-900 font-bold">{log.date} {log.entryTime}</span>
-              </div>
-              <div className="flex justify-between items-end">
-                <p className="text-sm font-bold text-slate-200 tracking-tight">{log.summary}</p>
-                {log.exitTime ? (
-                  <span className="text-[10px] font-mono text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">EXIT: {log.exitTime}</span>
-                ) : (
-                  <button onClick={() => setExit(log.id)} className="bg-blue-600 text-white text-[10px] px-3 py-1.5 rounded-full font-black animate-pulse uppercase italic">補登出廠</button>
-                )}
-              </div>
-            </div>
-          ))}
-          {logs.length === 0 && <div className="text-center py-10 text-slate-800 font-mono italic text-xs"># WAITING_FOR_KERNEL_DATA</div>}
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="max-w-md mx-auto h-screen bg-slate-100 flex flex-col overflow-hidden text-slate-800 select-none">
-      <header className="bg-slate-900 p-6 pt-12 flex justify-between items-center border-b border-slate-800 shadow-xl z-50">
-        <div className="flex items-center gap-3">
-          <Shield className="text-blue-500" size={24} />
-          <div>
-            <h1 className="text-white text-xs font-mono font-black tracking-widest uppercase italic leading-none">NODE_K-PROTOCOL_TERMINAL</h1>
-            <p className="text-[8px] text-slate-500 font-mono mt-1">2026.02.02 | CMD_BLACK_STATION</p>
-          </div>
-        </div>
-        <button onClick={() => setView('dashboard')} className="text-slate-600"><Activity size={20} /></button>
-      </header>
-
-      <main className="flex-1 overflow-y-auto relative bg-[#f1f5f9]">
-        {view === 'dashboard' && <Dashboard />}
-
-        {/* 訪客表單 */}
-        {view === 'visitor' && (
-          <div className="p-6 space-y-4 animate-in slide-in-from-right duration-300">
-            <button onClick={() => setView('dashboard')} className="text-slate-400 font-bold text-[10px] flex items-center gap-1 uppercase tracking-widest italic mb-2"><ArrowLeft size={14} /> Exit_Protocol</button>
-            <div className="bg-white p-8 rounded-[3rem] shadow-2xl space-y-4 border border-slate-200">
-              <h2 className="text-center font-black text-slate-700 text-xl border-b pb-4 italic tracking-tighter uppercase">Visitor Data Input</h2>
-              <div className="grid grid-cols-2 gap-3 text-[10px] font-mono">
-                <div className="col-span-1 space-y-1">
-                  <label className="text-slate-400 ml-1">訪客姓名</label>
-                  <input type="text" onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-50 p-4 rounded-xl border border-slate-100 font-black text-slate-700" />
-                </div>
-                <div className="col-span-1 space-y-1">
-                  <label className="text-slate-400 ml-1">人數</label>
-                  <input type="number" defaultValue="1" onChange={e => setFormData({...formData, people: e.target.value})} className="w-full bg-slate-50 p-4 rounded-xl border border-slate-100 font-black text-slate-700 text-center" />
-                </div>
-                <div className="col-span-2 space-y-1">
-                  <label className="text-slate-400 ml-1">公司行號 / 單位</label>
-                  <input type="text" onChange={e => setFormData({...formData, company: e.target.value})} className="w-full bg-slate-50 p-4 rounded-xl border border-slate-100 font-black text-slate-700" />
-                </div>
-                <div className="col-span-1 space-y-1">
-                  <label className="text-slate-400 ml-1">受訪人</label>
-                  <input type="text" onChange={e => setFormData({...formData, host: e.target.value})} className="w-full bg-slate-50 p-4 rounded-xl border border-slate-100 font-black text-slate-700" />
-                </div>
-                <div className="col-span-1 space-y-1">
-                  <label className="text-slate-400 ml-1">領用編號</label>
-                  <input type="text" onChange={e => setFormData({...formData, badge: e.target.value})} className="w-full bg-slate-50 p-4 rounded-xl border border-slate-100 font-black text-blue-600 text-center uppercase" />
-                </div>
-                <div className="col-span-2 space-y-1">
-                  <label className="text-slate-400 ml-1">事由與電話</label>
-                  <div className="flex gap-2">
-                    <input type="text" placeholder="事由" onChange={e => setFormData({...formData, purpose: e.target.value})} className="flex-1 bg-slate-50 p-4 rounded-xl border border-slate-100 font-bold" />
-                    <input type="tel" placeholder="電話" onChange={e => setFormData({...formData, phone: e.target.value})} className="w-32 bg-slate-50 p-4 rounded-xl border border-slate-100 font-bold" />
-                  </div>
-                </div>
-              </div>
-              <button onClick={() => commitEntry('VISITOR')} disabled={!formData.name || loading} className="w-full mt-6 bg-slate-900 text-white p-6 rounded-2xl font-black text-lg shadow-xl uppercase italic">Commit_Data</button>
-            </div>
-          </div>
-        )}
-
-        {/* 車輛表單 */}
-        {view === 'vehicle' && (
-          <div className="p-6 space-y-4 animate-in slide-in-from-right duration-300">
-            <button onClick={() => setView('dashboard')} className="text-slate-400 font-bold text-[10px] flex items-center gap-1 uppercase tracking-widest italic mb-2"><ArrowLeft size={14} /> Exit_Protocol</button>
-            <div className="bg-white p-8 rounded-[3rem] shadow-2xl space-y-4 border border-slate-200">
-              <h2 className="text-center font-black text-slate-700 text-xl border-b pb-4 italic tracking-tighter uppercase">Truck Data Input</h2>
-              <div className="space-y-4 text-[10px] font-mono">
-                <div className="space-y-1">
-                  <label className="text-slate-400 ml-2">公司行號</label>
-                  <input type="text" onChange={e => setFormData({...formData, company: e.target.value})} className="w-full bg-slate-50 p-5 rounded-2xl border border-slate-100 font-black text-xl text-slate-700" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-slate-400 ml-2">駕駛姓名</label>
-                  <input type="text" onChange={e => setFormData({...formData, driver: e.target.value})} className="w-full bg-slate-50 p-5 rounded-2xl border border-slate-100 font-black text-xl text-slate-700" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-slate-400 ml-2">車牌號碼</label>
-                  <input type="text" placeholder="ABC-1234" onChange={e => setFormData({...formData, plate: e.target.value})} className="w-full bg-slate-50 p-6 rounded-2xl border border-slate-100 font-black text-3xl text-blue-600 text-center uppercase tracking-widest" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-slate-400 ml-2">物品 / 備註</label>
-                  <input type="text" onChange={e => setFormData({...formData, item: e.target.value})} className="w-full bg-slate-50 p-5 rounded-2xl border border-slate-100 font-bold text-slate-700" />
-                </div>
-                <button onClick={() => commitEntry('VEHICLE')} disabled={!formData.plate || loading} className="w-full mt-4 bg-slate-900 text-white p-6 rounded-2xl font-black text-lg shadow-xl uppercase italic">Commit_Truck</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 員工表單 */}
-        {view === 'employee' && (
-          <div className="p-6 space-y-4 animate-in slide-in-from-right duration-300">
-            <button onClick={() => setView('dashboard')} className="flex items-center text-slate-400 font-bold text-[10px] flex items-center gap-1 uppercase tracking-widest italic mb-2"><ArrowLeft size={14} /> Exit_Protocol</button>
-            <div className="bg-white p-8 rounded-[3rem] shadow-2xl space-y-4 border border-slate-200">
-              <h2 className="text-center font-black text-slate-700 text-xl border-b pb-4 italic tracking-tighter uppercase">Staff Data Input</h2>
-              <div className="space-y-6 text-[10px] font-mono">
-                <div className="space-y-1">
-                  <label className="text-slate-400 ml-2 text-center block">員工姓名</label>
-                  <input type="text" onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-50 p-6 rounded-2xl border border-slate-100 font-black text-3xl text-slate-700 text-center" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-slate-400 ml-2 text-center block">事由 ( 加班 / 請假 / 公出 )</label>
-                  <input type="text" placeholder="加班" onChange={e => setFormData({...formData, reason: e.target.value})} className="w-full bg-slate-50 p-6 rounded-2xl border border-slate-100 font-bold text-xl text-slate-700 text-center" />
-                </div>
-                <button onClick={() => commitEntry('EMPLOYEE')} disabled={!formData.name || loading} className="w-full mt-4 bg-emerald-600 text-white p-7 rounded-2xl font-black text-xl shadow-xl uppercase italic">Commit_Staff</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 秘密區域 */}
-        {view === 'vault' && (
-          <div className="fixed inset-0 bg-slate-950 z-[100] p-12 flex flex-col items-center justify-center text-center animate-in zoom-in duration-500">
-             <div className="text-6xl mb-10 opacity-20 grayscale">🐕</div>
-             <h2 className="text-2xl font-black text-white mb-10 tracking-[0.3em] border-b border-slate-800 pb-5 uppercase italic">Private_Vault</h2>
-             <div className="space-y-8 text-slate-500 italic text-xl leading-loose">
-               <p>「永遠記住祖先與觀世音姐姐」</p>
-               <p>「這輩子好好的彌補，完成承諾」</p>
-             </div>
-             <button onClick={() => setView('dashboard')} className="mt-20 text-[10px] text-slate-800 font-mono tracking-widest uppercase border border-slate-900 px-6 py-2 rounded-full italic">Vault_Close</button>
-          </div>
-        )}
-      </main>
-
-      <footer className="p-8 bg-slate-900 text-center border-t border-slate-800">
-        <div 
-          className="inline-block px-4 py-1.5 bg-slate-800 rounded-full cursor-pointer active:bg-slate-700"
-          onClick={() => { setUnlockCount(prev => prev + 1 >= 5 ? (setView('vault'), 0) : prev + 1); }}
-        >
-          <p className="text-[9px] text-slate-600 font-mono font-bold tracking-widest uppercase italic">
-            Diagnostic_Link: CLOUD-V11-SYNC
-          </p>
-        </div>
-      </footer>
-
-      {loading && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center">
-          <div className="bg-white p-8 rounded-[3rem] flex flex-col items-center gap-4 shadow-2xl animate-in zoom-in">
-            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            <span className="font-black text-slate-700 text-sm tracking-widest uppercase italic">Encrypting & Syncing...</span>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
