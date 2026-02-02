@@ -4,20 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Field Utility Station</title>
-    <!-- 核心載入：React, Babel, Tailwind -->
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- 核心穩定載入：React, Babel, Tailwind -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #0f172a; color: #94a3b8; overflow: hidden; -webkit-tap-highlight-color: transparent; }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .stealth-card { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(51, 65, 85, 0.5); backdrop-filter: blur(10px); }
-        .btn-active:active { transform: scale(0.97); background: rgba(51, 65, 85, 0.9); }
+        .stealth-card { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(51, 65, 85, 0.5); backdrop-filter: blur(12px); }
+        .btn-active:active { transform: scale(0.96); background: rgba(51, 65, 85, 0.9); }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
-        @keyframes scan { 0% { top: -10%; } 100% { top: 110%; } }
-        .scanner::after { content: ""; position: absolute; width: 100%; height: 1px; background: rgba(59, 130, 246, 0.2); animation: scan 5s linear infinite; pointer-events: none; }
+        @keyframes scanline { 0% { top: -10%; } 100% { top: 110%; } }
+        .scanner::after { content: ""; position: absolute; width: 100%; height: 1px; background: rgba(59, 130, 246, 0.15); animation: scanline 4s linear infinite; pointer-events: none; }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden select-none scanner">
@@ -26,7 +26,7 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- Firebase 核心配置 (由環境處理) ---
+        // --- Firebase 穩定注入模式 ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -58,7 +58,7 @@
             const [view, setView] = useState('dashboard');
             const [logs, setLogs] = useState([]);
             const [queryStr, setQueryStr] = useState('');
-            const [formData, setFormData] = useState({ name: '', people: '1', company: '', host: '', purpose: '', phone: '', badge: '', plate: '', driver: '', item: '', reason: '' });
+            const [formData, setFormData] = useState({ name: '', people: '1', comp: '', host: '', purp: '', tel: '', id: '', plate: '', driver: '', reason: '' });
             const [loading, setLoading] = useState(false);
             const [unlockSteps, setUnlockSteps] = useState(0);
 
@@ -68,7 +68,7 @@
                 return onAuthStateChanged(auth, setUser);
             }, []);
 
-            // 2. 雲端同步監聽
+            // 2. 雲端同步
             useEffect(() => {
                 if (!user) return;
                 const q = collection(db, 'artifacts', appId, 'public', 'data', 'duty_logs');
@@ -78,12 +78,11 @@
                 });
             }, [user]);
 
-            // 分機表數據 (去公司名，根據照片整理)
+            // 分機表樣本 (依據照片校對)
             const directory = [
                 { d: '生產部', n: '經理室', e: '8000' }, { d: '生產部', n: '財務室', e: '1101' },
                 { d: '管理部', n: '警衛室', e: '9' }, { d: '資材部', n: '出貨組', e: '6618' },
-                { d: '研發部', n: '組長室', e: '3101' }, { d: '品保部', n: '課長室', e: '4301' },
-                { d: '生技部', n: '技術組', e: '4101' }
+                { d: '研發部', n: '組長室', e: '3101' }, { d: '品保部', n: '課長室', e: '4301' }
             ];
 
             const commit = async (cat) => {
@@ -92,14 +91,16 @@
                 const now = new Date();
                 const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
                 
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'duty_logs'), {
-                    cat, details: formData, entry: timeStr, date: `${now.getMonth()+1}/${now.getDate()}`,
-                    timestamp: serverTimestamp(), exit: null,
-                    summary: cat === 'VISIT' ? `${formData.name} [${formData.company}] > ${formData.host}` : 
-                             cat === 'TRUCK' ? `${formData.plate} (${formData.company})` : `${formData.name} [${formData.reason}]`
-                });
-                setFormData({ name: '', people: '1', company: '', host: '', purpose: '', phone: '', badge: '', plate: '', driver: '', item: '', reason: '' });
-                setView('dashboard'); setLoading(false);
+                try {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'duty_logs'), {
+                        cat, details: formData, entry: timeStr, date: `${now.getMonth()+1}/${now.getDate()}`,
+                        timestamp: serverTimestamp(), exit: null,
+                        summary: cat === 'VISIT' ? `${formData.name} [${formData.comp}] >找 ${formData.host}` : 
+                                 cat === 'TRUCK' ? `${formData.plate} (${formData.comp})` : `${formData.name} [${formData.reason}]`
+                    });
+                    setFormData({ name: '', people: '1', comp: '', host: '', purp: '', tel: '', id: '', plate: '', driver: '', reason: '' });
+                    setView('dashboard');
+                } catch(e) {} finally { setLoading(false); }
             };
 
             const markExit = async (id) => {
@@ -116,15 +117,15 @@
                         <div className="flex justify-between items-center mb-3 px-2">
                             <div className="flex items-center gap-2">
                                 <Icon d={PATHS.search} color="#4b5563" size={14} />
-                                <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest leading-none">PORT_QUERY_MODULE</p>
+                                <p className="text-[10px] font-mono font-black text-slate-500 uppercase tracking-widest leading-none">PORT_ID_DECODING</p>
                             </div>
                             <div className={`w-2.5 h-2.5 rounded-full ${user ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-red-500 animate-pulse'}`}></div>
                         </div>
-                        <input type="text" placeholder="搜尋單位、人員或分機..." onChange={e => setQueryStr(e.target.value)} className="w-full bg-slate-900/50 p-4 rounded-2xl border border-slate-700 text-blue-400 font-bold outline-none placeholder:text-slate-800" />
+                        <input type="text" placeholder="搜尋單位或分機..." onChange={e => setQueryStr(e.target.value)} className="w-full bg-slate-900/50 p-4 rounded-2xl border border-slate-700 text-blue-400 font-bold outline-none placeholder:text-slate-800" />
                         {queryStr && (
                             <div className="mt-3 space-y-1.5 max-h-40 overflow-y-auto">
-                                {directory.filter(i => i.n.includes(queryStr) || i.e.includes(queryStr) || i.d.includes(queryStr)).map(i => (
-                                    <div key={i.e} className="bg-slate-900/40 p-3 rounded-xl flex justify-between items-center border border-white/5 animate-in slide-in-from-top-1">
+                                {directory.filter(i => i.n.includes(queryStr) || i.e.includes(queryStr)).map(i => (
+                                    <div key={i.e} className="bg-slate-900/40 p-3 rounded-xl flex justify-between items-center border border-white/5">
                                         <span className="text-sm font-bold text-slate-300">{i.n} ({i.d})</span>
                                         <span className="text-xl font-black text-blue-600 mono">#{i.e}</span>
                                     </div>
@@ -134,17 +135,19 @@
                     </div>
 
                     <div className="grid grid-cols-1 gap-3">
-                        <button onClick={() => setView('visit')} className="bg-white p-6 rounded-[2.5rem] border-b-4 border-slate-200 flex items-center gap-5 active:translate-y-1 active:border-b-0 transition-all shadow-lg">
+                        <button onClick={() => setView('visit')} className="bg-white p-6 rounded-[2.5rem] border-b-4 border-slate-200 flex items-center gap-5 active:translate-y-1 active:border-b-0 shadow-lg transition-all">
                             <div className="bg-indigo-50 p-3 rounded-2xl text-indigo-500"><Icon d={PATHS.visitor} size={28} /></div>
-                            <div className="text-left leading-tight"><h3 className="font-black text-slate-700 text-lg italic">訪客進出登記簿</h3><p className="text-[9px] text-slate-400 font-mono tracking-widest uppercase">Match_Paper: Visit</p></div>
+                            <div className="text-left leading-tight">
+                                <h3 className="font-black text-slate-700 text-lg italic">訪客進出登記簿</h3>
+                                <p className="text-[9px] text-slate-400 font-mono tracking-widest uppercase">Visit_Log_V12</p>
+                            </div>
                         </button>
-                        <button onClick={() => setView('truck')} className="bg-white p-6 rounded-[2.5rem] border-b-4 border-slate-200 flex items-center gap-5 active:translate-y-1 active:border-b-0 transition-all shadow-lg">
+                        <button onClick={() => setView('truck')} className="bg-white p-6 rounded-[2.5rem] border-b-4 border-slate-200 flex items-center gap-5 active:translate-y-1 active:border-b-0 shadow-lg transition-all">
                             <div className="bg-blue-50 p-3 rounded-2xl text-blue-500"><Icon d={PATHS.truck} size={28} /></div>
-                            <div className="text-left leading-tight"><h3 className="font-black text-slate-700 text-lg italic">車輛物品登記表</h3><p className="text-[9px] text-slate-400 font-mono tracking-widest uppercase">Match_Paper: Truck</p></div>
-                        </button>
-                        <button onClick={() => setView('staff')} className="bg-white p-6 rounded-[2.5rem] border-b-4 border-slate-200 flex items-center gap-5 active:translate-y-1 active:border-b-0 transition-all shadow-lg">
-                            <div className="bg-emerald-50 p-3 rounded-2xl text-emerald-500"><Icon d={PATHS.staff} size={28} /></div>
-                            <div className="text-left leading-tight"><h3 className="font-black text-slate-700 text-lg italic">員工進出登記表</h3><p className="text-[9px] text-slate-400 font-mono tracking-widest uppercase">Match_Paper: Staff</p></div>
+                            <div className="text-left leading-tight">
+                                <h3 className="font-black text-slate-700 text-lg italic">車輛物品登記表</h3>
+                                <p className="text-[9px] text-slate-400 font-mono tracking-widest uppercase">Truck_Log_V12</p>
+                            </div>
                         </button>
                     </div>
 
@@ -169,51 +172,44 @@
                         <div className="flex items-center gap-3">
                             <Icon d={PATHS.node} color="#3b82f6" size={24} />
                             <div>
-                                <h1 className="text-white text-xs font-mono font-black tracking-widest uppercase italic leading-none">FIELD_UTILITY_V12</h1>
-                                <p className="text-[8px] text-slate-600 font-mono mt-1 uppercase tracking-widest">2026.02.02 | STATION_01</p>
+                                <h1 className="text-white text-xs font-mono font-black tracking-widest uppercase italic leading-none">FIELD_UTILITY_V12.8</h1>
+                                <p className="text-[8px] text-slate-600 font-mono mt-1 uppercase">2026.02.02 | CMD_BLACK</p>
                             </div>
                         </div>
-                        <button onClick={() => setView('dashboard')} className="text-slate-600 hover:text-white transition-colors"><Icon d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" size={18}/></button>
+                        <button onClick={() => setView('dashboard')} className="text-slate-600 hover:text-white"><Icon d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" size={18}/></button>
                     </header>
 
                     <main className="flex-1 overflow-y-auto relative bg-[#f1f5f9]">
                         {view === 'dashboard' && <Dashboard />}
                         
-                        {['visit', 'truck', 'staff'].includes(view) && (
+                        {['visit', 'truck'].includes(view) && (
                             <div className="p-4 space-y-6 animate-in slide-in-from-right duration-300">
-                                <button onClick={() => setView('dashboard')} className="text-slate-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"><Icon d={PATHS.back} size={14} /> Back_to_Station</button>
+                                <button onClick={() => setView('dashboard')} className="text-slate-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"><Icon d={PATHS.back} size={14} /> Back_to_Terminal</button>
                                 <div className="bg-white p-8 rounded-[3.5rem] shadow-2xl space-y-4 border border-slate-200 text-slate-800">
-                                    <h2 className="text-center font-black text-2xl border-b pb-4 italic tracking-tighter uppercase underline decoration-slate-200 underline-offset-8">{view}_Registry</h2>
+                                    <h2 className="text-center font-black text-2xl border-b pb-4 italic tracking-tighter uppercase underline decoration-slate-200 underline-offset-8">{view}_Register</h2>
                                     <div className="space-y-4 text-[10px] font-mono text-slate-400 px-1">
                                         {view === 'visit' && (
                                             <div className="grid grid-cols-2 gap-3">
                                                 <div className="col-span-1"><label>姓名</label><input type="text" onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-50 p-4 rounded-xl border font-black text-slate-800 outline-none focus:border-blue-500" /></div>
                                                 <div className="col-span-1"><label>人數</label><input type="number" defaultValue="1" onChange={e => setFormData({...formData, people: e.target.value})} className="w-full bg-slate-50 p-4 rounded-xl border font-black text-center text-slate-800 outline-none focus:border-blue-500" /></div>
-                                                <div className="col-span-2"><label>公司單位</label><input type="text" onChange={e => setFormData({...formData, company: e.target.value})} className="w-full bg-slate-50 p-4 rounded-xl border font-bold text-slate-800 outline-none focus:border-blue-500" /></div>
+                                                <div className="col-span-2"><label>公司單位</label><input type="text" onChange={e => setFormData({...formData, comp: e.target.value})} className="w-full bg-slate-50 p-4 rounded-xl border font-bold text-slate-800 outline-none focus:border-blue-500" /></div>
                                                 <div className="col-span-1"><label>受訪人</label><input type="text" onChange={e => setFormData({...formData, host: e.target.value})} className="w-full bg-slate-50 p-4 rounded-xl border font-bold text-slate-800 outline-none focus:border-blue-500" /></div>
-                                                <div className="col-span-1"><label>編號</label><input type="text" onChange={e => setFormData({...formData, badge: e.target.value})} className="w-full bg-slate-50 p-4 rounded-xl border font-black text-blue-600 text-center uppercase outline-none focus:border-blue-500" /></div>
-                                                <div className="col-span-2"><label>電話 / 事由</label><input type="tel" onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-slate-50 p-4 rounded-xl border outline-none focus:border-blue-500" /></div>
+                                                <div className="col-span-1"><label>編號</label><input type="text" onChange={e => setFormData({...formData, id: e.target.value})} className="w-full bg-slate-50 p-4 rounded-xl border font-black text-blue-600 text-center uppercase outline-none focus:border-blue-500" /></div>
+                                                <div className="col-span-2"><label>電話 / 事由</label><input type="tel" onChange={e => setFormData({...formData, tel: e.target.value})} className="w-full bg-slate-50 p-4 rounded-xl border outline-none focus:border-blue-500" /></div>
                                             </div>
                                         )}
                                         {view === 'truck' && (
                                             <div className="space-y-4">
-                                                <div><label>公司名稱</label><input type="text" onChange={e => setFormData({...formData, company: e.target.value})} className="w-full bg-slate-50 p-5 rounded-2xl border font-black text-slate-800 outline-none focus:border-blue-500" /></div>
+                                                <div><label>公司名稱</label><input type="text" onChange={e => setFormData({...formData, comp: e.target.value})} className="w-full bg-slate-50 p-5 rounded-2xl border font-black text-slate-800 outline-none focus:border-blue-500" /></div>
                                                 <div><label>駕駛姓名</label><input type="text" onChange={e => setFormData({...formData, driver: e.target.value})} className="w-full bg-slate-50 p-5 rounded-2xl border font-black text-slate-800 outline-none focus:border-blue-500" /></div>
                                                 <div><label>車牌號碼</label><input type="text" placeholder="例: AA-1234" onChange={e => setFormData({...formData, plate: e.target.value})} className="w-full bg-slate-50 p-6 rounded-2xl border font-black text-4xl text-blue-600 text-center uppercase tracking-widest outline-none focus:border-blue-500" /></div>
                                             </div>
                                         )}
-                                        {view === 'staff' && (
-                                            <div className="space-y-6">
-                                                <div><label className="text-center block">員工姓名</label><input type="text" onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-50 p-6 rounded-3xl border font-black text-3xl text-center text-slate-800 outline-none focus:border-blue-500" /></div>
-                                                <div><label className="text-center block">事由</label><input type="text" placeholder="加班" onChange={e => setFormData({...formData, reason: e.target.value})} className="w-full bg-slate-50 p-6 rounded-3xl border font-bold text-xl text-center text-slate-800 outline-none focus:border-blue-500" /></div>
-                                            </div>
-                                        )}
                                     </div>
-                                    <button onClick={() => commit(view.toUpperCase())} className="w-full mt-4 bg-slate-900 text-white p-6 rounded-3xl font-black text-xl shadow-xl active:scale-95 transition-all uppercase italic">Confirm_Entry</button>
+                                    <button onClick={() => commit(view.toUpperCase())} className="w-full mt-4 bg-slate-900 text-white p-6 rounded-3xl font-black text-xl shadow-xl active:scale-95 transition-all uppercase italic">Confirm_Commit</button>
                                 </div>
                             </div>
                         )}
-
                         {view === 'vault' && (
                             <div className="fixed inset-0 bg-slate-950 z-[100] p-12 flex flex-col items-center justify-center text-center animate-in zoom-in duration-500">
                                 <div className="text-6xl mb-10 opacity-20 grayscale">🐕</div>
@@ -228,18 +224,11 @@
                     </main>
 
                     <footer className="p-8 bg-slate-900 text-center border-t border-slate-800" onClick={() => setUnlockSteps(prev => (prev + 1 >= 5 ? (setView('vault'), 0) : prev + 1))}>
-                        <p className="text-[9px] text-slate-600 font-mono font-bold tracking-[0.4em] uppercase italic leading-none">Diagnostic_Node_Active_V12</p>
+                        <p className="text-[9px] text-slate-600 font-mono font-bold tracking-[0.4em] uppercase italic leading-none">Diagnostic_Node_Active_V12.8</p>
                         <p className="text-[8px] text-slate-800 mt-2 tracking-widest uppercase italic underline decoration-slate-700 underline-offset-4 tracking-[0.2em]">Secure Local Buffer | CMD_BLACK</p>
                     </footer>
 
-                    {loading && (
-                        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center animate-in fade-in">
-                            <div className="bg-white p-8 rounded-[3.5rem] flex flex-col items-center gap-4 shadow-2xl">
-                                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                <span className="font-black text-slate-700 text-sm uppercase italic tracking-widest">Syncing...</span>
-                            </div>
-                        </div>
-                    )}
+                    {loading && <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center animate-in fade-in"><div className="bg-white p-8 rounded-[3.5rem] flex flex-col items-center gap-4 shadow-2xl animate-in zoom-in"><div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div><span className="font-black text-slate-700 text-sm uppercase italic tracking-widest">Syncing...</span></div></div>}
                 </div>
             );
         };
