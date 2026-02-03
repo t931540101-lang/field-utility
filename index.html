@@ -17,7 +17,6 @@
         <div class="grid grid-cols-2 gap-2">
             <button onclick="s('大黑','燥熱。建議魚腥草。')" class="bg-blue-600 p-2 rounded text-xs">大黑</button>
             <button onclick="s('小白','脾虛。建議四君子湯。')" class="bg-blue-600 p-2 rounded text-xs">小白</button>
-            <button onclick="s('小黃','關節。建議杜仲。')" class="bg-blue-600 p-2 rounded text-xs">小黃</button>
             <button onclick="s('阿布','腸胃。建議山藥。')" class="bg-blue-600 p-2 rounded text-xs">阿布</button>
             <button onclick="s('虎斑','濕疹。建議苦參。')" class="bg-blue-600 p-2 rounded text-xs">虎斑</button>
             <button onclick="s('妞妞','清熱。建議少量魚腥草。')" class="bg-orange-500 p-2 rounded text-xs">妞妞 🐱</button>
@@ -25,23 +24,31 @@
         <div id="box" class="mt-4 p-3 bg-white rounded hidden text-black"><h4 id="n" class="font-bold"></h4><p id="t"></p></div>
     </div>
     <script type="text/babel">
-        const GuardApp = () => (
-            <div class="p-4">
-                <h1 class="text-xl font-bold mb-4">🛡️ FIELD_UTILITY_V13</h1>
-                <div class="space-y-4">
-                    <div class="bg-white text-slate-900 p-6 rounded-3xl shadow-lg">訪客進出登記簿</div>
-                    <div class="bg-white text-slate-900 p-6 rounded-3xl shadow-lg">車輛物品登記表</div>
+        const App = () => {
+            const [logs, setLogs] = React.useState([]);
+            const addLog = (type) => {
+                const name = prompt('請輸入姓名/車號：');
+                if(name) setLogs([{type, name, time: new Date().toLocaleTimeString()}, ...logs]);
+            };
+            return (
+                <div class="p-4">
+                    <h1 class="text-xl font-bold mb-4">🛡️ FIELD_UTILITY_V13</h1>
+                    <div class="space-y-3 mb-6">
+                        <button onClick={()=>addLog('訪客')} class="w-full bg-white text-slate-900 p-5 rounded-2xl shadow-lg font-bold text-left flex justify-between">訪客進出登記簿 <span>👤</span></button>
+                        <button onClick={()=>addLog('送貨')} class="w-full bg-white text-slate-900 p-5 rounded-2xl shadow-lg font-bold text-left flex justify-between">車輛物品登記表 <span>🚚</span></button>
+                    </div>
+                    <div class="space-y-2">
+                        {logs.map((l, i) => (
+                            <div key={i} class="bg-slate-700 p-3 rounded-lg text-sm flex justify-between">
+                                <span>[{l.type}] {l.name}</span> <span class="text-slate-400">{l.time}</span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            </div>
-        );
-        ReactDOM.createRoot(document.getElementById('root')).render(<GuardApp />);
+            );
+        };
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
-    <script>
-        function s(n,t){
-            document.getElementById('box').classList.remove('hidden');
-            document.getElementById('n').innerText='🐾 '+n;
-            document.getElementById('t').innerText=t;
-        }
-    </script>
+    <script>function s(n,t){document.getElementById('box').classList.remove('hidden');document.getElementById('n').innerText='🐾 '+n;document.getElementById('t').innerText=t;}</script>
 </body>
 </html>
