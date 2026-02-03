@@ -7,24 +7,33 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <title>Field Utility v13</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
 </head>
 
-<body class="min-h-screen bg-slate-900 overflow-y-auto select-none">
-    <div id="root"></div>
-
-    <div class="p-4 bg-slate-800 rounded-xl m-4 shadow-lg text-white">
-        <h2 class="text-xl font-bold mb-4">🐕 狗狗中醫體質速查</h2>
-        <div class="grid grid-cols-2 gap-2">
-            <button onclick="showAdvice('大黑', '容易燥熱、皮膚搔癢。')" class="bg-blue-600 p-3 rounded">大黑</button>
-            <button onclick="showAdvice('小白', '脾胃較虛、食慾不振。')" class="bg-blue-600 p-3 rounded">小白</button>
-            <button onclick="showAdvice('小黃', '老犬關節保養。')" class="bg-blue-600 p-3 rounded">小黃</button>
-            <button onclick="showAdvice('阿布', '腸胃敏感。')" class="bg-blue-600 p-3 rounded">阿布</button>
-            <button onclick="showAdvice('皮皮', '活潑好動。')" class="bg-blue-600 p-3 rounded">皮皮</button>
-            <button onclick="showAdvice('虎斑', '注意皮膚濕疹。')" class="bg-blue-600 p-3 rounded">虎斑</button>
-            <button onclick="showAdvice('熊貓', '體質較弱。')" class="bg-blue-600 p-3 rounded">熊貓</button>
-            <button onclick="showAdvice('多多', '食慾不振。')" class="bg-blue-600 p-3 rounded">多多</button>
-            <button onclick="showAdvice('妞妞(貓)', '日常清熱解毒。')" class="bg-orange-500 p-3 rounded">妞妞 🐱</button>
+<body class="min-h-screen bg-slate-900 overflow-y-auto select-none text-white">
+    <div id="root" class="p-4">
+        <h1 class="text-2xl font-bold mb-4">🛡️ FIELD_UTILITY_V13</h1>
         </div>
+
+    <hr class="border-slate-700 my-4">
+
+    <div class="p-4 bg-slate-800 rounded-xl m-4 shadow-lg">
+        <h2 class="text-xl font-bold mb-4 text-green-400">🐕 狗狗中醫體質速查</h2>
+        <div class="grid grid-cols-2 gap-2">
+            <button onclick="showAdvice('大黑', '容易燥熱、皮膚搔癢。')" class="bg-blue-600 p-3 rounded text-sm">大黑</button>
+            <button onclick="showAdvice('小白', '脾胃較虛、食慾不振。')" class="bg-blue-600 p-3 rounded text-sm">小白</button>
+            <button onclick="showAdvice('小黃', '老犬關節保養。')" class="bg-blue-600 p-3 rounded text-sm">小黃</button>
+            <button onclick="showAdvice('阿布', '腸胃敏感。')" class="bg-blue-600 p-3 rounded text-sm">阿布</button>
+            <button onclick="showAdvice('皮皮', '活潑好動。')" class="bg-blue-600 p-3 rounded text-sm">皮皮</button>
+            <button onclick="showAdvice('虎斑', '注意皮膚濕疹。')" class="bg-blue-600 p-3 rounded text-sm">虎斑</button>
+            <button onclick="showAdvice('熊貓', '體質較弱。')" class="bg-blue-600 p-3 rounded text-sm">熊貓</button>
+            <button onclick="showAdvice('多多', '食慾不振。')" class="bg-blue-600 p-3 rounded text-sm">多多</button>
+            <button onclick="showAdvice('妞妞(貓)', '日常清熱解毒。')" class="bg-orange-500 p-3 rounded text-sm">妞妞 🐱</button>
+        </div>
+        
         <div id="dog-advice-box" class="mt-4 p-3 bg-white rounded-lg hidden text-black">
             <h4 id="dog-name" class="font-bold text-blue-800"></h4>
             <p id="dog-text" class="mt-1"></p>
@@ -32,11 +41,12 @@
     </div>
 
     <script>
-    function showAdvice(name, text) {
-        document.getElementById('dog-advice-box').classList.remove('hidden');
-        document.getElementById('dog-name').innerText = '🐾 ' + name + ' 的調理筆記：';
-        document.getElementById('dog-text').innerText = text;
-    }
+        // 狗狗助手邏輯
+        function showAdvice(name, text) {
+            document.getElementById('dog-advice-box').classList.remove('hidden');
+            document.getElementById('dog-name').innerText = '🐾 ' + name + ' 的調理筆記：';
+            document.getElementById('dog-text').innerText = text;
+        }
     </script>
 </body>
 </html>
