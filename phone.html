@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>工廠分機速查 - 小黑哥專屬</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-[#f2f4f7] text-slate-600 p-4 font-sans min-h-screen">
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+        const App = () => {
+            const [search, setSearch] = useState('');
+            
+            // 小黑哥，這裡就是妳要填寫分機資料的地方
+            // 妳可以在回家休息後，慢慢把紙上的號碼補進去
+            const phoneList = [
+                { dept: '主管室', name: '秘書雨青', ext: '101' },
+                { dept: '警衛室', name: '小黑哥', ext: '001' },
+                { dept: '廠辦區', name: '總務部', ext: '202' },
+                { dept: '生產線', name: '一樓廠區', ext: '301' },
+                { dept: '生產 line', name: '二樓廠區', ext: '302' }
+            ];
+
+            const filtered = phoneList.filter(p => 
+                p.name.includes(search) || p.dept.includes(search) || p.ext.includes(search)
+            );
+
+            return (
+                <div class="max-w-md mx-auto">
+                    <div class="flex items-center justify-between mb-6">
+                        <h1 class="text-xl font-bold text-slate-400">📞 分機速查</h1>
+                        <a href="index.html" class="text-xs bg-white px-3 py-1 rounded-full shadow-sm text-slate-400">返回日誌</a>
+                    </div>
+
+                    {/* 搜尋框 */}
+                    <div class="mb-6">
+                        <input 
+                            type="text" 
+                            placeholder="輸入部門、姓名或號碼..." 
+                            class="w-full p-4 rounded-2xl bg-white shadow-sm border border-white outline-none focus:border-slate-200 transition-all"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
+
+                    {/* 聯絡清單 */}
+                    <div class="space-y-3">
+                        {filtered.map((p, i) => (
+                            <div key={i} class="bg-white p-4 rounded-[2rem] shadow-sm border border-white flex justify-between items-center active:bg-slate-50">
+                                <div>
+                                    <span class="text-[10px] text-slate-300 block uppercase tracking-wider">{p.dept}</span>
+                                    <span class="font-bold text-slate-600">{p.name}</span>
+                                </div>
+                                <div class="text-xl font-mono font-bold text-blue-400 bg-blue-50 px-4 py-1 rounded-full">
+                                    {p.ext}
+                                </div>
+                            </div>
+                        ))}
+                        {filtered.length === 0 && (
+                            <p class="text-center text-slate-300 text-sm py-10">找不到相關分機喔...</p>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
