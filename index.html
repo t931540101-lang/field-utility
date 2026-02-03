@@ -18,15 +18,14 @@
 
         const App = () => {
             const [logs, setLogs] = useState([]);
-            const [view, setView] = useState('home'); // 'home', 'visitor', 'truck'
+            const [view, setView] = useState('home');
 
-            const saveLog = (data) => {
-                const newLog = { 
-                    ...data, 
-                    id: Date.now(),
-                    time: new Date().toLocaleTimeString('zh-TW', {hour12:false, hour:'2-digit', minute:'2-digit'})
-                };
-                setLogs([newLog, ...logs]);
+            const saveLog = (type, data) => {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('zh-TW', {hour12:false, hour:'2-digit', minute:'2-digit'});
+                const dateStr = (now.getMonth() + 1) + '/' + now.getDate();
+                
+                setLogs([{ type, date: dateStr, time: timeStr, ...data, id: Date.now() }, ...logs]);
                 setView('home');
             };
 
@@ -34,29 +33,169 @@
                 <div class="max-w-md mx-auto">
                     {view === 'home' && (
                         <div>
-                            <h1 class="text-2xl font-bold mb-6 flex items-center gap-2">🛡️ FIELD_UTILITY <span class="text-sm bg-blue-600 px-2 py-1 rounded">V13</span></h1>
-                            <div class="grid gap-4 mb-8">
-                                <button onClick={() => setView('visitor')} class="bg-white text-slate-900 p-6 rounded-3xl shadow-xl flex items-center justify-between active:scale-95 transition-transform">
-                                    <div class="text-left"><p class="text-xl font-bold">訪客進出登記</p><p class="text-slate-500 text-sm">姓名 / 電話 / 事由</p></div>
-                                    <span class="text-3xl">👤</span>
+                            <h1 class="text-xl font-bold mb-6 flex items-center justify-between">
+                                🛡️ FIELD_UTILITY_V13 
+                                <span class="text-xs bg-slate-700 px-2 py-1 rounded">STATION_ALPHA</span>
+                            </h1>
+                            
+                            <div class="space-y-4 mb-8">
+                                <button onClick={()=>setView('visitor')} class="w-full bg-white text-slate-900 p-5 rounded-3xl shadow-lg text-left flex justify-between items-center">
+                                               {/* 🐾 狗狗面板開始 */}
+            <div class="bg-slate-800 p-4 rounded-3xl mb-6 border border-slate-700 shadow-lg">
+                <h2 class="text-sm font-bold mb-3 text-green-400 flex items-center gap-2">🐕 狗狗中醫體質速查</h2>
+                <div class="grid grid-cols-3 gap-2">
+                    {dogs.map(d => (
+                        <button key={d.n} onClick={()=>setDog({n:d.n, t:d.t, s:true})} 
+                                   {/* 🐾 狗狗面板渲染開始 */}
+            <div class="bg-slate-800 p-4 rounded-3xl mb-6 border border-slate-700 shadow-lg">
+                                        {/* 🐾 狗狗面板渲染開始 */}
+            <div class="bg-slate-800 p-4 rounded-3xl mb-6 border border-slate-700 shadow-lg">
+                <h2 class="text-sm font-bold mb-3 text-green-400 flex items-center gap-2">🐕 狗狗中醫體質速查</h2>
+                <div class="grid grid-cols-3 gap-2">
+                    {dogs.map(d => (
+                        <button key={d.n} onClick={()=>setDog({n:d.n, t:d.t, s:true})} 
+                                class={`p-2 rounded-xl text-[10px] font-bold border ${d.cat?'bg-orange-600/20 border-orange-500/40 text-orange-400':'bg-blue-600/20 border-blue-500/40 text-blue-400'} active:scale-95 transition-all`}>
+                            {d.n}{d.cat?'🐱':''}
+                        </button>
+                    ))}
+                </div>
+                {dog.s && (
+                    <div class="mt-3 p-3 bg-white rounded-2xl text-slate-900 text-sm font-bold border-l-4 border-blue-500 shadow-inner">
+                        🐾 {dog.n} 的建議：{dog.t}
+                    </div>
+                )}
+            </div>
+            {/* 🐾 狗狗面板渲染結束 */}
+
+                <h2 class="text-sm font-bold mb-3 text-green-400 flex items-center gap-2">🐕 狗狗中醫體質速查</h2>
+                <div class="grid grid-cols-3 gap-2">
+                    {dogs.map(d => (
+                        <button key={d.n} onClick={()=>setDog({n:d.n, t:d.t, s:true})} 
+                                class={`p-2 rounded-xl text-[10px] font-bold border ${d.cat?'bg-orange-600/20 border-orange-500/40 text-orange-400':'bg-blue-600/20 border-blue-500/40 text-blue-400'} active:scale-95 transition-all`}>
+                            {d.n}{d.cat?'🐱':''}
+                        </button>
+                    ))}
+                </div>
+                {dog.s && (
+                    <div class="mt-3 p-3 bg-white rounded-2xl text-slate-900 text-sm font-bold border-l-4 border-blue-500 shadow-inner">
+                        🐾 {dog.n} 的建議：{dog.t}
+                    </div>
+                )}
+            </div>
+            {/* 🐾 狗狗面板渲染結束 */}
+     
+                                       {/* 🐾 狗狗面板渲染開始 */}
+            <div class="bg-slate-800 p-4 rounded-3xl mb-6 border border-slate-700 shadow-lg">
+                <h2 class="text-sm font-bold mb-3 text-green-400 flex items-center gap-2">🐕 狗狗中醫體質速查</h2>
+                <div class="grid grid-cols-3 gap-2">
+                    {dogs.map(d => (
+                        <button key={d.n} onClick={()=>setDog({n:d.n, t:d.t, s:true})} 
+                                class={`p-2 rounded-xl text-[10px] font-bold border ${d.cat?'bg-orange-600/20 border-orange-500/40 text-orange-400':'bg-blue-600/20 border-blue-500/40 text-blue-400'} border active:scale-95 transition-all`}>
+                            {d.n}{d.cat?'🐱':''}
+                        </button>
+                    ))}
+                </div>
+                {dog.s && (
+                    <div class="mt-3 p-3 bg-white rounded-2xl text-slate-900 text-sm font-bold border-l-4 border-blue-500 shadow-inner">
+                        🐾 {dog.n} 的建議：{dog.t}
+                    </div>
+                )}
+            </div>
+            {/* 🐾 狗狗面板渲染結束 */}
+ 
+                                class={`p-2 rounded-xl text-[10px] font-bold border ${d.cat?'bg-orange-600/20 border-orange-500/40 text-orange-400':'bg-blue-600/20 border-blue-500/40 text-blue-400'} active:scale-95 transition-all`}>
+                            {d.n}{d.cat?'🐱':''}
+                        </button>
+                    ))}
+                </div>
+                {dog.s && (
+                    <div class="mt-3 p-3 bg-white rounded-2xl text-slate-900 text-sm font-bold border-l-4 border-blue-500 shadow-inner">
+                        🐾 {dog.n} 的建議：{dog.t}
+                    </div>
+                )}
+            </div>
+            {/* 🐾 狗狗面板結束 */}
+            {/* 🐾 狗狗面板渲染開始 */}
+            <div class="bg-slate-800 p-4 rounded-3xl mb-6 border border-slate-700 shadow-lg">
+                <h2 class="text-sm font-bold mb-3 text-green-400 flex items-center gap-2">🐕 狗狗中醫體質速查</h2>
+                <div class="grid grid-cols-3 gap-2">
+                    {dogs.map(d => (
+                        <button key={d.n} onClick={()=>setDog({n:d.n, t:d.t, s:true})} 
+                                class={`p-2 rounded-xl text-[10px] font-bold border ${d.cat?'bg-orange-600/20 border-orange-500/40 text-orange-400':'bg-blue-600/20 border-blue-500/40 text-blue-400'} active:scale-95 transition-all`}>
+                            {d.n}{d.cat?'🐱':''}
+                        </button>
+                    ))}
+                </div>
+                {dog.s && (
+                    <div class="mt-3 p-3 bg-white rounded-2xl text-slate-900 text-sm font-bold border-l-4 border-blue-500 shadow-inner">
+                        🐾 {dog.n} 的建議：{dog.t}
+                    </div>
+                )}
+            </div>
+            {/* 🐾 狗狗面板渲染結束 */}
+ 
+                                    <div><p class="font-bold text-lg">訪客進出登記</p><p class="text-xs text-slate-500">姓名/公司/受訪人/事由/電話</p></div>
+                                    <span class="text-2xl">👤</span>
                                 </button>
-                                <button onClick={() => setView('truck')} class="bg-white text-slate-900 p-6 rounded-3xl shadow-xl flex items-center justify-between active:scale-95 transition-transform">
-                                    <div class="text-left"><p class="text-xl font-bold">送貨車量登記</p><p class="text-slate-500 text-sm">車號 / 司機 / 種類</p></div>
-                                    <span class="text-3xl">🚚</span>
+                                <button onClick={()=>setView('truck')} class="w-full bg-white text-slate-900 p-5 rounded-3xl shadow-lg text-left flex justify-between items-center">
+                                    <div><p class="font-bold text-lg">車輛物品登記</p><p class="text-xs text-slate-500">車號/公司/司機/進出時間</p></div>
+                                    <span class="text-2xl">🚚</span>
                                 </button>
+                                            {/* 🐾 狗狗按鈕面板開始 */}
+            <div class="bg-slate-800 p-4 rounded-3xl mb-6 border border-slate-700 shadow-inner">
+                <h2 class="text-sm font-bold mb-3 text-green-400 flex items-center gap-2">🐕 狗狗中醫速查</h2>
+                <div class="grid grid-cols-3 gap-2">
+                    {dogs.map(d => (
+                        <button key={d.n} onClick={()=>setDog({n:d.n, t:d.t, s:true})} 
+                                class={`p-2 rounded-xl text-[10px] font-bold border ${d.cat?'bg-orange-600/20 border-orange-500/40 text-orange-400':'bg-blue-600/20 border-blue-500/40 text-blue-400'} active:scale-95 transition-all`}>
+                            {d.n}{d.cat?'🐱':''}
+                        </button>
+                    ))}
+                </div>
+                {dog.s && (
+                    <div class="mt-3 p-3 bg-white rounded-2xl text-slate-900 text-sm font-bold border-l-4 border-blue-500">
+                        🐾 {dog.n}：{dog.t}
+                    </div>
+                )}
+            </div>
+            {/* 🐾 狗狗按鈕面板結束 */}
+
                             </div>
-                            <h2 class="text-lg font-bold mb-3 border-l-4 border-blue-500 pl-2 text-blue-400">今日登記紀錄</h2>
+                                        {/* 🐾 狗狗中醫面板開始 */}
+            <div class="bg-slate-800 p-4 rounded-2xl mb-6 border border-slate-700">
+                <h2 class="text-sm font-bold mb-3 text-green-400">🐕 狗狗中醫體質速查</h2>
+                <div class="grid grid-cols-3 gap-2">
+                    {dogs.map(d => (
+                        <button key={d.n} onClick={()=>setDog({n:d.n, t:d.t, s:true})} 
+                                class={`p-2 rounded-lg text-xs ${d.cat?'bg-orange-600/20 border-orange-500/50 text-orange-400':'bg-blue-600/20 border-blue-500/50 text-blue-400'} border`}>
+                            {d.n}{d.cat?'🐱':''}
+                        </button>
+                    ))}
+                </div>
+                {dog.s && (
+                    <div class="mt-3 p-3 bg-white rounded-xl text-slate-900 text-sm font-bold animate-pulse">
+                        🐾 {dog.n}：{dog.t}
+                    </div>
+                )}
+            </div>
+            {/* 🐾 狗狗中醫面板結束 */}
+
+
+                            <h2 class="text-sm font-bold text-blue-400 mb-3 tracking-widest uppercase italic">Local_Kernel_Buffer</h2>
                             <div class="space-y-3">
-                                {logs.map(log => (
-                                    <div key={log.id} class="bg-slate-800 p-4 rounded-2xl border border-slate-700">
-                                        <div class="flex justify-between text-sm text-slate-400 mb-1">
-                                            <span>{log.type === 'visitor' ? '👤 訪客' : '🚚 送貨'}</span>
-                                            <span>{log.time}</span>
+                                {logs.map(l => (
+                                    <div key={l.id} class="bg-slate-800 p-4 rounded-2xl border border-slate-700 relative overflow-hidden">
+                                        <div class={`absolute left-0 top-0 h-full w-1 ${l.type==='visitor'?'bg-blue-500':'bg-green-500'}`}></div>
+                                        <div class="flex justify-between text-xs text-slate-400 mb-2">
+                                            <span class="bg-slate-700 px-2 py-0.5 rounded text-[10px]">{l.type==='visitor'?'VISIT':'TRUCK'}</span>
+                                            <span>{l.date} {l.time}</span>
                                         </div>
-                                        <div class="font-bold text-lg">
-                                            {log.type === 'visitor' ? `${log.name} - ${log.reason}` : `${log.carId} (${log.driver})`}
+                                        <div class="font-bold text-base">
+                                            {l.type==='visitor' ? `${l.name} [${l.comp}] > 找 ${l.target}` : `${l.car} (${l.comp})`}
                                         </div>
-                                        <p class="text-sm text-slate-400">{log.type === 'visitor' ? log.phone : `種類: ${log.cargo}`}</p>
+                                        <p class="text-xs text-slate-400 mt-1">
+                                            {l.type==='visitor' ? `事由: ${l.reason} / 電話: ${l.phone}` : `司機: ${l.driver} / 狀態: 進廠`}
+                                        </p>
                                     </div>
                                 ))}
                             </div>
@@ -64,40 +203,42 @@
                     )}
 
                     {view === 'visitor' && (
-                        <div class="bg-slate-800 p-6 rounded-3xl shadow-2xl border border-blue-500/30">
-                            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">👤 訪客登記表</h2>
-                            <div class="space-y-4">
-                                <div><label class="text-sm text-slate-400">訪客姓名</label><input id="v_name" class="w-full bg-slate-700 p-3 rounded-xl mt-1 outline-none focus:ring-2 ring-blue-500" placeholder="請輸入姓名" /></div>
-                                <div><label class="text-sm text-slate-400">聯絡電話</label><input id="v_phone" class="w-full bg-slate-700 p-3 rounded-xl mt-1 outline-none" placeholder="09XX-XXX-XXX" /></div>
-                                <div><label class="text-sm text-slate-400">進場事由</label><input id="v_reason" class="w-full bg-slate-700 p-3 rounded-xl mt-1 outline-none" placeholder="例如：找老闆" /></div>
-                                <div class="flex gap-3 pt-4">
-                                    <button onClick={() => setView('home')} class="flex-1 bg-slate-600 py-4 rounded-2xl font-bold">取消</button>
-                                    <button onClick={() => saveLog({
-                                        type: 'visitor',
-                                        name: document.getElementById('v_name').value,
-                                        phone: document.getElementById('v_phone').value,
-                                        reason: document.getElementById('v_reason').value
-                                    })} class="flex-1 bg-blue-600 py-4 rounded-2xl font-bold">確認登記</button>
+                        <div class="bg-slate-800 p-6 rounded-3xl border border-blue-500/30">
+                            <h2 class="text-lg font-bold mb-4">👤 訪客進出登記</h2>
+                            <div class="space-y-3">
+                                <input id="v1" placeholder="訪客姓名" class="w-full bg-slate-700 p-3 rounded-xl outline-none" />
+                                <input id="v2" placeholder="公司行號" class="w-full bg-slate-700 p-3 rounded-xl outline-none" />
+                                <input id="v3" placeholder="受訪人員" class="w-full bg-slate-700 p-3 rounded-xl outline-none" />
+                                <input id="v4" placeholder="進場事由" class="w-full bg-slate-700 p-3 rounded-xl outline-none" />
+                                <input id="v5" placeholder="聯絡電話" class="w-full bg-slate-700 p-3 rounded-xl outline-none" />
+                                <div class="flex gap-2 mt-4">
+                                    <button onClick={()=>setView('home')} class="flex-1 py-3 bg-slate-600 rounded-xl font-bold">取消</button>
+                                    <button onClick={()=>saveLog('visitor', {
+                                        name: document.getElementById('v1').value,
+                                        comp: document.getElementById('v2').value,
+                                        target: document.getElementById('v3').value,
+                                        reason: document.getElementById('v4').value,
+                                        phone: document.getElementById('v5').value
+                                    })} class="flex-1 py-3 bg-blue-600 rounded-xl font-bold text-white">確認登記</button>
                                 </div>
                             </div>
                         </div>
                     )}
 
                     {view === 'truck' && (
-                        <div class="bg-slate-800 p-6 rounded-3xl shadow-2xl border border-green-500/30">
-                            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">🚚 送貨車量登記</h2>
-                            <div class="space-y-4">
-                                <div><label class="text-sm text-slate-400">車牌號碼</label><input id="t_car" class="w-full bg-slate-700 p-3 rounded-xl mt-1 outline-none focus:ring-2 ring-green-500" placeholder="例如：ABC-123" /></div>
-                                <div><label class="text-sm text-slate-400">司機姓名</label><input id="t_driver" class="w-full bg-slate-700 p-3 rounded-xl mt-1 outline-none" placeholder="請輸入姓名" /></div>
-                                <div><label class="text-sm text-slate-400">送貨種類</label><input id="t_cargo" class="w-full bg-slate-700 p-3 rounded-xl mt-1 outline-none" placeholder="例如：原料 / 零件" /></div>
-                                <div class="flex gap-3 pt-4">
-                                    <button onClick={() => setView('home')} class="flex-1 bg-slate-600 py-4 rounded-2xl font-bold">取消</button>
-                                    <button onClick={() => saveLog({
-                                        type: 'truck',
-                                        carId: document.getElementById('t_car').value,
-                                        driver: document.getElementById('t_driver').value,
-                                        cargo: document.getElementById('t_cargo').value
-                                    })} class="flex-1 bg-green-600 py-4 rounded-2xl font-bold">確認登記</button>
+                        <div class="bg-slate-800 p-6 rounded-3xl border border-green-500/30">
+                            <h2 class="text-lg font-bold mb-4">🚚 車輛物品登記</h2>
+                            <div class="space-y-3">
+                                <input id="t1" placeholder="車牌號碼" class="w-full bg-slate-700 p-3 rounded-xl outline-none" />
+                                <input id="t2" placeholder="公司行號" class="w-full bg-slate-700 p-3 rounded-xl outline-none" />
+                                <input id="t3" placeholder="司機姓名" class="w-full bg-slate-700 p-3 rounded-xl outline-none" />
+                                <div class="flex gap-2 mt-4">
+                                    <button onClick={()=>setView('home')} class="flex-1 py-3 bg-slate-600 rounded-xl font-bold">取消</button>
+                                    <button onClick={()=>saveLog('truck', {
+                                        car: document.getElementById('t1').value,
+                                        comp: document.getElementById('t2').value,
+                                        driver: document.getElementById('t3').value
+                                    })} class="flex-1 py-3 bg-green-600 rounded-xl font-bold text-white">確認登記</button>
                                 </div>
                             </div>
                         </div>
@@ -107,7 +248,24 @@
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
+      
+    
         root.render(<App />);
+                    // 🐾 狗狗助手功能開始
+            const [dog, setDog] = useState({ n: '', s: false });
+            const dogs = [
+                {n:'大黑', t:'容易燥熱。建議：魚腥草。'},
+                {n:'小白', t:'脾胃較虛。建議：四君子湯。'},
+                {n:'小黃', t:'老犬關節。建議：杜仲。'},
+                {n:'阿布', t:'腸胃敏感。建議：山藥。'},
+                {n:'皮皮', t:'活潑好動。日常保養。'},
+                {n:'虎斑', t:'注意濕疹。建議：苦參。'},
+                {n:'熊貓', t:'體質較弱。建議：黃耆。'},
+                {n:'多多', t:'食慾不振。建議：神曲。'},
+                {n:'妞妞', t:'清熱解毒。', cat:true}
+            ];
+            // 狗狗助手功能結束
+
     </script>
 </body>
 </html>
