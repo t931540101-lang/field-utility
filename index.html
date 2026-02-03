@@ -10,45 +10,104 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-<body class="min-h-screen bg-slate-900 overflow-y-auto text-white">
+<body class="min-h-screen bg-slate-900 text-white p-4 overflow-y-auto">
     <div id="root"></div>
-    <div class="p-4 bg-slate-800 rounded-xl m-4 shadow-lg border border-slate-700">
-        <h2 class="font-bold mb-4 text-green-400">🐕 狗狗中醫速查</h2>
-        <div class="grid grid-cols-2 gap-2">
-            <button onclick="s('大黑','燥熱。建議魚腥草。')" class="bg-blue-600 p-2 rounded text-xs">大黑</button>
-            <button onclick="s('小白','脾虛。建議四君子湯。')" class="bg-blue-600 p-2 rounded text-xs">小白</button>
-            <button onclick="s('阿布','腸胃。建議山藥。')" class="bg-blue-600 p-2 rounded text-xs">阿布</button>
-            <button onclick="s('虎斑','濕疹。建議苦參。')" class="bg-blue-600 p-2 rounded text-xs">虎斑</button>
-            <button onclick="s('妞妞','清熱。建議少量魚腥草。')" class="bg-orange-500 p-2 rounded text-xs">妞妞 🐱</button>
-        </div>
-        <div id="box" class="mt-4 p-3 bg-white rounded hidden text-black"><h4 id="n" class="font-bold"></h4><p id="t"></p></div>
-    </div>
+
     <script type="text/babel">
+        const { useState } = React;
+
         const App = () => {
-            const [logs, setLogs] = React.useState([]);
-            const addLog = (type) => {
-                const name = prompt('請輸入姓名/車號：');
-                if(name) setLogs([{type, name, time: new Date().toLocaleTimeString()}, ...logs]);
+            const [logs, setLogs] = useState([]);
+            const [view, setView] = useState('home'); // 'home', 'visitor', 'truck'
+
+            const saveLog = (data) => {
+                const newLog = { 
+                    ...data, 
+                    id: Date.now(),
+                    time: new Date().toLocaleTimeString('zh-TW', {hour12:false, hour:'2-digit', minute:'2-digit'})
+                };
+                setLogs([newLog, ...logs]);
+                setView('home');
             };
+
             return (
-                <div class="p-4">
-                    <h1 class="text-xl font-bold mb-4">🛡️ FIELD_UTILITY_V13</h1>
-                    <div class="space-y-3 mb-6">
-                        <button onClick={()=>addLog('訪客')} class="w-full bg-white text-slate-900 p-5 rounded-2xl shadow-lg font-bold text-left flex justify-between">訪客進出登記簿 <span>👤</span></button>
-                        <button onClick={()=>addLog('送貨')} class="w-full bg-white text-slate-900 p-5 rounded-2xl shadow-lg font-bold text-left flex justify-between">車輛物品登記表 <span>🚚</span></button>
-                    </div>
-                    <div class="space-y-2">
-                        {logs.map((l, i) => (
-                            <div key={i} class="bg-slate-700 p-3 rounded-lg text-sm flex justify-between">
-                                <span>[{l.type}] {l.name}</span> <span class="text-slate-400">{l.time}</span>
+                <div class="max-w-md mx-auto">
+                    {view === 'home' && (
+                        <div>
+                            <h1 class="text-2xl font-bold mb-6 flex items-center gap-2">🛡️ FIELD_UTILITY <span class="text-sm bg-blue-600 px-2 py-1 rounded">V13</span></h1>
+                            <div class="grid gap-4 mb-8">
+                                <button onClick={() => setView('visitor')} class="bg-white text-slate-900 p-6 rounded-3xl shadow-xl flex items-center justify-between active:scale-95 transition-transform">
+                                    <div class="text-left"><p class="text-xl font-bold">訪客進出登記</p><p class="text-slate-500 text-sm">姓名 / 電話 / 事由</p></div>
+                                    <span class="text-3xl">👤</span>
+                                </button>
+                                <button onClick={() => setView('truck')} class="bg-white text-slate-900 p-6 rounded-3xl shadow-xl flex items-center justify-between active:scale-95 transition-transform">
+                                    <div class="text-left"><p class="text-xl font-bold">送貨車量登記</p><p class="text-slate-500 text-sm">車號 / 司機 / 種類</p></div>
+                                    <span class="text-3xl">🚚</span>
+                                </button>
                             </div>
-                        ))}
-                    </div>
+                            <h2 class="text-lg font-bold mb-3 border-l-4 border-blue-500 pl-2 text-blue-400">今日登記紀錄</h2>
+                            <div class="space-y-3">
+                                {logs.map(log => (
+                                    <div key={log.id} class="bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                                        <div class="flex justify-between text-sm text-slate-400 mb-1">
+                                            <span>{log.type === 'visitor' ? '👤 訪客' : '🚚 送貨'}</span>
+                                            <span>{log.time}</span>
+                                        </div>
+                                        <div class="font-bold text-lg">
+                                            {log.type === 'visitor' ? `${log.name} - ${log.reason}` : `${log.carId} (${log.driver})`}
+                                        </div>
+                                        <p class="text-sm text-slate-400">{log.type === 'visitor' ? log.phone : `種類: ${log.cargo}`}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {view === 'visitor' && (
+                        <div class="bg-slate-800 p-6 rounded-3xl shadow-2xl border border-blue-500/30">
+                            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">👤 訪客登記表</h2>
+                            <div class="space-y-4">
+                                <div><label class="text-sm text-slate-400">訪客姓名</label><input id="v_name" class="w-full bg-slate-700 p-3 rounded-xl mt-1 outline-none focus:ring-2 ring-blue-500" placeholder="請輸入姓名" /></div>
+                                <div><label class="text-sm text-slate-400">聯絡電話</label><input id="v_phone" class="w-full bg-slate-700 p-3 rounded-xl mt-1 outline-none" placeholder="09XX-XXX-XXX" /></div>
+                                <div><label class="text-sm text-slate-400">進場事由</label><input id="v_reason" class="w-full bg-slate-700 p-3 rounded-xl mt-1 outline-none" placeholder="例如：找老闆" /></div>
+                                <div class="flex gap-3 pt-4">
+                                    <button onClick={() => setView('home')} class="flex-1 bg-slate-600 py-4 rounded-2xl font-bold">取消</button>
+                                    <button onClick={() => saveLog({
+                                        type: 'visitor',
+                                        name: document.getElementById('v_name').value,
+                                        phone: document.getElementById('v_phone').value,
+                                        reason: document.getElementById('v_reason').value
+                                    })} class="flex-1 bg-blue-600 py-4 rounded-2xl font-bold">確認登記</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {view === 'truck' && (
+                        <div class="bg-slate-800 p-6 rounded-3xl shadow-2xl border border-green-500/30">
+                            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">🚚 送貨車量登記</h2>
+                            <div class="space-y-4">
+                                <div><label class="text-sm text-slate-400">車牌號碼</label><input id="t_car" class="w-full bg-slate-700 p-3 rounded-xl mt-1 outline-none focus:ring-2 ring-green-500" placeholder="例如：ABC-123" /></div>
+                                <div><label class="text-sm text-slate-400">司機姓名</label><input id="t_driver" class="w-full bg-slate-700 p-3 rounded-xl mt-1 outline-none" placeholder="請輸入姓名" /></div>
+                                <div><label class="text-sm text-slate-400">送貨種類</label><input id="t_cargo" class="w-full bg-slate-700 p-3 rounded-xl mt-1 outline-none" placeholder="例如：原料 / 零件" /></div>
+                                <div class="flex gap-3 pt-4">
+                                    <button onClick={() => setView('home')} class="flex-1 bg-slate-600 py-4 rounded-2xl font-bold">取消</button>
+                                    <button onClick={() => saveLog({
+                                        type: 'truck',
+                                        carId: document.getElementById('t_car').value,
+                                        driver: document.getElementById('t_driver').value,
+                                        cargo: document.getElementById('t_cargo').value
+                                    })} class="flex-1 bg-green-600 py-4 rounded-2xl font-bold">確認登記</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         };
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
-    <script>function s(n,t){document.getElementById('box').classList.remove('hidden');document.getElementById('n').innerText='🐾 '+n;document.getElementById('t').innerText=t;}</script>
 </body>
 </html>
