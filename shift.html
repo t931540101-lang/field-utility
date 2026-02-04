@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-    <title>2月排班表</title>
+    <title>2月精準班表</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -14,14 +14,13 @@
     <script type="text/babel">
         const { useState } = React;
         const App = () => {
-            // 2月份班表數據 (蔡易倫 晚班)
-            // 'W' 代表晚班, 'H' 代表休
+            // 2月份班表數據 (完全對照蔡易倫晚班行)
             const myShifts = {
                 1: 'H', 2: 'W', 3: 'W', 4: 'H', 5: 'W', 
                 6: 'W', 7: 'W', 8: 'H', 9: 'W', 10: 'W', 
-                11: 'H', 12: 'W', 13: 'W', 14: 'H', 15: 'W',
-                16: 'H', 17: 'H', 18: 'H', 19: 'H', 20: 'W',
-                21: 'W', 22: 'H', 23: 'W', 24: 'W', 25: 'W',
+                11: 'W', 12: 'W', 13: 'W', 14: 'H', 15: 'W',
+                16: 'W', 17: 'W', 18: 'W', 19: 'W', 20: 'W',
+                21: 'W', 22: 'H', 23: 'H', 24: 'H', 25: 'H',
                 26: 'H', 27: 'W', 28: 'W'
             };
 
@@ -33,33 +32,30 @@
                     <div className="flex items-center gap-3 mb-8 mt-6 px-2">
                         <span className="text-3xl">📅</span>
                         <div>
-                            <h1 className="text-2xl font-black text-blue-800 tracking-tighter">個人班表查詢</h1>
-                            <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">February 2026</p>
+                            <h1 className="text-2xl font-black text-blue-800 tracking-tighter">小黑哥個人班表</h1>
+                            <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">2026 February Corrected</p>
                         </div>
                     </div>
 
-                    {/* 今日班表卡片 */}
-                    <div className={`p-8 rounded-[3.5rem] shadow-lg mb-8 text-center border-4 transition-all ${myShifts[today] === 'H' ? 'bg-white border-emerald-400' : 'bg-slate-800 border-blue-400 text-white'}`}>
+                    <div className={`p-8 rounded-[3.5rem] shadow-lg mb-8 text-center border-4 ${myShifts[today] === 'H' ? 'bg-white border-emerald-400' : 'bg-slate-800 border-blue-400 text-white'}`}>
                         <p className="text-sm font-bold opacity-60 mb-2">2 月 {today} 日</p>
                         <h2 className="text-4xl font-black">{todayStatus}</h2>
                     </div>
 
-                    {/* 2月整月預覽 */}
                     <div className="bg-white rounded-[3rem] p-6 shadow-sm border border-slate-100">
                         <div className="flex justify-between items-center mb-6">
-                            <p className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">2月 完整班表</p>
-                            <span className="text-[10px] font-bold text-blue-400 bg-blue-50 px-2 py-1 rounded-md">晚班總計: 18天</span>
+                            <p className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">2月 完整班表 (校正版)</p>
+                            <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-md">五連休預備！</span>
                         </div>
                         <div className="grid grid-cols-7 gap-2 text-center">
                             {['日','一','二','三','四','五','六'].map(d => (
                                 <div key={d} className="text-[10px] font-bold text-slate-400 pb-2">{d}</div>
                             ))}
-                            {/* 2/1 是星期日 */}
                             {[...Array(28)].map((_, i) => {
                                 const day = i + 1;
                                 const status = myShifts[day];
                                 return (
-                                    <div key={i} className={`py-3 rounded-xl text-xs font-bold transition-all ${day === today ? 'ring-2 ring-blue-500 shadow-md' : ''} ${status === 'H' ? 'bg-rose-50 text-rose-400' : 'bg-blue-50 text-blue-600'}`}>
+                                    <div key={i} className={`py-3 rounded-xl text-xs font-bold ${day === today ? 'ring-2 ring-blue-500 shadow-md' : ''} ${status === 'H' ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-blue-600'}`}>
                                         {day}<br/><span className="text-[8px] font-black">{status === 'H' ? '休' : '晚'}</span>
                                     </div>
                                 );
@@ -67,12 +63,12 @@
                         </div>
                     </div>
 
-                    <div className="mt-8 px-4 py-6 bg-blue-50/50 rounded-[2.5rem] border border-blue-100/50 text-xs text-blue-800 leading-relaxed">
-                        <p className="font-bold mb-1 italic decoration-blue-200">柔的溫馨提醒：</p>
-                        小黑哥，2 月有連續 4 天休假（16-19日），那幾天可以好好陪陪毛孩們了！✋✨
+                    <div className="mt-8 px-6 py-6 bg-emerald-50/50 rounded-[2.5rem] border border-emerald-100 text-xs text-emerald-800 leading-relaxed">
+                        <p className="font-bold mb-1 italic">柔的筆記更新：</p>
+                        小黑哥，確認過班表了！ 22 號到 26 號那整排「粉紅色」才是妳的大假，那幾天記得把手機丟一邊，好好陪狗狗們喔！✋✨
                     </div>
 
-                    <a href="index.html" className="fixed bottom-8 right-8 bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-xl z-40 border-2 border-white/20 text-white font-bold">🏠</a>
+                    <a href="index.html" className="fixed bottom-8 right-8 bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-xl z-40 border-2 border-white/20 text-white font-bold font-sans">🏠</a>
                 </div>
             );
         };
