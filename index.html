@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-    <title>護衛日誌 V13.2 PRO</title>
+    <title>護衛日誌 V13.3 PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -15,9 +15,9 @@
         const { useState } = React;
         const App = () => {
             const [records, setRecords] = useState([]);
-            const [showForm, setShowForm] = useState(false);
+            const [formType, setFormType] = useState(null); // 'visitor' or 'truck'
             const [status, setStatus] = useState("點擊上方毛孩查看狀態");
-            const [formData, setFormData] = useState({ name: '', target: '', hasID: false });
+            const [formData, setFormData] = useState({ name: '', target: '', hasID: false, carID: '', company: '' });
 
             const pets = [
                 { name: "張布丁", msg: "布丁最乖，守護第一。" },
@@ -34,15 +34,15 @@
             const handleSubmit = () => {
                 const now = new Date();
                 const newRecord = {
-                    type: '訪客',
-                    name: formData.name || '訪客',
-                    target: formData.target || '未填',
-                    hasID: formData.hasID ? '✅ 已換證' : '❌ 未換證',
+                    type: formType === 'visitor' ? '👤 訪客' : '🚚 車輛',
+                    title: formData.company || formData.name || '未填',
+                    detail: formType === 'visitor' ? `找：${formData.target}` : `車號：${formData.carID}`,
+                    tag: formType === 'visitor' ? (formData.hasID ? '✅ 已換證' : '❌ 未換證') : '📦 已點貨',
                     time: now.toLocaleTimeString()
                 };
                 setRecords([newRecord, ...records]);
-                setShowForm(false);
-                setFormData({ name: '', target: '', hasID: false });
+                setFormType(null);
+                setFormData({ name: '', target: '', hasID: false, carID: '', company: '' });
             };
 
             return (
@@ -52,49 +52,70 @@
                             <span className="text-2xl">🛡️</span>
                             <h1 className="text-xl font-black text-slate-400">護衛日誌</h1>
                         </div>
-                        <span className="text-[10px] font-bold bg-white px-3 py-1 rounded-full shadow-sm text-slate-300 tracking-tighter">V13.2 PRO</span>
+                        <span className="text-[10px] font-bold bg-white px-3 py-1 rounded-full shadow-sm text-slate-300 tracking-tighter">V13.3 PRO</span>
                     </div>
 
                     {/* 主功能按鈕 */}
                     <div className="grid grid-cols-2 gap-4 mb-8">
-                        <button onClick={() => setShowForm(true)} className="bg-white p-8 rounded-[2.5rem] shadow-sm flex flex-col items-center active:scale-95 transition-all">
+                        <button onClick={() => setFormType('visitor')} className="bg-white p-8 rounded-[2.5rem] shadow-sm flex flex-col items-center active:scale-95 transition-all">
                             <span className="text-4xl mb-2">👤</span>
                             <span className="font-bold text-slate-500 text-lg">訪客登記</span>
                         </button>
-                        <button className="bg-white p-8 rounded-[2.5rem] shadow-sm flex flex-col items-center opacity-50">
+                        <button onClick={() => setFormType('truck')} className="bg-white p-8 rounded-[2.5rem] shadow-sm flex flex-col items-center active:scale-95 transition-all">
                             <span className="text-4xl mb-2">🚚</span>
-                            <span className="font-bold text-slate-500 text-lg">車輛登記</span>
+                            <span className="font-bold text-slate-500 text-lg">送貨登記</span>
                         </button>
                     </div>
 
-                    {/* 訪客表單彈窗 */}
-                    {showForm && (
+                    {/* 表單彈窗 */}
+                    {formType && (
                         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-6">
                             <div className="bg-white w-full rounded-[3rem] p-8 shadow-2xl">
-                                <h2 className="text-xl font-bold mb-6 text-slate-600 flex items-center gap-2">✍️ 訪客登記</h2>
+                                <h2 className="text-xl font-bold mb-6 text-slate-600 flex items-center gap-2">
+                                    {formType === 'visitor' ? '✍️ 訪客登記' : '🚛 送貨登記'}
+                                </h2>
                                 <div className="space-y-4 mb-8">
                                     <input 
-                                        type="text" placeholder="來訪公司/姓名" 
+                                        type="text" placeholder="公司行號" 
                                         className="w-full p-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-2 ring-blue-100"
-                                        value={formData.name}
-                                        onChange={e => setFormData({...formData, name: e.target.value})}
+                                        value={formData.company}
+                                        onChange={e => setFormData({...formData, company: e.target.value})}
                                     />
-                                    <input 
-                                        type="text" placeholder="受訪人員 (例:雨青)" 
-                                        className="w-full p-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-2 ring-blue-100"
-                                        value={formData.target}
-                                        onChange={e => setFormData({...formData, target: e.target.value})}
-                                    />
-                                    <div 
-                                        onClick={() => setFormData({...formData, hasID: !formData.hasID})}
-                                        className={`p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all ${formData.hasID ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}
-                                    >
-                                        <span className="font-bold">是否有換證？</span>
-                                        <span className="text-2xl">{formData.hasID ? '✅' : '⬜'}</span>
-                                    </div>
+                                    {formType === 'visitor' ? (
+                                        <>
+                                            <input 
+                                                type="text" placeholder="受訪人員 (例:雨青)" 
+                                                className="w-full p-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-2 ring-blue-100"
+                                                value={formData.target}
+                                                onChange={e => setFormData({...formData, target: e.target.value})}
+                                            />
+                                            <div 
+                                                onClick={() => setFormData({...formData, hasID: !formData.hasID})}
+                                                className={`p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all ${formData.hasID ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}
+                                            >
+                                                <span className="font-bold text-sm">是否有換證？</span>
+                                                <span className="text-2xl">{formData.hasID ? '✅' : '⬜'}</span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <input 
+                                                type="text" placeholder="車牌號碼" 
+                                                className="w-full p-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-2 ring-blue-100"
+                                                value={formData.carID}
+                                                onChange={e => setFormData({...formData, carID: e.target.value})}
+                                            />
+                                            <input 
+                                                type="text" placeholder="司機姓名" 
+                                                className="w-full p-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-2 ring-blue-100"
+                                                value={formData.name}
+                                                onChange={e => setFormData({...formData, name: e.target.value})}
+                                            />
+                                        </>
+                                    )}
                                 </div>
                                 <div className="flex gap-3">
-                                    <button onClick={() => setShowForm(false)} className="flex-1 py-4 rounded-2xl font-bold text-slate-400 bg-slate-100">取消</button>
+                                    <button onClick={() => setFormType(null)} className="flex-1 py-4 rounded-2xl font-bold text-slate-400 bg-slate-100">取消</button>
                                     <button onClick={handleSubmit} className="flex-1 py-4 rounded-2xl font-bold text-white bg-slate-600">完成存檔</button>
                                 </div>
                             </div>
@@ -110,7 +131,7 @@
                                 </button>
                             ))}
                         </div>
-                        <div className="bg-blue-50/50 p-4 rounded-[2rem] border border-blue-100/50 min-h-[60px] flex items-center justify-center">
+                        <div className="bg-blue-50/50 p-4 rounded-[2rem] border border-blue-100/50 min-h-[60px] flex items-center justify-center px-4">
                             <p className="text-slate-500 font-bold text-sm italic">✨ {status}</p>
                         </div>
                     </div>
@@ -122,17 +143,20 @@
 
                     {/* 紀錄清單 */}
                     <div className="space-y-3">
-                        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest px-4">今日登記紀錄</p>
+                        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest px-4">今日進出紀錄</p>
                         {records.map((r, i) => (
                             <div key={i} className="bg-white p-5 rounded-[2.2rem] shadow-sm border border-white">
                                 <div className="flex justify-between items-start mb-2">
-                                    <span className="font-bold text-slate-600">{r.name}</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-400">{r.type}</span>
+                                        <span className="font-bold text-slate-600">{r.title}</span>
+                                    </div>
                                     <span className="text-[10px] font-mono text-slate-300">{r.time}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-xs text-slate-400">找：{r.target}</span>
-                                    <span className={`text-[11px] font-bold px-3 py-1 rounded-full ${r.hasID.includes('✅') ? 'bg-emerald-50 text-emerald-500' : 'bg-red-50 text-red-400'}`}>
-                                        {r.hasID}
+                                    <span className="text-xs text-slate-400 font-medium">{r.detail}</span>
+                                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${r.tag.includes('✅') || r.tag.includes('📦') ? 'bg-emerald-50 text-emerald-500' : 'bg-red-50 text-red-400'}`}>
+                                        {r.tag}
                                     </span>
                                 </div>
                             </div>
