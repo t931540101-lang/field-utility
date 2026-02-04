@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-    <title>護衛日誌 - 訪客標準版</title>
+    <title>訪客登記系統 - 小黑哥專屬</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -35,58 +35,72 @@
 
             return (
                 <div className="max-w-md mx-auto pb-20">
-                    <div className="flex justify-between items-center mb-10 mt-4 px-2">
-                        <h1 className="text-2xl font-black text-slate-300">🛡️ 訪客管理</h1>
-                        <span className="text-[10px] bg-white px-3 py-1 rounded-full text-slate-200">公司標準版</span>
+                    {/* 標題正名 */}
+                    <div className="flex justify-between items-center mb-10 mt-6 px-2">
+                        <div className="flex items-center gap-3">
+                            <span className="text-3xl">📝</span>
+                            <h1 className="text-2xl font-black text-slate-400 tracking-tighter">訪客登記系統</h1>
+                        </div>
+                        <span className="text-[10px] font-bold bg-white px-3 py-1 rounded-full shadow-sm text-slate-200">OFFICIAL</span>
                     </div>
 
-                    {/* 登記大按鈕 */}
-                    <button onClick={() => setShowForm(true)} className="w-full bg-white p-10 rounded-[3rem] shadow-sm flex flex-col items-center mb-10 active:scale-95 transition-all">
-                        <span className="text-5xl mb-4">✍️</span>
-                        <span className="font-bold text-slate-500 text-xl">新訪客進廠登記</span>
+                    {/* 大按鈕：單一功能最直覺 */}
+                    <button 
+                        onClick={() => setShowForm(true)} 
+                        className="w-full bg-white p-12 rounded-[3.5rem] shadow-sm flex flex-col items-center mb-12 active:scale-95 transition-all border-2 border-dashed border-slate-100"
+                    >
+                        <span className="text-5xl mb-4">👤+</span>
+                        <span className="font-bold text-slate-500 text-xl tracking-widest">點擊登記新訪客</span>
                     </button>
 
-                    {/* 仿紙本表單 */}
+                    {/* 登記表單 */}
                     {showForm && (
-                        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-md z-50 flex items-center justify-center p-6">
+                        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-6">
                             <div className="bg-white w-full rounded-[3.5rem] p-8 shadow-2xl">
-                                <h2 className="text-xl font-bold mb-6 text-slate-600 border-b pb-4">訪客登記表</h2>
+                                <h2 className="text-xl font-bold mb-6 text-slate-600 border-b border-slate-50 pb-4 flex items-center gap-2">✍️ 填寫登記資料</h2>
                                 <div className="space-y-4 mb-8">
-                                    <input type="text" placeholder="公司行號" className="w-full p-4 rounded-2xl bg-slate-50 outline-none" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
-                                    <input type="text" placeholder="訪客姓名" className="w-full p-4 rounded-2xl bg-slate-50 outline-none" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                                    <input type="text" placeholder="受訪人員" className="w-full p-4 rounded-2xl bg-slate-50 outline-none" value={formData.target} onChange={e => setFormData({...formData, target: e.target.value})} />
-                                    <input type="text" placeholder="入廠事由" className="w-full p-4 rounded-2xl bg-slate-50 outline-none" value={formData.reason} onChange={e => setFormData({...formData, reason: e.target.value})} />
-                                    <div onClick={() => setFormData({...formData, hasID: !formData.hasID})} className={`p-4 rounded-2xl flex items-center justify-between cursor-pointer ${formData.hasID ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>
-                                        <span className="font-bold text-sm">是否有換證？</span>
+                                    <input type="text" placeholder="公司行號 (例：心健)" className="w-full p-5 rounded-2xl bg-slate-50 outline-none text-lg" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
+                                    <input type="text" placeholder="訪客姓名" className="w-full p-5 rounded-2xl bg-slate-50 outline-none text-lg" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                    <input type="text" placeholder="受訪人員 (例：雨青)" className="w-full p-5 rounded-2xl bg-slate-50 outline-none text-lg" value={formData.target} onChange={e => setFormData({...formData, target: e.target.value})} />
+                                    <input type="text" placeholder="入廠事由 (例：維修)" className="w-full p-5 rounded-2xl bg-slate-50 outline-none text-lg" value={formData.reason} onChange={e => setFormData({...formData, reason: e.target.value})} />
+                                    
+                                    <div 
+                                        onClick={() => setFormData({...formData, hasID: !formData.hasID})} 
+                                        className={`p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-all ${formData.hasID ? 'bg-emerald-50 text-emerald-600 ring-2 ring-emerald-100' : 'bg-slate-50 text-slate-400'}`}
+                                    >
+                                        <span className="font-bold">是否已換領訪客證？</span>
                                         <span className="text-2xl">{formData.hasID ? '✅' : '⬜'}</span>
                                     </div>
                                 </div>
-                                <div className="flex gap-3">
-                                    <button onClick={() => setShowForm(false)} className="flex-1 py-4 rounded-2xl font-bold text-slate-400 bg-slate-100">取消</button>
-                                    <button onClick={handleSubmit} className="flex-1 py-4 rounded-2xl font-bold text-white bg-slate-600">確認進廠</button>
+                                <div className="flex gap-4">
+                                    <button onClick={() => setShowForm(false)} className="flex-1 py-5 rounded-2xl font-bold text-slate-400 bg-slate-100 text-lg">取消</button>
+                                    <button onClick={handleSubmit} className="flex-1 py-5 rounded-2xl font-bold text-white bg-slate-600 shadow-lg text-lg">確認進廠</button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* 紀錄清單 */}
-                    <div className="space-y-4">
-                        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em] px-4">今日訪客名單</p>
+                    {/* 今日紀錄清單 */}
+                    <div className="space-y-4 px-1">
+                        <div className="flex justify-between items-center mb-2 px-3">
+                            <p className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">今日進廠名單</p>
+                            <span className="text-[10px] text-slate-300 font-mono">COUNT: {records.length}</span>
+                        </div>
                         {records.map((r, i) => (
-                            <div key={i} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-white">
-                                <div className="flex justify-between items-start mb-3">
+                            <div key={i} className="bg-white p-6 rounded-[2.8rem] shadow-sm border border-white relative overflow-hidden">
+                                <div className="flex justify-between items-start mb-4">
                                     <div>
-                                        <span className="text-[10px] text-slate-300 block uppercase mb-1">{r.company}</span>
-                                        <span className="text-lg font-bold text-slate-600">{r.name}</span>
+                                        <span className="text-[10px] text-blue-400 font-bold bg-blue-50 px-2 py-0.5 rounded-md mb-1 inline-block uppercase tracking-tighter">{r.company}</span>
+                                        <span className="text-xl font-black text-slate-600 block">{r.name}</span>
                                     </div>
-                                    <span className="text-[10px] font-mono text-slate-200">{r.time}</span>
+                                    <span className="text-xs font-mono text-slate-300 bg-slate-50 px-2 py-1 rounded-lg">{r.time}</span>
                                 </div>
-                                <div className="flex justify-between items-end">
-                                    <div className="text-xs text-slate-400">
-                                        找：{r.target} <br/> 
-                                        事由：{r.reason}
+                                <div className="flex justify-between items-end border-t border-slate-50 pt-4">
+                                    <div className="text-sm text-slate-400 leading-relaxed">
+                                        受訪：<span className="font-bold text-slate-500">{r.target}</span> <br/> 
+                                        事由：<span className="text-slate-500">{r.reason}</span>
                                     </div>
-                                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${r.hasID.includes('✅') ? 'bg-emerald-50 text-emerald-500' : 'bg-red-50 text-red-400'}`}>
+                                    <span className={`text-[10px] font-bold px-4 py-1.5 rounded-full shadow-sm ${r.hasID.includes('✅') ? 'bg-emerald-50 text-emerald-500' : 'bg-red-50 text-red-400'}`}>
                                         {r.hasID}
                                     </span>
                                 </div>
@@ -94,8 +108,8 @@
                         ))}
                     </div>
 
-                    {/* 回到分機表 */}
-                    <a href="phone.html" className="fixed bottom-6 right-6 bg-slate-600 w-16 h-16 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all text-2xl">📞</a>
+                    {/* 快速連結 - 依然保留，但縮小放在右下角 */}
+                    <a href="phone.html" className="fixed bottom-8 right-8 bg-slate-700 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center active:scale-95 transition-all text-xl z-40 border-2 border-white/20">📞</a>
                 </div>
             );
         };
