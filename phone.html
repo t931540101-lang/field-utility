@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-    <title>工廠分機速查 - 小黑哥專屬</title>
+    <title>工廠分機速查 V2 - 小黑哥專屬</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -16,449 +16,251 @@
         const App = () => {
             const [search, setSearch] = useState('');
             
-            // 小黑哥，這裡就是妳要填寫分機資料的地方
-            // 妳可以在回家休息後，慢慢把紙上的號碼補進去
-            const phoneList = [
-                // 這裡可以同時填入分機和手持號碼
             const phoneList = [
                 { dept: '秘書室', name: '蔡雨青', ext: '8000', mobile: '6699' },
-
-{ dept: '財務室', name: '主任洪秀敏', ext: '1101', mobile: '' },
-
-{ dept: '財務室', name: '揭素珍', ext: '1102', mobile: '' },
-
-{ dept: '財務室', name: '陳雅苓', ext: '1103', mobile: '' },
-
-{ dept: '財務室', name: '路明莉', ext: '1105', mobile: '' },
-
-{ dept: '財務室', name: '楊凱鈞', ext: '1106', mobile: '' },
-
-{ dept: '財務室', name: '趙馨茹', ext: '1107', mobile: '' },
-
-{ dept: '財務室', name: '張茹茵', ext: '1108', mobile: '' },
-
-{ dept: '稽核室', name: '副理蕭國棟', ext: '1109', mobile: '6663' },
-
-{ dept: '資訊室', name: '組長楊政諺', ext: '1205', mobile: '6640' },
-
-{ dept: '資訊室', name: '劉閔青', ext: '1202', mobile: '6620' },
-
-{ dept: '資訊室', name: '詹宗勳', ext: '1203', mobile: '' },
-
-{ dept: '資訊室', name: '何中南', ext: '1204', mobile: '' },
-
-{ dept: '管理部', name: '主任洪文忠', ext: '1302', mobile: '6625' },
-
-{ dept: '管理部', name: '王慶鐘', ext: '1303', mobile: '' },
-
-{ dept: '管理部', name: '鐘慕萱', ext: '1305', mobile: '' },
-
-{ dept: '管理部', name: '廖敏慈', ext: '1306', mobile: '' },
-
-{ dept: '管理部', name: '林一德', ext: '1308', mobile: '' },
-
-{ dept: '管理部', name: '菜瑄瑩', ext: '1317', mobile: '6656' },
-
-{ dept: '管理部', name: '明光', ext: '1307', mobile: '6654' },
-
-{ dept: '工務部', name: '劉葆洲', ext: '', mobile: '6603' },
-
-{ dept: '工務部', name: '李文欽', ext: '1318', mobile: '6613' },
-
-{ dept: '工務部', name: '陳文信', ext: '1319', mobile: '' },
-
-{ dept: '工務部', name: '陳茂發', ext: '1319', mobile: '' },
-
-{ dept: '採購課', name: '組長王柳清', ext: '1313', mobile: '6639' },
-
-{ dept: '採購課', name: '薛依妮', ext: '1314', mobile: '' },
-
-{ dept: '採購課', name: '黃智麟', ext: '1315', mobile: '' },
-
-{ dept: '組立課', name: '組一組長', ext: '', mobile: '6632' },
-
-{ dept: '組立課', name: '組二組長賴宥呈', ext: '', mobile: '6675' },
-
-{ dept: '組立課', name: '謝淑琬', ext: '4165', mobile: '' },
-
-{ dept: '組立課', name: '機械手線', ext: '2921', mobile: '' },
-
-{ dept: '組立課', name: '清洗線', ext: '2925', mobile: '' },
-
-{ dept: '組立課', name: '出貨線', ext: '2910', mobile: '' },
-
-{ dept: '組立課', name: '量產線', ext: '2911', mobile: '' },
-
-{ dept: '組立課', name: '刀塔線', ext: '2930', mobile: '' },
-
-{ dept: '組立課', name: '包裝組立', ext: '4166', mobile: '' },
-
-{ dept: '組立課', name: '裝針室', ext: '2917', mobile: '' },
-
-{ dept: '生產部', name: '經理黃仁貴', ext: '4201', mobile: '6622' },
-
-{ dept: '生產部', name: '課長邱岱履', ext: '2101', mobile: '6623' },
-
-{ dept: '生產部', name: '二/三課長陳秉宏', ext: '4103', mobile: '6616' },
-
-{ dept: '生產部', name: '精研組長陳俊和', ext: '2111', mobile: '6616' },
-
-{ dept: '生產部', name: '齒輪組長林崇仁', ext: '', mobile: '6665' },
-
-{ dept: '生產部', name: '鈑金/表面處理組長鄭宏益', ext: '2109', mobile: '6644' },
-
-{ dept: '生產部', name: '車一組長張啟榮', ext: '4163', mobile: '6659' },
-
-{ dept: '生產部', name: '車二組長陳進凱', ext: '2104', mobile: '6608' },
-
-{ dept: '生產部', name: '铣一組長林子祥', ext: '', mobile: '6604' },
-
-{ dept: '生產部', name: '铣二組長蔡源彬', ext: '', mobile: '6607' },
-
-{ dept: '生產部', name: '熱處理組長巴里', ext: '2114', mobile: '6611' },
-
-{ dept: '生產部', name: '夜班組長江志炫', ext: '', mobile: '6637' },
-
-{ dept: '生產部', name: '黃兆華', ext: '', mobile: '6637' },
-
-{ dept: '生產部', name: '楊賀昇', ext: '4176', mobile: '6658' },
-
-{ dept: '生產部', name: '許凱強', ext: '', mobile: '6612' },
-
-{ dept: '生產部', name: '王逸凱', ext: '', mobile: '6618' },
-
-{ dept: '生產部', name: '陳崇瑋', ext: '4174', mobile: '' },
-
-{ dept: '生產部', name: '鄭富豐', ext: '', mobile: '6627' },
-
-{ dept: '生產部', name: '廠房1區1樓', ext: '2909', mobile: '' },
-
-{ dept: '生產部', name: '廠房3區1樓', ext: '2908', mobile: '' },
-
-{ dept: '生產部', name: '廠房4區1樓', ext: '4163', mobile: '' },
-
-{ dept: '生產部', name: '廠房5區1樓', ext: '2906', mobile: '' },
-
-{ dept: '生產部', name: '廠房6區1樓', ext: '4162', mobile: '' },
-
-{ dept: '生產部', name: '廠房7區1樓', ext: '2904', mobile: '' },
-
-{ dept: '生產部', name: '廠房8區1樓', ext: '4161', mobile: '' },
-
-{ dept: '生產部', name: '廠房9區1樓', ext: '2903', mobile: '' },
-
-{ dept: '生產部', name: '廠房11區1樓', ext: '2901', mobile: '' },
-
-{ dept: '生產部', name: '廠房5區2樓', ext: '2907', mobile: '' },
-
-{ dept: '生產部', name: '廠房7區2樓', ext: '2905', mobile: '' },
-
-{ dept: '生產部', name: '廠房9區2樓', ext: '2926', mobile: '' },
-
-{ dept: '研發課', name: '課長薛慎宗', ext: '3101', mobile: '' },
-
-{ dept: '研發課', name: '組長陳恆裕', ext: '3114', mobile: '' },
-
-{ dept: '研發課', name: '塗立任', ext: '3102', mobile: '' },
-
-{ dept: '研發課', name: '邱燕芬', ext: '3104', mobile: '' },
-
-{ dept: '研發課', name: '', ext: '3108', mobile: '' },
-
-{ dept: '研發課', name: '陳政勇', ext: '3110', mobile: '' },
-
-{ dept: '研發課', name: '林婉甄', ext: '3111', mobile: '' },
-
-{ dept: '研發課', name: '', ext: '3113', mobile: '' },
-
-{ dept: '研發課', name: '吳家勇', ext: '3116', mobile: '' },
-
-{ dept: '研發課', name: '郭政穎', ext: '3118', mobile: '' },
-
-{ dept: '研發課', name: '會議室', ext: '1608', mobile: '' },
-
-{ dept: '生管課', name: '經理黃仁貴', ext: '4201', mobile: '6622' },
-
-{ dept: '生管課', name: '組長潘俊余', ext: '4203', mobile: '' },
-
-{ dept: '生管課', name: '劉詩凌', ext: '2402', mobile: '' },
-
-{ dept: '生管課', name: '楊舒惠', ext: '2404', mobile: '' },
-
-{ dept: '生管課', name: '吳欣怡', ext: '4205', mobile: '' },
-
-{ dept: '生管課', name: '陳亮仁', ext: '4206', mobile: '' },
-
-{ dept: '生管課', name: '戴幼欣', ext: '4207', mobile: '' },
-
-{ dept: '生管課', name: '張凱淯', ext: '4208', mobile: '' },
-
-{ dept: '生管課', name: '施彥米', ext: '4210', mobile: '' },
-
-{ dept: '生管課', name: '王麗菁', ext: '4211', mobile: '' },
-
-{ dept: '生管課', name: '黃慧芬', ext: '1320', mobile: '' },
-
-{ dept: '生管課', name: '張維倫', ext: '4209', mobile: '' },
-
-{ dept: '倉管組', name: '組長蔡淯淂', ext: '4229', mobile: '6621' },
-
-{ dept: '倉管組', name: '施芳瑛', ext: '4101', mobile: '' },
-
-{ dept: '倉管組', name: '侯洺錩', ext: '4164', mobile: '6631' },
-
-{ dept: '倉管組', name: '劉建延', ext: '4165', mobile: '' },
-
-{ dept: '倉管組', name: 'U4', ext: '4167', mobile: '' },
-
-{ dept: '倉管組', name: '魏華宏', ext: '4168', mobile: '' },
-
-{ dept: '倉管組', name: '郭仁豪', ext: '4169', mobile: '' },
-
-{ dept: '倉管組', name: 'U3', ext: '4171', mobile: '' },
-
-{ dept: '倉管組', name: '林峯成', ext: '', mobile: '6670' },
-
-{ dept: '倉管組', name: '王蘇國', ext: '4173', mobile: '' },
-
-{ dept: '倉管組', name: '王浚濠', ext: '4177', mobile: '' },
-
-{ dept: '倉管組', name: '劉鎮滄', ext: '4178', mobile: '' },
-
-{ dept: '倉管組', name: '吳亦逢', ext: '4172', mobile: '' },
-
-{ dept: '倉管組', name: '吳達友', ext: '2912', mobile: '' },
-
-{ dept: '倉管組', name: '邱國樑', ext: '4228', mobile: '6605' },
-
-{ dept: '倉管組', name: '張仕欣', ext: '', mobile: '6635' },
-
-{ dept: '倉管組', name: '廖治翔', ext: '4102', mobile: '' },
-
-{ dept: '倉管組', name: '許英傑', ext: '4227', mobile: '6636' },
-
-{ dept: '品管課', name: '課長邱岱履', ext: '4301', mobile: '6623' },
-
-{ dept: '品管課', name: '組長黃銘理', ext: '', mobile: '6629' },
-
-{ dept: '品管課', name: '陳毓庭', ext: '4303', mobile: '' },
-
-{ dept: '品管課', name: '廖光瑞', ext: '4304', mobile: '' },
-
-{ dept: '品管課', name: '量測室', ext: '4306', mobile: '' },
-
-{ dept: '品管課', name: '王淑美', ext: '4302/4307', mobile: '' },
-
-{ dept: '品管課', name: '陳敏澤', ext: '4230', mobile: '' },
-
-{ dept: '品管課', name: '沈懋達', ext: '4231', mobile: '' },
-
-{ dept: '品管課', name: '吳宜真', ext: '4232', mobile: '' },
-
-{ dept: '品管課', name: '電子室', ext: '2920', mobile: '' },
-
-{ dept: '品管課', name: '材料室', ext: '4230', mobile: '' },
-
-{ dept: '生技課', name: '課長黃忠利', ext: '3201', mobile: '6617' },
-
-{ dept: '生技課', name: '組長鐘文豪', ext: '3229', mobile: '6668' },
-
-{ dept: '生技課', name: '組長楊勝鈞', ext: '3224', mobile: '6610' },
-
-{ dept: '生技課', name: '陳盈達', ext: '2117', mobile: '' },
-
-{ dept: '生技課', name: '林志修', ext: '3221', mobile: '' },
-
-{ dept: '生技課', name: '履文財', ext: '3227', mobile: '' },
-
-{ dept: '生技課', name: '車床編程', ext: '3222', mobile: '' },
-
-{ dept: '生技課', name: '吳瑞祥', ext: '3226', mobile: '' },
-
-{ dept: '生技課', name: '王書聰', ext: '3218', mobile: '' },
-
-{ dept: '生技課', name: '曾怡嘉', ext: '3216', mobile: '' },
-
-{ dept: '生技課', name: '謝靜芳', ext: '3233', mobile: '' },
-
-{ dept: '生技課', name: '劉彥宏', ext: '3228', mobile: '6630' },
-
-{ dept: '生技課', name: '黃信倫', ext: '3225', mobile: '6626' },
-
-{ dept: '生技課', name: '王巧怡', ext: '3232', mobile: '' },
-
-{ dept: '生技課', name: '梁雅婷/游佳晏', ext: '3217', mobile: '' },
-
-{ dept: '生技課', name: '組長賴呈祥', ext: '4175', mobile: '6609' },
-
-{ dept: '生技課', name: '會議室', ext: '3234', mobile: '' },
-
-{ dept: '生技課', name: '地下室刀具室', ext: '2916', mobile: '' },
-
-{ dept: '生技課', name: '刀具室', ext: '2918', mobile: '' },
-
-{ dept: '生技課', name: '模具室', ext: '2919', mobile: '' },
-
-{ dept: '營業部', name: '總經理郭崇哲', ext: '6666', mobile: '6688' },
-
-{ dept: '營業部', name: '副總趙淑芬', ext: '5006', mobile: '6628' },
-
-{ dept: '營業部', name: '王書蕙', ext: '5004', mobile: '' },
-
-{ dept: '營業部', name: '楊雅惠', ext: '5010', mobile: '' },
-
-{ dept: '營業部', name: '劉施媛', ext: '5011', mobile: '' },
-
-{ dept: '營業部', name: '許千慧', ext: '5014', mobile: '' },
-
-{ dept: '營業部', name: '林明忠', ext: '5002', mobile: '6662' },
-
-{ dept: '營業部', name: '陳妍卉', ext: '5017', mobile: '' },
-
-{ dept: '營業部', name: '陳以馨', ext: '5019', mobile: '' },
-
-{ dept: '驗證室', name: '課長薛慎宗', ext: '3101', mobile: '' },
-
-{ dept: '驗證室', name: '賴瑞朝', ext: '2922', mobile: '' },
-
-{ dept: '驗證室', name: '會議室', ext: '1609', mobile: '' },
-
-{ dept: '設備課', name: '課長陳國隆', ext: '3120', mobile: '6661' },
-
-{ dept: '驗證室', name: '劉俊宏', ext: '3119', mobile: '6624' },
-
-{ dept: '二廠', name: '課長劉建成', ext: '7004', mobile: '6650' },
-
-{ dept: '二廠', name: '蔡佩君', ext: '7003', mobile: '' },
-
-{ dept: '二廠', name: '組長謝宗政', ext: '', mobile: '6646' },
-
-{ dept: '二廠', name: '謝俊宇', ext: '', mobile: '6657' },
-
-{ dept: '二廠', name: '蔡延緯', ext: '', mobile: '6647' },
-
-{ dept: '二廠', name: '蘇木聖', ext: '', mobile: '6641' },
-
-{ dept: '二廠', name: '陳建宏', ext: '', mobile: '6649' },
-
-{ dept: '二廠', name: '楊智傑', ext: '', mobile: '6651' },
-
-{ dept: '二廠', name: '許勝義', ext: '', mobile: '6655' },
-
-{ dept: '二廠', name: '蘇拉空', ext: '', mobile: '6648' },
-
-{ dept: '二廠', name: '守衛室', ext: '7665', mobile: '' },
-
-{ dept: '二廠', name: '辦公室', ext: '7002/7004', mobile: '' },
-
-{ dept: '二廠', name: '旭正铣床', ext: '7008/7009', mobile: '' },
-
-{ dept: '二廠', name: '熱處理', ext: '7014', mobile: '' },
-
-{ dept: '二廠', name: '美立固', ext: '7017', mobile: '' },
-
-{ dept: '二廠', name: '現場', ext: '7013', mobile: '' },
-
-{ dept: '二廠', name: 'B1現場', ext: '7011', mobile: '' },
-
-{ dept: '二廠', name: '量測室', ext: '7012', mobile: '' },
-
-{ dept: '二廠', name: '鑽孔', ext: '7007', mobile: '' },
-
-{ dept: '二廠', name: '滾齒', ext: '7016', mobile: '' },
-
-{ dept: '三廠', name: '經理林文彥', ext: '', mobile: '6602' },
-
-{ dept: '三廠', name: '組長邱士豪', ext: '', mobile: '6615' },
-
-{ dept: '三廠', name: '組長林志騰', ext: '', mobile: '6676' },
-
-{ dept: '三廠', name: '組長陳和欽', ext: '7382', mobile: '6642' },
-
-{ dept: '三廠', name: '李奇樺', ext: '', mobile: '6664' },
-
-{ dept: '三廠', name: '工務趙建能', ext: '', mobile: '6667' },
-
-{ dept: '三廠', name: '組長陳志遠', ext: '7384', mobile: '6617' },
-
-{ dept: '三廠', name: '陳信男', ext: '', mobile: '6669' },
-
-{ dept: '三廠', name: '林柏鈞', ext: '7381', mobile: '6658' },
-
-{ dept: '三廠', name: '沖床', ext: '7387', mobile: '' },
-
-{ dept: '三廠', name: '鋸床', ext: '7320', mobile: '' },
-
-{ dept: '三廠', name: '編程', ext: '7383', mobile: '' },
-
-{ dept: '三廠', name: '車床', ext: '7385', mobile: '' },
-
-{ dept: '三廠', name: '現場', ext: '7368', mobile: '' },
-
-{ dept: '三廠', name: '震澤', ext: '7369', mobile: '' },
-
-{ dept: '三廠', name: '現場', ext: '7386', mobile: '' },
-
-{ dept: '三廠', name: '刀具室', ext: '7376', mobile: '' },
-
-{ dept: '三廠', name: '守衛室', ext: '7365', mobile: '' },
-
-{ dept: '其他科室', name: '視聽室', ext: '1600', mobile: '' },
-
-{ dept: '其他科室', name: '會議室1', ext: '1602', mobile: '' },
-
-{ dept: '其他科室', name: '會議室2', ext: '1603', mobile: '' },
-
-{ dept: '其他科室', name: '會議室3', ext: '1605', mobile: '' },
-
-{ dept: '其他科室', name: '會議室4', ext: '1604', mobile: '' },
-
-{ dept: '其他科室', name: '守衛室', ext: '1665', mobile: '6619' },
-
-{ dept: '其他科室', name: '餐廳', ext: '1610', mobile: '' },
-
-{ dept: '其他科室', name: '餐廳2', ext: '1611', mobile: '' },
-
-{ dept: '', name: '', ext: '', mobile: '' }, // 如果沒手持就留空
+                { dept: '財務室', name: '主任洪秀敏', ext: '1101', mobile: '' },
+                { dept: '財務室', name: '揭素珍', ext: '1102', mobile: '' },
+                { dept: '財務室', name: '陳雅苓', ext: '1103', mobile: '' },
+                { dept: '財務室', name: '路明莉', ext: '1105', mobile: '' },
+                { dept: '財務室', name: '楊凱鈞', ext: '1106', mobile: '' },
+                { dept: '財務室', name: '趙馨茹', ext: '1107', mobile: '' },
+                { dept: '財務室', name: '張茹茵', ext: '1108', mobile: '' },
+                { dept: '稽核室', name: '副理蕭國棟', ext: '1109', mobile: '6663' },
+                { dept: '資訊室', name: '組長楊政諺', ext: '1205', mobile: '6640' },
+                { dept: '資訊室', name: '劉閔青', ext: '1202', mobile: '6620' },
+                { dept: '資訊室', name: '詹宗勳', ext: '1203', mobile: '' },
+                { dept: '資訊室', name: '何中南', ext: '1204', mobile: '' },
+                { dept: '管理部', name: '主任洪文忠', ext: '1302', mobile: '6625' },
+                { dept: '管理部', name: '王慶鐘', ext: '1303', mobile: '' },
+                { dept: '管理部', name: '鐘慕萱', ext: '1305', mobile: '' },
+                { dept: '管理部', name: '廖敏慈', ext: '1306', mobile: '' },
+                { dept: '管理部', name: '林一德', ext: '1308', mobile: '' },
+                { dept: '管理部', name: '菜瑄瑩', ext: '1317', mobile: '6656' },
+                { dept: '管理部', name: '明光', ext: '1307', mobile: '6654' },
+                { dept: '工務部', name: '劉葆洲', ext: '', mobile: '6603' },
+                { dept: '工務部', name: '李文欽', ext: '1318', mobile: '6613' },
+                { dept: '工務部', name: '陳文信', ext: '1319', mobile: '' },
+                { dept: '工務部', name: '陳茂發', ext: '1319', mobile: '' },
+                { dept: '採購課', name: '組長王柳清', ext: '1313', mobile: '6639' },
+                { dept: '採購課', name: '薛依妮', ext: '1314', mobile: '' },
+                { dept: '採購課', name: '黃智麟', ext: '1315', mobile: '' },
+                { dept: '組立課', name: '組一組長', ext: '', mobile: '6632' },
+                { dept: '組立課', name: '組二組長賴宥呈', ext: '', mobile: '6675' },
+                { dept: '組立課', name: '謝淑琬', ext: '4165', mobile: '' },
+                { dept: '組立課', name: '機械手線', ext: '2921', mobile: '' },
+                { dept: '組立課', name: '清洗線', ext: '2925', mobile: '' },
+                { dept: '組立課', name: '出貨線', ext: '2910', mobile: '' },
+                { dept: '組立課', name: '量產線', ext: '2911', mobile: '' },
+                { dept: '組立課', name: '刀塔線', ext: '2930', mobile: '' },
+                { dept: '組立課', name: '包裝組立', ext: '4166', mobile: '' },
+                { dept: '組立課', name: '裝針室', ext: '2917', mobile: '' },
+                { dept: '生產部', name: '經理黃仁貴', ext: '4201', mobile: '6622' },
+                { dept: '生產部', name: '課長邱岱履', ext: '2101', mobile: '6623' },
+                { dept: '生產部', name: '二/三課長陳秉宏', ext: '4103', mobile: '6616' },
+                { dept: '生產部', name: '精研組長陳俊和', ext: '2111', mobile: '6616' },
+                { dept: '生產部', name: '齒輪組長林崇仁', ext: '', mobile: '6665' },
+                { dept: '生產部', name: '鈑金/表面處理組長鄭宏益', ext: '2109', mobile: '6644' },
+                { dept: '生產部', name: '車一組長張啟榮', ext: '4163', mobile: '6659' },
+                { dept: '生產部', name: '車二組長陳進凱', ext: '2104', mobile: '6608' },
+                { dept: '生產部', name: '铣一組長林子祥', ext: '', mobile: '6604' },
+                { dept: '生產部', name: '铣二組長蔡源彬', ext: '', mobile: '6607' },
+                { dept: '生產部', name: '熱處理組長巴里', ext: '2114', mobile: '6611' },
+                { dept: '生產部', name: '夜班組長江志炫', ext: '', mobile: '6637' },
+                { dept: '生產部', name: '黃兆華', ext: '', mobile: '6637' },
+                { dept: '生產部', name: '楊賀昇', ext: '4176', mobile: '6658' },
+                { dept: '生產部', name: '許凱強', ext: '', mobile: '6612' },
+                { dept: '生產部', name: '王逸凱', ext: '', mobile: '6618' },
+                { dept: '生產部', name: '陳崇瑋', ext: '4174', mobile: '' },
+                { dept: '生產部', name: '鄭富豐', ext: '', mobile: '6627' },
+                { dept: '生產部', name: '廠房1區1樓', ext: '2909', mobile: '' },
+                { dept: '生產部', name: '廠房3區1樓', ext: '2908', mobile: '' },
+                { dept: '生產部', name: '廠房4區1樓', ext: '4163', mobile: '' },
+                { dept: '生產部', name: '廠房5區1樓', ext: '2906', mobile: '' },
+                { dept: '生產部', name: '廠房6區1樓', ext: '4162', mobile: '' },
+                { dept: '生產部', name: '廠房7區1樓', ext: '2904', mobile: '' },
+                { dept: '生產部', name: '廠房8區1樓', ext: '4161', mobile: '' },
+                { dept: '生產部', name: '廠房9區1樓', ext: '2903', mobile: '' },
+                { dept: '生產部', name: '廠房11區1樓', ext: '2901', mobile: '' },
+                { dept: '生產部', name: '廠房5區2樓', ext: '2907', mobile: '' },
+                { dept: '生產部', name: '廠房7區2樓', ext: '2905', mobile: '' },
+                { dept: '生產部', name: '廠房9區2樓', ext: '2926', mobile: '' },
+                { dept: '研發課', name: '課長薛慎宗', ext: '3101', mobile: '' },
+                { dept: '研發課', name: '組長陳恆裕', ext: '3114', mobile: '' },
+                { dept: '研發課', name: '塗立任', ext: '3102', mobile: '' },
+                { dept: '研發課', name: '邱燕芬', ext: '3104', mobile: '' },
+                { dept: '研發課', name: '陳政勇', ext: '3110', mobile: '' },
+                { dept: '研發課', name: '林婉甄', ext: '3111', mobile: '' },
+                { dept: '研發課', name: '吳家勇', ext: '3116', mobile: '' },
+                { dept: '研發課', name: '郭政穎', ext: '3118', mobile: '' },
+                { dept: '研發課', name: '會議室', ext: '1608', mobile: '' },
+                { dept: '生管課', name: '經理黃仁貴', ext: '4201', mobile: '6622' },
+                { dept: '生管課', name: '組長潘俊余', ext: '4203', mobile: '' },
+                { dept: '生管課', name: '劉詩凌', ext: '2402', mobile: '' },
+                { dept: '生管課', name: '楊舒惠', ext: '2404', mobile: '' },
+                { dept: '生管課', name: '吳欣怡', ext: '4205', mobile: '' },
+                { dept: '生管課', name: '陳亮仁', ext: '4206', mobile: '' },
+                { dept: '生管課', name: '戴幼欣', ext: '4207', mobile: '' },
+                { dept: '生管課', name: '張凱淯', ext: '4208', mobile: '' },
+                { dept: '生管課', name: '施彥米', ext: '4210', mobile: '' },
+                { dept: '生管課', name: '王麗菁', ext: '4211', mobile: '' },
+                { dept: '生管課', name: '黃慧芬', ext: '1320', mobile: '' },
+                { dept: '生管課', name: '張維倫', ext: '4209', mobile: '' },
+                { dept: '倉管組', name: '組長蔡淯淂', ext: '4229', mobile: '6621' },
+                { dept: '倉管組', name: '施芳瑛', ext: '4101', mobile: '' },
+                { dept: '倉管組', name: '侯洺錩', ext: '4164', mobile: '6631' },
+                { dept: '倉管組', name: '劉建延', ext: '4165', mobile: '' },
+                { dept: '倉管組', name: 'U4', ext: '4167', mobile: '' },
+                { dept: '倉管組', name: '魏華宏', ext: '4168', mobile: '' },
+                { dept: '倉管組', name: '郭仁豪', ext: '4169', mobile: '' },
+                { dept: '倉管組', name: 'U3', ext: '4171', mobile: '' },
+                { dept: '倉管組', name: '林峯成', ext: '', mobile: '6670' },
+                { dept: '倉管組', name: '王蘇國', ext: '4173', mobile: '' },
+                { dept: '倉管組', name: '王浚濠', ext: '4177', mobile: '' },
+                { dept: '倉管組', name: '劉鎮滄', ext: '4178', mobile: '' },
+                { dept: '倉管組', name: '吳亦逢', ext: '4172', mobile: '' },
+                { dept: '倉管組', name: '吳達友', ext: '2912', mobile: '' },
+                { dept: '倉管組', name: '邱國樑', ext: '4228', mobile: '6605' },
+                { dept: '倉管組', name: '張仕欣', ext: '', mobile: '6635' },
+                { dept: '倉管組', name: '廖治翔', ext: '4102', mobile: '' },
+                { dept: '倉管組', name: '許英傑', ext: '4227', mobile: '6636' },
+                { dept: '品管課', name: '課長邱岱履', ext: '4301', mobile: '6623' },
+                { dept: '品管課', name: '組長黃銘理', ext: '', mobile: '6629' },
+                { dept: '品管課', name: '陳毓庭', ext: '4303', mobile: '' },
+                { dept: '品管課', name: '廖光瑞', ext: '4304', mobile: '' },
+                { dept: '品管課', name: '量測室', ext: '4306', mobile: '' },
+                { dept: '品管課', name: '王淑美', ext: '4302/4307', mobile: '' },
+                { dept: '品管課', name: '陳敏澤', ext: '4230', mobile: '' },
+                { dept: '品管課', name: '沈懋達', ext: '4231', mobile: '' },
+                { dept: '品管課', name: '吳宜真', ext: '4232', mobile: '' },
+                { dept: '品管課', name: '電子室', ext: '2920', mobile: '' },
+                { dept: '品管課', name: '材料室', ext: '4230', mobile: '' },
+                { dept: '生技課', name: '課長黃忠利', ext: '3201', mobile: '6617' },
+                { dept: '生技課', name: '組長鐘文豪', ext: '3229', mobile: '6668' },
+                { dept: '生技課', name: '組長楊勝鈞', ext: '3224', mobile: '6610' },
+                { dept: '生技課', name: '陳盈達', ext: '2117', mobile: '' },
+                { dept: '生技課', name: '林志修', ext: '3221', mobile: '' },
+                { dept: '生技課', name: '履文財', ext: '3227', mobile: '' },
+                { dept: '生技課', name: '車床編程', ext: '3222', mobile: '' },
+                { dept: '生技課', name: '吳瑞祥', ext: '3226', mobile: '' },
+                { dept: '生技課', name: '王書聰', ext: '3218', mobile: '' },
+                { dept: '生技課', name: '曾怡嘉', ext: '3216', mobile: '' },
+                { dept: '生技課', name: '謝靜芳', ext: '3233', mobile: '' },
+                { dept: '生技課', name: '劉彥宏', ext: '3228', mobile: '6630' },
+                { dept: '生技課', name: '黃信倫', ext: '3225', mobile: '6626' },
+                { dept: '生技課', name: '王巧怡', ext: '3232', mobile: '' },
+                { dept: '生技課', name: '梁雅婷/游佳晏', ext: '3217', mobile: '' },
+                { dept: '生技課', name: '組長賴呈祥', ext: '4175', mobile: '6609' },
+                { dept: '生技課', name: '會議室', ext: '3234', mobile: '' },
+                { dept: '生技課', name: '地下室刀具室', ext: '2916', mobile: '' },
+                { dept: '生技課', name: '刀具室', ext: '2918', mobile: '' },
+                { dept: '生技課', name: '模具室', ext: '2919', mobile: '' },
+                { dept: '營業部', name: '總經理郭崇哲', ext: '6666', mobile: '6688' },
+                { dept: '營業部', name: '副總趙淑芬', ext: '5006', mobile: '6628' },
+                { dept: '營業部', name: '王書蕙', ext: '5004', mobile: '' },
+                { dept: '營業部', name: '楊雅惠', ext: '5010', mobile: '' },
+                { dept: '營業部', name: '劉施媛', ext: '5011', mobile: '' },
+                { dept: '營業部', name: '許千慧', ext: '5014', mobile: '' },
+                { dept: '營業部', name: '林明忠', ext: '5002', mobile: '6662' },
+                { dept: '營業部', name: '陳妍卉', ext: '5017', mobile: '' },
+                { dept: '營業部', name: '陳以馨', ext: '5019', mobile: '' },
+                { dept: '驗證室', name: '課長薛慎宗', ext: '3101', mobile: '' },
+                { dept: '驗證室', name: '賴瑞朝', ext: '2922', mobile: '' },
+                { dept: '驗證室', name: '會議室', ext: '1609', mobile: '' },
+                { dept: '設備課', name: '課長陳國隆', ext: '3120', mobile: '6661' },
+                { dept: '驗證室', name: '劉俊宏', ext: '3119', mobile: '6624' },
+                { dept: '二廠', name: '課長劉建成', ext: '7004', mobile: '6650' },
+                { dept: '二廠', name: '蔡佩君', ext: '7003', mobile: '' },
+                { dept: '二廠', name: '組長謝宗政', ext: '', mobile: '6646' },
+                { dept: '二廠', name: '謝俊宇', ext: '', mobile: '6657' },
+                { dept: '二廠', name: '蔡延緯', ext: '', mobile: '6647' },
+                { dept: '二廠', name: '蘇木聖', ext: '', mobile: '6641' },
+                { dept: '二廠', name: '陳建宏', ext: '', mobile: '6649' },
+                { dept: '二廠', name: '楊智傑', ext: '', mobile: '6651' },
+                { dept: '二廠', name: '許勝義', ext: '', mobile: '6655' },
+                { dept: '二廠', name: '蘇拉空', ext: '', mobile: '6648' },
+                { dept: '二廠', name: '守衛室', ext: '7665', mobile: '' },
+                { dept: '二廠', name: '辦公室', ext: '7002/7004', mobile: '' },
+                { dept: '二廠', name: '旭正铣床', ext: '7008/7009', mobile: '' },
+                { dept: '二廠', name: '熱處理', ext: '7014', mobile: '' },
+                { dept: '二廠', name: '美立固', ext: '7017', mobile: '' },
+                { dept: '二廠', name: '現場', ext: '7013', mobile: '' },
+                { dept: '二廠', name: 'B1現場', ext: '7011', mobile: '' },
+                { dept: '二廠', name: '量測室', ext: '7012', mobile: '' },
+                { dept: '二廠', name: '鑽孔', ext: '7007', mobile: '' },
+                { dept: '二廠', name: '滾齒', ext: '7016', mobile: '' },
+                { dept: '三廠', name: '經理林文彥', ext: '', mobile: '6602' },
+                { dept: '三廠', name: '組長邱士豪', ext: '', mobile: '6615' },
+                { dept: '三廠', name: '組長林志騰', ext: '', mobile: '6676' },
+                { dept: '三廠', name: '組長陳和欽', ext: '7382', mobile: '6642' },
+                { dept: '三廠', name: '李奇樺', ext: '', mobile: '6664' },
+                { dept: '三廠', name: '工務趙建能', ext: '', mobile: '6667' },
+                { dept: '三廠', name: '組長陳志遠', ext: '7384', mobile: '6617' },
+                { dept: '三廠', name: '陳信男', ext: '', mobile: '6669' },
+                { dept: '三廠', name: '林柏鈞', ext: '7381', mobile: '6658' },
+                { dept: '三廠', name: '沖床', ext: '7387', mobile: '' },
+                { dept: '三廠', name: '鋸床', ext: '7320', mobile: '' },
+                { dept: '三廠', name: '編程', ext: '7383', mobile: '' },
+                { dept: '三廠', name: '車床', ext: '7385', mobile: '' },
+                { dept: '三廠', name: '現場', ext: '7368', mobile: '' },
+                { dept: '三廠', name: '震澤', ext: '7369', mobile: '' },
+                { dept: '三廠', name: '現場', ext: '7386', mobile: '' },
+                { dept: '三廠', name: '刀具室', ext: '7376', mobile: '' },
+                { dept: '三廠', name: '守衛室', ext: '7365', mobile: '' },
+                { dept: '其他科室', name: '視聽室', ext: '1600', mobile: '' },
+                { dept: '其他科室', name: '會議室1', ext: '1602', mobile: '' },
+                { dept: '其他科室', name: '會議室2', ext: '1603', mobile: '' },
+                { dept: '其他科室', name: '會議室3', ext: '1605', mobile: '' },
+                { dept: '其他科室', name: '會議室4', ext: '1604', mobile: '' },
+                { dept: '其他科室', name: '守衛室', ext: '1665', mobile: '6619' },
+                { dept: '其他科室', name: '餐廳', ext: '1610', mobile: '' },
+                { dept: '其他科室', name: '餐廳2', ext: '1611', mobile: '' }
             ];
 
             const filtered = phoneList.filter(p => 
-                p.name.includes(search) || p.dept.includes(search) || p.ext.includes(search)
+                p.name.includes(search) || p.dept.includes(search) || p.ext.includes(search) || (p.mobile && p.mobile.includes(search))
             );
 
             return (
-                <div class="max-w-md mx-auto">
-                    <div class="flex items-center justify-between mb-6">
-                        <h1 class="text-xl font-bold text-slate-400">📞 分機速查</h1>
-                        <a href="index.html" class="text-xs bg-white px-3 py-1 rounded-full shadow-sm text-slate-400">返回日誌</a>
+                <div className="max-w-md mx-auto">
+                    <div className="flex items-center justify-between mb-6">
+                        <h1 className="text-xl font-bold text-slate-400">📞 分機速查 V2</h1>
+                        <a href="index.html" className="text-xs bg-white px-3 py-1 rounded-full shadow-sm text-slate-400">返回日誌</a>
                     </div>
 
-                    {/* 搜尋框 */}
-                    <div class="mb-6">
+                    <div className="mb-6">
                         <input 
                             type="text" 
                             placeholder="輸入部門、姓名或號碼..." 
-                            class="w-full p-4 rounded-2xl bg-white shadow-sm border border-white outline-none focus:border-slate-200 transition-all"
+                            className="w-full p-4 rounded-2xl bg-white shadow-sm border border-white outline-none focus:border-slate-200 transition-all text-lg"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
 
-                    {/* 聯絡清單 */}
-                    <div class="space-y-3">
+                    <div className="space-y-3 pb-20">
                         {filtered.map((p, i) => (
-                            <div key={i} class="bg-white p-4 rounded-[2rem] shadow-sm border border-white flex justify-between items-center active:bg-slate-50">
-                                <div>
-                                    <span class="text-[10px] text-slate-300 block uppercase tracking-wider">{p.dept}</span>
-                                    <span class="font-bold text-slate-600">{p.name}</span>
+                            <div key={i} className="bg-white p-5 rounded-[2.2rem] shadow-sm border border-white flex justify-between items-center active:bg-slate-50 transition-all">
+                                <div className="flex-1">
+                                    <span className="text-[10px] text-slate-300 block uppercase tracking-widest mb-1">{p.dept}</span>
+                                    <span className="text-lg font-bold text-slate-600 leading-tight">{p.name || '無名'}</span>
                                 </div>
-                                <div class="text-xl font-mono font-bold text-blue-400 bg-blue-50 px-4 py-1 rounded-full">
-                                    {p.ext}
+                                <div className="text-right ml-4">
+                                    {p.ext && (
+                                        <div className="text-sm font-bold text-blue-500 bg-blue-50 px-3 py-1 rounded-lg mb-1 shadow-inner inline-block min-w-[80px]">
+                                            📞 {p.ext}
+                                        </div>
+                                    )}
+                                    <br/>
+                                    {p.mobile && (
+                                        <div className="text-[11px] font-bold text-emerald-500 bg-emerald-50 px-3 py-1 rounded-lg shadow-inner inline-block min-w-[80px]">
+                                            📱 {p.mobile}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}
                         {filtered.length === 0 && (
-                            <p class="text-center text-slate-300 text-sm py-10">找不到相關分機喔...</p>
+                            <div className="text-center py-20 text-slate-300">沒找到這個分機喔...</div>
                         )}
                     </div>
                 </div>
