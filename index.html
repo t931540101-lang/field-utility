@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-    <title>護衛日誌 V13.1 - Gentle</title>
+    <title>護衛日誌 V13.1 GENTLE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -14,85 +14,79 @@
     <script type="text/babel">
         const { useState } = React;
         const App = () => {
-            const [logs, setLogs] = useState([]);
-            const [view, setView] = useState('home');
-            const [dog, setDog] = useState({ n: '', t: '', s: false });
+            const [status, setStatus] = useState("點擊上方毛孩查看狀態");
+            const [records, setRecords] = useState([]);
 
-            const dogs = [
-                {n:'張布丁', t:'日常保養。'}, {n:'蔡小白', t:'脾胃較虛。建議：四君子。'},
-                {n:'蔡小花', t:'注意皮膚。建議：苦參。'}, {n:'來順', t:'巡邏良伴。'},
-                {n:'蔡脯', t:'健健康康。'}, {n:'蔡頭貴', t:'平安富貴。'},
-                {n:'哈蜜瓜', t:'心情甜甜。'}, {n:'有錢', t:'福氣滿滿。'},
-                {n:'妞妞', t:'清熱解毒。建議：魚腥草。', cat:true}
+            const pets = [
+                { name: "張布丁", msg: "布丁最乖，守護第一。" },
+                { name: "蔡小白", msg: "小白精神好，巡邏有力。" },
+                { name: "蔡小花", msg: "小花今天也很活潑。" },
+                { name: "來順", msg: "來順來順，一切順利。" },
+                { name: "蔡脯", msg: "蔡脯守護工廠最盡責。" },
+                { name: "蔡頭貴", msg: "蔡頭貴：平安富貴。" },
+                { name: "哈蜜瓜", msg: "哈蜜瓜甜甜，心情好。" },
+                { name: "有錢", msg: "有錢：福氣滿滿。" },
+                { name: "妞妞 🐱", msg: "妞妞撒嬌中，記得餵食。" }
             ];
 
-            const save = (t, d) => {
-                const now = new Date().toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'});
-                setLogs([{ t, now, ...d, id: Date.now() }, ...logs]);
-                setView('home');
+            const addRecord = (type) => {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString();
+                setRecords([{ type, time: timeStr }, ...records]);
             };
 
             return (
-                <div class="max-w-md mx-auto pb-10">
-                    {view === 'home' ? (
-                        <div>
-                            <div class="flex justify-between items-center mb-8 px-1">
-                                <h1 class="text-xl font-bold text-slate-400">🛡️ 護衛日誌</h1>
-                                <span class="text-[9px] bg-white px-2 py-0.5 rounded-full text-slate-400 shadow-sm font-bold tracking-widest uppercase">V13.1 GENTLE</span>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-4 mb-8">
-                                <button onClick={()=>setView('v')} class="bg-white p-6 rounded-[2.5rem] shadow-sm active:bg-slate-50 transition-all text-center border border-white">
-                                    <span class="text-3xl block mb-2 opacity-60">👤</span>
-                                    <p class="font-bold text-slate-600">訪客</p>
-                                </button>
-                                <button onClick={()=>setView('t')} class="bg-white p-6 rounded-[2.5rem] shadow-sm active:bg-slate-50 transition-all text-center border border-white">
-                                    <span class="text-3xl block mb-2 opacity-60">🚚</span>
-                                    <p class="font-bold text-slate-600">車輛</p>
-                                </button>
-                            </div>
-
-                            <div class="bg-white p-6 rounded-[2.5rem] mb-8 shadow-sm border border-white">
-                                <h2 class="text-[10px] font-bold mb-4 text-slate-300 tracking-[0.2em] text-center uppercase italic">蔡家軍速查面板</h2>
-                                <div class="grid grid-cols-3 gap-2">
-                                    {dogs.map(d => (
-                                        <button key={d.n} onClick={()=>setDog({n:d.n, t:d.t, s:true})} class="bg-slate-50/50 p-3 rounded-2xl text-xs font-bold text-slate-500 border border-slate-100 active:bg-white active:shadow-inner">
-                                            {d.n}{d.cat?'🐱':''}
-                                        </button>
-                                    ))}
-                                </div>
-                                {dog.s && (
-                                    <div class="mt-5 p-4 bg-blue-50/40 rounded-2xl text-slate-600 text-sm border-l-4 border-blue-200 shadow-inner">
-                                        ✨ <b>{dog.n}</b>：{dog.t}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div class="space-y-3">
-                                {logs.map(l => (
-                                    <div key={l.id} class="bg-white/80 p-4 rounded-2xl flex justify-between items-center shadow-sm border border-white">
-                                        <div class="font-bold text-slate-500">{l.t==='v' ? l.n : l.car}</div>
-                                        <div class="text-[10px] text-slate-300 font-mono tracking-tighter">{l.now}</div>
-                                    </div>
-                                ))}
-                                {logs.length === 0 && <p class="text-center text-slate-300 text-[10px] italic py-4">今天還沒有紀錄喔，小黑哥加油！</p>}
-                            </div>
+                <div className="max-w-md mx-auto pb-20">
+                    {/* Header */}
+                    <div className="flex justify-between items-center mb-6 px-2">
+                        <div className="flex items-center gap-2">
+                            <span className="text-2xl">🛡️</span>
+                            <h1 className="text-xl font-black text-slate-400">護衛日誌</h1>
                         </div>
-                    ) : (
-                        <div class="bg-white p-8 rounded-[3rem] shadow-xl border border-white">
-                            <h2 class="text-lg font-bold mb-6 text-slate-500">{view==='v'?'訪客登記':'車輛登記'}</h2>
-                            <div class="space-y-4">
-                                <input id="i1" placeholder={view==='v'?'輸入姓名':'輸入車號'} class="w-full bg-slate-50 p-5 rounded-2xl outline-none focus:bg-white transition-all shadow-inner" />
-                                <div class="flex gap-3 pt-4">
-                                    <button onClick={()=>setView('home')} class="flex-1 p-5 bg-slate-100 text-slate-400 rounded-2xl font-bold">返回</button>
-                                    <button onClick={()=>{
-                                        const v = document.getElementById('i1').value;
-                                        if(v) save(view, view==='v'?{n:v}:{car:v});
-                                    }} class="flex-1 p-5 bg-slate-700 text-white rounded-2xl font-bold shadow-lg">存檔</button>
-                                </div>
-                            </div>
+                        <span className="text-[10px] font-bold bg-white px-3 py-1 rounded-full shadow-sm text-slate-300">V13.1 GENTLE</span>
+                    </div>
+
+                    {/* 功能按鈕 */}
+                    <div className="grid grid-cols-2 gap-4 mb-8">
+                        <button onClick={() => addRecord('訪客')} className="bg-white p-8 rounded-[2.5rem] shadow-sm flex flex-col items-center active:scale-95 transition-all">
+                            <span className="text-4xl mb-2">👤</span>
+                            <span className="font-bold text-slate-500 text-lg">訪客</span>
+                        </button>
+                        <button onClick={() => addRecord('車輛')} className="bg-white p-8 rounded-[2.5rem] shadow-sm flex flex-col items-center active:scale-95 transition-all">
+                            <span className="text-4xl mb-2">🚚</span>
+                            <span className="font-bold text-slate-500 text-lg">車輛</span>
+                        </button>
+                    </div>
+
+                    {/* 毛孩速查面板 */}
+                    <div className="bg-white rounded-[3rem] p-6 shadow-sm border border-white mb-6">
+                        <p className="text-center text-[10px] font-bold text-slate-300 italic mb-4 tracking-widest">毛孩速查面板</p>
+                        <div className="grid grid-cols-3 gap-2 mb-6">
+                            {pets.map(pet => (
+                                <button key={pet.name} onClick={() => setStatus(pet.msg)} className="bg-[#fcfdfe] py-3 rounded-2xl text-[13px] font-bold text-slate-400 border border-slate-50 active:bg-slate-100 transition-all">
+                                    {pet.name}
+                                </button>
+                            ))}
                         </div>
-                    )}
+                        <div className="bg-blue-50/50 p-4 rounded-[2rem] border border-blue-100/50 flex items-center justify-center min-h-[60px]">
+                            <p className="text-slate-500 font-bold text-sm text-center">✨ {status}</p>
+                        </div>
+                    </div>
+
+                    {/* 分機表連結 - 這是新的！ */}
+                    <a href="phone.html" className="block bg-slate-600 p-5 rounded-[2rem] shadow-lg text-center active:scale-95 transition-all mb-8">
+                        <span className="text-white font-bold text-lg">📞 進入數位分機大腦</span>
+                    </a>
+
+                    {/* 紀錄顯示 */}
+                    <div className="space-y-3">
+                        {records.map((r, i) => (
+                            <div key={i} className="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border-l-4 border-blue-400">
+                                <span className="font-bold text-slate-500">{r.type}登記</span>
+                                <span className="text-xs font-mono text-slate-300">{r.time}</span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             );
         };
