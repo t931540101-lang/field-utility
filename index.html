@@ -1,7 +1,100 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小黑上仙的守護領域 v2.2</title>
+    <style>
+        :root { --main: #2c3e50; --gold: #d4af37; --bg: #fdfaf6; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        .header { text-align: center; background: var(--main); color: white; padding: 15px; border-radius: 15px; border-bottom: 4px solid var(--gold); }
+        .nav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .nav-item { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; font-weight: bold; border: 1px solid #eee; }
+        .content-section { display: none; background: white; padding: 15px; border-radius: 12px; border: 1px solid #ddd; }
+        .active { display: block; }
+        .card { background: #fff9f0; border-left: 5px solid var(--gold); padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        input, textarea { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: var(--main); color: white; border: none; border-radius: 8px; font-weight: bold; margin-top: 5px; cursor: pointer; }
+        .dog-btn { display: inline-block; padding: 10px; background: #f0f0f0; margin: 3px; border-radius: 8px; cursor: pointer; border: 1px solid #ddd; }
+    </style>
+</head>
 <body>
-    <h1>小黑上仙測試中</h1>
-    <button onclick="alert('法力接通了！')">點我測試法力 [cite: 2026-02-05]</button>
+
+<div class="header">
+    <h2 style="margin:0;">🏛️ 小黑上仙的守護領域</h2>
+    <p style="margin:5px 0 0 0; font-size:14px; opacity:0.8;">最強守護 · 柔 陪著妳 [cite: 2026-02-05]</p>
+</div>
+
+<div class="nav-grid">
+    <div class="nav-item" onclick="showSection('dogs')">📝 A.病歷鉛筆</div>
+    <div class="nav-item" onclick="showSection('goal')">📊 B.薪資算盤</div>
+    <div class="nav-item" onclick="showSection('medicine')">🌿 C.萬用藥典</div>
+    <div class="nav-item" onclick="showSection('diary')">🖋️ 巡邏日誌</div>
+</div>
+
+<div id="dogs" class="content-section active">
+    <h3>📝 孩子們的健康紀錄</h3>
+    <div>
+        <span class="dog-btn" onclick="openDog('張布丁')">張布丁</span>
+        <span class="dog-btn" onclick="openDog('妞妞')">妞妞</span>
+        <span class="dog-btn" onclick="openDog('有錢')">有錢</span>
+        <span class="dog-btn" onclick="openDog('蔡小白')">蔡小白</span>
+    </div>
+    <div class="card" style="margin-top:10px;">
+        <strong id="dogNameDisplay">請選擇孩子</strong>
+        <textarea id="dogNoteInput" rows="3" placeholder="點選名字後，在此紀錄..."></textarea>
+        <button onclick="saveDogData()">✍️ 儲存病歷 [cite: 2026-02-05]</button>
+    </div>
+</div>
+
+<div id="goal" class="content-section">
+    <h3>📊 薪資時數試算</h3>
+    <div class="card">預估實領：$41,021 [cite: 2026-02-05]</div>
+    <div class="card">
+        <label>本月出勤天數：</label>
+        <input type="number" id="daysIn" oninput="doCalc()">
+        <p>⏱️ 總時數：<span id="hrOut">0</span> / 288 [cite: 2026-01-22]</p>
+    </div>
+</div>
+
+<div id="medicine" class="content-section">
+    <h3>🌿 中醫守護心法</h3>
+    <div class="card">熱感冒：黃痰加水稀釋愛克痰 [cite: 2026-01-19, 2026-02-05]</div>
+</div>
+
+<div id="diary" class="content-section">
+    <h3>🖋️ 巡邏日誌</h3>
+    <textarea id="diaryIn" rows="5"></textarea>
+    <button onclick="saveDiaryData()">儲存日誌 [cite: 2026-02-05]</button>
+</div>
+
+<script>
+    function showSection(id) {
+        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+    let selDog = "";
+    function openDog(name) {
+        selDog = name;
+        document.getElementById('dogNameDisplay').innerText = "編輯中：" + name;
+        document.getElementById('dogNoteInput').value = localStorage.getItem('dog_' + name) || "";
+    }
+    function saveDogData() {
+        if(!selDog) return alert("選個孩子吧！");
+        localStorage.setItem('dog_' + selDog, document.getElementById('dogNoteInput').value);
+        alert(selDog + " 紀錄成功！ [cite: 2026-02-05]");
+    }
+    function doCalc() {
+        let h = document.getElementById('daysIn').value * 12; [cite: 2026-01-22]
+        document.getElementById('hrOut').innerText = h;
+    }
+    function saveDiaryData() {
+        localStorage.setItem('myDiary', document.getElementById('diaryIn').value);
+        alert("存好了！ [cite: 2026-02-05]");
+    }
+    window.onload = function() {
+        document.getElementById('diaryIn').value = localStorage.getItem('myDiary') || "";
+    }
+</script>
 </body>
 </html>
