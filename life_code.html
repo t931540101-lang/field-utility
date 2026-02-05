@@ -16,7 +16,7 @@
         const App = () => {
             const [view, setView] = useState('home');
             
-            // 主畫面
+            // --- 1. 首頁模組 ---
             const Home = () => (
                 <div className="space-y-6">
                     <div className="bg-slate-800 rounded-[2.5rem] p-8 border border-slate-700 shadow-2xl">
@@ -40,29 +40,63 @@
                 </div>
             );
 
-            // 小銀保養頁面
+            // --- 2. 小銀保養模組 ---
             const CarModule = () => (
                 <div className="space-y-4">
-                    <button onClick={() => setView('home')} className="text-blue-400 text-xs font-bold mb-4">← 返回首頁</button>
+                    <button onClick={() => setView('home')} className="text-blue-400 text-[10px] font-bold mb-4 uppercase tracking-widest">← Back to Dashboard</button>
                     <div className="bg-slate-800 rounded-[2.5rem] p-6 border border-slate-700">
                         <h3 className="text-xl font-black text-white mb-4">Suzuki Solio (2019)</h3>
                         <div className="space-y-3">
                             <div className="bg-slate-900/50 p-4 rounded-2xl flex justify-between items-center">
-                                <span className="text-xs text-slate-400">上次換機油</span>
-                                <span className="text-xs font-bold text-blue-400">2026-01-05</span>
+                                <span className="text-xs text-slate-400 font-bold">上次換機油</span>
+                                <span className="text-xs font-bold text-blue-400 uppercase">2026-01-05</span>
                             </div>
                             <div className="bg-slate-900/50 p-4 rounded-2xl">
-                                <p className="text-[10px] text-slate-500 mb-2 uppercase font-bold tracking-widest">已更新配件清單</p>
-                                <ul className="text-xs space-y-1 text-slate-300">
-                                    <li>• 倒車顯影系統</li>
-                                    <li>• 全車 LED 燈組</li>
-                                    <li>• 內裝隔音強化</li>
-                                </ul>
+                                <p className="text-[10px] text-slate-500 mb-3 uppercase font-black tracking-widest">已更新配件清單</p>
+                                <div className="space-y-2 text-xs font-bold text-slate-300">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1 h-1 bg-blue-500 rounded-full"></div> 倒車顯影系統
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1 h-1 bg-blue-500 rounded-full"></div> 全車 LED 燈組
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1 h-1 bg-blue-500 rounded-full"></div> 內裝隔音強化
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             );
+
+            // --- 3. 模擬配藥模組 ---
+            const MedModule = () => {
+                const herbs = [
+                    { name: '黃耆', property: '微溫', effect: '補氣升陽，益衛固表', note: '常用於增強毛孩免疫力' },
+                    { name: '當歸', property: '溫', effect: '補血活血，調經止痛', note: '注意劑量，腸胃虛弱慎用' }
+                ];
+                return (
+                    <div className="space-y-4">
+                        <button onClick={() => setView('home')} className="text-blue-400 text-[10px] font-bold mb-4 uppercase tracking-widest">← Back to Dashboard</button>
+                        <div className="bg-slate-800 rounded-[2.5rem] p-6 border border-slate-700">
+                            <h3 className="text-xl font-black text-white mb-4 italic">Virtual Dispensary</h3>
+                            <div className="space-y-3">
+                                {herbs.map(h => (
+                                    <div key={h.name} className="bg-slate-900/50 p-5 rounded-2xl border border-slate-700/50">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-lg font-bold text-blue-400">{h.name}</span>
+                                            <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-md font-bold">{h.property}</span>
+                                        </div>
+                                        <p className="text-xs text-slate-300 mb-1 font-bold leading-relaxed">{h.effect}</p>
+                                        <p className="text-[10px] text-slate-500 italic mt-2 border-t border-slate-800 pt-2">小黑筆記: {h.note}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
 
             return (
                 <div className="max-w-md mx-auto pb-10">
@@ -72,7 +106,7 @@
                     </div>
                     {view === 'home' && <Home />}
                     {view === 'car' && <CarModule />}
-                    {view === 'med' && <div className="text-center p-10"><button onClick={() => setView('home')} className="text-blue-400 text-xs font-bold">配藥模組開發中... 返回</button></div>}
+                    {view === 'med' && <MedModule />}
                 </div>
             );
         };
