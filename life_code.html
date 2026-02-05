@@ -14,66 +14,34 @@
     <script type="text/babel">
         const { useState } = React;
         const App = () => {
-            const [view, setView] = useState('home');
-            
             return (
                 <div className="max-w-md mx-auto pb-10">
-                    {/* Top Navigation */}
                     <div className="mt-8 mb-10 text-center">
                         <h1 className="text-3xl font-black tracking-tighter text-blue-400">Guardian Life-Code</h1>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.4em] mt-1 underline decoration-blue-900">Professional Manual v1.0</p>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.4em] mt-1">Professional Manual</p>
                     </div>
 
-                    {/* Main Dashboard */}
                     <div className="space-y-6">
-                        {/* Module 1: Salary & Hours */}
-                        <div className="bg-slate-800 rounded-[2.5rem] p-6 border border-slate-700 shadow-xl">
-                            <div className="flex justify-between items-center mb-4">
-                                <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Finance</span>
-                                <span className="text-[10px] text-slate-500 font-bold">Feb 2026</span>
-                            </div>
-                            <h2 className="text-3xl font-black text-white mb-2">$ 41,040</h2>
-                            <p className="text-xs text-slate-400 font-bold mb-4">總時數: 216 / 288H</p>
-                            <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
-                                <div className="bg-blue-500 h-full w-[75%]"></div>
+                        {/* 薪資模組 */}
+                        <div className="bg-slate-800 rounded-[2.5rem] p-8 border border-slate-700 shadow-2xl">
+                            <p className="text-[10px] font-black text-blue-400 uppercase mb-2">Estimated Salary</p>
+                            <h2 className="text-4xl font-black text-white mb-4">$ 41,040</h2>
+                            <div className="flex justify-between text-xs font-bold text-slate-400">
+                                <span>18 天</span>
+                                <span>216 / 288H</span>
                             </div>
                         </div>
 
-                        {/* Quick Access Grid */}
+                        {/* 功能入口網格 */}
                         <div className="grid grid-cols-2 gap-4">
-                            {/* Module 2: Car Guard */}
                             <div className="bg-slate-800/50 rounded-[2.5rem] p-6 border border-slate-700 text-center">
-                                <span className="text-2xl mb-2 block">🚗</span>
-                                <h3 className="text-sm font-black text-slate-200">小銀保養</h3>
-                                <p className="text-[9px] text-slate-500 mt-1 uppercase">Solio 2019</p>
+                                <span className="text-2xl block mb-1">🚗</span>
+                                <p className="text-xs font-black">小銀保養</p>
                             </div>
-
-                            {/* Module 3: Virtual Dispensary */}
                             <div className="bg-slate-800/50 rounded-[2.5rem] p-6 border border-slate-700 text-center">
-                                <span className="text-2xl mb-2 block">🏺</span>
-                                <h3 className="text-sm font-black text-slate-200">模擬配藥</h3>
-                                <p className="text-[9px] text-slate-500 mt-1 uppercase">TCM & Vet</p>
+                                <span className="text-2xl block mb-1">🏺</span>
+                                <p className="text-xs font-black">模擬配藥</p>
                             </div>
-                        </div>
-
-                        {/* Module 4: Ancestral Promise */}
-                        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-[2.5rem] p-6 border border-slate-700">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-500 text-xl font-bold">🙏</div>
-                                <div>
-                                    <h3 className="text-sm font-black text-slate-200 tracking-wide">承諾進度</h3>
-                                    <p className="text-[10px] text-slate-500 italic mt-0.5">「永記祖先與觀士音姐姐」</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Bottom Status */}
-                    <div className="mt-12 text-center">
-                        <div className="inline-block px-4 py-2 bg-slate-800 rounded-full border border-slate-700">
-                            <p className="text-[10px] font-bold text-slate-400 tracking-tighter">
-                                工作是為了更好的生活，而不是生活的全部。
-                            </p>
                         </div>
                     </div>
                 </div>
