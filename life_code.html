@@ -1,53 +1,135 @@
-const Home = () => {
-    const [days, setDays] = useState(18); // 預設 18 天
-    const [rate, setRate] = useState(190); // 預設時薪
-    const hours = days * 12;
-    const salary = hours * rate;
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>Guardian Life-Code</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-[#0f172a] text-slate-200 p-4 font-sans min-h-screen">
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+        const App = () => {
+            const [view, setView] = useState('home');
+            const [days, setDays] = useState(18); // 預設 18 天
+            const [rate, setRate] = useState(190); // 預設時薪
+            const [category, setCategory] = useState('全部');
 
-    return (
-        <div className="space-y-6">
-            <div className="bg-slate-800 rounded-[2.5rem] p-8 border border-slate-700 shadow-2xl relative overflow-hidden">
-                <p className="text-[10px] font-black text-blue-400 uppercase mb-2 tracking-widest">Estimated Salary</p>
-                <h2 className="text-5xl font-black text-white mb-6">
-                    <span className="text-xl text-blue-500 mr-1">$</span>
-                    {salary.toLocaleString()}
-                </h2>
-                
-                {/* 調整按鈕 */}
-                <div className="flex items-center gap-4 mb-6">
-                    <button onClick={() => setDays(Math.max(0, days - 1))} className="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center font-bold text-xl active:bg-blue-600">-</button>
-                    <div className="text-center">
-                        <p className="text-2xl font-black text-white">{days}</p>
-                        <p className="text-[10px] text-slate-500 font-bold">本月天數</p>
-                    </div>
-                    <button onClick={() => setDays(days + 1)} className="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center font-bold text-xl active:bg-blue-600">+</button>
-                </div>
+            const hours = days * 12; // 每班 12 小時
+            const salary = hours * rate;
 
-                <div className="pt-4 border-t border-slate-700/50">
-                    <div className="flex justify-between text-xs font-bold text-slate-400 mb-2">
-                        <span>總工時: {hours}H</span>
-                        <span className={hours > 288 ? "text-red-500" : "text-blue-400"}>上限 288H</span>
+            const herbs = [
+                { name: '人參', cat: '腸胃', prop: '微溫', effect: '大補元氣、健脾益肺', note: '四君子之首' },
+                { name: '白朮', cat: '腸胃', prop: '溫', effect: '健脾益氣、燥濕利水', note: '改善毛孩便稀' },
+                { name: '茯苓', cat: '腸胃', prop: '平', effect: '利水滲濕、健脾安神', note: '四君子之一' },
+                { name: '甘草', cat: '感冒', prop: '平', effect: '潤肺止咳、調和諸藥', note: '感冒咳嗽必備' },
+                { name: '黃耆', cat: '皮膚', prop: '微溫', effect: '補氣升陽、托毒生肌', note: '傷口久不癒合常用' },
+                { name: '黃連', cat: '皮膚', prop: '寒', effect: '清熱燥濕、瀉火解毒', note: '皮膚紅腫可用' }
+            ];
+
+            const filteredHerbs = category === '全部' ? herbs : herbs.filter(h => h.cat === category);
+
+            // --- 首頁：含薪資連動 ---
+            const Home = () => (
+                <div className="space-y-6">
+                    <div className="bg-slate-800 rounded-[2.5rem] p-8 border border-slate-700 shadow-2xl relative overflow-hidden">
+                        <p className="text-[10px] font-black text-blue-400 uppercase mb-2 tracking-widest">Estimated Salary / 2月</p>
+                        <h2 className="text-4xl font-black text-white mb-6">
+                            <span className="text-xl text-blue-500 mr-1">$</span>{salary.toLocaleString()}
+                        </h2>
+                        
+                        <div className="flex items-center gap-4 mb-6">
+                            <button onClick={() => setDays(Math.max(0, days - 1))} className="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center font-bold text-xl active:bg-blue-600">-</button>
+                            <div className="text-center">
+                                <p className="text-2xl font-black text-white">{days}</p>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase">Days</p>
+                            </div>
+                            <button onClick={() => setDays(days + 1)} className="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center font-bold text-xl active:bg-blue-600">+</button>
+                        </div>
+
+                        <div className="pt-4 border-t border-slate-700/50">
+                            <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-2">
+                                <span>TOTAL: {hours}H</span>
+                                <span className={hours > 288 ? "text-red-500" : "text-blue-400"}>LIMIT: 288H</span>
+                            </div>
+                            <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
+                                <div className={`h-full transition-all duration-500 ${hours > 288 ? "bg-red-500" : "bg-blue-500"}`} style={{ width: `${Math.min(100, (hours / 288) * 100)}%` }}></div>
+                            </div>
+                        </div>
                     </div>
-                    <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
-                        <div 
-                            className={`h-full transition-all duration-500 ${hours > 288 ? "bg-red-500" : "bg-blue-500"}`}
-                            style={{ width: `${Math.min(100, (hours / 288) * 100)}%` }}
-                        ></div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div onClick={() => setView('car')} className="bg-slate-800/50 rounded-[2.5rem] p-6 border border-slate-700 text-center active:scale-95 transition-all">
+                            <span className="text-2xl block mb-1">🚗</span>
+                            <p className="text-xs font-black">小銀保養</p>
+                        </div>
+                        <div onClick={() => setView('med')} className="bg-slate-800/50 rounded-[2.5rem] p-6 border border-slate-700 text-center active:scale-95 transition-all">
+                            <span className="text-2xl block mb-1">🏺</span>
+                            <p className="text-xs font-black">模擬配藥</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            {/* 原本的入口網格 */}
-            <div className="grid grid-cols-2 gap-4">
-                <div onClick={() => setView('car')} className="bg-slate-800/50 rounded-[2.5rem] p-6 border border-slate-700 text-center active:scale-95 transition-all">
-                    <span className="text-2xl block mb-1">🚗</span>
-                    <p className="text-xs font-black text-slate-300">小銀保養</p>
+            );
+
+            // --- 小銀保養頁面 ---
+            const CarModule = () => (
+                <div className="space-y-4">
+                    <button onClick={() => setView('home')} className="text-blue-400 text-[10px] font-bold mb-4 uppercase tracking-widest">← Back</button>
+                    <div className="bg-slate-800 rounded-[2.5rem] p-6 border border-slate-700">
+                        <h3 className="text-xl font-black text-white mb-4">Suzuki Solio (2019)</h3>
+                        <div className="space-y-3">
+                            <div className="bg-slate-900/50 p-4 rounded-2xl flex justify-between items-center">
+                                <span className="text-xs text-slate-400 font-bold">上次換機油</span>
+                                <span className="text-xs font-bold text-blue-400 uppercase">2026-01-05</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div onClick={() => setView('med')} className="bg-slate-800/50 rounded-[2.5rem] p-6 border border-slate-700 text-center active:scale-95 transition-all">
-                    <span className="text-2xl block mb-1">🏺</span>
-                    <p className="text-xs font-black text-slate-300">模擬配藥</p>
+            );
+
+            // --- 模擬配藥頁面 ---
+            const MedModule = () => (
+                <div className="space-y-4">
+                    <button onClick={() => setView('home')} className="text-blue-400 text-[10px] font-bold mb-2 uppercase tracking-widest">← Back</button>
+                    <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                        {['全部', '感冒', '腸胃', '皮膚'].map(c => (
+                            <button key={c} onClick={() => setCategory(c)} className={`px-4 py-2 rounded-full text-[10px] font-bold transition-all ${category === c ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-500 border border-slate-700'}`}>{c}</button>
+                        ))}
+                    </div>
+                    <div className="bg-slate-800 rounded-[2.5rem] p-6 border border-slate-700 min-h-[400px]">
+                        <h3 className="text-xl font-black text-white mb-6 italic flex items-center gap-2"><span>🏺</span> Dispensary</h3>
+                        <div className="space-y-4">
+                            {filteredHerbs.map(h => (
+                                <div key={h.name} className="bg-slate-900/50 p-5 rounded-2xl border border-slate-700/50">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-lg font-bold text-blue-400">{h.name}</span>
+                                        <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-md font-bold">{h.prop}</span>
+                                    </div>
+                                    <p className="text-xs text-slate-200 font-bold leading-relaxed">{h.effect}</p>
+                                    <p className="text-[10px] text-slate-500 italic mt-3 pt-2 border-t border-slate-800/50">小黑筆記: {h.note}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    );
-};
+            );
+
+            return (
+                <div className="max-w-md mx-auto pb-10">
+                    <div className="mt-8 mb-10 text-center">
+                        <h1 className="text-3xl font-black tracking-tighter text-blue-400">Guardian Life-Code</h1>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.4em] mt-1">Professional Manual</p>
+                    </div>
+                    {view === 'home' && <Home />}
+                    {view === 'car' && <CarModule />}
+                    {view === 'med' && <MedModule />}
+                </div>
+            );
+        };
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
