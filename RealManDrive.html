@@ -114,3 +114,16 @@
     </script>
 </body>
 </html>
+
+<div class="card">
+    <input type="text" class="card-title-input" id="carSubName" value="🚗 小銀弟的里程路" onchange="saveAll()">
+    
+    <p>機油倒數：<span class="value" id="disp_count">1,250</span> KM</p>
+    
+    <p>輪胎調位倒數：<span class="value" id="disp_tire">8,000</span> KM</p>
+    <p>電瓶更換至今：<span class="value" id="disp_battery">14</span> 個月</p>
+
+    <input type="number" id="in_km" placeholder="更新目前總里程數">
+    <button class="btn" onclick="updateKm()">更新數據</button>
+</div>
+
