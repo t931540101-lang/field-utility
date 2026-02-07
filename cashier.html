@@ -42,12 +42,29 @@
         .btn-save { background: #b33939; grid-column: span 2; }
         
         /* 歷史清單 */
-        .history { flex-grow: 1; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px; }
-        .history-item { 
-            display: flex; justify-content: space-between; border-bottom: 1px solid #222; 
-            padding: 8px 0; font-size: 14px; 
-        }
-    </style>
+        /* 這裡負責讓紀錄區可以下拉滑動 */
+    .history {
+        flex: 1;           /* 讓它自動佔滿剩下的空間 */
+        overflow-y: auto;  /* 開啟垂直滑動功能 */
+        background: rgba(0,0,0,0.5);
+        border-radius: 10px;
+        padding: 12px;
+        margin-top: 10px;
+        border: 1px solid var(--btn-color);
+        -webkit-overflow-scrolling: touch; /* 讓手機滑起來更順 */
+    }
+
+    /* 這是為了確保手機畫面不會亂跳 */
+    body {
+        font-family: "Microsoft JhengHei", sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        margin: 0; padding: 15px;
+        display: flex; flex-direction: column;
+        height: 100vh;      /* 鎖定畫面高度等於螢幕高度 */
+        box-sizing: border-box;
+        overflow: hidden;   /* 讓整個網頁不要亂動，只有紀錄區可以動 */
+    }
 </head>
 <body>
 
@@ -143,25 +160,3 @@
 
 </body>
 </html>
-<style>
-    /* ...前面的代碼都不變... */
-    
-    /* 重點修復這裡：讓歷史清單可以滑動 */
-    .history {
-        flex-grow: 1;
-        overflow-y: auto; /* 開啟垂直捲動 */
-        -webkit-overflow-scrolling: touch; /* 讓手機滑動感更順 */
-        background: rgba(0,0,0,0.3);
-        border-radius: 10px;
-        padding: 10px;
-        margin-top: 5px;
-        border: 1px solid #1a3c2a;
-        min-height: 150px; /* 給紀錄區一個保底的高度 */
-    }
-    
-    /* 讓整個畫面在手機上不會被塞死 */
-    body {
-        height: 100vh;
-        overflow: hidden; /* 防止整頁亂跑，只讓紀錄區動 */
-    }
-</style>
