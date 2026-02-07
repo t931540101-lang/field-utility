@@ -6,151 +6,139 @@
     <title>警衛室收銀系統</title>
     <style>
         :root {
-            --bg-color: #1b262c;    /* 深墨綠底色 */
-            --text-color: #bbe1fa; /* 淺藍白文字 */
-            --accent-color: #00ff41; /* 螢光綠（金額專用） */
-            --btn-color: #3282b8;  /* 按鈕顏色 */
+            --bg-color: #0a1a12;    /* 更深邃的職人墨綠 */
+            --text-color: #e0e0e0; 
+            --accent-color: #00ff41; /* 螢光綠文字 */
+            --btn-color: #2d5a27;   /* 深森林綠按鈕 */
         }
         body {
-            font-family: -apple-system, "Microsoft JhengHei", sans-serif;
+            font-family: "Microsoft JhengHei", sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            margin: 0;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
+            margin: 0; padding: 15px;
+            display: flex; flex-direction: column;
+            height: 100vh; box-sizing: border-box;
         }
-        .header {
-            text-align: center;
-            padding: 10px;
-            border-bottom: 2px solid var(--btn-color);
-            margin-bottom: 10px;
-        }
-        .display-area {
-            background: #0f171b;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: right;
-            margin-bottom: 15px;
-        }
-        .label { font-size: 14px; color: #888; }
-        .amount { font-size: 40px; font-weight: bold; color: var(--accent-color); }
+        .header { text-align: center; border-bottom: 1px solid var(--accent-color); margin-bottom: 15px; padding-bottom: 5px; }
         
-        /* 左手友善按鈕配置 */
-        .keypad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            flex-grow: 1;
+        /* 輸入區域 */
+        .input-box { background: #122b1e; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #2d5a27; }
+        input { 
+            width: 100%; background: none; border: none; border-bottom: 1px solid var(--accent-color); 
+            color: var(--accent-color); font-size: 18px; padding: 5px 0; margin-bottom: 10px; outline: none;
         }
-        button {
-            background-color: var(--btn-color);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 20px;
-            font-weight: bold;
-            padding: 20px 0;
-            cursor: pointer;
-            active: transform: scale(0.95);
-        }
-        .btn-op { background-color: #0f4c75; }
-        .btn-save { background-color: #e84545; grid-column: span 3; }
         
-        .history {
-            margin-top: 15px;
-            max-height: 150px;
-            overflow-y: auto;
-            background: rgba(255,255,255,0.05);
-            border-radius: 10px;
-            padding: 10px;
-            font-size: 14px;
+        .display-area { text-align: right; margin: 10px 0; }
+        .amount { font-size: 48px; font-weight: bold; color: var(--accent-color); text-shadow: 0 0 10px rgba(0,255,65,0.3); }
+        
+        /* 左手大按鈕 */
+        .keypad { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        button { 
+            background: var(--btn-color); color: white; border: none; border-radius: 12px; 
+            padding: 20px; font-size: 20px; font-weight: bold; cursor: pointer;
         }
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 1px solid #333;
-            padding: 5px 0;
+        button:active { filter: brightness(1.5); }
+        .btn-add { background: #3d8c40; font-size: 24px; }
+        .btn-save { background: #b33939; grid-column: span 2; }
+        
+        /* 歷史清單 */
+        .history { flex-grow: 1; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px; }
+        .history-item { 
+            display: flex; justify-content: space-between; border-bottom: 1px solid #222; 
+            padding: 8px 0; font-size: 14px; 
         }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h3>🛡️ 警衛室收銀系統 v1.0</h3>
+    <h3 style="color:var(--accent-color); margin:0;">🛡️ 警衛室收銀系統 v2.0</h3>
+</div>
+
+<div class="input-box">
+    <div style="font-size:12px; color:#888; margin-bottom:5px;">📅 日期與廠商登記：</div>
+    <input type="date" id="recDate">
+    <input type="text" id="vendorName" placeholder="請輸入廠商名稱 (例如: 阿土伯)" onclick="this.select()">
 </div>
 
 <div class="display-area">
-    <div class="label">應收 / 找零</div>
-    <div id="mainDisplay" class="amount">0</div>
+    <div style="font-size:14px; color:#aaa;">應收總額 ($65/餐)</div>
+    <div id="mainDisplay" class="amount">$0</div>
 </div>
 
 <div class="keypad">
-    <button onclick="addAmount(80)">$80</button>
-    <button onclick="addAmount(100)">$100</button>
-    <button onclick="addAmount(120)">$120</button>
-    
-    <button onclick="setInputMode('receive')" class="btn-op">收銀</button>
-    <button onclick="calculateChange()" class="btn-op">找零</button>
-    <button onclick="clearAll()" style="background:#666">歸零</button>
-    
-    <button class="btn-save" onclick="saveRecord()">💾 存入月結清單</button>
+    <button class="btn-add" onclick="addMeal()">➕ 增加一餐</button>
+    <button onclick="clearCurrent()">🔄 清除重算</button>
+    <button onclick="calculateChange()">💸 找零計算</button>
+    <button onclick="clearHistory()" style="background:#444; font-size:14px;">🗑️ 清空清單</button>
+    <button class="btn-save" onclick="saveToCloud()">💾 存入月結報表</button>
 </div>
 
 <div class="history">
-    <div style="color:var(--btn-color); font-weight:bold; margin-bottom:5px;">今日收銀紀錄：</div>
-    <div id="historyList"></div>
+    <div style="color:var(--accent-color); font-weight:bold; font-size:14px; margin-bottom:8px;">本月結帳清單：</div>
+    <div id="logList"></div>
 </div>
 
 <script>
-    let totalDue = 0;
-    let history = JSON.parse(localStorage.getItem('cashierRecords') || "[]");
+    const MEAL_PRICE = 65;
+    let currentTotal = 0;
+    let records = JSON.parse(localStorage.getItem('guardCashier') || "[]");
 
-    function addAmount(val) {
-        totalDue += val;
-        updateDisplay(totalDue);
+    // 初始化日期
+    window.onload = function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('recDate').value = today;
+        renderLogs();
+    };
+
+    function addMeal() {
+        currentTotal += MEAL_PRICE;
+        document.getElementById('mainDisplay').innerText = '$' + currentTotal;
     }
 
-    function updateDisplay(val) {
-        document.getElementById('mainDisplay').innerText = '$' + val;
+    function clearCurrent() {
+        currentTotal = 0;
+        document.getElementById('mainDisplay').innerText = '$0';
     }
 
-    function clearAll() {
-        totalDue = 0;
-        updateDisplay(0);
+    function calculateChange() {
+        let pay = prompt("收到多少錢？");
+        if(pay) {
+            alert("應找零：$" + (pay - currentTotal));
+        }
     }
 
-    function saveRecord() {
-        if(totalDue === 0) return;
-        const now = new Date();
-        const timeStr = now.getHours() + ":" + now.getMinutes();
-        history.unshift({ time: timeStr, amount: totalDue });
-        localStorage.setItem('cashierRecords', JSON.stringify(history));
-        renderHistory();
-        clearAll();
-        alert("已存入月結清單！");
+    function saveToCloud() {
+        const vendor = document.getElementById('vendorName').value || "未命名廠商";
+        const date = document.getElementById('recDate').value;
+        if(currentTotal === 0) { alert("請先增加餐數！"); return; }
+
+        records.unshift({ date, vendor, total: currentTotal });
+        localStorage.setItem('guardCashier', JSON.stringify(records));
+        
+        alert(vendor + " 紀錄存檔成功！");
+        clearCurrent();
+        document.getElementById('vendorName').value = "";
+        renderLogs();
     }
 
-    function renderHistory() {
-        const list = document.getElementById('historyList');
-        list.innerHTML = history.slice(0, 5).map(item => `
+    function renderLogs() {
+        const list = document.getElementById('logList');
+        list.innerHTML = records.map(r => `
             <div class="history-item">
-                <span>🕒 ${item.time}</span>
-                <span style="color:#00ff41">+$${item.amount}</span>
+                <span>${r.date.substring(5)} | <b>${r.vendor}</b></span>
+                <span style="color:var(--accent-color)">$${r.total}</span>
             </div>
         `).join('');
     }
 
-    function calculateChange() {
-        let receive = prompt("輸入收到多少錢？");
-        if (receive) {
-            let change = receive - totalDue;
-            alert("應找零：$" + change);
+    function clearHistory() {
+        if(confirm("確定要清空本月所有紀錄嗎？")) {
+            records = [];
+            localStorage.removeItem('guardCashier');
+            renderLogs();
         }
     }
-
-    window.onload = renderHistory;
 </script>
 
 </body>
