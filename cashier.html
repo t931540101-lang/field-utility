@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>警衛室收銀系統</title>
+    <style>
+        :root {
+            --bg-color: #1b262c;    /* 深墨綠底色 */
+            --text-color: #bbe1fa; /* 淺藍白文字 */
+            --accent-color: #00ff41; /* 螢光綠（金額專用） */
+            --btn-color: #3282b8;  /* 按鈕顏色 */
+        }
+        body {
+            font-family: -apple-system, "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .header {
+            text-align: center;
+            padding: 10px;
+            border-bottom: 2px solid var(--btn-color);
+            margin-bottom: 10px;
+        }
+        .display-area {
+            background: #0f171b;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: right;
+            margin-bottom: 15px;
+        }
+        .label { font-size: 14px; color: #888; }
+        .amount { font-size: 40px; font-weight: bold; color: var(--accent-color); }
+        
+        /* 左手友善按鈕配置 */
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            flex-grow: 1;
+        }
+        button {
+            background-color: var(--btn-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            padding: 20px 0;
+            cursor: pointer;
+            active: transform: scale(0.95);
+        }
+        .btn-op { background-color: #0f4c75; }
+        .btn-save { background-color: #e84545; grid-column: span 3; }
+        
+        .history {
+            margin-top: 15px;
+            max-height: 150px;
+            overflow-y: auto;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 14px;
+        }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #333;
+            padding: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h3>🛡️ 警衛室收銀系統 v1.0</h3>
+</div>
+
+<div class="display-area">
+    <div class="label">應收 / 找零</div>
+    <div id="mainDisplay" class="amount">0</div>
+</div>
+
+<div class="keypad">
+    <button onclick="addAmount(80)">$80</button>
+    <button onclick="addAmount(100)">$100</button>
+    <button onclick="addAmount(120)">$120</button>
+    
+    <button onclick="setInputMode('receive')" class="btn-op">收銀</button>
+    <button onclick="calculateChange()" class="btn-op">找零</button>
+    <button onclick="clearAll()" style="background:#666">歸零</button>
+    
+    <button class="btn-save" onclick="saveRecord()">💾 存入月結清單</button>
+</div>
+
+<div class="history">
+    <div style="color:var(--btn-color); font-weight:bold; margin-bottom:5px;">今日收銀紀錄：</div>
+    <div id="historyList"></div>
+</div>
+
+<script>
+    let totalDue = 0;
+    let history = JSON.parse(localStorage.getItem('cashierRecords') || "[]");
+
+    function addAmount(val) {
+        totalDue += val;
+        updateDisplay(totalDue);
+    }
+
+    function updateDisplay(val) {
+        document.getElementById('mainDisplay').innerText = '$' + val;
+    }
+
+    function clearAll() {
+        totalDue = 0;
+        updateDisplay(0);
+    }
+
+    function saveRecord() {
+        if(totalDue === 0) return;
+        const now = new Date();
+        const timeStr = now.getHours() + ":" + now.getMinutes();
+        history.unshift({ time: timeStr, amount: totalDue });
+        localStorage.setItem('cashierRecords', JSON.stringify(history));
+        renderHistory();
+        clearAll();
+        alert("已存入月結清單！");
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('historyList');
+        list.innerHTML = history.slice(0, 5).map(item => `
+            <div class="history-item">
+                <span>🕒 ${item.time}</span>
+                <span style="color:#00ff41">+$${item.amount}</span>
+            </div>
+        `).join('');
+    }
+
+    function calculateChange() {
+        let receive = prompt("輸入收到多少錢？");
+        if (receive) {
+            let change = receive - totalDue;
+            alert("應找零：$" + change);
+        }
+    }
+
+    window.onload = renderHistory;
+</script>
+
+</body>
+</html>
