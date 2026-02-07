@@ -1,162 +1,73 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>警衛室收銀系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收銀系統</title>
     <style>
-        :root {
-            --bg-color: #0a1a12;    /* 更深邃的職人墨綠 */
-            --text-color: #e0e0e0; 
-            --accent-color: #00ff41; /* 螢光綠文字 */
-            --btn-color: #2d5a27;   /* 深森林綠按鈕 */
-        }
-        body {
-            font-family: "Microsoft JhengHei", sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0; padding: 15px;
-            display: flex; flex-direction: column;
-            height: 100vh; box-sizing: border-box;
-        }
-        .header { text-align: center; border-bottom: 1px solid var(--accent-color); margin-bottom: 15px; padding-bottom: 5px; }
-        
-        /* 輸入區域 */
-        .input-box { background: #122b1e; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #2d5a27; }
-        input { 
-            width: 100%; background: none; border: none; border-bottom: 1px solid var(--accent-color); 
-            color: var(--accent-color); font-size: 18px; padding: 5px 0; margin-bottom: 10px; outline: none;
-        }
-        
-        .display-area { text-align: right; margin: 10px 0; }
-        .amount { font-size: 48px; font-weight: bold; color: var(--accent-color); text-shadow: 0 0 10px rgba(0,255,65,0.3); }
-        
-        /* 左手大按鈕 */
-        .keypad { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        button { 
-            background: var(--btn-color); color: white; border: none; border-radius: 12px; 
-            padding: 20px; font-size: 20px; font-weight: bold; cursor: pointer;
-        }
-        button:active { filter: brightness(1.5); }
-        .btn-add { background: #3d8c40; font-size: 24px; }
-        .btn-save { background: #b33939; grid-column: span 2; }
-        
-        /* 歷史清單 */
-        /* 這裡負責讓紀錄區可以下拉滑動 */
-    .history {
-        flex: 1;           /* 讓它自動佔滿剩下的空間 */
-        overflow-y: auto;  /* 開啟垂直滑動功能 */
-        background: rgba(0,0,0,0.5);
-        border-radius: 10px;
-        padding: 12px;
-        margin-top: 10px;
-        border: 1px solid var(--btn-color);
-        -webkit-overflow-scrolling: touch; /* 讓手機滑起來更順 */
-    }
-
-    /* 這是為了確保手機畫面不會亂跳 */
-    body {
-        font-family: "Microsoft JhengHei", sans-serif;
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        margin: 0; padding: 15px;
-        display: flex; flex-direction: column;
-        height: 100vh;      /* 鎖定畫面高度等於螢幕高度 */
-        box-sizing: border-box;
-        overflow: hidden;   /* 讓整個網頁不要亂動，只有紀錄區可以動 */
-    }
+        /* 改用最保險的配色：綠底黑字 */
+        body { background: #008000; color: #000; font-family: sans-serif; padding: 15px; margin: 0; }
+        .box { background: #fff; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+        input { width: 90%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; font-size: 18px; }
+        .big-btn { width: 100%; padding: 20px; background: #000; color: #fff; border: none; border-radius: 10px; font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+        .list { background: #e0f0e0; padding: 10px; border-radius: 8px; min-height: 100px; }
+        .item { border-bottom: 1px solid #999; padding: 8px 0; display: flex; justify-content: space-between; }
+    </style>
 </head>
 <body>
 
-<div class="header">
-    <h3 style="color:var(--accent-color); margin:0;">🛡️ 警衛室收銀系統 v2.0</h3>
-</div>
+    <h2 style="text-align:center; color:white;">🛡️ 警衛收銀系統</h2>
 
-<div class="input-box">
-    <div style="font-size:12px; color:#888; margin-bottom:5px;">📅 日期與廠商登記：</div>
-    <input type="date" id="recDate">
-    <input type="text" id="vendorName" placeholder="請輸入廠商名稱 (例如: 阿土伯)" onclick="this.select()">
-</div>
+    <div class="box">
+        <input type="date" id="d">
+        <input type="text" id="v" placeholder="廠商名稱">
+    </div>
 
-<div class="display-area">
-    <div style="font-size:14px; color:#aaa;">應收總額 ($65/餐)</div>
-    <div id="mainDisplay" class="amount">$0</div>
-</div>
+    <div style="text-align:center; background:#000; color:#0f0; padding:15px; border-radius:10px; margin-bottom:10px;">
+        <div style="font-size:14px;">應收金額 ($65/餐)</div>
+        <div id="m" style="font-size:40px; font-weight:bold;">$0</div>
+    </div>
 
-<div class="keypad">
-    <button class="btn-add" onclick="addMeal()">➕ 增加一餐</button>
-    <button onclick="clearCurrent()">🔄 清除重算</button>
-    <button onclick="calculateChange()">💸 找零計算</button>
-    <button onclick="clearHistory()" style="background:#444; font-size:14px;">🗑️ 清空清單</button>
-    <button class="btn-save" onclick="saveToCloud()">💾 存入月結報表</button>
-</div>
+    <button class="big-btn" onclick="a()">➕ 增加一餐</button>
+    <button style="width:48%; padding:15px; background:#fff;" onclick="c()">🔄 重算</button>
+    <button style="width:48%; padding:15px; background:#f00; color:#fff;" onclick="s()">💾 存檔</button>
 
-<div class="history">
-    <div style="color:var(--accent-color); font-weight:bold; font-size:14px; margin-bottom:8px;">本月結帳清單：</div>
-    <div id="logList"></div>
-</div>
+    <div class="list">
+        <div style="font-weight:bold; border-bottom:2px solid #000; margin-bottom:5px;">本月紀錄：</div>
+        <div id="l"></div>
+    </div>
 
 <script>
-    const MEAL_PRICE = 65;
-    let currentTotal = 0;
-    let records = JSON.parse(localStorage.getItem('guardCashier') || "[]");
+    let t = 0;
+    let r = JSON.parse(localStorage.getItem('gc') || "[]");
 
-    // 初始化日期
     window.onload = function() {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('recDate').value = today;
-        renderLogs();
+        document.getElementById('d').value = new Date().toISOString().split('T')[0];
+        rl();
     };
 
-    function addMeal() {
-        currentTotal += MEAL_PRICE;
-        document.getElementById('mainDisplay').innerText = '$' + currentTotal;
+    function a() { t += 65; document.getElementById('m').innerText = '$' + t; }
+    function c() { t = 0; document.getElementById('m').innerText = '$0'; }
+
+    function s() {
+        const vendor = document.getElementById('v').value || "未命名";
+        const date = document.getElementById('d').value;
+        if(t === 0) return;
+        r.unshift({ d: date, v: vendor, t: t });
+        localStorage.setItem('gc', JSON.stringify(r));
+        alert("存好了！");
+        c(); document.getElementById('v').value = "";
+        rl();
     }
 
-    function clearCurrent() {
-        currentTotal = 0;
-        document.getElementById('mainDisplay').innerText = '$0';
-    }
-
-    function calculateChange() {
-        let pay = prompt("收到多少錢？");
-        if(pay) {
-            alert("應找零：$" + (pay - currentTotal));
-        }
-    }
-
-    function saveToCloud() {
-        const vendor = document.getElementById('vendorName').value || "未命名廠商";
-        const date = document.getElementById('recDate').value;
-        if(currentTotal === 0) { alert("請先增加餐數！"); return; }
-
-        records.unshift({ date, vendor, total: currentTotal });
-        localStorage.setItem('guardCashier', JSON.stringify(records));
-        
-        alert(vendor + " 紀錄存檔成功！");
-        clearCurrent();
-        document.getElementById('vendorName').value = "";
-        renderLogs();
-    }
-
-    function renderLogs() {
-        const list = document.getElementById('logList');
-        list.innerHTML = records.map(r => `
-            <div class="history-item">
-                <span>${r.date.substring(5)} | <b>${r.vendor}</b></span>
-                <span style="color:var(--accent-color)">$${r.total}</span>
+    function rl() {
+        document.getElementById('l').innerHTML = r.map(i => `
+            <div class="item">
+                <span>${i.d.substring(5)} ${i.v}</span>
+                <span style="font-weight:bold;">$${i.t}</span>
             </div>
         `).join('');
     }
-
-    function clearHistory() {
-        if(confirm("確定要清空本月所有紀錄嗎？")) {
-            records = [];
-            localStorage.removeItem('guardCashier');
-            renderLogs();
-        }
-    }
 </script>
-
 </body>
 </html>
