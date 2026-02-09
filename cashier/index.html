@@ -3,110 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>警衛室收銀系統-專業歸位版</title>
+    <title>警衛室-廠商餐費電子表</title>
     <style>
-        body { font-family: sans-serif; background-color: #e8f5e9; padding: 15px; color: #000; margin: 0; } /* 綠底黑字 */
-        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        h2 { color: #2e7d32; font-size: 1.1rem; border-left: 5px solid #2e7d32; padding-left: 10px; }
+        body { font-family: sans-serif; background-color: #f8f9fa; padding: 10px; margin: 0; }
+        .card { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        h2 { font-size: 1.2rem; text-align: center; color: #333; margin-bottom: 15px; border-bottom: 2px solid #333; padding-bottom: 5px; }
         
-        /* 分格排列 */
-        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-        
-        .full-width-btn { width: 100%; padding: 15px; background-color: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; }
-        .list-header { display: grid; grid-template-columns: 2fr 3fr 2fr 1fr; font-weight: bold; border-bottom: 2px solid #2e7d32; padding-bottom: 5px; margin-bottom: 10px; }
-        .list-item { display: grid; grid-template-columns: 2fr 3fr 2fr 1fr; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px; }
-        
-        .edit-btn { background: none; color: #1976d2; border: none; cursor: pointer; font-size: 18px; text-align: center; }
-        .total-box { background: #c8e6c9; padding: 15px; border-radius: 8px; text-align: center; font-size: 22px; font-weight: bold; color: #1b5e20; }
+        /* 模擬紙本表格的輸入區 */
+        .input-box { display: grid; grid-template-columns: 1.5fr 2fr 1.5fr; gap: 8px; margin-bottom: 10px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #999; border-radius: 4px; font-size: 16px; }
+        .add-btn { width: 100%; padding: 12px; background-color: #444; color: white; border: none; border-radius: 4px; font-size: 18px; font-weight: bold; }
+
+        /* 核心表格區 */
+        .table-container { overflow-x: auto; border: 1px solid #333; }
+        table { width: 100%; border-collapse: collapse; background: white; min-width: 400px; }
+        th, td { border: 1px solid #333; padding: 8px; text-align: center; font-size: 14px; }
+        th { background-color: #f0f0f0; }
+        .weekend { background-color: #fff9c4; } /* 模擬紙本的黃色假日格 */
+        .total-row { background-color: #e0e0e0; font-weight: bold; }
+        .edit-btn { color: #007bff; border: none; background: none; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2>💰 警衛室收銀登記</h2>
-        <div class="input-grid">
-            <div>
-                <label style="font-size: 12px;">日期</label>
-                <input type="date" id="entryDate">
-            </div>
-            <div>
-                <label style="font-size: 12px;">廠商名稱</label>
-                <input type="text" id="vendorName" placeholder="如: 甲廠商">
-            </div>
+        <h2>廠商餐費登記表 (數位版)</h2>
+        <div class="input-box">
+            <input type="date" id="entryDate">
+            <select id="vendorName">
+                <option value="俊丰">俊丰</option>
+                <option value="祥箐">祥箐</option>
+                <option value="自定義">＋其他廠商</option>
+            </select>
+            <input type="number" id="quantity" value="1" placeholder="份數">
         </div>
-        <div class="input-grid">
-            <div>
-                <label style="font-size: 12px;">單價</label>
-                <input type="number" id="unitPrice" value="65">
-            </div>
-            <div>
-                <label style="font-size: 12px;">數量</label>
-                <input type="number" id="quantity" value="1">
-            </div>
-        </div>
-        <button class="full-width-btn" onclick="addEntry()">立即登記</button>
+        <button class="add-btn" onclick="addEntry()">寫入表格 ✍️</button>
     </div>
 
-    <div class="card">
-        <h2>📋 收銀紀錄明細</h2>
-        <div class="list-header">
-            <div>日期</div><div>廠商</div><div>金額</div><div>✏️</div>
+    <div class="card" style="padding: 5px;">
+        <div class="table-container">
+            <table id="mainTable">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">日期</th>
+                        <th>廠商</th>
+                        <th>金額 ($65/份)</th>
+                        <th style="width: 15%;">修改</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    </tbody>
+                <tfoot>
+                    <tr class="total-row">
+                        <td colspan="2">本月小計：</td>
+                        <td id="grandTotal">$ 0</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
-        <div id="entryList">
-            </div>
-    </div>
-
-    <div class="card">
-        <h2>📊 月底自動結算</h2>
-        <div class="total-box" id="totalAmount">本月總計: $ 0</div>
     </div>
 
     <script>
-        // 設定今天日期
+        // 初始化日期
         document.getElementById('entryDate').valueAsDate = new Date();
-        
-        let entries = [];
+        let data = [];
 
         function addEntry() {
             let date = document.getElementById('entryDate').value;
             let vendor = document.getElementById('vendorName').value;
-            let price = parseInt(document.getElementById('unitPrice').value) || 0;
             let qty = parseInt(document.getElementById('quantity').value) || 0;
-            
-            if(vendor && price > 0 && qty > 0) {
-                entries.push({ date: date, vendor: vendor, total: price * qty });
-                updateUI();
-                document.getElementById('vendorName').value = '';
-                document.getElementById('quantity').value = '1';
+            let total = qty * 65;
+
+            if (qty > 0) {
+                data.push({ date, vendor, total });
+                renderTable();
+                document.getElementById('quantity').value = "1";
             }
         }
 
-        function editEntry(index) {
-            let newTotal = prompt("修改「" + entries[index].vendor + "」的金額：", entries[index].total);
-            if (newTotal !== null && !isNaN(newTotal) && newTotal !== "") {
-                entries[index].total = parseInt(newTotal);
-                updateUI();
-            }
-        }
+        function renderTable() {
+            let body = document.getElementById('tableBody');
+            let grandTotal = 0;
+            body.innerHTML = "";
 
-        function updateUI() {
-            let listHtml = '';
-            let totalSum = 0;
-            entries.forEach((item, index) => {
-                totalSum += item.total;
-                // 格式化日期只顯示月/日
-                let displayDate = item.date.split('-').slice(1).join('/');
-                listHtml += `
-                    <div class="list-item">
-                        <div>${displayDate}</div>
-                        <div>${item.vendor}</div>
-                        <div>$${item.total.toLocaleString()}</div>
-                        <button class="edit-btn" onclick="editEntry(${index})">✏️</button>
-                    </div>`;
+            data.forEach((item, index) => {
+                grandTotal += item.total;
+                let row = body.insertRow();
+                // 判斷是否為週末 (模擬紙本黃色標記)
+                let day = new Date(item.date).getDay();
+                if (day === 0 || day === 6) row.className = "weekend";
+
+                row.insertCell(0).innerText = item.date.split('-').slice(1).join('/');
+                row.insertCell(1).innerText = item.vendor;
+                row.insertCell(2).innerText = "$" + item.total;
+                let editCell = row.insertCell(3);
+                editCell.innerHTML = `<button class="edit-btn" onclick="editItem(${index})">✏️</button>`;
             });
-            document.getElementById('entryList').innerHTML = listHtml;
-            document.getElementById('totalAmount').innerText = "本月總計: $ " + totalSum.toLocaleString();
+
+            document.getElementById('grandTotal').innerText = "$" + grandTotal.toLocaleString();
+        }
+
+        function editItem(index) {
+            let newQty = prompt("請修改份數：", data[index].total / 65);
+            if (newQty && !isNaN(newQty)) {
+                data[index].total = parseInt(newQty) * 65;
+                renderTable();
+            }
         }
     </script>
 </body>
