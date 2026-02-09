@@ -3,160 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>精銳院長全能帳本</title>
+    <title>薪資生活小幫手-精確版</title>
     <style>
-        body { font-family: "Microsoft JhengHei", sans-serif; background-color: #f4f4f4; padding: 15px; margin: 0; }
-        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        h2 { text-align: center; color: #333; font-size: 1.2rem; border-bottom: 2px solid #333; padding-bottom: 8px; margin-bottom: 15px; }
-        .input-box { display: grid; grid-template-columns: 1.2fr 1.5fr 1fr; gap: 8px; margin-bottom: 10px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; background: #fafafa; }
-        .btn-write { width: 100%; padding: 15px; background-color: #2c3e50; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
-        .table-container { width: 100%; border: 1.5px solid #333; border-radius: 4px; overflow: hidden; background: white; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #333; padding: 10px 5px; text-align: center; font-size: 14px; }
-        th { background-color: #e0e0e0; font-weight: bold; }
-        .weekend { background-color: #fff9c4; }
-        .vendor-total { background-color: #f1f8e9; color: #2e7d32; font-weight: bold; font-size: 13px; }
-        .total-row { background-color: #34495e; color: white; font-weight: bold; font-size: 16px; }
-        .edit-btn { background: none; border: none; color: #2980b9; cursor: pointer; font-size: 18px; padding: 0; }
-        .clear-btn { width: 100%; margin-top: 10px; padding: 8px; background: none; color: #999; border: 1px solid #ccc; border-radius: 6px; font-size: 12px; }
+        body { font-family: sans-serif; background-color: #fdfdfd; padding: 15px; margin: 0; }
+        .container { max-width: 500px; margin: auto; background: white; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); padding: 20px; border-top: 5px solid #f1c40f; }
+        h1 { text-align: center; color: #2c3e50; font-size: 1.5rem; }
+        .section-title { background: #f0f2f5; padding: 10px; border-radius: 10px; font-weight: bold; margin: 20px 0 10px 0; display: flex; align-items: center; border-left: 5px solid #e74c3c; }
+        .input-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        label { font-size: 15px; color: #34495e; flex: 1; }
+        input { width: 120px; padding: 10px; border: 1px solid #ddd; border-radius: 10px; text-align: right; font-size: 16px; background: #fafafa; }
+        .btn-calc { width: 100%; padding: 15px; background-color: #34495e; color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .result-card { margin-top: 20px; padding: 20px; border-radius: 15px; text-align: center; }
+        .income-bg { background-color: #e8f5e9; color: #2e7d32; }
+        .final-result { font-size: 28px; font-weight: bold; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2>精銳院長全能帳本</h2>
-        <div class="input-box">
-            <input type="date" id="entryDate">
-            <select id="vendorName" onchange="checkType()">
-                <optgroup label="廠商餐費 ($65/份)">
-                    <option value="俊丰">俊丰</option>
-                    <option value="祥箐">祥箐</option>
-                </optgroup>
-                <optgroup label="個人支出 (直接輸入金額)">
-                    <option value="玉山卡費">玉山卡費</option>
-                    <option value="國泰卡費">國泰卡費</option>
-                    <option value="手機費">手機費</option>
-                    <option value="網路費">網路費</option>
-                </optgroup>
-            </select>
-            <input type="number" id="amountInput" value="1" placeholder="份數/金額">
-        </div>
-        <button class="btn-write" onclick="addEntry()">寫入帳本並存檔 ✍️</button>
+<div class="container">
+    <h1>📊 薪資生活小幫手</h1>
+
+    <div class="section-title">💰 收入項目</div>
+    <div class="input-row">
+        <label>實領底薪+加給：</label>
+        <input type="number" id="baseSalary" value="41021" oninput="calculate()">
+    </div>
+    <div class="input-row">
+        <label>加班/獎金：</label>
+        <input type="number" id="bonus" value="0" oninput="calculate()">
     </div>
 
-    <div class="card" style="padding: 5px;">
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 22%;">日期</th>
-                        <th>項目</th>
-                        <th style="width: 25%;">金額</th>
-                        <th style="width: 15%;">✏️</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-                <tfoot id="tableFoot"></tfoot>
-            </table>
-        </div>
-        <button class="clear-btn" onclick="clearAll()">⚠️ 月底對完帳清空全部紀錄</button>
+    <div class="section-title">💸 支出項目 (含卡費)</div>
+    
+    <div class="input-row">
+        <label>🏠 房貸 / 房租：</label>
+        <input type="number" id="rent" value="5000" oninput="calculate()">
+    </div>
+    <div class="input-row">
+        <label>🚗 車貸 / 交通：</label>
+        <input type="number" id="car" value="2300" oninput="calculate()">
+    </div>
+    <div class="input-row">
+        <label>💳 玉山信用卡：</label>
+        <input type="number" id="esun" value="0" placeholder="輸入金額" oninput="calculate()">
+    </div>
+    <div class="input-row">
+        <label>💳 國泰信用卡：</label>
+        <input type="number" id="cathay" value="0" placeholder="輸入金額" oninput="calculate()">
+    </div>
+    <div class="input-row">
+        <label>📱 手機 / 網路費：</label>
+        <input type="number" id="phone" value="0" placeholder="輸入金額" oninput="calculate()">
+    </div>
+    <div class="input-row">
+        <label>🍕 生活固定開銷：</label>
+        <input type="number" id="living" value="10000" oninput="calculate()">
     </div>
 
-    <script>
-        document.getElementById('entryDate').valueAsDate = new Date();
-        let data = JSON.parse(localStorage.getItem('fullAccountData')) || [];
-        sortAndRender();
+    <button class="btn-calc" onclick="calculate()">🚀 結算本月餘額</button>
 
-        function checkType() {
-            const vendor = document.getElementById('vendorName').value;
-            const amountInput = document.getElementById('amountInput');
-            // 如果是餐費，預設份數為 1，否則空白讓使用者填金額
-            if (vendor === "俊丰" || vendor === "祥箐") {
-                amountInput.placeholder = "份數";
-                if(amountInput.value > 50) amountInput.value = 1; 
-            } else {
-                amountInput.placeholder = "輸入金額";
-                amountInput.value = "";
-            }
-        }
+    <div class="result-card income-bg">
+        <div>剩餘夢想基金預估：</div>
+        <div class="final-result" id="finalMoney">$ 23,721</div>
+    </div>
+</div>
 
-        function addEntry() {
-            const date = document.getElementById('entryDate').value;
-            const vendor = document.getElementById('vendorName').value;
-            const val = parseInt(document.getElementById('amountInput').value) || 0;
-            
-            let finalPrice = 0;
-            if (vendor === "俊丰" || vendor === "祥箐") {
-                finalPrice = val * 65;
-            } else {
-                finalPrice = val;
-            }
+<script>
+    function calculate() {
+        // 收入
+        const base = parseFloat(document.getElementById('baseSalary').value) || 0;
+        const bonus = parseFloat(document.getElementById('bonus').value) || 0;
+        
+        // 支出
+        const rent = parseFloat(document.getElementById('rent').value) || 0;
+        const car = parseFloat(document.getElementById('car').value) || 0;
+        const esun = parseFloat(document.getElementById('esun').value) || 0;
+        const cathay = parseFloat(document.getElementById('cathay').value) || 0;
+        const phone = parseFloat(document.getElementById('phone').value) || 0;
+        const living = parseFloat(document.getElementById('living').value) || 0;
 
-            if (finalPrice > 0) {
-                data.push({ date, vendor, price: finalPrice });
-                saveAndRender();
-                document.getElementById('amountInput').value = (vendor === "俊丰" || vendor === "祥箐") ? "1" : "";
-            }
-        }
+        const totalIncome = base + bonus;
+        const totalExpense = rent + car + esun + cathay + phone + living;
+        const remain = totalIncome - totalExpense;
 
-        function saveAndRender() {
-            localStorage.setItem('fullAccountData', JSON.stringify(data));
-            sortAndRender();
-        }
+        document.getElementById('finalMoney').innerText = "$ " + remain.toLocaleString();
+    }
+    // 初始計算一次
+    calculate();
+</script>
 
-        function sortAndRender() {
-            data.sort((a, b) => new Date(a.date) - new Date(b.date));
-            renderTable();
-        }
-
-        function renderTable() {
-            const body = document.getElementById('tableBody');
-            const foot = document.getElementById('tableFoot');
-            let totalSum = 0;
-            let vendorTotals = {};
-
-            body.innerHTML = "";
-            data.forEach((item, index) => {
-                totalSum += item.price;
-                vendorTotals[item.vendor] = (vendorTotals[item.vendor] || 0) + item.price;
-
-                const row = body.insertRow();
-                const day = new Date(item.date).getDay();
-                if (day === 0 || day === 6) row.className = "weekend";
-                row.insertCell(0).innerText = item.date.split('-').slice(1).join('/');
-                row.insertCell(1).innerText = item.vendor;
-                row.insertCell(2).innerText = "$" + item.price.toLocaleString();
-                const editCell = row.insertCell(3);
-                editCell.innerHTML = `<button class="edit-btn" onclick="editItem(${index})">✏️</button>`;
-            });
-
-            let footHtml = "";
-            for (let v in vendorTotals) {
-                footHtml += `<tr class="vendor-total"><td colspan="2">${v}：</td><td colspan="2">$${vendorTotals[v].toLocaleString()}</td></tr>`;
-            }
-            footHtml += `<tr class="total-row"><td colspan="2">本月支出總計：</td><td colspan="2">$${totalSum.toLocaleString()}</td></tr>`;
-            foot.innerHTML = footHtml;
-        }
-
-        function editItem(index) {
-            let newDate = prompt("修改日期 (YYYY-MM-DD)", data[index].date);
-            if (newDate) {
-                let newPrice = prompt(`修改「${data[index].vendor}」的金額/份數金額：`, data[index].price);
-                if (newPrice !== null && !isNaN(newPrice)) {
-                    data[index].date = newDate;
-                    data[index].price = parseInt(newPrice);
-                    saveAndRender();
-                }
-            }
-        }
-
-        function clearAll() {
-            if(confirm("確定要清空所有紀錄嗎？")) {
-                data = [];
-                saveAndRender();
-            }
-        }
-    </script>
 </body>
 </html>
