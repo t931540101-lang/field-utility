@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>薪資生活小幫手-精確版</title>
+    <title>薪資生活小幫手</title>
     <style>
         body { font-family: sans-serif; background-color: #fdfdfd; padding: 15px; margin: 0; }
-        .container { max-width: 500px; margin: auto; background: white; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); padding: 20px; border-top: 5px solid #f1c40f; }
+        .container { max-width: 500px; margin: auto; background: white; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); padding: 20px; border-top: 5px solid #27ae60; }
         h1 { text-align: center; color: #2c3e50; font-size: 1.5rem; }
-        .section-title { background: #f0f2f5; padding: 10px; border-radius: 10px; font-weight: bold; margin: 20px 0 10px 0; display: flex; align-items: center; border-left: 5px solid #e74c3c; }
+        .section-title { background: #f0f2f5; padding: 10px; border-radius: 10px; font-weight: bold; margin: 20px 0 10px 0; display: flex; align-items: center; border-left: 5px solid #27ae60; }
         .input-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
         label { font-size: 15px; color: #34495e; flex: 1; }
         input { width: 120px; padding: 10px; border: 1px solid #ddd; border-radius: 10px; text-align: right; font-size: 16px; background: #fafafa; }
-        .btn-calc { width: 100%; padding: 15px; background-color: #34495e; color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-calc { width: 100%; padding: 15px; background-color: #27ae60; color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .result-card { margin-top: 20px; padding: 20px; border-radius: 15px; text-align: center; }
         .income-bg { background-color: #e8f5e9; color: #2e7d32; }
         .final-result { font-size: 28px; font-weight: bold; margin-top: 5px; }
@@ -29,67 +29,56 @@
         <input type="number" id="baseSalary" value="41021" oninput="calculate()">
     </div>
     <div class="input-row">
-        <label>加班/獎金：</label>
+        <label>加班 / 獎金：</label>
         <input type="number" id="bonus" value="0" oninput="calculate()">
     </div>
 
-    <div class="section-title">💸 支出項目 (含卡費)</div>
+    <div class="section-title">💸 固定支出項目</div>
     
     <div class="input-row">
-        <label>🏠 房貸 / 房租：</label>
+        <label>🏠 房租 / 房貸：</label>
         <input type="number" id="rent" value="5000" oninput="calculate()">
     </div>
     <div class="input-row">
-        <label>🚗 車貸 / 交通：</label>
-        <input type="number" id="car" value="2300" oninput="calculate()">
-    </div>
-    <div class="input-row">
         <label>💳 玉山信用卡：</label>
-        <input type="number" id="esun" value="0" placeholder="輸入金額" oninput="calculate()">
+        <input type="number" id="esun" value="0" oninput="calculate()">
     </div>
     <div class="input-row">
         <label>💳 國泰信用卡：</label>
-        <input type="number" id="cathay" value="0" placeholder="輸入金額" oninput="calculate()">
+        <input type="number" id="cathay" value="0" oninput="calculate()">
     </div>
     <div class="input-row">
         <label>📱 手機 / 網路費：</label>
-        <input type="number" id="phone" value="0" placeholder="輸入金額" oninput="calculate()">
+        <input type="number" id="phone" value="0" oninput="calculate()">
     </div>
     <div class="input-row">
-        <label>🍕 生活固定開銷：</label>
+        <label>🍕 生活雜支預扣：</label>
         <input type="number" id="living" value="10000" oninput="calculate()">
     </div>
 
     <button class="btn-calc" onclick="calculate()">🚀 結算本月餘額</button>
 
     <div class="result-card income-bg">
-        <div>剩餘夢想基金預估：</div>
-        <div class="final-result" id="finalMoney">$ 23,721</div>
+        <div>預估剩餘夢想基金：</div>
+        <div class="final-result" id="finalMoney">$ 0</div>
     </div>
 </div>
 
 <script>
     function calculate() {
-        // 收入
         const base = parseFloat(document.getElementById('baseSalary').value) || 0;
         const bonus = parseFloat(document.getElementById('bonus').value) || 0;
         
-        // 支出
         const rent = parseFloat(document.getElementById('rent').value) || 0;
-        const car = parseFloat(document.getElementById('car').value) || 0;
         const esun = parseFloat(document.getElementById('esun').value) || 0;
         const cathay = parseFloat(document.getElementById('cathay').value) || 0;
         const phone = parseFloat(document.getElementById('phone').value) || 0;
         const living = parseFloat(document.getElementById('living').value) || 0;
 
-        const totalIncome = base + bonus;
-        const totalExpense = rent + car + esun + cathay + phone + living;
-        const remain = totalIncome - totalExpense;
-
+        const remain = (base + bonus) - (rent + esun + cathay + phone + living);
         document.getElementById('finalMoney').innerText = "$ " + remain.toLocaleString();
     }
-    // 初始計算一次
-    calculate();
+    calculate(); // 打開就先算一次
 </script>
 
 </body>
