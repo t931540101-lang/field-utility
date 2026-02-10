@@ -3,18 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>婆婆媽媽理財記事本-極致版</title>
+    <title>婆婆媽媽理財記事本-自訂框架版</title>
     <style>
         body { font-family: "Microsoft JhengHei", sans-serif; background-color: #fff9f0; padding: 15px; margin: 0; }
         .container { max-width: 500px; margin: auto; background: white; border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); padding: 25px; border-top: 8px solid #f39c12; }
         h1 { text-align: center; color: #d35400; font-size: 1.5rem; margin-bottom: 20px; }
-        .section-box { background: #fff3e0; padding: 12px; border-radius: 12px; font-weight: bold; color: #e67e22; margin: 15px 0 10px 0; border-left: 5px solid #d35400; }
-        .input-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
-        label { font-size: 15px; color: #5d4037; flex: 1; }
-        input { width: 120px; padding: 10px; border: 1.5px solid #ffcc80; border-radius: 10px; text-align: right; font-size: 18px; color: #d35400; }
+        .section-box { background: #fff3e0; padding: 12px; border-radius: 12px; font-weight: bold; color: #e67e22; margin: 15px 0 10px 0; border-left: 5px solid #d35400; display: flex; justify-content: space-between; align-items: center; }
+        .input-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .label-group { flex: 1; display: flex; align-items: center; cursor: pointer; }
+        .label-group:hover { color: #d35400; }
+        .edit-icon { font-size: 12px; margin-left: 5px; color: #999; }
+        input { width: 100px; padding: 8px; border: 1.5px solid #ffcc80; border-radius: 10px; text-align: right; font-size: 16px; color: #d35400; }
         .btn-calc { width: 100%; padding: 18px; background: linear-gradient(135deg, #ff9f43, #ee5253); color: white; border: none; border-radius: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .btn-add { font-size: 14px; background: #d35400; color: white; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; }
         .result-box { margin-top: 25px; padding: 20px; border-radius: 20px; background: #fff8e1; border: 2px dashed #f39c12; text-align: center; }
         .total-amount { font-size: 32px; font-weight: bold; color: #e67e22; }
+        .delete-btn { color: #ff4d4d; margin-left: 10px; cursor: pointer; font-size: 18px; border: none; background: none; }
     </style>
 </head>
 <body>
@@ -28,36 +32,13 @@
         <input type="number" id="income" value="40000" oninput="calculate()">
     </div>
 
-    <div class="section-box">🥬 撐起一個家的開銷</div>
+    <div class="section-box">
+        <span>🥬 開銷項目 (點文字可改名)</span>
+        <button class="btn-add" onclick="addNewItem()">＋新增項目</button>
+    </div>
     
-    <div class="input-item">
-        <label>🏠 房租 / 房貸 / 稅金：</label>
-        <input type="number" id="rent" value="0" oninput="calculate()">
-    </div>
-    <div class="input-item">
-        <label>🥗 每日買菜 / 伙食：</label>
-        <input type="number" id="food" value="0" oninput="calculate()">
-    </div>
-    <div class="input-item">
-        <label>⚡ 水電 / 瓦斯 / 健保：</label>
-        <input type="number" id="utility" value="0" oninput="calculate()">
-    </div>
-    <div class="input-item">
-        <label>🙏 拜拜 / 人情紅白帖：</label>
-        <input type="number" id="social" value="0" oninput="calculate()">
-    </div>
-    <div class="input-item">
-        <label>👴 保健 / 醫療備用金：</label>
-        <input type="number" id="health" value="0" oninput="calculate()">
-    </div>
-    <div class="input-item">
-        <label>🛠️ 家用維修 / 雜項：</label>
-        <input type="number" id="other" value="0" oninput="calculate()">
-    </div>
-    <div class="input-item">
-        <label>💖 疼愛孩子 / 零用紅包：</label>
-        <input type="number" id="love" value="0" oninput="calculate()">
-    </div>
+    <div id="expenseList">
+        </div>
 
     <button class="btn-calc" onclick="calculate()">💖 算算剩下多少老本</button>
 
@@ -68,20 +49,74 @@
 </div>
 
 <script>
+    // 預設項目，如果保險箱有資料就用保險箱的
+    let expenses = JSON.parse(localStorage.getItem('myExpenses')) || [
+        { name: "🏠 房租 / 房貸", value: 0 },
+        { name: "🥗 每日買菜 / 伙食", value: 0 },
+        { name: "⚡ 水電 / 瓦斯", value: 0 },
+        { name: "🙏 拜拜 / 人情紅白", value: 0 },
+        { name: "👴 保健 / 醫療備用", value: 0 },
+        { name: "🛠️ 家用維修 / 雜項", value: 0 },
+        { name: "💖 疼愛孩子 / 零用", value: 0 }
+    ];
+
+    function renderExpenses() {
+        const list = document.getElementById('expenseList');
+        list.innerHTML = "";
+        expenses.forEach((item, index) => {
+            list.innerHTML += `
+                <div class="input-item">
+                    <div class="label-group" onclick="editName(${index})">
+                        <span>${item.name}</span>
+                        <span class="edit-icon">✏️</span>
+                    </div>
+                    <input type="number" value="${item.value}" oninput="updateValue(${index}, this.value)">
+                    <button class="delete-btn" onclick="deleteItem(${index})">×</button>
+                </div>
+            `;
+        });
+        calculate();
+    }
+
+    function updateValue(index, val) {
+        expenses[index].value = parseFloat(val) || 0;
+        localStorage.setItem('myExpenses', JSON.stringify(expenses));
+        calculate();
+    }
+
+    function editName(index) {
+        const newName = prompt("請輸入項目名稱：", expenses[index].name);
+        if (newName) {
+            expenses[index].name = newName;
+            localStorage.setItem('myExpenses', JSON.stringify(expenses));
+            renderExpenses();
+        }
+    }
+
+    function addNewItem() {
+        expenses.push({ name: "🆕 新項目", value: 0 });
+        renderExpenses();
+    }
+
+    function deleteItem(index) {
+        if(confirm("確定要刪除這項嗎？")) {
+            expenses.splice(index, 1);
+            localStorage.setItem('myExpenses', JSON.stringify(expenses));
+            renderExpenses();
+        }
+    }
+
     function calculate() {
         const inc = parseFloat(document.getElementById('income').value) || 0;
-        const rent = parseFloat(document.getElementById('rent').value) || 0;
-        const food = parseFloat(document.getElementById('food').value) || 0;
-        const utility = parseFloat(document.getElementById('utility').value) || 0;
-        const social = parseFloat(document.getElementById('social').value) || 0;
-        const health = parseFloat(document.getElementById('health').value) || 0;
-        const other = parseFloat(document.getElementById('other').value) || 0;
-        const love = parseFloat(document.getElementById('love').value) || 0;
-
-        const remain = inc - (rent + food + utility + social + health + other + love);
+        let totalExpense = 0;
+        expenses.forEach(item => totalExpense += item.value);
+        
+        const remain = inc - totalExpense;
         document.getElementById('finalMoney').innerText = "$ " + remain.toLocaleString();
     }
-    calculate();
+
+    // 初始化畫面
+    renderExpenses();
 </script>
 
 </body>
