@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RADAR_COMM_V4</title>
+    <title>MDC1200_RADAR</title>
     <style>
         body {
             background-color: #050a05;
@@ -19,8 +19,8 @@
         }
         .radar-container {
             position: relative;
-            width: 300px;
-            height: 300px;
+            width: 280px;
+            height: 280px;
             border: 2px solid #0f0;
             border-radius: 50%;
             background: radial-gradient(circle, rgba(0, 255, 0, 0.1) 0%, rgba(0, 0, 0, 1) 80%);
@@ -29,60 +29,57 @@
         .scanner {
             position: absolute;
             top: 50%; left: 50%;
-            width: 150px;
-            height: 150px;
+            width: 140px;
+            height: 140px;
             background: conic-gradient(from 0deg, rgba(0, 255, 0, 0.5) 0%, transparent 25%);
             border-radius: 100% 0 0 0;
             transform-origin: top left;
-            animation: scan 4s linear infinite;
+            animation: scan 3s linear infinite;
         }
         @keyframes scan { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .status-panel { margin-top: 30px; text-align: center; }
-        .hint { font-size: 14px; color: #ff0; margin-top: 20px; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
+        .mdc-btn {
+            background: #060;
+            color: #fff;
+            border: 1px solid #0f0;
+            padding: 10px 20px;
+            font-family: 'Courier New';
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 10px #0f0;
+            border-radius: 5px;
+        }
+        .mdc-btn:active { background: #0a0; }
     </style>
 </head>
-<body onclick="playChirp()">
+<body>
 
     <div class="radar-container">
         <div class="scanner"></div>
     </div>
 
     <div class="status-panel">
-        <div style="font-size: 18px; font-weight: bold;">RADAR ACTIVE</div>
-        <div id="info" style="font-size: 12px; margin-top: 10px;">> COMMS: STANDBY</div>
-        <div class="hint" id="hint">點擊螢幕解鎖對講機音效</div>
+        <div style="font-size: 16px; margin-bottom: 20px;">SYSTEM: MDC 1200 READY</div>
+        <button class="mdc-btn" onclick="playMDC()">TRANSMIT ID</button>
+        <div id="info" style="font-size: 12px; margin-top: 20px; color: #aaa;">> WAITING FOR PTT...</div>
     </div>
 
     <script>
-        // 現場合成摩托羅拉「嘟嚕嚕」音效
-        function playChirp() {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            const audioCtx = new AudioContext();
+        // 直接引用正宗 MDC 1200 音效 (這是一個經典的撥號感數位音)
+        const mdcAudio = new Audio('https://bigsoundbank.com/UPLOAD/mp3/1908.mp3');
+
+        function playMDC() {
+            // 重播設定，讓它每次點都能立刻響
+            mdcAudio.currentTime = 0;
+            mdcAudio.play();
             
-            // 建立三段不同頻率的聲音來合成「嘟嚕嚕」
-            const freqs = [880, 1046, 1318]; 
-            const startTime = audioCtx.currentTime;
-
-            freqs.forEach((f, i) => {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                
-                osc.type = 'square'; // 方波更有機械感
-                osc.frequency.value = f;
-                
-                gain.gain.setValueAtTime(0.1, startTime + (i * 0.05));
-                gain.gain.exponentialRampToValueAtTime(0.01, startTime + (i * 0.05) + 0.1);
-                
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                
-                osc.start(startTime + (i * 0.05));
-                osc.stop(startTime + (i * 0.05) + 0.1);
-            });
-
-            document.getElementById('info').innerHTML = "> COMMS: ONLINE<br>> SOURCE: MOTOROLA_P25";
-            document.getElementById('hint').style.display = 'none';
+            const info = document.getElementById('info');
+            info.innerHTML = "> MDC1200: [ID_7485] SENT<br>> STATUS: ONLINE";
+            info.style.color = "#0f0";
+            
+            setTimeout(() => {
+                info.style.color = "#aaa";
+            }, 1000);
         }
     </script>
 </body>
