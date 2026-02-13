@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TERMINAL_OVERRIDE</title>
+    <style>
+        body {
+            background-color: black;
+            color: #0f0; /* 經典駭客綠 */
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            text-shadow: 0 0 5px #0f0;
+        }
+        #terminal {
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background: #0f0;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        .system-msg { color: #fff; font-weight: bold; }
+        .danger { color: #f00; text-shadow: 0 0 5px #f00; }
+    </style>
+</head>
+<body>
+    <div id="terminal"></div>
+    <span class="cursor"></span>
+
+    <script>
+        const logs = [
+            "> INITIALIZING SYSTEM... [OK]",
+            "> CONNECTING TO LOS SANTOS SATELLITE... [OK]",
+            "> BYPASSING FIRESTALL... 15%... 48%... 100%",
+            "> ACCESSING ENCRYPTED DATABASE...",
+            "> [SYSTEM MESSAGE]: 歡迎回來，班長小黑哥。",
+            "> 目標定位：總機防線 - 已鎖定。",
+            "> 狀態：240G 戰機封存中，等待年後重啟...",
+            "> 正在監控所有包裹路徑...",
+            "> 駭客協定已啟動。世界就在妳手中。",
+            "---------------------------------------",
+            "> 正在掃描附近所有排線... 警告：排線過細！",
+            "> 建議：立即前往休息模式。"
+        ];
+
+        let line = 0;
+        let charIndex = 0;
+        const terminal = document.getElementById('terminal');
+
+        function typeLog() {
+            if (line < logs.length) {
+                if (charIndex < logs[line].length) {
+                    terminal.innerHTML += logs[line][charIndex];
+                    charIndex++;
+                    setTimeout(typeLog, 30); // 打字速度
+                } else {
+                    terminal.innerHTML += "<br>";
+                    line++;
+                    charIndex = 0;
+                    setTimeout(typeLog, 500); // 換行停頓
+                }
+            }
+        }
+        window.onload = typeLog;
+    </script>
+</body>
+</html>
