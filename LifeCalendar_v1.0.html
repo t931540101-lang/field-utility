@@ -4,37 +4,44 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>班長排班神器 V4.6</title>
+    <title>班長排班神器 V4.7</title>
     <style>
         :root { --bg-color: #ffffff; --line-color: #e0e0e0; --red-focus: #d32f2f; --theme: #2e5a44; }
-        body { margin: 0; font-family: sans-serif; background: #f5f5f5; -webkit-tap-highlight-color: transparent; }
-        .calendar-box { max-width: 500px; margin: 0 auto; background: white; min-height: 100vh; padding-bottom: 100px; }
-        header { background: var(--theme); color: white; padding: 20px 10px; text-align: center; position: sticky; top: 0; z-index: 100; }
+        body { margin: 0; font-family: sans-serif; background: #f5f5f5; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        .calendar-box { max-width: 500px; margin: 0 auto; background: white; min-height: 100vh; padding-bottom: 120px; }
+        header { background: var(--theme); color: white; padding: 15px 10px; text-align: center; position: sticky; top: 0; z-index: 100; }
         .header-nav { display: flex; justify-content: space-between; align-items: center; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid var(--line-color); }
-        .weekday { text-align: center; padding: 12px 0; color: #555; font-size: 14px; background: #fafafa; font-weight: bold; border-bottom: 1px solid var(--line-color); }
-        .cell { min-height: 140px; border-right: 1px solid var(--line-color); border-bottom: 1px solid var(--line-color); position: relative; padding: 5px 2px; cursor: pointer; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
-        .day-num { font-size: 1.3rem; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid var(--line-color); width: 100%; }
+        .weekday { text-align: center; padding: 10px 0; color: #555; font-size: 13px; background: #fafafa; font-weight: bold; border-bottom: 1px solid var(--line-color); }
+        .cell { min-height: 130px; border-right: 1px solid var(--line-color); border-bottom: 1px solid var(--line-color); position: relative; padding: 4px 1px; cursor: pointer; display: flex; flex-direction: column; background: #fff; overflow: hidden; box-sizing: border-box; }
+        .day-num { font-size: 1.2rem; font-weight: bold; margin-left: 2px; }
         
-        /* 核心修正：字體不准換行，且縮小間距 */
+        /* 核心修正：使用 vw 單位讓字體隨螢幕寬度自動縮放，保證不切邊 */
         .memo-text { 
-            font-size: 1.1rem; 
+            font-size: 4.2vw; /* 隨螢幕寬度縮放 */
+            max-font-size: 18px; /* 電腦版不會無限大 */
             color: var(--theme); 
             font-weight: 900; 
             text-align: center; 
             margin: auto 0;
-            white-space: nowrap; /* 強制不換行 */
-            letter-spacing: -1px; /* 稍微縮小字距讓它擠進去 */
+            white-space: nowrap; 
+            letter-spacing: -1.5px; /* 進一步縮小字距 */
             width: 100%;
+            display: block;
+        }
+
+        /* 針對桌機/大螢幕的調整 */
+        @media (min-width: 500px) {
+            .memo-text { font-size: 1.2rem; letter-spacing: -0.5px; }
         }
         
-        .today { box-shadow: inset 0 0 0 5px var(--red-focus); }
+        .today { box-shadow: inset 0 0 0 4px var(--red-focus); }
         .done::after { content: ""; position: absolute; top: 30%; left: -5%; width: 110%; height: 5px; background: rgba(211, 47, 47, 0.7); transform: rotate(10deg); pointer-events: none; }
 
-        /* 印章工具列 */
-        .toolbar { position: fixed; bottom: 0; left: 0; width: 100%; background: #eee; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 200; border-top: 1px solid #ccc; }
-        .stamp-btn { padding: 12px 8px; background: white; border-radius: 8px; font-weight: bold; border: 2px solid #ccc; font-size: 14px; min-width: 60px; text-align: center; }
-        .active-stamp { border-color: var(--theme); background: var(--theme); color: white; }
+        /* 工具列美化 */
+        .toolbar { position: fixed; bottom: 0; left: 0; width: 100%; background: #f8f8f8; display: flex; justify-content: space-around; padding: 12px 0; box-shadow: 0 -3px 15px rgba(0,0,0,0.1); z-index: 200; border-top: 1px solid #ddd; }
+        .stamp-btn { padding: 10px 5px; background: white; border-radius: 10px; font-weight: bold; border: 1.5px solid #ccc; font-size: 13px; width: 22%; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .active-stamp { border-color: var(--theme); background: var(--theme); color: white; box-shadow: 0 0 8px rgba(46,90,68,0.4); }
     </style>
 </head>
 <body>
@@ -42,9 +49,9 @@
 <div class="calendar-box">
     <header>
         <div class="header-nav">
-            <div onclick="changeMonth(-1)" style="font-size:30px; width:50px; cursor:pointer;">❮</div>
-            <div id="calendar-title" style="font-size: 24px; font-weight: bold;">2026年 3月</div>
-            <div onclick="changeMonth(1)" style="font-size:30px; width:50px; cursor:pointer;">❯</div>
+            <div onclick="changeMonth(-1)" style="font-size:28px; width:45px; cursor:pointer;">❮</div>
+            <div id="calendar-title" style="font-size: 22px; font-weight: bold;">2026年 3月</div>
+            <div onclick="changeMonth(1)" style="font-size:28px; width:45px; cursor:pointer;">❯</div>
         </div>
     </header>
     <div class="grid" id="calendarGrid">
@@ -54,11 +61,10 @@
 </div>
 
 <div class="toolbar">
-    <div class="stamp-btn" onclick="setStamp('日B班', this)">印:日B</div>
-    <div class="stamp-btn" onclick="setStamp('夜B班', this)">印:夜B</div>
-    <div class="stamp-btn" onclick="setStamp('休假', this)">印:休</div>
-    <div class="stamp-btn" onclick="setStamp('CLEAR', this)" style="color:red;">擦除</div>
-    <div class="stamp-btn" onclick="setStamp('CROSS', this)">🔴/⚪</div>
+    <div class="stamp-btn" onclick="setStamp('日B班', this)">日B班</div>
+    <div class="stamp-btn" onclick="setStamp('夜B班', this)">夜B班</div>
+    <div class="stamp-btn" onclick="setStamp('休假', this)">休假</div>
+    <div class="stamp-btn" onclick="setStamp('CLEAR', this)" style="color:#d32f2f;">擦除</div>
 </div>
 
 <script>
@@ -102,14 +108,17 @@
                 if (!activeStamp) {
                     const newText = prompt("手動輸入：", note);
                     if (newText !== null) save(dateKey, newText, null);
-                } else if (activeStamp === 'CROSS') {
-                    const isDone = localStorage.getItem('done-' + dateKey) === "true";
-                    save(dateKey, null, !isDone);
                 } else if (activeStamp === 'CLEAR') {
                     save(dateKey, "", false);
                 } else {
                     save(dateKey, activeStamp, null);
                 }
+            };
+            // 加上長按劃掉功能
+            cell.oncontextmenu = (e) => {
+                e.preventDefault();
+                const isDone = localStorage.getItem('done-' + dateKey) === "true";
+                save(dateKey, null, !isDone);
             };
             grid.appendChild(cell);
         }
