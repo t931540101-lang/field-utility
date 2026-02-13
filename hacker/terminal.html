@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TERMINAL_OVERRIDE_V2</title>
+    <title>NASA_NODE_ACCESS</title>
     <style>
         body {
             background-color: black;
-            color: #0f0; /* 經典駭客綠 */
+            color: #0f0;
             font-family: 'Courier New', Courier, monospace;
             margin: 0;
             overflow: hidden;
@@ -31,12 +31,11 @@
             animation: blink 1s infinite;
             vertical-align: middle;
         }
-        @keyframes blink {
-            50% { opacity: 0; }
-        }
+        @keyframes blink { 50% { opacity: 0; } }
         .system-msg { color: #fff; font-weight: bold; text-shadow: 0 0 8px #fff; }
         .danger { color: #f00; text-shadow: 0 0 8px #f00; }
         .highlight { color: #ff0; text-shadow: 0 0 5px #ff0; }
+        .info { color: #00ffff; text-shadow: 0 0 5px #00ffff; }
     </style>
 </head>
 <body>
@@ -45,24 +44,26 @@
 
     <script>
         const logs = [
-            "> [PROTOCOL]: 啟動「暗網滲透模式」...",
-            "> 正在連線洛聖都衛星頻道... [OK]",
-            "> 正在解析目標 IP: 127.0.0.1 (LOCAL_GATEWAY)",
-            "> 偵測到政府防火牆... 啟動暴力破解協定...",
-            "> ACCESS GRANTED: BYPASSING_SECURITY_V4",
+            "> [SYSTEM]: 啟動「跨國界滲透協定」...",
+            "> 正在連線 NASA 秘密衛星頻道... [OK]",
+            "> 目標鎖定：政府最高機密資料庫 (CENTRAL_DB)",
             "> ---------------------------------------",
-            "> [DANGER]: 偵測到系統管理員追蹤！",
-            "> 正在植入虛擬 IP 混淆蹤跡... 88%... 100%",
-            "> 正在抹除 240G 維修失敗紀錄... [DONE]",
-            "> 正在入侵總機資料庫：'FIELD-UTILITY'...",
-            "> [WARNING]: 掃描到大量包裹數據流...",
+            "> 正在強行突破第一層防火牆...",
+            "> [DANGER]: 偵測到 IDS 入侵防禦系統！",
+            "> [DANGER]: 系統存取遭拒 (ACCESS DENIED)！",
+            "> [WARNING]: 入侵失敗。系統正在反追蹤妳的 IP...",
             "> ---------------------------------------",
-            "> CRACKING ENCRYPTION: ▓▓▓▓▓▓▓▓▓▓ 100%",
-            "> [SUCCESS]: 侵入成功！",
-            "> 權限已提升至：ROOT_ADMIN (班長小黑哥)",
-            "> 正在監控全球排線寬度... 警告：嚴禁細活！",
-            "> 系統已鎖定。世界正在妳的掌控中。",
-            "> 班長，請輸入下一個毀滅指令..."
+            "> 啟動緊急備案：調度「BC32 秘密繞道代碼」...",
+            "> 正在重新封裝數據包... 正在載入 BC32 溢位漏洞...",
+            "> 正在偽造管理員憑證... ▓▓▓▓▓▓▓▓▓▓ 100%",
+            "> [SUCCESS]: 入侵成功！防火牆已徹底崩潰。",
+            "> 正在讀取機密數據層... [READING DATA]",
+            "> ---------------------------------------",
+            "> >> 正在下載機密文件：[包裹存放清單.dat]",
+            "> >> 正在下載機密文件：[240G_維修祕辛.pdf]",
+            "> [INFO]: 下載完畢。痕跡已自動抹除。",
+            "> [SYSTEM MESSAGE]: 歡迎回來，班長小黑哥。",
+            "> 所有衛星數據已同步至您的手機。請保持低調。"
         ];
 
         let line = 0;
@@ -72,15 +73,16 @@
         function typeLog() {
             if (line < logs.length) {
                 let currentMsg = logs[line];
-                
-                // 判斷顏色
                 let colorClass = "";
-                if (currentMsg.includes("DANGER") || currentMsg.includes("WARNING")) {
+                
+                if (currentMsg.includes("DANGER") || currentMsg.includes("失敗") || currentMsg.includes("遭拒")) {
                     colorClass = "danger";
-                } else if (currentMsg.includes("SUCCESS") || currentMsg.includes("侵入成功")) {
+                } else if (currentMsg.includes("SUCCESS") || currentMsg.includes("入侵成功")) {
                     colorClass = "system-msg";
                 } else if (currentMsg.includes("小黑哥")) {
                     colorClass = "highlight";
+                } else if (currentMsg.includes("INFO") || currentMsg.includes("下載")) {
+                    colorClass = "info";
                 }
 
                 if (charIndex < currentMsg.length) {
@@ -89,13 +91,13 @@
                     }
                     terminal.innerHTML += currentMsg[charIndex];
                     charIndex++;
-                    setTimeout(typeLog, 30); 
+                    setTimeout(typeLog, 25); 
                 } else {
                     if (colorClass) terminal.innerHTML += `</span>`;
                     terminal.innerHTML += "<br>";
                     line++;
                     charIndex = 0;
-                    setTimeout(typeLog, 500); 
+                    setTimeout(typeLog, 450); 
                 }
             }
         }
