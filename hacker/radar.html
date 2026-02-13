@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RADAR_COMM_SYSTEM</title>
+    <title>RADAR_COMM_V4</title>
     <style>
         body {
             background-color: #050a05;
@@ -17,7 +17,6 @@
             font-family: 'Courier New', Courier, monospace;
             color: #0f0;
         }
-
         .radar-container {
             position: relative;
             width: 300px;
@@ -27,26 +26,6 @@
             background: radial-gradient(circle, rgba(0, 255, 0, 0.1) 0%, rgba(0, 0, 0, 1) 80%);
             box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
         }
-
-        .radar-container::before {
-            content: '';
-            position: absolute;
-            top: 50%; left: 0; width: 100%; height: 1px; background: rgba(0, 255, 0, 0.3);
-        }
-        .radar-container::after {
-            content: '';
-            position: absolute;
-            left: 50%; top: 0; width: 1px; height: 100%; background: rgba(0, 255, 0, 0.3);
-        }
-
-        .circle {
-            position: absolute;
-            top: 50%; left: 50%;
-            border: 1px solid rgba(0, 255, 0, 0.2);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-        }
-
         .scanner {
             position: absolute;
             top: 50%; left: 50%;
@@ -57,98 +36,54 @@
             transform-origin: top left;
             animation: scan 4s linear infinite;
         }
-
-        @keyframes scan {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .blip {
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            background-color: #f00;
-            border-radius: 50%;
-            box-shadow: 0 0 10px #f00;
-            animation: pulse 2s infinite;
-            opacity: 0;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 0; }
-            50% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-
-        .status-panel {
-            margin-top: 30px;
-            text-align: center;
-            text-shadow: 0 0 5px #0f0;
-        }
-
-        .scanning-text {
-            font-size: 18px;
-            font-weight: bold;
-            letter-spacing: 2px;
-        }
-
-        .hint {
-            font-size: 10px;
-            color: #5f5;
-            margin-top: 15px;
-            opacity: 0.6;
-        }
+        @keyframes scan { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .status-panel { margin-top: 30px; text-align: center; }
+        .hint { font-size: 14px; color: #ff0; margin-top: 20px; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
     </style>
 </head>
-<body onclick="startRadio()">
+<body onclick="playChirp()">
 
     <div class="radar-container">
-        <div class="circle" style="width: 100px; height: 100px;"></div>
-        <div class="circle" style="width: 200px; height: 200px;"></div>
         <div class="scanner"></div>
-        <div class="blip" style="top: 25%; left: 70%; animation-delay: 0.5s;"></div>
-        <div class="blip" style="top: 60%; left: 30%; animation-delay: 1.2s;"></div>
     </div>
 
     <div class="status-panel">
-        <div class="scanning-text">RADAR ACTIVE</div>
-        <div id="info" style="font-size: 12px; margin-top: 10px;">
-            > COMMS: STANDBY<br>
-            > SOURCE: MOTOROLA_P25
-        </div>
-        <div class="hint">點擊螢幕開啟音訊頻道</div>
+        <div style="font-size: 18px; font-weight: bold;">RADAR ACTIVE</div>
+        <div id="info" style="font-size: 12px; margin-top: 10px;">> COMMS: STANDBY</div>
+        <div class="hint" id="hint">點擊螢幕解鎖對講機音效</div>
     </div>
 
     <script>
-        const info = document.getElementById('info');
-        // 擬真對講機嘟嚕嚕音效 (Motorola P25 樣式)
-        const radioBeep = new Audio('https://www.soundboard.com/handler/DownLoadTrack.ashx?cliptitle=Motorola+Nextel+Chirp&filename=24/241857-41829e92-d698-4228-8686-2180017a0273.mp3');
-        const radioStatic = new Audio('https://www.soundjay.com/communication/radio-static-1.mp3');
-        
-        let radioActive = false;
+        // 現場合成摩托羅拉「嘟嚕嚕」音效
+        function playChirp() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            const audioCtx = new AudioContext();
+            
+            // 建立三段不同頻率的聲音來合成「嘟嚕嚕」
+            const freqs = [880, 1046, 1318]; 
+            const startTime = audioCtx.currentTime;
 
-        function startRadio() {
-            if (!radioActive) {
-                radioBeep.play();
-                radioStatic.volume = 0.05;
-                radioStatic.loop = true;
-                radioStatic.play();
-                radioActive = true;
-                info.innerHTML = `> COMMS: ONLINE<br>> SOURCE: MOTOROLA_P25`;
-                document.querySelector('.hint').style.display = 'none';
-            } else {
-                radioBeep.play(); // 再次點擊也會響起嘟嚕嚕
-            }
+            freqs.forEach((f, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'square'; // 方波更有機械感
+                osc.frequency.value = f;
+                
+                gain.gain.setValueAtTime(0.1, startTime + (i * 0.05));
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + (i * 0.05) + 0.1);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start(startTime + (i * 0.05));
+                osc.stop(startTime + (i * 0.05) + 0.1);
+            });
+
+            document.getElementById('info').innerHTML = "> COMMS: ONLINE<br>> SOURCE: MOTOROLA_P25";
+            document.getElementById('hint').style.display = 'none';
         }
-
-        // 模擬雷達數據跳動
-        const locations = ["北區總機基地", "240G 核心訊號", "洛聖都巡邏組", "BC32 秘密節點"];
-        setInterval(() => {
-            if (radioActive) {
-                const loc = locations[Math.floor(Math.random() * locations.length)];
-                info.innerHTML = `> COMMS: ONLINE<br>> TARGET: ${loc}`;
-            }
-        }, 4000);
     </script>
 </body>
 </html>
