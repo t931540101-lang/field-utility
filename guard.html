@@ -3,42 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>溫馨生活日曆</title>
+    <title>保平安生活日曆 V2.0</title>
     <style>
-        :root { --bg: #fffaf0; --text: #5d4037; --red: #e57373; --blue: #64b5f6; --green: #81c784; --orange: #ffb74d; --purple: #ba68c8; }
+        :root { --bg: #fffaf0; --text: #5d4037; --red: #d32f2f; --gold: #b8860b; }
         body { margin: 0; font-family: "Microsoft JhengHei", sans-serif; background: #fdf5e6; color: var(--text); }
-        .box { max-width: 800px; margin: 0 auto; background: var(--bg); min-height: 100vh; padding-bottom: 160px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        header { background: #8d6e63; color: white; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); background: #d7ccc8; gap: 1px; border: 1px solid #d7ccc8; }
-        .weekday { background: #efebe9; padding: 10px 0; text-align: center; font-size: 18px; font-weight: bold; }
-        .cell { background: white; min-height: 100px; padding: 5px; cursor: pointer; position: relative; overflow: hidden; }
-        .day-num { font-size: 20px; font-weight: bold; margin-bottom: 3px; }
-        .sun { color: #d32f2f; }
+        .box { max-width: 800px; margin: 0 auto; background: var(--bg); min-height: 100vh; padding-bottom: 180px; }
+        header { background: #8d6e63; color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; }
+        .month-ctrl { display: flex; justify-content: space-between; align-items: center; font-size: 24px; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); background: #d7ccc8; gap: 1px; }
+        .weekday { background: #efebe9; padding: 10px 0; text-align: center; font-size: 20px; font-weight: bold; }
+        .cell { background: white; min-height: 110px; padding: 5px; cursor: pointer; position: relative; }
+        .day-num { font-size: 24px; font-weight: bold; }
+        .lunar-text { font-size: 14px; color: #888; font-weight: normal; }
+        .sun { color: var(--red); }
         .sat { color: #1976d2; }
-        .memo { font-size: 16px; font-weight: bold; text-align: center; line-height: 1.3; white-space: pre-wrap; }
+        .memo { font-size: 18px; font-weight: bold; text-align: center; margin-top: 5px; white-space: pre-wrap; }
         
-        /* 生活標籤顏色 */
-        .tag-food { color: var(--orange); }
-        .tag-meet { color: var(--red); }
-        .tag-doc { color: var(--blue); }
-        .tag-travel { color: var(--green); }
-        .tag-event { color: var(--purple); }
+        /* 標籤顏色 */
+        .tag-pray { color: var(--red); border: 1px solid var(--red); border-radius: 4px; padding: 2px; }
+        .tag-money { color: var(--gold); }
 
         .btns-area { position: fixed; bottom: 0; width: 100%; max-width: 800px; background: #efebe9; border-top: 2px solid #d7ccc8; padding: 10px 0; }
-        .btn-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 0 10px; }
-        .btn { padding: 10px 15px; border-radius: 20px; font-size: 16px; font-weight: bold; color: white; cursor: pointer; border: 2px solid transparent; }
-        .btn-food { background: var(--orange); }
-        .btn-meet { background: var(--red); }
-        .btn-doc { background: var(--blue); }
-        .btn-travel { background: var(--green); }
-        .btn-event { background: var(--purple); }
-        .btn-clear { background: #9e9e9e; }
-        .selected { border: 2px solid #5d4037; box-shadow: 0 0 5px rgba(0,0,0,0.3); }
+        .btn-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 5px; }
+        .btn { padding: 15px 20px; border-radius: 15px; font-size: 20px; font-weight: bold; color: white; cursor: pointer; }
+        .btn-pray { background: var(--red); }
+        .btn-money { background: var(--gold); }
+        .btn-doc { background: #1976d2; }
+        .btn-clear { background: #666; }
+        .selected { border: 4px solid black; }
     </style>
 </head>
 <body>
 <div class="box">
-    <header id="title">🏠 我的生活日曆 - 2026年 3月</header>
+    <header>
+        <div class="month-ctrl">
+            <div onclick="changeMonth(-1)">❮ 上個月</div>
+            <div id="monthTitle">2026年 3月</div>
+            <div onclick="changeMonth(1)">下個月 ❯</div>
+        </div>
+    </header>
     <div class="grid" id="grid">
         <div class="weekday sun">日</div><div class="weekday">一</div><div class="weekday">二</div>
         <div class="weekday">三</div><div class="weekday">四</div><div class="weekday">五</div><div class="weekday sat">六</div>
@@ -47,17 +50,17 @@
 
 <div class="btns-area">
     <div class="btn-row">
-        <div class="btn btn-food" onclick="sel('🧺買菜', this)">🧺買菜</div>
-        <div class="btn btn-meet" onclick="sel('🥳聚餐', this)">🥳聚餐</div>
-        <div class="btn btn-doc" onclick="sel('🏥看醫生', this)">🏥看醫生</div>
-        <div class="btn btn-travel" onclick="sel('🚗出遊', this)">🚗出遊</div>
-        <div class="btn btn-event" onclick="sel('💡記事', this)">💡記事</div>
-        <div class="btn btn-clear" onclick="sel('CLEAR', this)">🧼擦除</div>
+        <div class="btn btn-pray" onclick="sel('🍎 拜拜/初一十五', this)">🍎 拜拜</div>
+        <div class="btn btn-money" onclick="sel('🧧 領錢/發薪', this)">🧧 領錢</div>
+        <div class="btn btn-doc" onclick="sel('🏥 看醫生', this)">🏥 看醫生</div>
+        <div class="btn btn-clear" onclick="sel('CLEAR', this)">🧼 橡皮擦</div>
     </div>
 </div>
 
 <script>
+    let curY = 2026, curM = 2; // 預設 3 月
     let curStamp = "";
+
     function sel(t, el) {
         curStamp = t;
         document.querySelectorAll('.btn').forEach(b => b.classList.remove('selected'));
@@ -67,33 +70,32 @@
     function render() {
         const grid = document.getElementById('grid');
         grid.querySelectorAll('.cell').forEach(i => i.remove());
-        const y = 2026, m = 2; // 3月
-        const first = new Date(y, m, 1).getDay();
-        const days = new Date(y, m + 1, 0).getDate();
+        document.getElementById('monthTitle').innerText = `${curY}年 ${curM + 1}月`;
+        
+        const first = new Date(curY, curM, 1).getDay();
+        const days = new Date(curY, curM + 1, 0).getDate();
 
         for (let i = 0; i < first; i++) grid.appendChild(document.createElement('div'));
         for (let i = 1; i <= days; i++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
-            const d = new Date(y, m, i).getDay();
+            const d = new Date(curY, curM, i).getDay();
             let nC = "day-num"; if(d===0) nC+=" sun"; if(d===6) nC+=" sat";
-            const key = `life-${y}-${m+1}-${i}`;
+            
+            const key = `life-${curY}-${curM+1}-${i}`;
             const val = localStorage.getItem(key) || "";
             
-            let tC = "";
-            if(val.includes("買菜")) tC="tag-food";
-            else if(val.includes("聚餐")) tC="tag-meet";
-            else if(val.includes("看醫生")) tC="tag-doc";
-            else if(val.includes("出遊")) tC="tag-travel";
-            else if(val.includes("記事")) tC="tag-event";
+            // 這裡可以手動加入一些特定的日子註記 (示範)
+            let special = "";
+            if (curM === 2 && i === 19) special = "<br><span style='color:red; font-size:12px;'>初一</span>";
+            if (curM === 2 && i === 4) special = "<br><span style='color:red; font-size:12px;'>十五</span>";
 
-            cell.innerHTML = `<div class="${nC}">${i}</div><div class="memo ${tC}">${val}</div>`;
+            cell.innerHTML = `<div class="${nC}">${i}${special}</div><div class="memo">${val}</div>`;
             cell.onclick = () => {
                 if(curStamp === "CLEAR") { localStorage.removeItem(key); }
                 else if(curStamp !== "") {
                     const old = localStorage.getItem(key) || "";
-                    const n = old ? old + "\n" + curStamp : curStamp;
-                    localStorage.setItem(key, n);
+                    localStorage.setItem(key, old ? old + "\n" + curStamp : curStamp);
                 } else {
                     const n = prompt("想記點什麼？", val);
                     if(n !== null) localStorage.setItem(key, n);
@@ -103,6 +105,7 @@
             grid.appendChild(cell);
         }
     }
+    function changeMonth(d) { curM += d; if (curM < 0) {curM=11;curY--;} else if (curM>11) {curM=0;curY++;} render(); }
     render();
 </script>
 </body>
