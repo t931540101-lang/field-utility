@@ -3,49 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>前輩專用大字日曆</title>
+    <title>溫馨生活日曆</title>
     <style>
-        :root { --bg: #ffffff; --text: #333333; --red: #d32f2f; --blue: #1976d2; --green: #388e3c; --orange: #f57c00; }
-        body { margin: 0; font-family: "Microsoft JhengHei", sans-serif; background: #f0f0f0; }
-        .box { max-width: 800px; margin: 0 auto; background: var(--bg); min-height: 100vh; padding-bottom: 140px; }
-        header { background: #333; color: white; padding: 20px; text-align: center; font-size: 28px; font-weight: bold; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); background: #ccc; gap: 1px; }
-        .weekday { background: #eee; padding: 15px 0; text-align: center; font-size: 20px; font-weight: bold; }
-        .cell { background: white; min-height: 110px; padding: 8px; cursor: pointer; position: relative; }
-        .day-num { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
-        .sun { color: var(--red); }
-        .sat { color: var(--blue); }
-        .memo { font-size: 20px; font-weight: bold; text-align: center; line-height: 1.2; word-break: break-all; }
+        :root { --bg: #fffaf0; --text: #5d4037; --red: #e57373; --blue: #64b5f6; --green: #81c784; --orange: #ffb74d; --purple: #ba68c8; }
+        body { margin: 0; font-family: "Microsoft JhengHei", sans-serif; background: #fdf5e6; color: var(--text); }
+        .box { max-width: 800px; margin: 0 auto; background: var(--bg); min-height: 100vh; padding-bottom: 160px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        header { background: #8d6e63; color: white; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); background: #d7ccc8; gap: 1px; border: 1px solid #d7ccc8; }
+        .weekday { background: #efebe9; padding: 10px 0; text-align: center; font-size: 18px; font-weight: bold; }
+        .cell { background: white; min-height: 100px; padding: 5px; cursor: pointer; position: relative; overflow: hidden; }
+        .day-num { font-size: 20px; font-weight: bold; margin-bottom: 3px; }
+        .sun { color: #d32f2f; }
+        .sat { color: #1976d2; }
+        .memo { font-size: 16px; font-weight: bold; text-align: center; line-height: 1.3; white-space: pre-wrap; }
         
-        /* 班別文字顏色 */
-        .work-day { color: var(--orange); }
-        .work-night { color: var(--blue); }
-        .work-off { color: var(--green); }
+        /* 生活標籤顏色 */
+        .tag-food { color: var(--orange); }
+        .tag-meet { color: var(--red); }
+        .tag-doc { color: var(--blue); }
+        .tag-travel { color: var(--green); }
+        .tag-event { color: var(--purple); }
 
-        /* 下方大按鈕區 */
-        .btns { position: fixed; bottom: 0; width: 100%; max-width: 800px; background: white; border-top: 3px solid #ccc; display: flex; flex-wrap: wrap; padding: 10px 0; }
-        .btn { flex: 1; min-width: 30%; margin: 5px; padding: 15px 0; text-align: center; border-radius: 10px; font-size: 22px; font-weight: bold; color: white; cursor: pointer; }
-        .btn-day { background: var(--orange); }
-        .btn-night { background: var(--blue); }
-        .btn-off { background: var(--green); }
-        .btn-clear { background: #666; }
-        .selected { border: 5px solid black; box-sizing: border-box; }
+        .btns-area { position: fixed; bottom: 0; width: 100%; max-width: 800px; background: #efebe9; border-top: 2px solid #d7ccc8; padding: 10px 0; }
+        .btn-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 0 10px; }
+        .btn { padding: 10px 15px; border-radius: 20px; font-size: 16px; font-weight: bold; color: white; cursor: pointer; border: 2px solid transparent; }
+        .btn-food { background: var(--orange); }
+        .btn-meet { background: var(--red); }
+        .btn-doc { background: var(--blue); }
+        .btn-travel { background: var(--green); }
+        .btn-event { background: var(--purple); }
+        .btn-clear { background: #9e9e9e; }
+        .selected { border: 2px solid #5d4037; box-shadow: 0 0 5px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body>
 <div class="box">
-    <header id="monthTitle">2026年 3月</header>
+    <header id="title">🏠 我的生活日曆 - 2026年 3月</header>
     <div class="grid" id="grid">
         <div class="weekday sun">日</div><div class="weekday">一</div><div class="weekday">二</div>
-        <div class="weekday">三</div><div class="weekday">四</div><div class="weekday">五</div><div class="weekday" style="color:blue">六</div>
+        <div class="weekday">三</div><div class="weekday">四</div><div class="weekday">五</div><div class="weekday sat">六</div>
     </div>
 </div>
 
-<div class="btns">
-    <div class="btn btn-day" onclick="sel('日班', this)">蓋日班</div>
-    <div class="btn btn-night" onclick="sel('夜班', this)">蓋夜班</div>
-    <div class="btn btn-off" onclick="sel('休假', this)">蓋休假</div>
-    <div class="btn btn-clear" onclick="sel('CLEAR', this)">橡皮擦</div>
+<div class="btns-area">
+    <div class="btn-row">
+        <div class="btn btn-food" onclick="sel('🧺買菜', this)">🧺買菜</div>
+        <div class="btn btn-meet" onclick="sel('🥳聚餐', this)">🥳聚餐</div>
+        <div class="btn btn-doc" onclick="sel('🏥看醫生', this)">🏥看醫生</div>
+        <div class="btn btn-travel" onclick="sel('🚗出遊', this)">🚗出遊</div>
+        <div class="btn btn-event" onclick="sel('💡記事', this)">💡記事</div>
+        <div class="btn btn-clear" onclick="sel('CLEAR', this)">🧼擦除</div>
+    </div>
 </div>
 
 <script>
@@ -58,9 +66,7 @@
 
     function render() {
         const grid = document.getElementById('grid');
-        const items = grid.querySelectorAll('.cell');
-        items.forEach(i => i.remove());
-
+        grid.querySelectorAll('.cell').forEach(i => i.remove());
         const y = 2026, m = 2; // 3月
         const first = new Date(y, m, 1).getDay();
         const days = new Date(y, m + 1, 0).getDate();
@@ -70,23 +76,26 @@
             const cell = document.createElement('div');
             cell.className = 'cell';
             const d = new Date(y, m, i).getDay();
-            let numClass = "day-num";
-            if(d===0) numClass += " sun";
-            if(d===6) numClass += " sat";
-            
-            const key = `g-${y}-${m+1}-${i}`;
+            let nC = "day-num"; if(d===0) nC+=" sun"; if(d===6) nC+=" sat";
+            const key = `life-${y}-${m+1}-${i}`;
             const val = localStorage.getItem(key) || "";
-            let colorClass = "";
-            if(val.includes("日班")) colorClass = "work-day";
-            if(val.includes("夜班")) colorClass = "work-night";
-            if(val.includes("休假")) colorClass = "work-off";
+            
+            let tC = "";
+            if(val.includes("買菜")) tC="tag-food";
+            else if(val.includes("聚餐")) tC="tag-meet";
+            else if(val.includes("看醫生")) tC="tag-doc";
+            else if(val.includes("出遊")) tC="tag-travel";
+            else if(val.includes("記事")) tC="tag-event";
 
-            cell.innerHTML = `<div class="${numClass}">${i}</div><div class="memo ${colorClass}">${val}</div>`;
+            cell.innerHTML = `<div class="${nC}">${i}</div><div class="memo ${tC}">${val}</div>`;
             cell.onclick = () => {
                 if(curStamp === "CLEAR") { localStorage.removeItem(key); }
-                else if(curStamp !== "") { localStorage.setItem(key, curStamp); }
-                else {
-                    const n = prompt("寫記事：", val);
+                else if(curStamp !== "") {
+                    const old = localStorage.getItem(key) || "";
+                    const n = old ? old + "\n" + curStamp : curStamp;
+                    localStorage.setItem(key, n);
+                } else {
+                    const n = prompt("想記點什麼？", val);
                     if(n !== null) localStorage.setItem(key, n);
                 }
                 render();
