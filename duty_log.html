@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>勤務交接簿 | 台灣精銳</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .duty-card { background: white; border-left: 8px solid #1e293b; box-shadow: 4px 4px 0px #cbd5e1; }
+        .important-red { color: #dc2626; font-weight: 900; }
+        .timestamp { font-size: 11px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #475569; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [logs, setLogs] = useState(() => {
+                const saved = localStorage.getItem('DUTY_LOG_V1');
+                return saved ? JSON.parse(saved) : [];
+            });
+
+            useEffect(() => {
+                localStorage.setItem('DUTY_LOG_V1', JSON.stringify(logs));
+            }, [logs]);
+
+            const addEntry = () => {
+                const note = prompt("請輸入交接事項：");
+                if (!note) return;
+                const isUrgent = confirm("這件事很重要需要變紅字嗎？");
+                
+                const now = new Date();
+                const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${(now.getMinutes()<10?'0':'')+now.getMinutes()}`;
+                
+                setLogs([{ id: Date.now(), time: timeStr, note, urgent: isUrgent }, ...logs]);
+            };
+
+            const deleteLog = (id) => {
+                if(confirm("確定刪除這條交接紀錄嗎？")) {
+                    setLogs(logs.filter(l => l.id !== id));
+                }
+            };
+
+            return (
+                <div className="p-4 max-w-2xl mx-auto">
+                    <header className="flex justify-between items-center border-b-4 border-slate-800 pb-3 mb-6">
+                        <h1 className="text-2xl font-black text-slate-800">勤務交接簿</h1>
+                        <button onClick={addEntry} className="bg-slate-800 text-white px-4 py-2 rounded-full font-bold text-sm">
+                            + 新增紀錄
+                        </button>
+                    </header>
+
+                    <div className="space-y-4">
+                        {logs.map(log => (
+                            <div key={log.id} onDoubleClick={() => deleteLog(log.id)} className="duty-card p-4 relative">
+                                <div className="flex items-center mb-2">
+                                    <span className="timestamp font-mono">{log.time}</span>
+                                    {log.urgent && <span className="ml-2 text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-black">重要</span>}
+                                </div>
+                                <p className={`text-base leading-relaxed ${log.urgent ? 'important-red text-lg' : 'text-slate-700'}`}>
+                                    {log.note}
+                                </p>
+                            </div>
+                        ))}
+                        {logs.length === 0 && <p className="text-center text-slate-400 italic mt-10">目前無交接事項</p>}
+                    </div>
+
+                    <footer className="text-center text-[10px] text-slate-400 mt-10 font-bold uppercase tracking-widest">
+                        指揮部勤務交接系統 - 內部專用
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
