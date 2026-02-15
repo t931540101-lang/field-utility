@@ -2,67 +2,83 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>台灣精銳 | 數位指揮中心</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>指揮官專屬 | 全體班表同步雷達</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding-bottom: 50px; }
-        .hub-card { 
-            background: #1e293b; 
-            border: 2px solid #334155; 
-            transition: all 0.3s;
-            box-shadow: 6px 6px 0px #000;
-        }
-        /* 點擊時的下壓感 */
-        .hub-card:active { transform: translate(3px, 3px); box-shadow: 0px 0px 0px #000; background: #334155; }
-        .accent-border { border-left: 6px solid #f97316; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .master-table { border-collapse: collapse; width: 100%; }
+        .master-table th, .master-table td { border: 1px solid #334155; padding: 12px 8px; text-align: center; }
+        .shift-早 { background-color: #1e40af; color: white; font-weight: 900; }
+        .shift-中 { background-color: #854d0e; color: white; font-weight: 900; }
+        .shift-晚 { background-color: #6b21a8; color: white; font-weight: 900; }
+        .shift-休 { color: #475569; font-weight: 400; }
+        .sticky-col { position: sticky; left: 0; background: #1e293b; z-index: 10; }
+        .loading { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
     </style>
 </head>
-<body class="p-6">
-    <header class="mb-10 text-center">
-        <h1 class="text-3xl font-black tracking-tighter text-orange-500 mb-1">數位指揮中心</h1>
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Taiwan Elite HQ Portal</p>
-        <div class="h-1.5 w-16 bg-orange-600 mx-auto mt-4 rounded-full"></div>
+<body class="p-4">
+    <header class="mb-6 flex justify-between items-center bg-slate-800 p-4 rounded-xl border border-orange-500/30">
+        <div>
+            <h1 class="text-xl font-black text-orange-500 italic">COMMANDER RADAR</h1>
+            <p id="status" class="text-[10px] text-green-400 font-bold tracking-widest uppercase">● 雲端雷達連線中</p>
+        </div>
+        <button onclick="location.reload()" class="bg-slate-700 p-2 rounded-lg text-xs font-bold border border-slate-600">刷新數據</button>
     </header>
-<a href="Master_Schedule.html" class="hub-card p-5 rounded-xl flex items-center border-l-8 border-red-600 bg-slate-900 shadow-[6px_6px_0px_#450a0a]">
-            <div class="text-3xl mr-5">👁️‍🗨️</div>
-            <div class="flex-1">
-                <h2 class="text-xl font-black text-red-500 italic">全體勤務總覽</h2>
-                <p class="text-xs text-slate-500 mt-1 font-bold">上帝視角：全體隊員部署監控</p>
-            </div>
-        </a>
-    <div class="grid gap-6 max-w-md mx-auto">
-        <a href="duty_log.html" class="hub-card p-5 rounded-xl flex items-center accent-border">
-            <div class="text-3xl mr-5">📖</div>
-            <div class="flex-1">
-                <h2 class="text-xl font-black text-white">勤務交接簿</h2>
-                <p class="text-xs text-slate-400 mt-1">每日重點、紅字警示、交接管理</p>
-            </div>
-        </a>
 
-        <a href="LifeCalendar_v1.0.html" class="hub-card p-5 rounded-xl flex items-center accent-border">
-            <div class="text-3xl mr-5">📅</div>
-            <div class="flex-1">
-                <h2 class="text-xl font-black text-white">霸氣排班表</h2>
-                <p class="text-xs text-slate-400 mt-1">警衛統一排班格式 (V7.5 超級大字版)</p>
-            </div>
-        </a>
-
-        <a href="Parcel_Log.html" class="hub-card p-5 rounded-xl flex items-center accent-border">
-            <div class="text-3xl mr-5">📦</div>
-            <div class="flex-1">
-                <h2 class="text-xl font-black text-white">包裹登記系統</h2>
-                <p class="text-xs text-slate-400 mt-1">廠區包裹簽收、紀錄查詢</p>
-            </div>
-        </a>
+    <div class="overflow-x-auto rounded-xl shadow-2xl border border-slate-700 bg-slate-900">
+        <table class="master-table text-sm">
+            <thead id="table-head" class="bg-slate-800">
+                </thead>
+            <tbody id="table-body">
+                <tr><td colspan="10" class="p-20 text-center loading text-slate-500">正在同步雲端大數據...</td></tr>
+            </tbody>
+        </table>
     </div>
 
-    <footer class="mt-20 text-center">
-        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-            指揮官：小黑哥 · 專屬數位裝備
-        </p>
-        <p class="text-[9px] text-slate-700 mt-2">v1.1 LINK-FIXED EDITION</p>
-    </footer>
+    <script>
+        const SPREADSHEET_ID = '1-5D0Tls2Sz9m1Al9kq0raRfh3B3Zz9gNZzzOhbfCk6s';
+        const JSON_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json`;
+
+        async function fetchSchedule() {
+            try {
+                const response = await fetch(JSON_URL);
+                const text = await response.text();
+                const json = JSON.parse(text.substring(47).slice(0, -2));
+                const rows = json.table.rows;
+                const cols = json.table.cols;
+
+                // 1. 產生表頭 (名字)
+                let headHtml = `<tr class="text-slate-400 font-bold"><th class="sticky-col">日期</th>`;
+                for(let i=1; i<cols.length; i++) {
+                    headHtml += `<th>${cols[i].label || '隊員'+i}</th>`;
+                }
+                headHtml += `</tr>`;
+                document.getElementById('table-head').innerHTML = headHtml;
+
+                // 2. 產生內容 (班次)
+                let bodyHtml = '';
+                rows.forEach(row => {
+                    let dateStr = row.c[0] ? row.c[0].f || row.c[0].v : '';
+                    bodyHtml += `<tr><td class="sticky-col font-bold text-slate-300 text-xs">${dateStr}</td>`;
+                    for(let i=1; i<cols.length; i++) {
+                        let val = row.c[i] ? row.c[i].v : '';
+                        let styleClass = val ? `shift-${val}` : '';
+                        bodyHtml += `<td class="${styleClass}">${val || '-'}</td>`;
+                    }
+                    bodyHtml += `</tr>`;
+                });
+                document.getElementById('table-body').innerHTML = bodyHtml;
+                document.getElementById('status').innerText = '● 雲端數據已同步';
+            } catch (e) {
+                document.getElementById('status').innerText = '❌ 連線失敗';
+                console.error(e);
+            }
+        }
+
+        fetchSchedule();
+    </script>
 </body>
 </html>
