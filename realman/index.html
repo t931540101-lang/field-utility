@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>K9 獸醫護理站 | 2026 專業正式版</title>
+    <title>K9 獸醫護理站 | 2026 完整功能版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
@@ -16,8 +16,8 @@
         .log-table { border: 2px solid #1e293b; border-top: none; margin-top: -2px; }
         .log-header { background: #f8fafc; border-bottom: 2px solid #1e293b; display: flex; font-weight: bold; font-size: 11px; }
         .log-row { display: flex; border-bottom: 1px solid #cbd5e1; font-size: 13px; min-height: 45px; }
-        .add-btn { background: #1e293b; color: white; width: 100%; padding: 12px; font-weight: 900; font-size: 13px; border-radius: 4px; margin-top: 15px; transition: background 0.2s; }
-        .add-btn:active { background: #059669; }
+        .add-btn { background: #1e293b; color: white; width: 100%; padding: 12px; font-weight: 900; font-size: 13px; border-radius: 4px; margin-top: 15px; }
+        .edit-btn { position: absolute; right: 15px; bottom: 15px; background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 12px; border: 1px solid #cbd5e1; color: #64748b; }
     </style>
 </head>
 <body>
@@ -25,7 +25,7 @@
     <header class="flex justify-between items-end border-b-4 border-slate-800 pb-2 mb-8">
         <div>
             <h1 class="text-2xl font-black text-slate-800 leading-tight">台灣精銳犬隻<br>臨床病歷系統</h1>
-            <p class="text-[11px] font-bold text-slate-500 mt-1">👩‍⚕️ 護理師：小黑哥 | V7.0 PROFESSIONAL</p>
+            <p class="text-[11px] font-bold text-slate-500 mt-1">👩‍⚕️ 護理師：小黑哥 | V7.0 FULL</p>
         </div>
         <div class="stamp">已認證</div>
     </header>
@@ -35,19 +35,19 @@
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxm4CDB5i8V2CX6lbCu4gxI2TH-jGKFznI8H01CLlnKEh9Fdr71pfeQr7ai6VcVtAvomw/exec";
         
-        // 八隻狗狗名單完整還原
-        const dogData = [
-            { name: '張布丁', sex: 'M', age: '3Y+', weight: '43.5', breed: '高山犬' },
-            { name: '妞妞', sex: 'F', age: '?', weight: '?', breed: '米克斯' },
-            { name: '狗狗3號', sex: '?', age: '?', weight: '?', breed: '?' },
-            { name: '狗狗4號', sex: '?', age: '?', weight: '?', breed: '?' },
-            { name: '狗狗5號', sex: '?', age: '?', weight: '?', breed: '?' },
-            { name: '狗狗6號', sex: '?', age: '?', weight: '?', breed: '?' },
-            { name: '狗狗7號', sex: '?', age: '?', weight: '?', breed: '?' },
-            { name: '狗狗8號', sex: '?', age: '?', weight: '?', breed: '?' }
+        // 八隻狗狗名單與初始資料
+        let dogData = JSON.parse(localStorage.getItem('K9_BASE_INFO')) || [
+            { id: 1, name: '張布丁', sex: 'M', age: '3Y+', weight: '43.5', breed: '高山犬' },
+            { id: 2, name: '妞妞', sex: 'F', age: '?', weight: '?', breed: '米克斯' },
+            { id: 3, name: '狗狗3', sex: '?', age: '?', weight: '?', breed: '?' },
+            { id: 4, name: '狗狗4', sex: '?', age: '?', weight: '?', breed: '?' },
+            { id: 5, name: '狗狗5', sex: '?', age: '?', weight: '?', breed: '?' },
+            { id: 6, name: '狗狗6', sex: '?', age: '?', weight: '?', breed: '?' },
+            { id: 7, name: '狗狗7', sex: '?', age: '?', weight: '?', breed: '?' },
+            { id: 8, name: '狗狗8', sex: '?', age: '?', weight: '?', breed: '?' }
         ];
 
-        let allLogs = JSON.parse(localStorage.getItem('K9_ALL_LOGS_FINAL') || '{}');
+        let allLogs = JSON.parse(localStorage.getItem('K9_ALL_LOGS_PRO_FINAL') || '{}');
 
         function renderDogs() {
             const list = document.getElementById('k9-list');
@@ -70,38 +70,55 @@
                                 ${logs.length === 0 ? '<div class="p-6 text-center text-slate-300 italic text-xs">尚無紀錄</div>' : 
                                   logs.map(l => `
                                     <div class="log-row">
-                                        <div class="w-[30%] p-2 border-r-2 border-slate-800 text-[9px] text-slate-500 flex items-center justify-center font-mono text-center">${l.time}</div>
+                                        <div class="w-[30%] p-2 border-r-2 border-slate-800 text-[9px] text-slate-500 flex items-center justify-center font-mono text-center leading-tight">${l.time}</div>
                                         <div class="w-[70%] p-2 italic flex items-center font-medium">${l.note}</div>
                                     </div>
                                   `).join('')}
                             </div>
                         </div>
                         <button onclick="addLog('${dog.name}', '${dog.weight}')" class="add-btn">
-                            + 新增臨床紀錄 (NEW ENTRY)
+                            + 新增臨床紀錄 (SAVE TO CLOUD)
                         </button>
+                        <button onclick="editDogInfo(${dog.id})" class="edit-btn">✏️ 修改基本資料</button>
                     </div>
                 `;
             }).join('');
         }
 
-        async function addLog(name, weight) {
-            const note = prompt(`護理師小黑哥，請輸入 [${name}] 的診療紀錄：`);
-            if (!note) return;
+        function editDogInfo(id) {
+            const dog = dogData.find(d => d.id === id);
+            const nName = prompt("修改名字:", dog.name);
+            const nWeight = prompt("修改體重 (KG):", dog.weight);
+            const nSexAge = prompt("修改性別/年齡 (M/3Y+):", dog.sex + "/" + dog.age);
+            const nBreed = prompt("修改品種:", dog.breed);
+            
+            if (nName) dog.name = nName;
+            if (nWeight) dog.weight = nWeight;
+            if (nSexAge) {
+                const parts = nSexAge.split('/');
+                dog.sex = parts[0] || dog.sex;
+                dog.age = parts[1] || dog.age;
+            }
+            if (nBreed) dog.breed = nBreed;
+            
+            localStorage.setItem('K9_BASE_INFO', JSON.stringify(dogData));
+            renderDogs();
+        }
 
+        async function addLog(name, weight) {
+            const note = prompt(`護理師小黑哥，請輸入 [${name}] 的紀錄：`);
+            if (!note) return;
             const now = new Date();
             const timeStr = (now.getMonth()+1) + '/' + now.getDate() + ' ' + now.getHours() + ':' + (now.getMinutes()<10?'0':'') + now.getMinutes();
-
             if (!allLogs[name]) allLogs[name] = [];
             allLogs[name].unshift({ time: timeStr, note: note });
-            localStorage.setItem('K9_ALL_LOGS_FINAL', JSON.stringify(allLogs));
+            localStorage.setItem('K9_ALL_LOGS_PRO_FINAL', JSON.stringify(allLogs));
             renderDogs();
-
             try {
-                // 雲端同步
                 const query = `type=k9&dogName=${encodeURIComponent(name)}&area=${encodeURIComponent(weight + " KG")}&health=醫療紀錄&note=${encodeURIComponent(note)}`;
                 fetch(`${SCRIPT_URL}?${query}`, { mode: 'no-cors' });
-                alert(`✅ ${name} 紀錄已同步雲端。`);
-            } catch (e) { console.log("Sync Error"); }
+                alert("✅ 雲端同步成功！");
+            } catch (e) { console.log("Sync error"); }
         }
 
         renderDogs();
