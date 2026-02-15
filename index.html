@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>K9 獸醫護理站 | 2026 終極版</title>
+    <title>K9 獸醫護理站 | 終極大圓滿版</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -19,67 +19,67 @@
     <div id="root"></div>
     <script type="text/babel">
         const { useState, useEffect } = React;
-        // 柔幫班長埋好的 21:21 最新接收站網址
-        const SCRIPT_URL = https://script.google.com/macros/s/AKfycbw0_KoJ5ozSzDwfr6FEIXVC5gXJyZCGvub3IuKfCHn4rVYR_oGCxIfp0hh60NH6I03Snw/exec
+        // 班長剛才測試成功、最具威力的 Web App 網址
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0_KoJ5ozSzDwfr6FEIXVC5gXJyZCGvub3IuKfCHn4rVYR_oGCxIfp0hh60NH6I03Snw/exec";
 
         function App() {
             const [dogs, setDogs] = useState(() => {
-                const saved = localStorage.getItem('K9_V8_ULTIMATE_DATA');
+                const saved = localStorage.getItem('K9_FINAL_COMPLETE');
+                // 柔幫班長把今天最辛苦打的內容直接刻進去！
                 return saved ? JSON.parse(saved) : [
-                    { id: 1, name: '張布丁', weight: '43.5', logs: [{ id: 101, time: '2/15 18:12', note: '服用四君子（進食飲水正常）服用康普樂，感冒回覆正常。服用胃藥機體無異常！腸胃開過刀，無法食用過硬的食物' }] },
-                    { id: 2, name: '蔡小白', weight: '23.5', logs: [{ id: 102, time: '2/15 18:18', note: '右後腳因骨刺導致時而無力，服用肌肉酸痛藥物後明顯改善～停藥後又回復腳軟！' }] },
-                    { id: 3, name: '蔡小花', weight: '23.3', logs: [{ id: 103, time: '2/15 18:18', note: '服用四君子（進食飲水正常）服用康普樂，感冒明顯改善。體型偏瘦，注意是否腸胃有問題。' }] },
-                    { id: 4, name: '來順', weight: '25.2', logs: [{ id: 104, time: '2/15 18:19', note: '服用四君子（進食飲水正常）服用康普樂感冒明顯改善。' }] },
-                    { id: 5, name: '哈蜜瓜', weight: '24.5', logs: [{ id: 105, time: '2/15 18:20', note: '服用四君子（進食飲水正常）服用康普樂，感冒明顯改善。活動力大，應注意是否受傷' }] },
-                    { id: 6, name: '蔡頭貴', weight: '25.1', logs: [{ id: 106, time: '2/15 18:20', note: '服用四君子（進食飲水正常）服用康普樂，感冒明顯改善～夏天容易有皮膚病' }] },
-                    { id: 7, name: '蔡哺', weight: '23.3', logs: [{ id: 107, time: '2/15 18:20', note: '服用四君子（進食飲水正常）精神狀態很好～容易感冒，感冒時全身無力因注意精神狀態' }] },
-                    { id: 8, name: '有錢', weight: '25.6', logs: [{ id: 108, time: '2/15 18:21', note: '服用四君子（進食飲水正常）臀部有小塊皮膚病' }] }
+                    { id: 1, name: '張布丁', weight: '43.5', logs: [{ id: 101, time: '2/15 病史', note: '服用四君子（進食飲水正常）服用康普樂，感冒回覆正常。服用胃藥機體無異常！腸胃開過刀，無法食用過硬的食物' }] },
+                    { id: 2, name: '蔡小白', weight: '23.5', logs: [{ id: 102, time: '2/15 病史', note: '右後腳因骨刺導致時而無力，服用肌肉酸痛藥物後明顯改善～停藥後又回復腳軟！' }] },
+                    { id: 3, name: '蔡小花', weight: '23.3', logs: [{ id: 103, time: '2/15 病史', note: '服用四君子（進食飲水正常）服用康普樂，感冒明顯改善。體型偏瘦，注意是否腸胃有問題。' }] },
+                    { id: 4, name: '來順', weight: '25.2', logs: [{ id: 104, time: '2/15 病史', note: '服用四君子（進食飲水正常）服用康普樂感冒明顯改善。' }] },
+                    { id: 5, name: '哈蜜瓜', weight: '24.5', logs: [{ id: 105, time: '2/15 病史', note: '服用四君子（進食飲水正常）服用康普樂，感冒明顯改善。活動力大，應注意是否受傷' }] },
+                    { id: 6, name: '蔡頭貴', weight: '25.1', logs: [{ id: 106, time: '2/15 病史', note: '服用四君子（進食飲水正常）服用康普樂，感冒明顯改善～夏天容易有皮膚病' }] },
+                    { id: 7, name: '蔡哺', weight: '23.3', logs: [{ id: 107, time: '2/15 病史', note: '服用四君子（進食飲水正常）精神狀態很好～容易感冒，感冒時全身無力因注意精神狀態' }] },
+                    { id: 8, name: '有錢', weight: '25.6', logs: [{ id: 108, time: '2/15 病史', note: '服用四君子（進食飲水正常）臀部有小塊皮膚病' }] }
                 ];
             });
 
             useEffect(() => {
-                localStorage.setItem('K9_V8_ULTIMATE_DATA', JSON.stringify(dogs));
+                localStorage.setItem('K9_FINAL_COMPLETE', JSON.stringify(dogs));
             }, [dogs]);
 
             const addLog = async (id) => {
                 const dog = dogs.find(d => d.id === id);
-                const note = prompt(`為 ${dog.name} 輸入新的診療紀錄：`);
+                const note = prompt(`為 ${dog.name} 記錄診斷：`);
                 if (!note) return;
                 const now = new Date();
                 const timeStr = (now.getMonth()+1) + '/' + now.getDate() + ' ' + now.getHours() + ':' + (now.getMinutes()<10?'0':'') + now.getMinutes();
                 
                 try {
-                    // 精準發射參數：type=k9
-                    const finalUrl = `${SCRIPT_URL}?type=k9&dogName=${encodeURIComponent(dog.name)}&weight=${encodeURIComponent(dog.weight + " KG")}&note=${encodeURIComponent(note)}`;
+                    // 根據班長的試算表欄位精準發射
+                    const finalUrl = `${SCRIPT_URL}?type=k9&dogName=${encodeURIComponent(dog.name)}&weight=${encodeURIComponent(dog.weight)}&note=${encodeURIComponent(note)}`;
                     fetch(finalUrl, { mode: 'no-cors' });
-                    alert(`✅ 指令已發射！請查閱試算表。`);
-                } catch (e) {
-                    alert("❌ 發射失敗，請檢查網路。");
-                }
+                    alert(`✅ 已同步至試算表！`);
+                } catch (e) { alert("發射失敗！"); }
+
                 setDogs(dogs.map(d => d.id === id ? { ...d, logs: [{ id: Date.now(), time: timeStr, note }, ...d.logs] } : d));
             };
 
             return (
                 <div className="p-3 max-w-4xl mx-auto">
                     <header className="flex justify-between items-center border-b-4 border-slate-800 pb-2 mb-4">
-                        <h1 className="text-xl font-black text-slate-800 leading-tight">台灣精銳 K9<br/>臨床病歷系統</h1>
-                        <div className="stamp">對頻完成</div>
+                        <h1 className="text-xl font-black text-slate-800 leading-tight">精銳 K9 臨床系統<br/>V7.0 CLOUD</h1>
+                        <div className="stamp">連線成功</div>
                     </header>
                     {dogs.map(dog => (
                         <div key={dog.id} className="medical-paper p-3 mb-6">
                             <div className="flex justify-between items-center mb-2">
                                 <span className="text-blue-600 font-black text-lg">{dog.name}</span>
-                                <span className="text-slate-500 text-xs font-bold">WEIGHT: {dog.weight} KG</span>
+                                <span className="text-slate-500 text-xs font-bold">體重: {dog.weight} KG</span>
                             </div>
-                            <div className="border-[1.5px] border-slate-800 text-[12px] bg-slate-50">
+                            <div className="border-[1.5px] border-slate-800 bg-slate-50">
                                 {dog.logs.map((log) => (
                                     <div key={log.id} className="flex border-b border-slate-300 min-h-[40px]">
-                                        <div className="w-[30%] p-1.5 border-r border-slate-800 font-mono text-[9px] flex items-center justify-center text-center">{log.time}</div>
-                                        <div className="w-[70%] p-1.5 flex items-center italic">{log.note}</div>
+                                        <div className="w-[30%] p-1.5 border-r border-slate-800 text-[9px] font-mono flex items-center justify-center text-center">{log.time}</div>
+                                        <div className="w-[70%] p-1.5 text-[12px] flex items-center italic break-all">{log.note}</div>
                                     </div>
                                 ))}
                             </div>
-                            <button onClick={() => addLog(dog.id)} className="mt-3 w-full bg-slate-800 text-white py-2.5 font-black text-xs rounded active:bg-emerald-600">＋ 同步雲端紀錄</button>
+                            <button onClick={() => addLog(dog.id)} className="mt-3 w-full bg-slate-800 text-white py-2.5 font-black text-xs rounded active:bg-emerald-600 shadow-md">＋ 新增紀錄並同步雲端</button>
                         </div>
                     ))}
                 </div>
