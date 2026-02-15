@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>K9 獸醫護理站 | 2026 專業版</title>
+    <title>K9 獸醫護理站 | 2026 雲端對頻版</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -19,36 +19,21 @@
     <div id="root"></div>
     <script type="text/babel">
         const { useState, useEffect } = React;
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTXzcIjMmJ4g4J0Bkd6P-16wDaIXn2-w6Cj3QRazXZm4wjVxhyu_c0qKm9Ksgs1DmFjA/exec";
+        // 班長提供的最新 Web App 網址
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVaCfh0dns_s-0q1_soPqVtL4-uq68OfIbqDgKpsqP2oF3zV_xRVhxcqsRrfxsfD87gg/exec";
 
         function App() {
             const [dogs, setDogs] = useState(() => {
                 const saved = localStorage.getItem('K9_V8_ULTIMATE_DATA');
                 return saved ? JSON.parse(saved) : [
-                    { id: 1, name: '張布丁', sex: 'M', age: '3Y+', weight: '43.5', breed: '高山犬', logs: [
-                        { id: 101, time: '2/15 18:12', note: '服用四君子（進食飲水正常）服用康普樂，感冒回覆正常。服用胃藥機體無異常！腸胃開過刀，無法食用過硬的食物' }
-                    ]},
-                    { id: 2, name: '蔡小白', sex: 'M', age: '11', weight: '23.5', breed: '米克斯', logs: [
-                        { id: 102, time: '2/15 18:18', note: '右後腳因骨刺導致時而無力，服用肌肉酸痛藥物後明顯改善～停藥後又回復腳軟！' }
-                    ]},
-                    { id: 3, name: '蔡小花', sex: 'M', age: '11', weight: '23.3', breed: '米克斯', logs: [
-                        { id: 103, time: '2/15 18:18', note: '服用四君子（進食飲水正常）服用康普樂，感冒明顯改善。體型偏瘦，注意是否腸胃有問題。' }
-                    ]},
-                    { id: 4, name: '來順', sex: 'M', age: '10', weight: '25.2', breed: '米克斯', logs: [
-                        { id: 104, time: '2/15 18:19', note: '服用四君子（進食飲水正常）服用康普樂感冒明顯改善。' }
-                    ]},
-                    { id: 5, name: '哈蜜瓜', sex: 'M', age: '2.5', weight: '24.5', breed: '米克斯', logs: [
-                        { id: 105, time: '2/15 18:20', note: '服用四君子（進食飲水正常）服用康普樂，感冒明顯改善。活動力大，應注意是否受傷' }
-                    ]},
-                    { id: 6, name: '蔡頭貴', sex: 'F', age: '9', weight: '25.1', breed: '米克斯', logs: [
-                        { id: 106, time: '2/15 18:20', note: '服用四君子（進食飲水正常）服用康普樂，感冒明顯改善～夏天容易有皮膚病' }
-                    ]},
-                    { id: 7, name: '蔡哺', sex: 'F', age: '9', weight: '23.3', breed: '米克斯', logs: [
-                        { id: 107, time: '2/15 18:20', note: '服用四君子（進食飲水正常）精神狀態很好～容易感冒，感冒時全身無力因注意精神狀態' }
-                    ]},
-                    { id: 8, name: '有錢', sex: 'F', age: '4', weight: '25.6', breed: '米克斯', logs: [
-                        { id: 108, time: '2/15 18:21', note: '服用四君子（進食飲水正常）臀部有小塊皮膚病' }
-                    ]}
+                    { id: 1, name: '張布丁', sex: 'M', age: '3Y+', weight: '43.5', breed: '高山犬', logs: [{ id: 101, time: '2/15 18:12', note: '服用四君子（進食飲水正常）服用康普樂，感冒回覆正常。服用胃藥機體無異常！腸胃開過刀，無法食用過硬的食物' }] },
+                    { id: 2, name: '蔡小白', sex: 'M', age: '11', weight: '23.5', breed: '米克斯', logs: [{ id: 102, time: '2/15 18:18', note: '右後腳因骨刺導致時而無力，服用肌肉酸痛藥物後明顯改善～停藥後又回復腳軟！' }] },
+                    { id: 3, name: '蔡小花', sex: 'M', age: '11', weight: '23.3', breed: '米克斯', logs: [{ id: 103, time: '2/15 18:18', note: '服用四君子（進食飲水正常）服用康普樂，感冒明顯改善。體型偏瘦，注意是否腸胃有問題。' }] },
+                    { id: 4, name: '來順', sex: 'M', age: '10', weight: '25.2', breed: '米克斯', logs: [{ id: 104, time: '2/15 18:19', note: '服用四君子（進食飲水正常）服用康普樂感冒明顯改善。' }] },
+                    { id: 5, name: '哈蜜瓜', sex: 'M', age: '2.5', weight: '24.5', breed: '米克斯', logs: [{ id: 105, time: '2/15 18:20', note: '服用四君子（進食飲水正常）服用康普樂，感冒明顯改善。活動力大，應注意是否受傷' }] },
+                    { id: 6, name: '蔡頭貴', sex: 'F', age: '9', weight: '25.1', breed: '米克斯', logs: [{ id: 106, time: '2/15 18:20', note: '服用四君子（進食飲水正常）服用康普樂，感冒明顯改善～夏天容易有皮膚病' }] },
+                    { id: 7, name: '蔡哺', sex: 'F', age: '9', weight: '23.3', breed: '米克斯', logs: [{ id: 107, time: '2/15 18:20', note: '服用四君子（進食飲水正常）精神狀態很好～容易感冒，感冒時全身無力因注意精神狀態' }] },
+                    { id: 8, name: '有錢', sex: 'F', age: '4', weight: '25.6', breed: '米克斯', logs: [{ id: 108, time: '2/15 18:21', note: '服用四君子（進食飲水正常）臀部有小塊皮膚病' }] }
                 ];
             });
 
@@ -56,81 +41,59 @@
                 localStorage.setItem('K9_V8_ULTIMATE_DATA', JSON.stringify(dogs));
             }, [dogs]);
 
-            const editBaseInfo = (dogId) => {
-                const dog = dogs.find(d => d.id === dogId);
-                const nName = prompt("修改名字:", dog.name);
-                const nSex = prompt("修改性別:", dog.sex);
-                const nAge = prompt("修改年齡:", dog.age);
-                const nWeight = prompt("修改體重:", dog.weight);
-                const nBreed = prompt("修改品種:", dog.breed);
-                setDogs(dogs.map(d => d.id === dogId ? { ...d, name: nName || d.name, sex: nSex || d.sex, age: nAge || d.age, weight: nWeight || d.weight, breed: nBreed || d.breed } : d));
-            };
-
-            const addLog = (id) => {
+            const addLog = async (id) => {
                 const dog = dogs.find(d => d.id === id);
                 const note = prompt(`為 ${dog.name} 輸入新的診療紀錄：`);
                 if (!note) return;
                 const now = new Date();
                 const timeStr = (now.getMonth()+1) + '/' + now.getDate() + ' ' + now.getHours() + ':' + (now.getMinutes()<10?'0':'') + now.getMinutes();
+                
                 try {
-                    fetch(`${SCRIPT_URL}?type=k9&dogName=${encodeURIComponent(dog.name)}&area=${encodeURIComponent(dog.weight + " KG")}&health=臨床診斷&note=${encodeURIComponent(note)}`, { mode: 'no-cors' });
-                } catch (e) { console.log("Cloud Error"); }
+                    // 根據班長的試算表格式優化傳輸參數
+                    const finalUrl = `${SCRIPT_URL}?type=k9&dogName=${encodeURIComponent(dog.name)}&weight=${encodeURIComponent(dog.weight + " KG")}&note=${encodeURIComponent(note)}`;
+                    fetch(finalUrl, { mode: 'no-cors' });
+                    alert(`✅ 已向雲端發射！請校閱試算表。`);
+                } catch (e) {
+                    alert("❌ 發射失敗，請檢查連線！");
+                }
                 setDogs(dogs.map(d => d.id === id ? { ...d, logs: [{ id: Date.now(), time: timeStr, note }, ...d.logs] } : d));
             };
 
-            const editLog = (dogId, logId) => {
-                const dog = dogs.find(d => d.id === dogId);
-                const log = dog.logs.find(l => l.id === logId);
-                const action = prompt("1. 修改 / 2. 刪除");
-                if (action === "1") {
-                    const n = prompt("修改紀錄:", log.note);
-                    if (n) setDogs(dogs.map(d => d.id === dogId ? { ...d, logs: d.logs.map(l => l.id === logId ? { ...l, note: n } : l) } : d));
-                } else if (action === "2") {
-                    if (confirm("刪除？")) setDogs(dogs.map(d => d.id === dogId ? { ...d, logs: d.logs.filter(l => l.id !== logId) } : d));
-                }
+            const editBaseInfo = (id) => {
+                const dog = dogs.find(d => d.id === id);
+                const nWeight = prompt("更新體重紀錄 (KG):", dog.weight);
+                setDogs(dogs.map(d => d.id === id ? { ...d, weight: nWeight || dog.weight } : d));
             };
 
             return (
                 <div className="p-3 max-w-4xl mx-auto">
-                    <header className="flex justify-between items-center border-b-4 border-slate-800 pb-2 mb-4 text-slate-800">
-                        <div className="flex-1 pr-2">
-                            <h1 className="text-xl font-black tracking-tight leading-tight">台灣精銳犬隻<br/>臨床病歷系統</h1>
-                            <p className="text-[10px] font-bold text-slate-500 mt-1">👩‍⚕️ 護理師：小黑哥</p>
+                    <header className="flex justify-between items-center border-b-4 border-slate-800 pb-2 mb-4">
+                        <div className="flex-1">
+                            <h1 className="text-xl font-black tracking-tight text-slate-800 leading-tight">台灣精銳犬隻<br/>臨床病歷系統</h1>
+                            <p className="text-[10px] font-bold text-slate-500 mt-1">👩‍⚕️ 護理師：小黑哥 | 雲端連線版</p>
                         </div>
-                        <div className="flex flex-col items-end">
-                            <span className="text-[8px] font-mono font-bold text-slate-400 bg-slate-200 px-1 rounded mb-1">V7.0 PRO</span>
-                            <div className="stamp">已認證</div>
-                        </div>
+                        <div className="stamp">已認證</div>
                     </header>
                     {dogs.map(dog => (
                         <div key={dog.id} className="medical-paper p-3 mb-6 relative">
                             <button onClick={() => editBaseInfo(dog.id)} className="absolute right-3 top-3 text-sm bg-slate-100 p-1 rounded-full opacity-70">✏️</button>
-                            <div className="grid grid-cols-4 border-[1.5px] border-slate-800 mb-3 text-[12px]">
-                                <div className="bg-slate-800 text-white p-1 text-[9px] font-bold text-center">姓名</div>
-                                <div className="p-1 border-r-[1.5px] border-slate-800 font-black text-blue-600 truncate">{dog.name}</div>
-                                <div className="bg-slate-800 text-white p-1 text-[9px] font-bold text-center">體重</div>
+                            <div className="grid grid-cols-2 border-[1.5px] border-slate-800 mb-3 text-[12px]">
+                                <div className="bg-slate-800 text-white p-1 text-[10px] font-bold text-center border-b-[1px] border-slate-600">病患姓名</div>
+                                <div className="p-1 font-black text-blue-600 border-b-[1px] border-slate-800">{dog.name}</div>
+                                <div className="bg-slate-800 text-white p-1 text-[10px] font-bold text-center">目前體重</div>
                                 <div className="p-1 font-black">{dog.weight} KG</div>
-                                <div className="bg-slate-800 text-white p-1 text-[9px] font-bold border-t-[1.5px] border-slate-800 text-center">性別/年齡</div>
-                                <div className="p-1 border-r-[1.5px] border-slate-800 border-t-[1.5px] border-slate-800 font-bold text-center">{dog.sex}/{dog.age}</div>
-                                <div className="bg-slate-800 text-white p-1 text-[9px] font-bold border-t-[1.5px] border-slate-800 text-center">品種</div>
-                                <div className="p-1 border-t-[1.5px] border-slate-800 font-bold truncate text-[11px] text-center">{dog.breed}</div>
                             </div>
-                            <div className="border-[1.5px] border-slate-800 min-h-[100px]">
-                                <div className="flex bg-slate-100 border-b-[1.5px] border-slate-800 font-bold text-[11px]">
-                                    <div className="w-[30%] p-1.5 border-r-[1.5px] border-slate-800 text-center">診療時間</div>
-                                    <div className="w-[70%] p-1.5 font-bold text-blue-800 underline">臨床紀錄 (點選修改)</div>
-                                </div>
+                            <div className="border-[1.5px] border-slate-800">
                                 {dog.logs.map((log) => (
-                                    <div key={log.id} onClick={() => editLog(dog.id, log.id)} className="flex border-b border-slate-300 text-[12px] min-h-[45px] record-row">
-                                        <div className="w-[30%] p-1.5 border-r-[1.5px] border-slate-800 font-mono text-[9px] text-slate-500 flex items-center justify-center text-center leading-tight">{log.time}</div>
-                                        <div className="w-[70%] p-1.5 font-medium text-slate-800 italic break-word flex items-center">{log.note}</div>
+                                    <div key={log.id} className="flex border-b border-slate-300 text-[12px] min-h-[45px]">
+                                        <div className="w-[30%] p-1.5 border-r-[1.5px] border-slate-800 font-mono text-[9px] text-slate-500 flex items-center justify-center text-center">{log.time}</div>
+                                        <div className="w-[70%] p-1.5 font-medium text-slate-800 italic flex items-center">{log.note}</div>
                                     </div>
                                 ))}
                             </div>
-                            <button onClick={() => addLog(dog.id)} className="mt-3 w-full bg-slate-800 text-white py-2.5 font-black text-xs active:bg-emerald-600 rounded shadow-md transition-all">+ 新增臨床紀錄 (NEW ENTRY)</button>
+                            <button onClick={() => addLog(dog.id)} className="mt-3 w-full bg-slate-800 text-white py-2.5 font-black text-xs active:bg-emerald-600 rounded">＋ 記錄診斷並同步雲端</button>
                         </div>
                     ))}
-                    <footer className="text-center text-[9px] text-slate-400 mt-6 uppercase tracking-widest font-bold">TAIWAN ELITE K9 CLINICAL SYSTEM - V8.0</footer>
                 </div>
             );
         }
