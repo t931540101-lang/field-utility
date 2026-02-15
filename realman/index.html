@@ -3,115 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>K9 獸醫護理站 | 八大戰駒雲端版</title>
+    <title>K9 獸醫護理站 | 2026 專業正式版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #f1f5f9; color: #1e293b; padding: 15px; }
-        .medical-container { max-width: 600px; margin: 0 auto; }
-        .medical-card { background: white; border: 2px solid #1e293b; box-shadow: 6px 6px 0px #cbd5e1; border-radius: 4px; padding: 15px; margin-bottom: 30px; position: relative; }
-        .stamp { border: 2.5px solid #ef4444; color: #ef4444; transform: rotate(-12deg); font-weight: 900; padding: 2px 8px; border-radius: 4px; display: inline-block; font-size: 12px; position: absolute; right: 15px; top: 10px; }
-        .grid-table { display: grid; grid-template-columns: 60px 1fr 60px 1fr; border: 2px solid #1e293b; font-size: 13px; text-align: center; }
-        .grid-header { background: #1e293b; color: white; padding: 5px; font-weight: 900; border: 0.5px solid #334155; font-size: 11px; }
-        .grid-cell { background: white; padding: 5px; font-weight: 700; border: 1px solid #1e293b; display: flex; align-items: center; justify-content: center; }
-        .log-section { border: 2px solid #1e293b; border-top: none; margin-top: -2px; }
-        .log-header { background: #f1f5f9; border-bottom: 2px solid #1e293b; display: flex; font-weight: 900; font-size: 11px; }
-        .log-row { display: flex; border-bottom: 1px solid #cbd5e1; font-size: 12px; min-height: 45px; }
-        .add-btn { background: #1e293b; color: white; width: 100%; padding: 12px; font-weight: 900; font-size: 13px; border-radius: 4px; margin-top: 12px; }
-        .add-btn:active { background: #059669; transform: scale(0.98); }
+        .medical-paper { background: white; border: 2px solid #1e293b; box-shadow: 6px 6px 0px #cbd5e1; border-radius: 4px; padding: 15px; margin-bottom: 30px; position: relative; }
+        .stamp { border: 2.5px solid #ef4444; color: #ef4444; transform: rotate(-12deg); font-weight: 900; padding: 2px 8px; border-radius: 4px; display: inline-block; font-size: 11px; position: absolute; right: 15px; top: 12px; }
+        .grid-table { display: grid; grid-template-columns: 60px 1fr 60px 1fr; border: 2px solid #1e293b; font-size: 13px; }
+        .grid-label { background: #1e293b; color: white; padding: 5px; text-align: center; font-weight: bold; border: 0.5px solid #334155; }
+        .grid-content { padding: 5px; border: 0.5px solid #1e293b; font-weight: bold; background: white; display: flex; align-items: center; justify-content: center; }
+        .log-table { border: 2px solid #1e293b; border-top: none; margin-top: -2px; }
+        .log-header { background: #f8fafc; border-bottom: 2px solid #1e293b; display: flex; font-weight: bold; font-size: 11px; }
+        .log-row { display: flex; border-bottom: 1px solid #cbd5e1; font-size: 13px; min-height: 45px; }
+        .add-btn { background: #1e293b; color: white; width: 100%; padding: 12px; font-weight: 900; font-size: 13px; border-radius: 4px; margin-top: 15px; transition: background 0.2s; }
+        .add-btn:active { background: #059669; }
     </style>
 </head>
 <body>
 
-<div class="medical-container">
-    <header class="flex justify-between items-center border-b-4 border-slate-800 pb-2 mb-6">
+    <header class="flex justify-between items-end border-b-4 border-slate-800 pb-2 mb-8">
         <div>
-            <h1 class="text-xl font-black text-slate-800 leading-tight">台灣精銳犬隻<br>臨床病歷系統</h1>
-            <p class="text-[10px] font-bold text-slate-500 mt-1">👩‍⚕️ 護理師：小黑哥 | V7.0 MOBILE</p>
+            <h1 class="text-2xl font-black text-slate-800 leading-tight">台灣精銳犬隻<br>臨床病歷系統</h1>
+            <p class="text-[11px] font-bold text-slate-500 mt-1">👩‍⚕️ 護理師：小黑哥 | V7.0 PROFESSIONAL</p>
         </div>
         <div class="stamp">已認證</div>
     </header>
 
     <div id="k9-list"></div>
-</div>
 
-<script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxm4CDB5i8V2CX6lbCu4gxI2TH-jGKFznI8H01CLlnKEh9Fdr71pfeQr7ai6VcVtAvomw/exec";
-    
-    // 初始化八隻狗狗的基礎資料
-    const initialDogs = [
-        { id: 1, name: '張布丁', sex: 'M', age: '3Y+', weight: '43.5', breed: '高山犬' },
-        { id: 2, name: '妞妞', sex: 'F', age: '?', weight: '?', breed: '米克斯' },
-        { id: 3, name: '狗狗3號', sex: '?', age: '?', weight: '?', breed: '?' },
-        { id: 4, name: '狗狗4號', sex: '?', age: '?', weight: '?', breed: '?' },
-        { id: 5, name: '狗狗5號', sex: '?', age: '?', weight: '?', breed: '?' },
-        { id: 6, name: '狗狗6號', sex: '?', age: '?', weight: '?', breed: '?' },
-        { id: 7, name: '狗狗7號', sex: '?', age: '?', weight: '?', breed: '?' },
-        { id: 8, name: '狗狗8號', sex: '?', age: '?', weight: '?', breed: '?' }
-    ];
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxm4CDB5i8V2CX6lbCu4gxI2TH-jGKFznI8H01CLlnKEh9Fdr71pfeQr7ai6VcVtAvomw/exec";
+        
+        // 八隻狗狗名單完整還原
+        const dogData = [
+            { name: '張布丁', sex: 'M', age: '3Y+', weight: '43.5', breed: '高山犬' },
+            { name: '妞妞', sex: 'F', age: '?', weight: '?', breed: '米克斯' },
+            { name: '狗狗3號', sex: '?', age: '?', weight: '?', breed: '?' },
+            { name: '狗狗4號', sex: '?', age: '?', weight: '?', breed: '?' },
+            { name: '狗狗5號', sex: '?', age: '?', weight: '?', breed: '?' },
+            { name: '狗狗6號', sex: '?', age: '?', weight: '?', breed: '?' },
+            { name: '狗狗7號', sex: '?', age: '?', weight: '?', breed: '?' },
+            { name: '狗狗8號', sex: '?', age: '?', weight: '?', breed: '?' }
+        ];
 
-    // 從本地載入紀錄
-    let allLogs = JSON.parse(localStorage.getItem('K9_ALL_LOGS') || '{}');
+        let allLogs = JSON.parse(localStorage.getItem('K9_ALL_LOGS_FINAL') || '{}');
 
-    function renderAll() {
-        const container = document.getElementById('k9-list');
-        container.innerHTML = initialDogs.map(dog => {
-            const logs = allLogs[dog.name] || [];
-            return `
-                <div class="medical-card">
-                    <div class="grid-table">
-                        <div class="grid-header">姓名</div><div class="grid-cell text-blue-600">${dog.name}</div>
-                        <div class="grid-header">體重</div><div class="grid-cell">${dog.weight} KG</div>
-                        <div class="grid-header">性別</div><div class="grid-cell">${dog.sex}/${dog.age}</div>
-                        <div class="grid-header">品種</div><div class="grid-cell text-[10px]">${dog.breed}</div>
-                    </div>
-                    <div class="log-section">
-                        <div class="log-header">
-                            <div class="w-[30%] p-1.5 text-center border-r-2 border-slate-800">診療時間</div>
-                            <div class="w-[70%] p-1.5 italic">臨床紀錄 (同步雲端)</div>
+        function renderDogs() {
+            const list = document.getElementById('k9-list');
+            list.innerHTML = dogData.map(dog => {
+                const logs = allLogs[dog.name] || [];
+                return `
+                    <div class="medical-paper">
+                        <div class="grid-table">
+                            <div class="grid-label">姓名</div><div class="grid-content text-blue-600">${dog.name}</div>
+                            <div class="grid-label">體重</div><div class="grid-content">${dog.weight} KG</div>
+                            <div class="grid-label">性別</div><div class="grid-content">${dog.sex}/${dog.age}</div>
+                            <div class="grid-label">品種</div><div class="grid-content text-[10px] leading-tight">${dog.breed}</div>
                         </div>
-                        <div id="logs-${dog.name}">
-                            ${logs.length === 0 ? '<div class="p-4 text-center text-slate-300 italic text-xs">尚無紀錄</div>' : 
-                              logs.map(l => `
-                                <div class="log-row">
-                                    <div class="w-[30%] p-2 border-r-2 border-slate-800 text-[9px] text-slate-500 flex items-center justify-center font-mono text-center">${l.time}</div>
-                                    <div class="w-[70%] p-2 italic flex items-center font-medium">${l.note}</div>
-                                </div>
-                              `).join('')
-                            }
+                        <div class="log-table">
+                            <div class="log-header">
+                                <div class="w-[30%] p-2 text-center border-r-2 border-slate-800">診療時間</div>
+                                <div class="w-[70%] p-2">臨床紀錄 (同步雲端)</div>
+                            </div>
+                            <div id="logs-${dog.name}">
+                                ${logs.length === 0 ? '<div class="p-6 text-center text-slate-300 italic text-xs">尚無紀錄</div>' : 
+                                  logs.map(l => `
+                                    <div class="log-row">
+                                        <div class="w-[30%] p-2 border-r-2 border-slate-800 text-[9px] text-slate-500 flex items-center justify-center font-mono text-center">${l.time}</div>
+                                        <div class="w-[70%] p-2 italic flex items-center font-medium">${l.note}</div>
+                                    </div>
+                                  `).join('')}
+                            </div>
                         </div>
+                        <button onclick="addLog('${dog.name}', '${dog.weight}')" class="add-btn">
+                            + 新增臨床紀錄 (NEW ENTRY)
+                        </button>
                     </div>
-                    <button onclick="addEntry('${dog.name}', '${dog.weight}')" class="add-btn">
-                        + 新增臨床紀錄 (NEW ENTRY)
-                    </button>
-                </div>
-            `;
-        }).join('');
-    }
+                `;
+            }).join('');
+        }
 
-    async function addEntry(dogName, weight) {
-        const note = prompt(`為 [${dogName}] 輸入臨床診斷紀錄：`);
-        if (!note) return;
+        async function addLog(name, weight) {
+            const note = prompt(`護理師小黑哥，請輸入 [${name}] 的診療紀錄：`);
+            if (!note) return;
 
-        const now = new Date();
-        const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${(now.getMinutes()<10?'0':'')+now.getMinutes()}`;
+            const now = new Date();
+            const timeStr = (now.getMonth()+1) + '/' + now.getDate() + ' ' + now.getHours() + ':' + (now.getMinutes()<10?'0':'') + now.getMinutes();
 
-        // 1. 更新本地數據
-        if (!allLogs[dogName]) allLogs[dogName] = [];
-        allLogs[dogName].unshift({ time: timeStr, note: note });
-        localStorage.setItem('K9_ALL_LOGS', JSON.stringify(allLogs));
-        renderAll();
+            if (!allLogs[name]) allLogs[name] = [];
+            allLogs[name].unshift({ time: timeStr, note: note });
+            localStorage.setItem('K9_ALL_LOGS_FINAL', JSON.stringify(allLogs));
+            renderDogs();
 
-        // 2. 同步雲端
-        try {
-            const query = `type=k9&dogName=${encodeURIComponent(dogName)}&area=${encodeURIComponent(weight + " KG")}&health=醫療紀錄&note=${encodeURIComponent(note)}`;
-            fetch(`${SCRIPT_URL}?${query}`, { mode: 'no-cors' });
-            alert(`✅ ${dogName} 的紀錄已同步至指揮部！`);
-        } catch (e) { console.log("Sync Error"); }
-    }
+            try {
+                // 雲端同步
+                const query = `type=k9&dogName=${encodeURIComponent(name)}&area=${encodeURIComponent(weight + " KG")}&health=醫療紀錄&note=${encodeURIComponent(note)}`;
+                fetch(`${SCRIPT_URL}?${query}`, { mode: 'no-cors' });
+                alert(`✅ ${name} 紀錄已同步雲端。`);
+            } catch (e) { console.log("Sync Error"); }
+        }
 
-    renderAll();
-</script>
-
+        renderDogs();
+    </script>
 </body>
 </html>
