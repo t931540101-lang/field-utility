@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台灣精銳 | K9 勤務紀錄系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
+        .k9-card { border-top: 4px solid #1e3a8a; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .dog-btn { transition: all 0.2s; border: 2px solid #e2e8f0; }
+        .dog-btn.active { border-color: #1e3a8a; background-color: #eff6ff; transform: scale(1.05); }
+    </style>
+</head>
+<body class="p-4">
+    <div class="max-w-md mx-auto">
+        <header class="text-center mb-6">
+            <h1 class="text-2xl font-black text-slate-800">K9 勤務紀錄系統</h1>
+            <p class="text-sm text-slate-500 font-bold uppercase tracking-widest">K-9 Unit Tracking</p>
+        </header>
+
+        <div class="k9-card bg-white rounded-xl p-6 space-y-6">
+            <section>
+                <label class="block text-xs font-bold text-slate-400 mb-3 uppercase">● 勤務犬員</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="selectDog(this, '張布丁')" class="dog-btn p-4 rounded-xl text-center">
+                        <span class="block text-2xl mb-1">🐕</span>
+                        <span class="font-bold text-slate-700">張布丁</span>
+                    </button>
+                    <button onclick="selectDog(this, '其他K9')" class="dog-btn p-4 rounded-xl text-center">
+                        <span class="block text-2xl mb-1">🐾</span>
+                        <span class="font-bold text-slate-700">其他隊友</span>
+                    </button>
+                </div>
+            </section>
+
+            <section>
+                <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">● 巡邏區域 / 任務</label>
+                <select id="area" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-700 outline-none">
+                    <option value="全廠區巡邏">全廠區巡邏</option>
+                    <option value="大門/周界哨點">大門/周界哨點</option>
+                    <option value="倉庫/生產線">倉庫/生產線</option>
+                    <option value="行政辦公區">行政辦公區</option>
+                </select>
+            </section>
+
+            <section>
+                <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">● 健康與食慾狀況</label>
+                <select id="health" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-700 outline-none">
+                    <option value="良好 (精神飽滿)">精神飽滿 (食慾優)</option>
+                    <option value="正常 (穩定輸出)">穩定輸出 (食慾正常)</option>
+                    <option value="普通 (稍微懶散)">稍微懶散 (食慾一般)</option>
+                    <option value="需注意 (觀察中)">需注意 (觀察中)</option>
+                </select>
+            </section>
+
+            <section>
+                <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">● 勤務備註</label>
+                <input type="text" id="note" placeholder="例如：今日有洗澡、點藥..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-700 outline-none">
+            </section>
+
+            <button onclick="saveK9Record()" id="saveBtn" class="w-full py-4 bg-blue-900 text-white rounded-xl font-black text-lg shadow-lg active:transform active:scale-95 transition-all">
+                確認紀錄並送交指揮部
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let selectedDogName = "";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTXzcIjMmJ4g4J0Bkd6P-16wDaIXn2-w6Cj3QRazXZm4wjVxhyu_c0qKm9Ksgs1DmFjA/exec";
+
+        function selectDog(btn, name) {
+            document.querySelectorAll('.dog-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedDogName = name;
+        }
+
+        async function saveK9Record() {
+            const area = document.getElementById('area').value;
+            const health = document.getElementById('health').value;
+            const note = document.getElementById('note').value;
+            const btn = document.getElementById('saveBtn');
+
+            if(!selectedDogName) { alert("請先選擇勤務犬！"); return; }
+
+            btn.disabled = true;
+            btn.innerText = "正在傳送紀錄...";
+
+            try {
+                // 發送到妳的新轉運站網址
+                await fetch(`${SCRIPT_URL}?type=k9&dogName=${encodeURIComponent(selectedDogName)}&area=${encodeURIComponent(area)}&health=${encodeURIComponent(health)}&note=${encodeURIComponent(note)}`, { mode: 'no-cors' });
+                
+                alert(`✅ 紀錄成功！\n${selectedDogName} 的勤務資料已同步。`);
+                location.reload(); 
+            } catch (e) {
+                alert("連線失敗！");
+                btn.disabled = false;
+                btn.innerText = "重新儲存";
+            }
+        }
+    </script>
+</body>
+</html>
