@@ -3,155 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>K9 獸醫護理站 | 2026 雲端同步版</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <title>K9 獸醫護理站 | 雲端同步版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f1f5f9; color: #1e293b; margin: 0; padding-bottom: 50px; }
-        .medical-paper { background: white; border: 2px solid #334155; box-shadow: 6px 6px 0px #cbd5e1; }
-        .stamp { border: 2px solid #ef4444; color: #ef4444; transform: rotate(-12deg); font-weight: 900; padding: 1px 6px; border-radius: 4px; display: inline-block; font-size: 10px; }
-        .record-row:active { background-color: #f1f5f9; }
-        .break-word { word-break: break-all; }
-        .grid-border { border: 1.5px solid #1e293b; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f1f5f9; color: #1e293b; padding: 20px; }
+        .medical-paper { background: white; border: 2px solid #334155; box-shadow: 6px 6px 0px #cbd5e1; border-radius: 4px; padding: 15px; margin-bottom: 20px; position: relative; }
+        .stamp { border: 2px solid #ef4444; color: #ef4444; transform: rotate(-12deg); font-weight: 900; padding: 1px 6px; border-radius: 4px; display: inline-block; font-size: 10px; position: absolute; right: 15px; top: 10px; }
+        .grid-table { display: grid; grid-template-columns: 60px 1fr 60px 1fr; border: 1.5px solid #1e293b; font-size: 12px; }
+        .grid-label { background: #1e293b; color: white; padding: 4px; text-align: center; font-weight: bold; border: 0.5px solid #334155; }
+        .grid-content { padding: 4px; border: 0.5px solid #1e293b; font-weight: bold; background: white; }
+        .log-table { border: 1.5px solid #1e293b; border-top: none; margin-top: -1.5px; }
+        .log-header { background: #f8fafc; border-bottom: 1.5px solid #1e293b; display: flex; font-weight: bold; font-size: 11px; }
+        .log-row { display: flex; border-bottom: 1px solid #cbd5e1; font-size: 12px; min-height: 40px; }
     </style>
 </head>
 <body>
-    <div id="root"></div>
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        const // ... (前面代碼保持不變)
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        // 基地台已更新為班長提供的新網址！
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_HUX6m0F-I2IVKU-Ayl1y5nNWnM5q-mianJRuA3SWLM9RixNvCAOlA9_Vh87ACDjyEQ/exec";
 
-        function App() {
-// ... (後面代碼保持不變)
+    <header class="flex justify-between items-end border-b-4 border-slate-800 pb-2 mb-6">
+        <div>
+            <h1 class="text-xl font-black text-slate-800 leading-tight">台灣精銳犬隻<br>臨床病歷系統</h1>
+            <p class="text-[10px] font-bold text-slate-500 mt-1">👩‍⚕️ 護理師：小黑哥</p>
+        </div>
+        <div class="stamp">已認證</div>
+    </header>
 
-        function App() {
-            const [dogs, setDogs] = useState(() => {
-                const saved = localStorage.getItem('K9_MEDICAL_PRO_V7_FINAL');
-                return saved ? JSON.parse(saved) : [
-                    { id: 1, name: '張布丁', sex: 'M', age: '3Y+', weight: '43.5', breed: '高山犬', logs: [] },
-                    { id: 2, name: '妞妞', sex: 'F', age: '?', weight: '?', breed: '米克斯', logs: [] },
-                    { id: 3, name: '狗狗3號', sex: '?', age: '?', weight: '?', breed: '?', logs: [] },
-                    { id: 4, name: '狗狗4號', sex: '?', age: '?', weight: '?', breed: '?', logs: [] },
-                    { id: 5, name: '狗狗5號', sex: '?', age: '?', weight: '?', breed: '?', logs: [] }
-                ];
-            });
-
-            useEffect(() => {
-                localStorage.setItem('K9_MEDICAL_PRO_V7_FINAL', JSON.stringify(dogs));
-            }, [dogs]);
-
-            // --- 秘密雲端同步功能 ---
-            const syncToCloud = async (dogName, weight, note) => {
-                try {
-                    const query = `type=k9&dogName=${encodeURIComponent(dogName)}&area=${encodeURIComponent(weight + " KG")}&health=醫療紀錄&note=${encodeURIComponent(note)}`;
-                    fetch(`${SCRIPT_URL}?${query}`, { mode: 'no-cors' });
-                } catch (e) { console.error("Cloud Sync Failed", e); }
-            };
-
-            const addLog = (id) => {
-                const dog = dogs.find(d => d.id === id);
-                const note = prompt(`為 ${dog.name} 輸入臨床診斷或用藥紀錄：`);
-                if (!note) return;
-                
-                const now = new Date();
-                const timeStr = (now.getMonth()+1) + '/' + now.getDate() + ' ' + now.getHours() + ':' + (now.getMinutes()<10?'0':'') + now.getMinutes();
-                
-                // 1. 更新本地介面
-                setDogs(dogs.map(d => d.id === id ? { ...d, logs: [{ id: Date.now(), time: timeStr, note }, ...d.logs] } : d));
-                
-                // 2. 靜默同步到雲端
-                syncToCloud(dog.name, dog.weight, note);
-            };
-
-            const editBaseInfo = (dogId) => {
-                const dog = dogs.find(d => d.id === dogId);
-                const nName = prompt("修改名字:", dog.name);
-                const nSex = prompt("修改性別 (M/F):", dog.sex);
-                const nAge = prompt("修改年齡:", dog.age);
-                const nWeight = prompt("修改體重 (KG):", dog.weight);
-                const nBreed = prompt("修改品種:", dog.breed);
-                setDogs(dogs.map(d => d.id === dogId ? { ...d, name: nName || d.name, sex: nSex || d.sex, age: nAge || d.age, weight: nWeight || d.weight, breed: nBreed || d.breed } : d));
-            };
-
-            const editLog = (dogId, logId) => {
-                const dog = dogs.find(d => d.id === dogId);
-                const log = dog.logs.find(l => l.id === logId);
-                const action = prompt("請選擇操作：\n1. 修改紀錄\n2. 刪除紀錄");
-                if (action === "1") {
-                    const newNote = prompt("修改紀錄內容:", log.note);
-                    if (newNote) setDogs(dogs.map(d => d.id === dogId ? { ...d, logs: d.logs.map(l => l.id === logId ? { ...l, note: newNote } : l) } : d));
-                } else if (action === "2") {
-                    if (confirm("確定刪除？")) setDogs(dogs.map(d => d.id === dogId ? { ...d, logs: d.logs.filter(l => l.id !== logId) } : d));
-                }
-            };
-
-            return (
-                <div className="p-3 max-w-4xl mx-auto">
-                    <header className="flex justify-between items-center border-b-4 border-slate-800 pb-2 mb-4">
-                        <div className="flex-1 pr-2">
-                            <h1 className="text-xl font-black tracking-tight text-slate-800 leading-tight">
-                                台灣精銳犬隻<br/>臨床病歷系統
-                            </h1>
-                            <p className="text-[10px] font-bold text-slate-500 mt-1">👩‍⚕️ 護理師：小黑哥</p>
-                        </div>
-                        <div className="flex flex-col items-end">
-                            <span className="text-[8px] font-mono font-bold text-slate-400 bg-slate-200 px-1 rounded mb-1">CLOUD SYNC ACTIVE</span>
-                            <div className="stamp">已認證</div>
-                        </div>
-                    </header>
-
-                    {dogs.map(dog => (
-                        <div key={dog.id} className="medical-paper p-3 mb-6 relative">
-                            <button onClick={() => editBaseInfo(dog.id)} className="absolute right-3 top-3 text-sm bg-slate-100 p-1 rounded-full opacity-70">✏️</button>
-                            <div className="grid grid-cols-4 border-[1.5px] border-slate-800 mb-3 text-[12px]">
-                                <div className="bg-slate-800 text-white p-1 text-[9px] font-bold text-center flex items-center justify-center">姓名</div>
-                                <div className="p-1 border-r-[1.5px] border-slate-800 font-black text-blue-600 truncate">{dog.name}</div>
-                                <div className="bg-slate-800 text-white p-1 text-[9px] font-bold text-center flex items-center justify-center">體重</div>
-                                <div className="p-1 font-black">{dog.weight} KG</div>
-                                <div className="bg-slate-800 text-white p-1 text-[9px] font-bold border-t-[1.5px] border-slate-800 text-center flex items-center justify-center">性別/年齡</div>
-                                <div className="p-1 border-r-[1.5px] border-slate-800 border-t-[1.5px] border-slate-800 font-bold text-center">{dog.sex}/{dog.age}</div>
-                                <div className="bg-slate-800 text-white p-1 text-[9px] font-bold border-t-[1.5px] border-slate-800 text-center flex items-center justify-center">品種</div>
-                                <div className="p-1 border-t-[1.5px] border-slate-800 font-bold truncate text-[11px]">{dog.breed}</div>
-                            </div>
-
-                            <div className="border-[1.5px] border-slate-800 min-h-[100px]">
-                                <div className="flex bg-slate-100 border-b-[1.5px] border-slate-800 font-bold text-[11px]">
-                                    <div className="w-[30%] p-1.5 border-r-[1.5px] border-slate-800 text-center">診療時間</div>
-                                    <div className="w-[70%] p-1.5">臨床紀錄 (同步雲端)</div>
-                                </div>
-                                {dog.logs.map((log) => (
-                                    <div key={log.id} onClick={() => editLog(dog.id, log.id)} className="flex border-b border-slate-300 record-row text-[12px] min-h-[45px]">
-                                        <div className="w-[30%] p-1.5 border-r-[1.5px] border-slate-800 font-mono text-[9px] text-slate-500 flex items-center justify-center text-center break-all leading-tight">
-                                            {log.time}
-                                        </div>
-                                        <div className="w-[70%] p-1.5 font-medium text-slate-800 italic break-word flex items-center">
-                                            {log.note}
-                                        </div>
-                                    </div>
-                                ))}
-                                {dog.logs.length === 0 && <div className="p-6 text-center text-slate-300 italic text-xs">尚無紀錄</div>}
-                            </div>
-                            <button onClick={() => addLog(dog.id)} className="mt-3 w-full bg-slate-800 text-white py-2.5 font-black text-xs active:bg-emerald-600 transition-colors rounded">
-                                + 新增臨床紀錄 (SAVE TO CLOUD)
-                            </button>
-                        </div>
-                    ))}
-                    <footer className="text-center text-[9px] text-slate-400 mt-6 uppercase tracking-widest font-bold">
-                        TAIWAN ELITE K9 CLINICAL SYSTEM - V7.0
-                    </footer>
+    <div class="medical-paper">
+        <div class="grid-table">
+            <div class="grid-label">姓名</div><div class="grid-content text-blue-600">張布丁</div>
+            <div class="grid-label">體重</div><div class="grid-content">43.5 KG</div>
+            <div class="grid-label">性別</div><div class="grid-content">M / 3Y+</div>
+            <div class="grid-label">品種</div><div class="grid-content">高山犬</div>
+        </div>
+        
+        <div class="log-table">
+            <div class="log-header">
+                <div class="w-[30%] p-1 text-center border-r-[1.5px] border-slate-800">診療時間</div>
+                <div class="w-[70%] p-1">臨床紀錄 (同步雲端)</div>
+            </div>
+            <div id="puddingLogs">
                 </div>
-            );
+        </div>
+
+        <button onclick="addLog('張布丁', '43.5')" class="mt-4 w-full bg-slate-800 text-white py-3 font-black text-xs rounded active:bg-emerald-600 transition-colors">
+            + 新增臨床紀錄 (SAVE TO CLOUD)
+        </button>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxm4CDB5i8V2CX6lbCu4gxI2TH-jGKFznI8H01CLlnKEh9Fdr71pfeQr7ai6VcVtAvomw/exec";
+        
+        // 載入本地紀錄
+        let logs = JSON.parse(localStorage.getItem('K9_LOGS_SIMPLE') || '[]');
+        renderLogs();
+
+        async function addLog(name, weight) {
+            const note = prompt(`為 ${name} 輸入臨床診療內容：`);
+            if (!note) return;
+
+            const now = new Date();
+            const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${(now.getMinutes()<10?'0':'')+now.getMinutes()}`;
+
+            // 1. 本地顯示
+            logs.unshift({ time: timeStr, note: note });
+            localStorage.setItem('K9_LOGS_SIMPLE', JSON.stringify(logs));
+            renderLogs();
+
+            // 2. 背景同步雲端
+            try {
+                const query = `type=k9&dogName=${encodeURIComponent(name)}&area=${encodeURIComponent(weight + " KG")}&health=醫療紀錄&note=${encodeURIComponent(note)}`;
+                fetch(`${SCRIPT_URL}?${query}`, { mode: 'no-cors' });
+                alert("✅ 紀錄已同步至指揮部雲端！");
+            } catch (e) {
+                console.log("Sync Error");
+            }
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        function renderLogs() {
+            const container = document.getElementById('puddingLogs');
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="p-4 text-center text-slate-300 italic text-xs">尚無紀錄</div>';
+                return;
+            }
+            container.innerHTML = logs.map(l => `
+                <div class="log-row">
+                    <div class="w-[30%] p-2 border-r-[1.5px] border-slate-800 text-[10px] text-slate-500 flex items-center justify-center font-mono text-center">${l.time}</div>
+                    <div class="w-[70%] p-2 italic flex items-center font-medium">${l.note}</div>
+                </div>
+            `).join('');
+        }
     </script>
 </body>
 </html>
