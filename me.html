@@ -15,4 +15,30 @@
     <button onclick="deduct(8)" class="bg-red-600 text-white py-3 rounded-lg font-bold text-xs border-b-4 border-red-900 active:border-b-0 hover:bg-red-500">
         -8 HR
     </button>
+    <script>
+    // 初始化時數：如果沒存過，預設是 56 小時 (7天x8小時)
+    let remainingHours = parseFloat(localStorage.getItem('myVacationHours')) || 56;
+
+    // 更新顯示畫面
+    function updateDisplay() {
+        document.getElementById('hours-count').innerText = remainingHours;
+        localStorage.setItem('myVacationHours', remainingHours);
+    }
+
+    // 執行扣除動作
+    function deduct(amount) {
+        if (remainingHours >= amount) {
+            remainingHours -= amount;
+            updateDisplay();
+            // 可以在這裡加個小提醒
+            console.log('已扣除 ' + amount + ' 小時');
+        } else {
+            alert('時數不夠扣囉！班長辛苦了！');
+        }
+    }
+
+    // 網頁開啟時先跑一次顯示
+    updateDisplay();
+</script>
+
 </div>
