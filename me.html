@@ -3,101 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>柔的精算大腦 - 全年版</title>
+    <title>K9 特休班表管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: sans-serif; background-color: #f5f5dc; margin: 0; padding: 0; color: #333; }
-        .header { background-color: #000; color: #fff; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; }
-        .month-nav { margin: 10px 0; }
-        select { padding: 5px; font-size: 16px; border-radius: 5px; }
-        .stats { background: #333; padding: 10px; margin-top: 5px; border-radius: 5px; font-size: 14px; }
-        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; padding: 10px; }
-        .day { background: #fff; border: 1px solid #ddd; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 14px; border-radius: 4px; }
-        .day.today { border: 2px solid #ff0000; }
-        .btn-group { display: flex; justify-content: space-around; padding: 10px; background: #eee; }
-        button { padding: 10px; border: none; border-radius: 5px; color: white; font-weight: bold; }
-        .btn-work { background-color: #2e7d32; } /* 綠色：日B班 */
-        .btn-off { background-color: #c62828; }  /* 紅色：休假 */
+        body { background-color: #e5e1d3; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background-color: #d1d5db; }
+        .day-cell { background-color: white; aspect-ratio: 1/1.2; padding: 4px; font-size: 12px; display: flex; flex-direction: column; justify-content: space-between; }
+        .off-day { color: #b91c1c; font-weight: bold; } /* 休假紅色 */
+        .work-day { color: #065f46; font-weight: bold; } /* 日班綠色 */
+        .other-month { background-color: #f3f4f6; color: #9ca3af; }
+        .today-border { border: 2px solid #ef4444 !important; }
     </style>
 </head>
-<body>
+<body class="max-w-md mx-auto shadow-lg min-h-screen flex flex-col">
 
-<div class="header">
-    <strong>K9 特休戰情室</strong>
-    <div class="month-nav">
-        <select id="monthSelect" onchange="renderCalendar()">
-            </select>
+    <div class="bg-black text-white p-3 flex justify-between items-center">
+        <div class="flex flex-col">
+            <span class="text-xs text-gray-400">夥伴：班長小黑哥</span>
+            <span class="font-bold text-sm">執行者：柔</span>
+        </div>
+        <div class="text-right">
+            <span class="text-xs text-gray-400">剩餘特休</span><br>
+            <span class="text-yellow-500 font-bold text-xl"><span id="hr-count">48</span><span class="text-xs ml-1">HR</span></span>
+        </div>
     </div>
-    <div class="stats">
-        剩餘特休：<span id="hoursDisplay">100</span> hr
+
+    <div class="bg-[#4a6741] text-white p-2 flex justify-between items-center shadow-md">
+        <button onclick="changeMonth(-1)" class="px-4 py-1 active:opacity-50">◀</button>
+        <div class="text-center">
+            <span id="current-date-label" class="font-bold">2026年 2月</span>
+            <div id="month-target" class="text-[10px] opacity-80">本月目標：休 6 天 (小月)</div>
+        </div>
+        <button onclick="changeMonth(1)" class="px-4 py-1 active:opacity-50">▶</button>
     </div>
-</div>
 
-<div id="calendar" class="calendar"></div>
+    <div class="grid grid-cols-7 bg-[#ede9d9] text-[#9a8c73] text-[10px] text-center py-1 border-b border-gray-300">
+        <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+    </div>
 
-<div class="btn-group">
-    <button class="btn-work" onclick="adjustHours(-1)">-1 hr</button>
-    <button class="btn-work" onclick="adjustHours(-4)">-4 hr</button>
-    <button class="btn-work" onclick="adjustHours(-8)">-8 hr</button>
-    <button style="background:#555" onclick="resetHours()">重置</button>
-</div>
+    <div class="calendar-grid border-b border-gray-300" id="calendar">
+        </div>
 
-<script>
-    let currentHours = parseFloat(localStorage.getItem('k9_hours')) || 100;
-    const monthSelect = document.getElementById('monthSelect');
+    <div class="p-4 bg-[#ede9d9] flex-grow">
+        <p class="text-[10px] text-gray-500 mb-2 font-bold tracking-widest">快速扣除特休時數</p>
+        <div class="grid grid-cols-3 gap-2">
+            <button onclick="deduct(1)" class="bg-white border border-gray-300 py-3 rounded shadow-sm text-xs font-bold active:bg-gray-200">-1 HR</button>
+            <button onclick="deduct(4)" class="bg-white border border-gray-300 py-3 rounded shadow-sm text-xs font-bold active:bg-gray-200">-4 HR</button>
+            <button onclick="deduct(8)" class="bg-white border border-gray-300 py-3 rounded shadow-sm text-xs font-bold active:bg-gray-200">-8 HR</button>
+        </div>
+        
+        <div class="mt-6 flex justify-between items-center border-t border-gray-300 pt-4">
+            <button onclick="resetHr()" class="text-[10px] text-gray-400 underline italic">手動校正總時數</button>
+            <div class="text-[9px] text-gray-400 text-right">
+                攻堅計畫：HP 15s SSD<br>
+                狀態：年後待送維修站
+            </div>
+        </div>
+    </div>
 
-    // 初始化月份選單
-    for (let i = 1; i <= 12; i++) {
-        let opt = document.createElement('option');
-        opt.value = i;
-        opt.innerHTML = i + ' 月';
-        if (i === new Date().getMonth() + 1) opt.selected = true;
-        monthSelect.appendChild(opt);
-    }
+    <script>
+        let totalHours = parseFloat(localStorage.getItem('k9_total_hr')) || 48;
+        let viewDate = new Date(2026, 1, 1); // 預設 2026 年 2 月
 
-    function renderCalendar() {
-        const year = 2026; // 固定 2026 年
-        const month = monthSelect.value;
-        const firstDay = new Date(year, month - 1, 1).getDay();
-        const daysInMonth = new Date(year, month, 0).getDate();
-        const container = document.getElementById('calendar');
-        container.innerHTML = '';
-
-        // 填充空白格子
-        for (let i = 0; i < firstDay; i++) {
-            container.innerHTML += '<div></div>';
+        function updateHR() {
+            document.getElementById('hr-count').innerText = totalHours;
+            localStorage.setItem('k9_total_hr', totalHours);
         }
 
-        // 生成日期
-        for (let d = 1; d <= daysInMonth; d++) {
-            const isToday = (d === new Date().getDate() && month == new Date().getMonth() + 1);
-            container.innerHTML += `<div class="day ${isToday ? 'today' : ''}">${d}</div>`;
+        function deduct(amt) {
+            if(totalHours >= amt) {
+                totalHours -= amt;
+                updateHR();
+            } else {
+                alert("班長，時數不夠囉！");
+            }
         }
-        updateDisplay();
-    }
 
-    function adjustHours(val) {
-        currentHours += val;
-        saveData();
-    }
-
-    function resetHours() {
-        if(confirm('確定要重置時數嗎？')) {
-            currentHours = 100;
-            saveData();
+        function resetHr() {
+            let n = prompt("班長，請輸入校正後的總時數：", totalHours);
+            if(n !== null) { totalHours = parseFloat(n) || 0; updateHR(); }
         }
-    }
 
-    function saveData() {
-        localStorage.setItem('k9_hours', currentHours);
-        updateDisplay();
-    }
+        function changeMonth(delta) {
+            viewDate.setMonth(viewDate.getMonth() + delta);
+            renderCalendar();
+        }
 
-    function updateDisplay() {
-        document.getElementById('hoursDisplay').innerText = currentHours;
-    }
+        function renderCalendar() {
+            const cal = document.getElementById('calendar');
+            const year = viewDate.getFullYear();
+            const month = viewDate.getMonth();
+            cal.innerHTML = '';
 
-    renderCalendar();
-</script>
+            // 更新標題與大7小6規則
+            document.getElementById('current-date-label').innerText = `${year}年 ${month + 1}月`;
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const targetDays = (daysInMonth >= 31) ? 7 : 6;
+            document.getElementById('month-target').innerText = `本月目標：休 ${targetDays} 天 (${daysInMonth >= 31 ? '大月' : '小月'})`;
 
+            const firstDay = new Date(year, month, 1).getDay();
+            const today = new Date();
+
+            // 填充月初空白
+            for (let i = 0; i < firstDay; i++) {
+                cal.innerHTML += `<div class="day-cell other-month"></div>`;
+            }
+
+            // 生成日期
+            for (let i = 1; i <= daysInMonth; i++) {
+                const isToday = (year === today.getFullYear() && month === today.getMonth() && i === today.getDate());
+                
+                // 模擬班表：這部分班長可以根據實際週期修改
+                // 這裡暫設定為六日為休假配色
+                const dayOfWeek = new Date(year, month, i).getDay();
+                const isOff = (dayOfWeek === 0 || dayOfWeek === 6); 
+                const colorClass = isOff ? 'off-day' : 'work-day';
+                const typeText = isOff ? '休假' : '日B班';
+
+                cal.innerHTML += `
+                    <div class="day-cell ${isToday ? 'today-border' : ''}">
+                        <div class="${colorClass}">${i}</div>
+                        <div class="text-[8px] text-gray-400 mt-auto">${typeText}</div>
+                    </div>`;
+            }
+        }
+
+        // 初始啟動
+        renderCalendar();
+        updateHR();
+    </script>
 </body>
 </html>
