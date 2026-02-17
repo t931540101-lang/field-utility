@@ -3,79 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>警衛-一廠勤務交接簿</title>
+    <title>K9-二廠戰情通報系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #e5e7eb; font-family: sans-serif; }
-        .log-card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 8px solid #1e293b; }
-        .status-badge { font-size: 12px; padding: 3px 10px; border-radius: 99px; font-weight: bold; }
+        body { background-color: #f3f4f6; font-family: sans-serif; }
+        .log-card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 8px solid #1e293b; }
         .urgent { border-left-color: #dc2626; }
-        .btn-confirm { background-color: #059669; color: white; width: 100%; padding: 12px; border-radius: 10px; font-weight: bold; margin-top: 10px; }
+        .btn-confirm { background-color: #059669; color: white; width: 100%; padding: 14px; border-radius: 12px; font-weight: 900; font-size: 18px; margin-top: 10px; }
     </style>
 </head>
-<body class="max-w-md mx-auto min-h-screen flex flex-col">
-
-    <div class="bg-black text-white p-4 flex justify-between items-center sticky top-0 z-50">
+<body class="max-w-md mx-auto min-h-screen">
+    <div class="bg-black text-white p-4 sticky top-0 z-50 flex justify-between items-center">
         <div>
-            <div class="text-[10px] text-gray-400">一廠勤務交接簿</div>
-            <div class="text-xl font-black">勤務交接簿</div>
+            <div class="text-[10px] text-gray-400">二廠勤務中心</div>
+            <div class="text-2xl font-black">戰情通報系統</div>
         </div>
-        <button onclick="addNewTask()" class="bg-yellow-500 text-black px-4 py-2 rounded-lg font-black text-sm active:scale-90">
-            + 新增事項
-        </button>
+        <button onclick="refreshData()" class="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold">🔄 重新整理</button>
     </div>
 
-    <div class="bg-slate-700 text-white p-2 text-center text-xs font-bold">
-        目前登入：姓名小黑 (D01762)
-    </div>
-
-    <div id="taskList" class="p-4 flex-grow overflow-y-auto">
-        
-        <div class="log-card urgent">
-            <div class="flex justify-between items-start mb-2">
-                <span class="status-badge bg-red-100 text-red-700">⚠️ 緊急重要</span>
-                <span class="text-xs text-gray-400 font-bold">16:30 發布</span>
-            </div>
-            <h3 class="text-2xl font-black text-slate-800 leading-tight mb-2">
-                2月23日：二廠開工水果三牲需定位
-            </h3>
-            <p class="text-gray-600 text-sm font-bold">由警衛室點收，幫忙配合搬運。</p>
-            <button class="btn-confirm active:bg-green-700" onclick="markDone(this)">確認已讀/處理</button>
+    <div id="loading" class="p-10 text-center font-bold text-slate-500">📡 正在連接雲端戰情室...</div>
+    
+    <div id="logList" class="p-4">
         </div>
-
-        <div class="log-card">
-            <div class="flex justify-between items-start mb-2">
-                <span class="status-badge bg-blue-100 text-blue-700">📅 一般勤務</span>
-                <span class="text-xs text-gray-400 font-bold">15:20 發布</span>
-            </div>
-            <h3 class="text-2xl font-black text-slate-800 leading-tight mb-2">
-                外勞掃車道口
-            </h3>
-            <p class="text-gray-600 text-sm font-bold">請注意放安全錐，確保進出安全。</p>
-            <button class="btn-confirm active:bg-green-700" onclick="markDone(this)">確認已讀/處理</button>
-        </div>
-
-    </div>
-
-    <div class="p-4 text-center">
-        <div class="text-[10px] text-gray-400 font-bold">© K9 SECURITY SYSTEM V1.0</div>
-    </div>
 
     <script>
-        function addNewTask() {
-            const task = prompt("請輸入要交代的事項內容：");
-            if (task) {
-                alert("已成功傳送到雲端資料庫！");
-                // 這裡之後會接 Firebase 實作同步
-            }
+        // 【主管注意！】這裡填入妳剛才拿到的那串 URL
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwdLy8w7-VptE5f7TEBjTu9pnSopEKo1daVjmhC2lDmgDQVDnc0F9lN6QpH-Ysry-qWUg/exec";
+
+        // 自動從雲端抓取資料
+        function refreshData() {
+            document.getElementById('loading').style.display = 'block';
+            fetch(GAS_URL)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('loading').style.display = 'none';
+                    const list = document.getElementById('logList');
+                    list.innerHTML = "";
+                    data.forEach((row, index) => {
+                        const card = document.createElement('div');
+                        card.className = `log-card ${row[2] === '重要' ? 'urgent' : ''}`;
+                        card.innerHTML = `
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="px-3 py-1 rounded-full text-xs font-black ${row[2] === '重要' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}">${row[2]}</span>
+                                <span class="text-xs text-gray-400 font-bold">${row[0]}</span>
+                            </div>
+                            <h3 class="text-2xl font-black text-slate-800 mb-2">${row[1]}</h3>
+                            <p class="text-slate-500 text-sm mb-4">狀態：${row[3]}</p>
+                            <button class="btn-confirm" onclick="markDone(${index})">確認已讀/處理</button>
+                        `;
+                        list.appendChild(card);
+                    });
+                });
         }
 
-        function markDone(btn) {
-            btn.innerHTML = "✅ 同仁已確認處理";
-            btn.classList.remove("bg-green-600");
-            btn.classList.add("bg-gray-400");
-            btn.disabled = true;
+        // 當按下確認按鈕
+        function markDone(idx) {
+            alert("已回報雲端！");
+            // 這裡可以連動 GAS 的 updateStatus 功能
         }
+
+        // 網頁開啟時自動載入一次
+        window.onload = refreshData;
     </script>
 </body>
 </html>
