@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>K9 戰情室 V8.2 - 頂部巨字版</title>
+    <title>K9 戰情室 V8.3 - 雙顯精算版</title>
     <style>
         :root { --paper: #f9f4e8; --ink: #2e5a44; --red: #c0392b; --gold: #b8860b; --line: #dcd3b6; }
         body { margin: 0; font-family: sans-serif; background: #e8e2d0; -webkit-tap-highlight-color: transparent; }
         .calendar-box { max-width: 500px; margin: 0 auto; background: var(--paper); min-height: 100vh; padding-bottom: 120px; }
         
-        /* 頂部：姓名工號巨字化 */
+        /* 頂部：姓名工號巨字 + 時數天數雙顯 */
         .user-info-bar { 
             background: #000000; 
             color: #ffffff; 
-            padding: 15px 10px; 
+            padding: 12px 10px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center;
             border-bottom: 3px solid var(--red);
         }
-        .u-left { font-size: 20px; font-weight: 900; width: 40%; }
-        .u-center { width: 20%; text-align: center; }
-        .u-right { font-size: 20px; font-weight: 900; width: 40%; text-align: right; }
-        .hr-big { color: #eab308; font-size: 32px; font-weight: 900; line-height: 1; }
-        .hr-unit { color: #eab308; font-size: 10px; display: block; margin-top: -2px; }
+        .u-left { font-size: 20px; font-weight: 900; width: 38%; }
+        .u-center { width: 24%; text-align: center; display: flex; flex-direction: column; align-items: center; }
+        .u-right { font-size: 20px; font-weight: 900; width: 38%; text-align: right; }
+        
+        .hr-big { color: #eab308; font-size: 28px; font-weight: 900; line-height: 1; }
+        .day-sub { color: #eab308; font-size: 11px; font-weight: bold; margin-top: 2px; }
 
         .stat-bar { background: #4a6741; color: white; padding: 8px; display: flex; justify-content: space-around; font-size: 14px; font-weight: bold; }
         
@@ -51,7 +52,7 @@
         <div class="u-left" id="uNameDisplay" onclick="editInfo()">姓名：小黑</div>
         <div class="u-center" onclick="secretReset()">
             <span class="hr-big" id="hr-count">48</span>
-            <span class="hr-unit">HR</span>
+            <span class="day-sub" id="day-convert">(約 4 天)</span>
         </div>
         <div class="u-right" id="uIDDisplay" onclick="editInfo()">工號：D01762</div>
     </div>
@@ -115,12 +116,12 @@
 
         document.getElementById('calendar-title').innerText = `${curY}年 ${curM + 1}月`;
         document.getElementById('hr-count').innerText = totalVacationHr;
+        document.getElementById('day-convert').innerText = `(約 ${Math.floor(totalVacationHr / 12)} 天)`;
         document.getElementById('uNameDisplay').innerText = "姓名：" + (localStorage.getItem('user-name') || "小黑");
         document.getElementById('uIDDisplay').innerText = "工號：" + (localStorage.getItem('user-id') || "D01762");
 
         const firstDay = new Date(curY, curM, 1).getDay();
         const daysInMonth = new Date(curY, curM + 1, 0).getDate();
-        
         let workCount = 0; let offCount = 0;
 
         for (let i = 0; i < firstDay; i++) grid.appendChild(Object.assign(document.createElement('div'), {className: 'cell'}));
@@ -130,7 +131,6 @@
             const d = new Date(curY, curM, i);
             const dateKey = `${curY}-${curM + 1}-${i}`;
             const note = localStorage.getItem('note-' + dateKey) || "";
-            
             cell.className = 'cell';
             let colorClass = "color-default";
             if (note.includes("例假") || note.includes("休假")) { colorClass = "color-holiday"; offCount++; }
@@ -138,7 +138,6 @@
             else if (note.includes("班")) { workCount++; }
 
             cell.innerHTML = `<div class="day-num ${d.getDay()===0||d.getDay()===6?'is-weekend':''}">${i}</div><div class="memo-text ${colorClass}">${note}</div>`;
-            
             cell.onclick = () => {
                 const oldNote = localStorage.getItem('note-' + dateKey) || "";
                 if (isClearMode) {
