@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>K9 戰情室-精簡優化版</title>
+    <title>K9 戰情室-全功能指揮版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #e5e1d3; font-family: sans-serif; }
@@ -33,26 +33,41 @@
         </div>
     </div>
 
-    <div class="bg-[#4a6741] text-white p-3 flex justify-between items-center shadow-md">
-        <button onclick="changeMonth(-1)" class="text-xl px-2">◀</button>
+    <div class="bg-[#4a6741] text-white p-2 flex justify-between items-center shadow-md">
+        <button onclick="changeMonth(-1)" class="text-xl px-4">◀</button>
         <div class="text-center">
             <span id="month-label" class="font-bold text-lg">2026年 3月</span>
             <div id="vacation-count-only" class="text-[11px] bg-black/30 rounded-full px-4 py-0.5 mt-1 font-medium italic">
                 本月已休 0 天
             </div>
         </div>
-        <button onclick="changeMonth(1)" class="text-xl px-2">▶</button>
+        <button onclick="changeMonth(1)" class="text-xl px-4">▶</button>
     </div>
 
     <div id="calendar" class="calendar-grid border-b border-gray-300"></div>
 
-    <div class="p-4 bg-[#ede9d9]">
-        <div class="bg-white/50 p-3 rounded-lg border border-gray-300 text-[11px] text-gray-600">
-            <p class="font-bold mb-1 text-black">🛡️ 攻堅守則：</p>
+    <div class="p-2 bg-[#d6d2c4] grid grid-cols-3 gap-2 border-t border-gray-300">
+        <select class="bg-white border border-gray-300 rounded p-2 text-xs text-gray-700">
+            <option>🏢 廠區</option>
+            <option>A 廠</option>
+            <option>B 廠</option>
+        </select>
+        <select class="bg-white border border-gray-300 rounded p-2 text-xs text-gray-700">
+            <option>📝 項目</option>
+            <option>巡邏</option>
+            <option>守備</option>
+        </select>
+        <button onclick="alert('進入擦除模式')" class="bg-white border border-gray-300 rounded py-2 text-xs text-blue-600 font-bold active:bg-gray-200">
+            擦除
+        </button>
+    </div>
+
+    <div class="p-4 bg-[#ede9d9] flex-grow">
+        <div class="bg-white/50 p-3 rounded-lg border border-gray-300 text-[10px] text-gray-600">
+            <p class="font-bold mb-1 text-black">🛡️ 戰情備註：</p>
             <ul class="list-disc ml-4">
-                <li>點擊日期切換：上班 ➔ 休假 ➔ 特休</li>
-                <li>特休自動扣除 12HR，取消自動加回</li>
-                <li><span class="text-blue-600">HP 15s-du0xxx 240G 裝備升級中</span></li>
+                <li>點擊日期：上班 ➔ 休假 ➔ 特休 (自動扣 12HR)</li>
+                <li><span class="text-blue-600">裝備：HP 15s-du0xxx (240G 擴充完成)</span></li>
             </ul>
         </div>
     </div>
@@ -60,7 +75,7 @@
     <script>
         let totalHr = parseFloat(localStorage.getItem('k9_total_hr')) || 48;
         let schedule = JSON.parse(localStorage.getItem('k9_schedule')) || {};
-        let viewDate = new Date(2026, 2, 1); // 預設顯示 3 月
+        let viewDate = new Date(2026, 2, 1);
         let clickCount = 0;
 
         function updateUI() {
@@ -113,27 +128,18 @@
             const year = viewDate.getFullYear(), month = viewDate.getMonth();
             cal.innerHTML = '';
             document.getElementById('month-label').innerText = `${year}年 ${month + 1}月`;
-
             const firstDay = new Date(year, month, 1).getDay();
             const days = new Date(year, month + 1, 0).getDate();
-
             for (let i = 0; i < firstDay; i++) cal.innerHTML += `<div class="day-cell other-month"></div>`;
-
             for (let i = 1; i <= days; i++) {
                 const key = `${year}-${month+1}-${i}`;
                 const type = schedule[key] || 'work';
                 let cellClass = '', textClass = 'work-text', label = '日B班';
                 if(type === 'off') { cellClass = 'off-bg'; textClass = 'off-text'; label = '休假'; }
                 if(type === 'vacation') { cellClass = 'vacation-bg'; textClass = 'vacation-text'; label = '特休'; }
-
-                cal.innerHTML += `
-                    <div class="day-cell ${cellClass}" onclick="toggleDay('${key}')">
-                        <div class="${textClass}">${i}</div>
-                        <div class="text-[8px] text-gray-400 mt-auto">${label}</div>
-                    </div>`;
+                cal.innerHTML += `<div class="day-cell ${cellClass}" onclick="toggleDay('${key}')"><div class="${textClass}">${i}</div><div class="text-[8px] text-gray-400 mt-auto">${label}</div></div>`;
             }
         }
-
         render(); updateUI();
     </script>
 </body>
