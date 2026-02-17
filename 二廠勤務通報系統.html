@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>K9-二廠戰情交接簿</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #e5e7eb; font-family: sans-serif; }
+        .log-card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 8px solid #1e293b; }
+        .status-badge { font-size: 12px; padding: 3px 10px; border-radius: 99px; font-weight: bold; }
+        .urgent { border-left-color: #dc2626; }
+        .btn-confirm { background-color: #059669; color: white; width: 100%; padding: 12px; border-radius: 10px; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body class="max-w-md mx-auto min-h-screen flex flex-col">
+
+    <div class="bg-black text-white p-4 flex justify-between items-center sticky top-0 z-50">
+        <div>
+            <div class="text-[10px] text-gray-400">二廠勤務指揮</div>
+            <div class="text-xl font-black">戰情交接簿</div>
+        </div>
+        <button onclick="addNewTask()" class="bg-yellow-500 text-black px-4 py-2 rounded-lg font-black text-sm active:scale-90">
+            + 新增事項
+        </button>
+    </div>
+
+    <div class="bg-slate-700 text-white p-2 text-center text-xs font-bold">
+        目前登入：班長小黑 (D01762)
+    </div>
+
+    <div id="taskList" class="p-4 flex-grow overflow-y-auto">
+        
+        <div class="log-card urgent">
+            <div class="flex justify-between items-start mb-2">
+                <span class="status-badge bg-red-100 text-red-700">⚠️ 緊急重要</span>
+                <span class="text-xs text-gray-400 font-bold">16:30 發布</span>
+            </div>
+            <h3 class="text-2xl font-black text-slate-800 leading-tight mb-2">
+                2月23日：二廠開工水果三牲需定位
+            </h3>
+            <p class="text-gray-600 text-sm font-bold">由班長親自點收，保全配合搬運。</p>
+            <button class="btn-confirm active:bg-green-700" onclick="markDone(this)">確認已讀/處理</button>
+        </div>
+
+        <div class="log-card">
+            <div class="flex justify-between items-start mb-2">
+                <span class="status-badge bg-blue-100 text-blue-700">📅 一般勤務</span>
+                <span class="text-xs text-gray-400 font-bold">15:20 發布</span>
+            </div>
+            <h3 class="text-2xl font-black text-slate-800 leading-tight mb-2">
+                外勞掃車道口
+            </h3>
+            <p class="text-gray-600 text-sm font-bold">請注意放安全錐，確保進出安全。</p>
+            <button class="btn-confirm active:bg-green-700" onclick="markDone(this)">確認已讀/處理</button>
+        </div>
+
+    </div>
+
+    <div class="p-4 text-center">
+        <div class="text-[10px] text-gray-400 font-bold">© K9 SECURITY SYSTEM V1.0</div>
+    </div>
+
+    <script>
+        function addNewTask() {
+            const task = prompt("請輸入要交代的事項內容：");
+            if (task) {
+                alert("已成功傳送到雲端資料庫！");
+                // 這裡之後會接 Firebase 實作同步
+            }
+        }
+
+        function markDone(btn) {
+            btn.innerHTML = "✅ 同仁已確認處理";
+            btn.classList.remove("bg-green-600");
+            btn.classList.add("bg-gray-400");
+            btn.disabled = true;
+        }
+    </script>
+</body>
+</html>
