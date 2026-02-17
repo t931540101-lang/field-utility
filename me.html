@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>K9 戰情室 V8.0 - 智能核算版</title>
+    <title>K9 戰情室 V8.1 - 完整大字版</title>
     <style>
         :root { --paper: #f9f4e8; --ink: #2e5a44; --red: #c0392b; --gold: #b8860b; --line: #dcd3b6; }
         body { margin: 0; font-family: sans-serif; background: #e8e2d0; -webkit-tap-highlight-color: transparent; }
@@ -13,20 +13,20 @@
         .user-info-bar { 
             background: #000000; 
             color: #ffffff; 
-            padding: 12px 15px; 
+            padding: 12px 10px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center;
             border-bottom: 3px solid var(--red);
         }
-        .u-left { font-size: 16px; font-weight: 900; width: 35%; }
-        .u-center { width: 30%; text-align: center; }
-        .u-right { font-size: 16px; font-weight: 900; width: 35%; text-align: right; }
-        .hr-big { color: #eab308; font-size: 24px; font-weight: 900; }
+        .u-left { font-size: 14px; font-weight: 900; width: 38%; }
+        .u-center { width: 24%; text-align: center; }
+        .u-right { font-size: 14px; font-weight: 900; width: 38%; text-align: right; }
+        .hr-big { color: #eab308; font-size: 26px; font-weight: 900; }
         .hr-unit { color: #eab308; font-size: 10px; margin-left: 2px; }
 
         /* 自動核算提醒欄 */
-        .stat-bar { background: #4a6741; color: white; padding: 6px; display: flex; justify-content: space-around; font-size: 12px; font-weight: bold; shadow: inset 0 -2px 5px rgba(0,0,0,0.2); }
+        .stat-bar { background: #4a6741; color: white; padding: 6px; display: flex; justify-content: space-around; font-size: 12px; font-weight: bold; }
         
         header { background: var(--ink); color: #fff; padding: 6px; text-align: center; }
         .grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid var(--line); }
@@ -49,11 +49,11 @@
 <body>
 <div class="calendar-box">
     <div class="user-info-bar">
-        <div class="u-left" onclick="editInfo()">姓名：小黑</div>
+        <div class="u-left" id="uNameDisplay" onclick="editInfo()">姓名：小黑</div>
         <div class="u-center" onclick="secretReset()">
             <span class="hr-big" id="hr-count">48</span><span class="hr-unit">HR</span>
         </div>
-        <div class="u-right" onclick="editInfo()">工號：D01762</div>
+        <div class="u-right" id="uIDDisplay" onclick="editInfo()">工號：D01762</div>
     </div>
 
     <div class="stat-bar">
@@ -75,13 +75,13 @@
 <div class="toolbar">
     <div class="control-row">
         <select id="factorySelect" onchange="updateActiveStamp()"><option value="">🏢 廠區</option><option value="一廠">一廠</option><option value="二廠">二廠</option><option value="三廠">三廠</option></select>
-        <select id="typeSelect" onchange="updateActiveStamp()"><option value="">📝 項目</option><option value="日B班">☀️日B</option><option value="夜B班">🌙夜B</option><option value="例假">🔴例假</option><option value="休假">🟢休假</option><option value="特休">⭐特休</option></select>
+        <select id="typeSelect" onchange="updateActiveStamp()"><option value="">📝 項目</option><option value="日B班">☀️日B班</option><option value="夜B班">🌙夜B班</option><option value="例假">🔴例假</option><option value="休假">🟢休假</option><option value="特休">⭐特休</option></select>
         <button class="clear-btn" onclick="setClearMode()">擦除</button>
     </div>
 </div>
 
 <script>
-    let curY = 2026, curM = 2; // 預設 3 月
+    let curY = 2026, curM = 2;
     let activeStamp = "", isClearMode = false;
     let totalVacationHr = parseFloat(localStorage.getItem('k9_total_hr')) || 48;
 
@@ -89,8 +89,8 @@
     function setClearMode() { isClearMode = true; activeStamp = ""; }
 
     function editInfo() {
-        const n = prompt("姓名：", localStorage.getItem('user-name')||"小黑");
-        const i = prompt("工號：", localStorage.getItem('user-id')||"D01762");
+        const n = prompt("請輸入姓名：", localStorage.getItem('user-name')||"小黑");
+        const i = prompt("請輸入工號：", localStorage.getItem('user-id')||"D01762");
         if (n) localStorage.setItem('user-name', n);
         if (i) localStorage.setItem('user-id', i);
         renderCalendar();
@@ -115,8 +115,8 @@
 
         document.getElementById('calendar-title').innerText = `${curY}年 ${curM + 1}月`;
         document.getElementById('hr-count').innerText = totalVacationHr;
-        document.querySelector('.u-left').innerText = localStorage.getItem('user-name') || "小黑";
-        document.querySelector('.u-right').innerText = localStorage.getItem('user-id') || "D01762";
+        document.getElementById('uNameDisplay').innerText = "姓名：" + (localStorage.getItem('user-name') || "小黑");
+        document.getElementById('uIDDisplay').innerText = "工號：" + (localStorage.getItem('user-id') || "D01762");
 
         const firstDay = new Date(curY, curM, 1).getDay();
         const daysInMonth = new Date(curY, curM + 1, 0).getDate();
@@ -149,11 +149,8 @@
                     let t = document.getElementById('typeSelect').value;
                     if (!f && !t) return;
                     let newNote = (f && t) ? f + "\n" + t : (f || t);
-                    
-                    // 特休扣除邏輯
                     if (newNote.includes("特休") && !oldNote.includes("特休")) totalVacationHr -= 12;
                     if (!newNote.includes("特休") && oldNote.includes("特休")) totalVacationHr += 12;
-                    
                     localStorage.setItem('note-' + dateKey, newNote);
                 }
                 saveGlobal();
