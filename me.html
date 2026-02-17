@@ -3,91 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>K9 戰情室-12H精準版</title>
+    <title>K9 戰情室-終極自動化</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #e5e1d3; font-family: sans-serif; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background-color: #d1d5db; }
-        .day-cell { background-color: white; aspect-ratio: 1/1.4; padding: 4px; font-size: 11px; display: flex; flex-direction: column; cursor: pointer; }
+        .day-cell { background-color: white; aspect-ratio: 1/1.3; padding: 4px; font-size: 11px; display: flex; flex-direction: column; cursor: pointer; transition: 0.2s; }
         .off-bg { background-color: #fff1f2; }
         .vacation-bg { background-color: #fef9c3; } 
         .off-text { color: #b91c1c; font-weight: bold; }
         .vacation-text { color: #854d0e; font-weight: bold; }
         .work-text { color: #065f46; font-weight: bold; }
-        .other-month { background-color: #f3f4f6; pointer-events: none; }
+        .other-month { background-color: #f3f4f6; pointer-events: none; opacity: 0.5; }
     </style>
 </head>
 <body class="max-w-md mx-auto shadow-lg min-h-screen flex flex-col">
 
     <div class="bg-black text-white p-3 flex justify-between items-center">
-        <div class="flex flex-col">
+        <div class="flex flex-col" onclick="secretReset()">
             <span class="text-[10px] text-gray-400">執行者：柔</span>
             <span class="font-bold text-sm">夥伴：班長小黑哥</span>
         </div>
         <div class="text-right">
-            <span class="text-yellow-500 font-bold text-xl"><span id="hr-count">48</span><span class="text-xs ml-1">HR</span></span>
+            <span class="text-[10px] text-gray-400 block">剩餘特休</span>
+            <span class="text-yellow-500 font-bold text-2xl"><span id="hr-count">48</span><span class="text-xs ml-1">HR</span></span>
         </div>
     </div>
 
-    <div class="bg-[#4a6741] text-white p-2 flex justify-between items-center shadow-md">
-        <button onclick="changeMonth(-1)" class="px-4 py-1 active:opacity-50">◀</button>
+    <div class="bg-[#4a6741] text-white p-3 flex justify-between items-center shadow-md">
+        <button onclick="changeMonth(-1)" class="text-xl px-2">◀</button>
         <div class="text-center">
             <span id="month-label" class="font-bold text-lg">2026年 2月</span>
-            <div id="target-info" class="text-[10px] bg-black/20 rounded px-2 py-0.5 mt-1">載入中...</div>
+            <div id="vacation-progress" class="text-[11px] bg-black/30 rounded-full px-3 py-0.5 mt-1 font-medium">
+                休假進度：載入中...
+            </div>
         </div>
-        <button onclick="changeMonth(1)" class="px-4 py-1 active:opacity-50">▶</button>
+        <button onclick="changeMonth(1)" class="text-xl px-2">▶</button>
     </div>
 
     <div id="calendar" class="calendar-grid border-b border-gray-300"></div>
 
-    <div class="p-4 bg-[#ede9d9] flex-grow">
-        <div class="grid grid-cols-3 gap-2 mb-4">
-            <button onclick="modifyHr(-4)" class="bg-white border border-gray-300 py-3 rounded shadow-sm text-xs font-bold active:bg-gray-200">-4 HR</button>
-            <button onclick="modifyHr(-8)" class="bg-white border border-gray-300 py-3 rounded shadow-sm text-xs font-bold active:bg-gray-200">-8 HR</button>
-            <button onclick="modifyHr(-12)" class="bg-white border border-gray-300 py-3 rounded shadow-sm text-xs font-bold active:bg-gray-200">-12 HR</button>
-        </div>
-        <div class="text-[9px] text-gray-400 italic text-center">
-            💡 點擊切換：上班 ➔ 固定假 ➔ 特休(扣12H)<br>
-            攻堅狀態：HP 15s 240G SSD 待命中
+    <div class="p-4 bg-[#ede9d9]">
+        <div class="bg-white/50 p-3 rounded-lg border border-gray-300 text-[11px] text-gray-600 leading-relaxed">
+            <p class="font-bold mb-1 text-black">🛡️ 攻堅守則：</p>
+            <ul class="list-disc ml-4">
+                <li>點擊日期切換：上班 ➔ 休假 ➔ 特休</li>
+                <li>排入「特休」自動扣除 12HR，取消自動加回</li>
+                <li>系統會自動計算本月總休假天數是否達標</li>
+                <li><span class="text-blue-600">HP 15s 240G SSD 裝備升級中</span></li>
+            </ul>
         </div>
     </div>
 
     <script>
-        const yearlyData = { 1:8, 2:10, 3:7, 4:8, 5:8, 6:7, 7:7, 8:7, 9:8, 10:9, 11:6, 12:8 };
+        const yearlyGoal = { 1:8, 2:10, 3:7, 4:8, 5:8, 6:7, 7:7, 8:7, 9:8, 10:9, 11:6, 12:8 };
         let totalHr = parseFloat(localStorage.getItem('k9_total_hr')) || 48;
         let schedule = JSON.parse(localStorage.getItem('k9_schedule')) || {};
         let viewDate = new Date(2026, 1, 1);
+        let clickCount = 0;
 
         function updateUI() {
             document.getElementById('hr-count').innerText = totalHr;
             localStorage.setItem('k9_total_hr', totalHr);
+            localStorage.setItem('k9_schedule', JSON.stringify(schedule));
+            calculateMonthStats();
         }
 
-        function modifyHr(v) { totalHr += v; updateUI(); }
-
+        // 循環切換：上班 -> 休假 -> 特休
         function toggleDay(key) {
             const current = schedule[key] || 'work';
             if (current === 'work') {
                 schedule[key] = 'off';
             } else if (current === 'off') {
                 schedule[key] = 'vacation';
-                if(confirm("班長，這天要扣 12 小時特休嗎？")) modifyHr(-12);
+                totalHr -= 12; // 自動扣除
             } else {
                 schedule[key] = 'work';
+                totalHr += 12; // 換回上班，補回時數
             }
-            localStorage.setItem('k9_schedule', JSON.stringify(schedule));
+            updateUI();
             render();
         }
 
-        function changeMonth(d) { viewDate.setMonth(viewDate.getMonth() + d); render(); }
+        // 計算本月統計提醒
+        function calculateMonthStats() {
+            const year = viewDate.getFullYear();
+            const month = viewDate.getMonth() + 1;
+            const goal = yearlyGoal[month];
+            
+            let currentOff = 0;
+            Object.keys(schedule).forEach(key => {
+                if (key.startsWith(`${year}-${month}-`) && (schedule[key] === 'off' || schedule[key] === 'vacation')) {
+                    currentOff++;
+                }
+            });
+
+            const progressEl = document.getElementById('vacation-progress');
+            const diff = goal - currentOff;
+            if (diff > 0) {
+                progressEl.innerHTML = `已休 <span class="text-yellow-300">${currentOff}</span> 天 / 目標 ${goal} 天 (還差 ${diff} 天)`;
+            } else {
+                progressEl.innerHTML = `🎉 已達成目標！本月已休 ${currentOff} 天`;
+            }
+        }
+
+        // 隱藏重設功能
+        function secretReset() {
+            clickCount++;
+            if (clickCount >= 5) {
+                let val = prompt("🔓 進入系統設定：請輸入新的總特休時數(HR)", totalHr);
+                if (val !== null) {
+                    totalHr = parseFloat(val);
+                    updateUI();
+                }
+                clickCount = 0;
+            }
+        }
+
+        function changeMonth(d) { viewDate.setMonth(viewDate.getMonth() + d); render(); calculateMonthStats(); }
 
         function render() {
             const cal = document.getElementById('calendar');
             const year = viewDate.getFullYear(), month = viewDate.getMonth();
-            const target = yearlyData[month + 1];
             cal.innerHTML = '';
             document.getElementById('month-label').innerText = `${year}年 ${month + 1}月`;
-            document.getElementById('target-info').innerText = `目標休假：${target}天`;
 
             const firstDay = new Date(year, month, 1).getDay();
             const days = new Date(year, month + 1, 0).getDate();
@@ -98,6 +137,7 @@
                 const key = `${year}-${month+1}-${i}`;
                 const type = schedule[key] || 'work';
                 let cellClass = '', textClass = 'work-text', label = '日B班';
+                
                 if(type === 'off') { cellClass = 'off-bg'; textClass = 'off-text'; label = '休假'; }
                 if(type === 'vacation') { cellClass = 'vacation-bg'; textClass = 'vacation-text'; label = '特休'; }
 
