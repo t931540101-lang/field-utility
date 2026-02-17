@@ -2,154 +2,170 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>K9 戰情室-全功能指揮版</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>K9 戰情室 V8.0 - 智能核算版</title>
     <style>
-        body { background-color: #e5e1d3; font-family: sans-serif; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background-color: #d1d5db; }
-        .day-cell { background-color: white; aspect-ratio: 1/1.3; padding: 4px; font-size: 11px; display: flex; flex-direction: column; cursor: pointer; transition: 0.2s; }
-        .off-bg { background-color: #fff1f2; }
-        .vacation-bg { background-color: #fef9c3; } 
-        .off-text { color: #b91c1c; font-weight: bold; }
-        .vacation-text { color: #854d0e; font-weight: bold; }
-        .work-text { color: #065f46; font-weight: bold; }
-        .other-month { background-color: #f3f4f6; pointer-events: none; opacity: 0.5; }
+        :root { --paper: #f9f4e8; --ink: #2e5a44; --red: #c0392b; --gold: #b8860b; --line: #dcd3b6; }
+        body { margin: 0; font-family: sans-serif; background: #e8e2d0; -webkit-tap-highlight-color: transparent; }
+        .calendar-box { max-width: 500px; margin: 0 auto; background: var(--paper); min-height: 100vh; padding-bottom: 120px; }
+        
+        /* 姓名工號 & 特休時數置中 */
+        .user-info-bar { 
+            background: #000000; 
+            color: #ffffff; 
+            padding: 12px 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            border-bottom: 3px solid var(--red);
+        }
+        .u-left { font-size: 16px; font-weight: 900; width: 35%; }
+        .u-center { width: 30%; text-align: center; }
+        .u-right { font-size: 16px; font-weight: 900; width: 35%; text-align: right; }
+        .hr-big { color: #eab308; font-size: 24px; font-weight: 900; }
+        .hr-unit { color: #eab308; font-size: 10px; margin-left: 2px; }
+
+        /* 自動核算提醒欄 */
+        .stat-bar { background: #4a6741; color: white; padding: 6px; display: flex; justify-content: space-around; font-size: 12px; font-weight: bold; shadow: inset 0 -2px 5px rgba(0,0,0,0.2); }
+        
+        header { background: var(--ink); color: #fff; padding: 6px; text-align: center; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid var(--line); }
+        .weekday { text-align: center; padding: 6px 0; color: #8e835d; font-size: 12px; background: #f0e9d2; border-bottom: 1px solid var(--line); }
+        .cell { min-height: 85px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); position: relative; padding: 2px; display: flex; flex-direction: column; background: var(--paper); box-sizing: border-box; }
+        .day-num { font-size: 1rem; font-weight: bold; color: #4a4a4a; }
+        .is-weekend { color: var(--red); }
+        
+        .memo-text { font-size: 11px; font-weight: 900; text-align: center; margin-top: 4px; line-height: 1.2; white-space: pre-wrap; width: 100%; }
+        .color-default { color: var(--ink); }
+        .color-holiday { color: var(--red); }
+        .color-special { color: var(--gold); }
+
+        .toolbar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: #f2ebd5; border-top: 2px solid var(--line); padding: 8px 0 env(safe-area-inset-bottom); z-index: 200; }
+        .control-row { display: flex; justify-content: space-around; padding: 0 10px; gap: 8px; }
+        select, .clear-btn { padding: 10px 5px; border-radius: 8px; border: 1.5px solid var(--line); background: #fff; font-size: 14px; font-weight: bold; flex: 1; }
+        .clear-btn { color: var(--red); }
     </style>
 </head>
-<body class="max-w-md mx-auto shadow-lg min-h-screen flex flex-col">
-
-    <div class="bg-black text-white p-3 flex items-center">
-        <div class="w-1/3 flex flex-col" onclick="secretReset()">
-            <span class="text-[10px] text-gray-400"> </span>
-            <span class="font-bold text-xs">姓名：</span>
+<body>
+<div class="calendar-box">
+    <div class="user-info-bar">
+        <div class="u-left" onclick="editInfo()">小黑</div>
+        <div class="u-center" onclick="secretReset()">
+            <span class="hr-big" id="hr-count">48</span><span class="hr-unit">HR</span>
         </div>
-        <div class="w-1/3 text-center">
-            <span class="text-yellow-500 font-bold text-2xl" id="hr-count">48</span>
-            <span class="text-yellow-500 text-[10px] ml-1">HR</span>
-        </div>
-        <div class="w-1/3 text-right">
-            <span class="text-[10px] text-gray-400">工號：D01762</span>
-        </div>
+        <div class="u-right" onclick="editInfo()">D01762</div>
     </div>
 
-    <div class="bg-[#4a6741] text-white p-2 flex justify-between items-center shadow-md">
-        <button onclick="changeMonth(-1)" class="text-xl px-4">◀</button>
-        <div class="text-center">
-            <span id="month-label" class="font-bold text-lg">2026年 3月</span>
-            <div id="vacation-count-only" class="text-[11px] bg-black/30 rounded-full px-4 py-0.5 mt-1 font-medium italic">
-                本月已休 0 天
-            </div>
+    <div class="stat-bar">
+        <span id="stat-off">本月已休：0 天</span>
+        <span id="stat-work">本月上班：0 小時</span>
+    </div>
+
+    <header>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
+            <div onclick="changeMonth(-1)" style="cursor:pointer">❮</div>
+            <div id="calendar-title">2026年 3月</div>
+            <div onclick="changeMonth(1)" style="cursor:pointer">❯</div>
         </div>
-        <button onclick="changeMonth(1)" class="text-xl px-4">▶</button>
+    </header>
+
+    <div class="grid" id="calendarGrid"></div>
+</div>
+
+<div class="toolbar">
+    <div class="control-row">
+        <select id="factorySelect" onchange="updateActiveStamp()"><option value="">🏢 廠區</option><option value="一廠">一廠</option><option value="二廠">二廠</option><option value="三廠">三廠</option></select>
+        <select id="typeSelect" onchange="updateActiveStamp()"><option value="">📝 項目</option><option value="日B班">☀️日B</option><option value="夜B班">🌙夜B</option><option value="例假">🔴例假</option><option value="休假">🟢休假</option><option value="特休">⭐特休</option></select>
+        <button class="clear-btn" onclick="setClearMode()">擦除</button>
     </div>
+</div>
 
-    <div id="calendar" class="calendar-grid border-b border-gray-300"></div>
+<script>
+    let curY = 2026, curM = 2; // 預設 3 月
+    let activeStamp = "", isClearMode = false;
+    let totalVacationHr = parseFloat(localStorage.getItem('k9_total_hr')) || 48;
 
-    <div class="p-2 bg-[#d6d2c4] grid grid-cols-3 gap-2 border-t border-gray-300">
-        <select class="bg-white border border-gray-300 rounded p-2 text-xs text-gray-700">
-            <option>🏢 廠區</option>
-            <option>ㄧ 廠</option>
-            <option>二 廠</option>
-            <option>三 廠</option>
-        </select>
-        <select class="bg-white border border-gray-300 rounded p-2 text-xs text-gray-700">
-            <option>📝 項目</option>
-            <option>日B班</option>
-            <option>夜B班</option>
-            <option>夜E班</option>
-            <option>例假</option>
-            <option>休息日</option>
-            <option>節日</option>
-            <option>特休</option>
-            <option>事假</option>
-            <option>調休</option>
-            <option>病假</option>
-        </select>
-        <button onclick="alert('進入擦除模式')" class="bg-white border border-gray-300 rounded py-2 text-xs text-blue-600 font-bold active:bg-gray-200">
-            擦除
-        </button>
-    </div>
+    function updateActiveStamp() { isClearMode = false; activeStamp = "active"; }
+    function setClearMode() { isClearMode = true; activeStamp = ""; }
 
-    <div class="p-4 bg-[#ede9d9] flex-grow">
-        <div class="bg-white/50 p-3 rounded-lg border border-gray-300 text-[10px] text-gray-600">
-            <p class="font-bold mb-1 text-black">🛡️ 戰情備註：</p>
-            <ul class="list-disc ml-4">
-                <li>點擊日期：上班 ➔ 休假 ➔ 特休 (自動扣 12HR)</li>
-                <li><span class="text-blue-600">裝備：HP 15s-du0xxx (240G 擴充完成)</span></li>
-            </ul>
-        </div>
-    </div>
+    function editInfo() {
+        const n = prompt("姓名：", localStorage.getItem('user-name')||"小黑");
+        const i = prompt("工號：", localStorage.getItem('user-id')||"D01762");
+        if (n) localStorage.setItem('user-name', n);
+        if (i) localStorage.setItem('user-id', i);
+        renderCalendar();
+    }
 
-    <script>
-        let totalHr = parseFloat(localStorage.getItem('k9_total_hr')) || 48;
-        let schedule = JSON.parse(localStorage.getItem('k9_schedule')) || {};
-        let viewDate = new Date(2026, 2, 1);
-        let clickCount = 0;
+    function secretReset() {
+        let val = prompt("🔓 修正剩餘特休總時數 (HR)：", totalVacationHr);
+        if (val !== null) { totalVacationHr = parseFloat(val); saveGlobal(); }
+    }
 
-        function updateUI() {
-            document.getElementById('hr-count').innerText = totalHr;
-            localStorage.setItem('k9_total_hr', totalHr);
-            localStorage.setItem('k9_schedule', JSON.stringify(schedule));
-            countVacationDays();
-        }
+    function saveGlobal() {
+        localStorage.setItem('k9_total_hr', totalVacationHr);
+        renderCalendar();
+    }
 
-        function toggleDay(key) {
-            const current = schedule[key] || 'work';
-            if (current === 'work') {
-                schedule[key] = 'off';
-            } else if (current === 'off') {
-                schedule[key] = 'vacation';
-                totalHr -= 12;
-            } else {
-                schedule[key] = 'work';
-                totalHr += 12;
-            }
-            updateUI();
-            render();
-        }
+    function renderCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        grid.innerHTML = ""; 
+        ["日","一","二","三","四","五","六"].forEach(w => {
+            const div = document.createElement('div'); div.className = 'weekday'; div.innerText = w; grid.appendChild(div);
+        });
 
-        function countVacationDays() {
-            const year = viewDate.getFullYear();
-            const month = viewDate.getMonth() + 1;
-            let count = 0;
-            Object.keys(schedule).forEach(key => {
-                if (key.startsWith(`${year}-${month}-`) && (schedule[key] === 'off' || schedule[key] === 'vacation')) {
-                    count++;
+        document.getElementById('calendar-title').innerText = `${curY}年 ${curM + 1}月`;
+        document.getElementById('hr-count').innerText = totalVacationHr;
+        document.querySelector('.u-left').innerText = localStorage.getItem('user-name') || "小黑";
+        document.querySelector('.u-right').innerText = localStorage.getItem('user-id') || "D01762";
+
+        const firstDay = new Date(curY, curM, 1).getDay();
+        const daysInMonth = new Date(curY, curM + 1, 0).getDate();
+        
+        let workCount = 0; let offCount = 0;
+
+        for (let i = 0; i < firstDay; i++) grid.appendChild(Object.assign(document.createElement('div'), {className: 'cell'}));
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            const cell = document.createElement('div');
+            const d = new Date(curY, curM, i);
+            const dateKey = `${curY}-${curM + 1}-${i}`;
+            const note = localStorage.getItem('note-' + dateKey) || "";
+            
+            cell.className = 'cell';
+            let colorClass = "color-default";
+            if (note.includes("例假") || note.includes("休假")) { colorClass = "color-holiday"; offCount++; }
+            else if (note.includes("特休")) { colorClass = "color-special"; offCount++; }
+            else if (note.includes("班")) { workCount++; }
+
+            cell.innerHTML = `<div class="day-num ${d.getDay()===0||d.getDay()===6?'is-weekend':''}">${i}</div><div class="memo-text ${colorClass}">${note}</div>`;
+            
+            cell.onclick = () => {
+                const oldNote = localStorage.getItem('note-' + dateKey) || "";
+                if (isClearMode) {
+                    if (oldNote.includes("特休")) totalVacationHr += 12;
+                    localStorage.removeItem('note-' + dateKey);
+                } else {
+                    let f = document.getElementById('factorySelect').value;
+                    let t = document.getElementById('typeSelect').value;
+                    if (!f && !t) return;
+                    let newNote = (f && t) ? f + "\n" + t : (f || t);
+                    
+                    // 特休扣除邏輯
+                    if (newNote.includes("特休") && !oldNote.includes("特休")) totalVacationHr -= 12;
+                    if (!newNote.includes("特休") && oldNote.includes("特休")) totalVacationHr += 12;
+                    
+                    localStorage.setItem('note-' + dateKey, newNote);
                 }
-            });
-            document.getElementById('vacation-count-only').innerText = `本月已休 ${count} 天`;
+                saveGlobal();
+            };
+            grid.appendChild(cell);
         }
+        document.getElementById('stat-off').innerText = `本月已休：${offCount} 天`;
+        document.getElementById('stat-work').innerText = `本月上班：${workCount * 12} 小時`;
+    }
 
-        function secretReset() {
-            clickCount++;
-            if (clickCount >= 5) {
-                let val = prompt("🔓 進入系統設定：請輸入新的總特休時數(HR)", totalHr);
-                if (val !== null) { totalHr = parseFloat(val); updateUI(); }
-                clickCount = 0;
-            }
-        }
-
-        function changeMonth(d) { viewDate.setMonth(viewDate.getMonth() + d); render(); countVacationDays(); }
-
-        function render() {
-            const cal = document.getElementById('calendar');
-            const year = viewDate.getFullYear(), month = viewDate.getMonth();
-            cal.innerHTML = '';
-            document.getElementById('month-label').innerText = `${year}年 ${month + 1}月`;
-            const firstDay = new Date(year, month, 1).getDay();
-            const days = new Date(year, month + 1, 0).getDate();
-            for (let i = 0; i < firstDay; i++) cal.innerHTML += `<div class="day-cell other-month"></div>`;
-            for (let i = 1; i <= days; i++) {
-                const key = `${year}-${month+1}-${i}`;
-                const type = schedule[key] || 'work';
-                let cellClass = '', textClass = 'work-text', label = '日B班';
-                if(type === 'off') { cellClass = 'off-bg'; textClass = 'off-text'; label = '休假'; }
-                if(type === 'vacation') { cellClass = 'vacation-bg'; textClass = 'vacation-text'; label = '特休'; }
-                cal.innerHTML += `<div class="day-cell ${cellClass}" onclick="toggleDay('${key}')"><div class="${textClass}">${i}</div><div class="text-[8px] text-gray-400 mt-auto">${label}</div></div>`;
-            }
-        }
-        render(); updateUI();
-    </script>
+    function changeMonth(d) { curM += d; if (curM < 0) {curM=11;curY--;} else if (curM>11) {curM=0;curY++;} renderCalendar(); }
+    window.onload = renderCalendar;
+</script>
 </body>
 </html>
