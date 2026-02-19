@@ -3,65 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>一廠勤務交接簿</title>
+    <title>一廠戰情室 | 2026 穩定版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #f3f4f6; font-family: sans-serif; }
-        .log-card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 8px solid #1e293b; }
-        .urgent { border-left-color: #dc2626; }
-        .btn-confirm { background-color: #059669; color: white; width: 100%; padding: 14px; border-radius: 12px; font-weight: 900; font-size: 18px; margin-top: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f1f5f9; padding: 15px; }
+        .card { background: white; border: 2px solid #1e293b; border-radius: 8px; box-shadow: 4px 4px 0px #cbd5e1; margin-bottom: 15px; padding: 15px; }
+        .badge-important { background-color: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
     </style>
 </head>
-<body class="max-w-md mx-auto min-h-screen">
-    <div class="bg-black text-white p-4 sticky top-0 z-50 flex justify-between items-center">
-        <div>
-            <div class="text-[10px] text-gray-400">一廠勤務交接簿</div>
-            <div class="text-2xl font-black">戰情通報系統</div>
-        </div>
-        <button onclick="refreshData()" class="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold">🔄 重新整理</button>
+<body>
+    <header className="mb-6 border-b-4 border-slate-800 pb-2 flex justify-between items-center">
+        <h1 class="text-2xl font-black text-slate-800">一廠戰情室</h1>
+        <div style="border: 2px solid #ef4444; color: #ef4444; transform: rotate(-5deg); font-weight: 900; padding: 2px 8px; font-size: 12px;">連線成功</div>
+    </header>
+
+    <div id="logs-container">
+        <p class="text-center text-slate-500">正在同步雲端資料...</p>
     </div>
 
-    <div id="loading" class="p-10 text-center font-bold text-slate-500">📡 正在連接雲端戰情室...</div>
-    
-    <div id="logList" class="p-4">
-        </div>
-
     <script>
-        // 【主管注意！】這裡填入妳剛才拿到的那串 URL
-        const GAS_URL = https://script.google.com/macros/s/AKfycbyITXKstLLIUcDuNoA_W0s_cc3w3DDmnWFqZhcP8gbeaHLYT5ux5kuGYDUGGiWvepwTbA/exec
-        function refreshData() {
-            document.getElementById('loading').style.display = 'block';
-            fetch(GAS_URL)
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById('loading').style.display = 'none';
-                    const list = document.getElementById('logList');
-                    list.innerHTML = "";
-                    data.forEach((row, index) => {
-                        const card = document.createElement('div');
-                        card.className = `log-card ${row[2] === '重要' ? 'urgent' : ''}`;
-                        card.innerHTML = `
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="px-3 py-1 rounded-full text-xs font-black ${row[2] === '重要' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}">${row[2]}</span>
-                                <span class="text-xs text-gray-400 font-bold">${row[0]}</span>
+        // 🔴 爸比，這裡換成妳昨天「部署」後產生的那個新網址
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTZ33jruXozMEb1nf2JPa5Rk_7p5EfIwRCVP09NQ31RjQaiO7qP3LnryLvQTIEhAxPyg/exec";
+
+        async function loadLogs() {
+            try {
+                // 仿照 K9 的方式，直接跟大腦要資料
+                google.script.run.withSuccessHandler(function(data) {
+                    const container = document.getElementById('logs-container');
+                    if (!data || data.length === 0) {
+                        container.innerHTML = '<div class="text-center p-4">目前尚無紀錄。</div>';
+                        return;
+                    }
+                    let html = '';
+                    data.forEach(log => {
+                        html += `
+                            <div class="card">
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-xs text-slate-500">${log.timestamp}</span>
+                                    <span class="${log.level === '重要' ? 'badge-important' : 'text-slate-400 text-xs font-bold'}">${log.status}</span>
+                                </div>
+                                <div class="text-slate-800 font-bold mb-1">${log.content}</div>
+                                <div class="text-[10px] text-blue-600 font-bold">${log.level || '普通'}</div>
                             </div>
-                            <h3 class="text-2xl font-black text-slate-800 mb-2">${row[1]}</h3>
-                            <p class="text-slate-500 text-sm mb-4">狀態：${row[3]}</p>
-                            <button class="btn-confirm" onclick="markDone(${index})">確認已讀/處理</button>
                         `;
-                        list.appendChild(card);
                     });
-                });
+                    container.innerHTML = html;
+                }).getLogs();
+            } catch (e) {
+                document.getElementById('logs-container').innerHTML = "線路繁忙，請重新整理。";
+            }
         }
 
-        // 當按下確認按鈕
-        function markDone(idx) {
-            alert("已回報雲端！");
-            // 這裡可以連動 GAS 的 updateStatus 功能
-        }
-
-        // 網頁開啟時自動載入一次
-        window.onload = refreshData;
+        window.onload = loadLogs;
     </script>
 </body>
 </html>
