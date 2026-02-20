@@ -3,90 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>勤務交接簿</title>
+    <title>勤務交接簿 - 雲端版</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #f4f5f7;
-            color: #333;
-            margin: 0;
-            padding: 15px;
-        }
-        .container {
-            width: 100%;
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            box-sizing: border-box;
-        }
-        h2 {
-            text-align: center;
-            color: #2c3e50;
-            margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 22px;
-        }
-        label {
-            display: block;
-            margin-top: 15px;
-            font-weight: 600;
-            font-size: 15px;
-            color: #555;
-        }
-        input[type="date"], select, textarea {
-            width: 100%;
-            padding: 12px;
-            margin-top: 8px;
-            border: 1px solid #ccd0d5;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 16px; /* 避免 iOS 自動放大畫面 */
-            background-color: #fafafa;
-        }
-        input[type="date"]:focus, select:focus, textarea:focus {
-            border-color: #3498db;
-            outline: none;
-            background-color: #fff;
-        }
-        textarea {
-            resize: vertical;
-            height: 120px;
-        }
-        .btn-group {
-            display: flex;
-            gap: 12px;
-            margin-top: 25px;
-        }
-        button {
-            flex: 1;
-            padding: 14px;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            color: #fff;
-            transition: background-color 0.2s;
-        }
+        /* 保持原有的簡潔窄螢幕優化 CSS */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f5f7; color: #333; margin: 0; padding: 15px; }
+        .container { width: 100%; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); box-sizing: border-box; }
+        h2 { text-align: center; color: #2c3e50; margin-top: 0; margin-bottom: 20px; font-size: 22px; }
+        label { display: block; margin-top: 15px; font-weight: 600; font-size: 15px; color: #555; }
+        input[type="date"], select, textarea { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ccd0d5; border-radius: 6px; box-sizing: border-box; font-size: 16px; background-color: #fafafa; }
+        input[type="date"]:focus, select:focus, textarea:focus { border-color: #3498db; outline: none; background-color: #fff; }
+        textarea { resize: vertical; height: 120px; }
+        .btn-group { display: flex; gap: 12px; margin-top: 25px; }
+        button { flex: 1; padding: 14px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; color: #fff; transition: background-color 0.2s; }
         .btn-save { background-color: #2980b9; }
         .btn-save:active { background-color: #2471a3; }
         .btn-clear { background-color: #e74c3c; }
-        .btn-clear:active { background-color: #c0392b; }
-        .status-msg {
-            margin-top: 15px;
-            text-align: center;
-            font-size: 14px;
-            color: #27ae60;
-            font-weight: bold;
-            min-height: 20px;
-        }
+        .status-msg { margin-top: 15px; text-align: center; font-size: 14px; color: #27ae60; font-weight: bold; min-height: 20px; }
     </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
 <body>
 
 <div class="container">
-    <h2>勤務交接簿</h2>
+    <h2>勤務交接簿 (雲端連線)</h2>
     
     <label for="dutyDate">日期</label>
     <input type="date" id="dutyDate">
@@ -104,68 +45,80 @@
     <textarea id="equipmentStatus" placeholder="無線電、鑰匙數量、巡邏設備狀態..."></textarea>
 
     <div class="btn-group">
-        <button class="btn-save" onclick="saveData()">暫存紀錄</button>
-        <button class="btn-clear" onclick="clearData()">清除重填</button>
+        <button class="btn-save" onclick="saveToCloud()">上傳雲端交接</button>
+        <button class="btn-clear" onclick="clearData()">清除</button>
     </div>
     <div id="statusMessage" class="status-msg"></div>
 </div>
 
 <script>
-    // 取得 DOM 元素
+    // 1. 初始化 Firebase (這裡需要填入專屬設定)
+    const firebaseConfig = {
+        apiKey: "請填寫_API_KEY",
+        authDomain: "請填寫_PROJECT_ID.firebaseapp.com",
+        databaseURL: "請填寫_DATABASE_URL",
+        projectId: "請填寫_PROJECT_ID",
+        storageBucket: "請填寫_PROJECT_ID.appspot.com",
+        messagingSenderId: "請填寫_SENDER_ID",
+        appId: "請填寫_APP_ID"
+    };
+    
+    // 檢查是否已填寫設定，避免未設定時報錯
+    if (firebaseConfig.apiKey !== "請填寫_API_KEY") {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database ? firebase.database() : null;
+
     const dutyDate = document.getElementById('dutyDate');
     const shift = document.getElementById('shift');
     const handoverNotes = document.getElementById('handoverNotes');
     const equipmentStatus = document.getElementById('equipmentStatus');
     const statusMessage = document.getElementById('statusMessage');
 
-    // 頁面載入時：讀取 Local Storage 資料
     window.onload = function() {
-        if(localStorage.getItem('dutyLog_date')) dutyDate.value = localStorage.getItem('dutyLog_date');
-        if(localStorage.getItem('dutyLog_shift')) shift.value = localStorage.getItem('dutyLog_shift');
-        if(localStorage.getItem('dutyLog_notes')) handoverNotes.value = localStorage.getItem('dutyLog_notes');
-        if(localStorage.getItem('dutyLog_equip')) equipmentStatus.value = localStorage.getItem('dutyLog_equip');
-        
-        // 若無日期紀錄，預設帶入今日日期
-        if(!dutyDate.value) {
-            const today = new Date().toISOString().split('T')[0];
-            dutyDate.value = today;
-        }
+        const today = new Date().toISOString().split('T')[0];
+        dutyDate.value = today;
     };
 
-    // 儲存資料到 Local Storage
-    function saveData() {
-        localStorage.setItem('dutyLog_date', dutyDate.value);
-        localStorage.setItem('dutyLog_shift', shift.value);
-        localStorage.setItem('dutyLog_notes', handoverNotes.value);
-        localStorage.setItem('dutyLog_equip', equipmentStatus.value);
+    // 2. 將資料上傳到 Firebase 即時資料庫
+    function saveToCloud() {
+        if (!db) {
+            showStatus('⚠️ 請先完成 Firebase 設定金鑰');
+            return;
+        }
+
+        const logData = {
+            date: dutyDate.value,
+            shift: shift.value,
+            notes: handoverNotes.value,
+            equipment: equipmentStatus.value,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        };
+
+        // 寫入資料庫路徑： dutyLogs/日期_班別 (確保每班紀錄獨立存放)
+        const recordId = dutyDate.value + "_" + shift.value;
         
-        showStatus('✅ 紀錄已成功暫存至手機端');
+        db.ref('dutyLogs/' + recordId).set(logData)
+            .then(() => {
+                showStatus('☁️ ✅ 交接紀錄已成功上傳雲端！');
+            })
+            .catch((error) => {
+                console.error("上傳失敗: ", error);
+                showStatus('❌ 上傳失敗，請檢查網路連線');
+            });
     }
 
-    // 清除資料與 Local Storage
     function clearData() {
         if(confirm('確定要清除目前填寫的所有內容嗎？')) {
-            localStorage.removeItem('dutyLog_date');
-            localStorage.removeItem('dutyLog_shift');
-            localStorage.removeItem('dutyLog_notes');
-            localStorage.removeItem('dutyLog_equip');
-            
-            // 恢復預設值
-            dutyDate.value = new Date().toISOString().split('T')[0];
-            shift.value = 'day';
             handoverNotes.value = '';
             equipmentStatus.value = '';
-            
-            showStatus('🗑️ 資料已清除');
+            showStatus('🗑️ 欄位已清除');
         }
     }
 
-    // 顯示狀態提示字元
     function showStatus(msg) {
         statusMessage.innerText = msg;
-        setTimeout(() => {
-            statusMessage.innerText = '';
-        }, 3000);
+        setTimeout(() => { statusMessage.innerText = ''; }, 3000);
     }
 </script>
 
