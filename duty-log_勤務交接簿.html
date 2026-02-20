@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+。<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -77,10 +77,50 @@
     const equipmentStatus = document.getElementById('equipmentStatus');
     const statusMessage = document.getElementById('statusMessage');
 
+        // 頁面載入時：設定今天日期，並自動去雲端抓最新紀錄
     window.onload = function() {
         const today = new Date().toISOString().split('T')[0];
         dutyDate.value = today;
+        
+        // 呼叫讀取雲端資料的函數
+        loadLatestRecord();
     };
+
+    // 3. 從 Firebase 讀取最新一筆交接紀錄
+    function loadLatestRecord() {
+        if (!db) return;
+        
+        showStatus('🔄 正在讀取上一班交接紀錄...');
+        
+        // 針對 dutyLogs 資料夾，依照 timestamp 排序，並只抓取最後（最新）的一筆
+        db.ref('dutyLogs').orderByChild('timestamp').limitToLast(1).once('value')
+            .then((snapshot) => {
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const data = childSnapshot.val();
+                        
+                        // 將雲端抓到的資料，自動填入畫面的格子裡
+                        // 如果有跨日交接的需求，日期也可以改成 data.date
+                        shift.value = data.shift || 'day';
+                        handoverNotes.value = data.notes || '';
+                        equipmentStatus.value = data.equipment || '';
+                        
+                        showStatus('✅ 已自動載入上一班最新紀錄！');
+                    });
+                } else {
+                    showStatus('📝 雲端目前無紀錄，請開始填寫。');
+                }
+            })
+            .catch((error) => {
+                console.error("讀取失敗: ", error);
+                showStatus('❌ 讀取失敗，請檢查網路連線');
+            });
+    }
+
+    // 2. 將資料上傳到 Firebase 即時資料庫 (保留原本的這段不要動)
+    function saveToCloud() {
+// ... (下方保留你原本寫好的 saveToCloud 與 clearData 程式碼) ...
+
 
     // 2. 將資料上傳到 Firebase 即時資料庫
     function saveToCloud() {
