@@ -17,9 +17,9 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; color: #1e293b; }
-        .duty-card { background: white; border-left: 8px solid #1e293b; box-shadow: 4px 4px 0px #cbd5e1; }
+        .duty-card { background: white; border-left: 12px solid #1e293b; box-shadow: 6px 6px 0px #cbd5e1; border-radius: 4px; }
         .important-red { color: #dc2626; font-weight: 900; }
-        .timestamp { font-size: 11px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #475569; }
+        .timestamp-box { font-size: 14px; background: #334155; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -27,7 +27,7 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // 1. 妳的 Firebase 專屬設定
+        // Firebase 設定
         const firebaseConfig = {
             apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI907S1YdCWor48",
             authDomain: "factor-security-d1965.firebaseapp.com",
@@ -46,23 +46,25 @@
         function App() {
             const [logs, setLogs] = useState([]);
 
-            // 2. 頁面開啟時，自動從雲端抓資料
+            // 自動讀取雲端資料
             useEffect(() => {
-                const logsRef = db.ref('reactLogs'); // 使用新的資料夾區分舊版
+                const logsRef = db.ref('reactLogs');
                 logsRef.on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
                         const list = Object.keys(data).map(key => ({
                             id: key,
                             ...data[key]
-                        })).reverse(); // 讓最新的在最上面
+                        })).reverse();
                         setLogs(list);
+                    } else {
+                        setLogs([]);
                     }
                 });
                 return () => logsRef.off();
             }, []);
 
-            // 3. 新增紀錄並傳送到雲端
+            // 新增紀錄
             const addEntry = () => {
                 const note = prompt("請輸入交接事項：");
                 if (!note) return;
@@ -77,42 +79,61 @@
                     urgent: isUrgent,
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 };
-
                 db.ref('reactLogs').push(newLog);
             };
 
-            // 4. 雙擊卡片刪除紀錄
+            // 刪除功能
             const deleteLog = (id) => {
-                if(confirm("確定刪除這條雲端紀錄嗎？")) {
+                if(confirm("⚠️ 確定要從雲端永久刪除這條紀錄嗎？")) {
                     db.ref(`reactLogs/${id}`).remove();
                 }
             };
 
             return (
                 <div className="p-4 max-w-2xl mx-auto">
-                    <header className="flex justify-between items-center border-b-4 border-slate-800 pb-3 mb-6">
-                        <h1 className="text-2xl font-black text-slate-800">勤務交接簿</h1>
-                        <button onClick={addEntry} className="bg-slate-800 text-white px-4 py-2 rounded-full font-bold text-sm">
+                    <header className="flex justify-between items-center border-b-8 border-slate-800 pb-4 mb-8">
+                        <h1 className="text-4xl font-black text-slate-800">勤務交接簿</h1>
+                        <button onClick={addEntry} className="bg-blue-600 text-white px-6 py-4 rounded-xl font-bold text-xl shadow-xl active:scale-95 transition-transform">
                             + 新增紀錄
                         </button>
                     </header>
 
-                    <div className="space-y-4">
+                    <div className="space-y-8">
                         {logs.map(log => (
-                            <div key={log.id} onDoubleClick={() => deleteLog(log.id)} className="duty-card p-4 relative animate-fade-in">
-                                <div className="flex items-center mb-2">
-                                    <span className="timestamp font-mono">{log.time}</span>
-                                    {log.urgent && <span className="ml-2 text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-black">重要</span>}
+                            <div key={log.id} className="duty-card p-6 relative">
+                                {/* 右上角大刪除按鈕 */}
+                                <button 
+                                    onClick={() => deleteLog(log.id)}
+                                    className="absolute top-4 right-4 text-red-500 hover:text-red-700 p-2"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+
+                                <div className="flex items-center mb-4">
+                                    <span className="timestamp-box font-mono">{log.time}</span>
+                                    {log.urgent && (
+                                        <span className="ml-4 text-sm bg-red-600 text-white px-4 py-1 rounded-full font-black animate-pulse">
+                                            ⚠️ 重要紀錄
+                                        </span>
+                                    )}
                                 </div>
-                                <p className={`text-base leading-relaxed ${log.urgent ? 'important-red text-lg' : 'text-slate-700'}`}>
+                                
+                                {/* 長輩友善特大字體 */}
+                                <p className={`text-3xl leading-snug pr-12 font-bold ${log.urgent ? 'text-red-600' : 'text-slate-800'}`}>
                                     {log.note}
                                 </p>
                             </div>
                         ))}
-                        {logs.length === 0 && <p className="text-center text-slate-400 italic mt-10">🔄 正在載入雲端紀錄...</p>}
+                        {logs.length === 0 && (
+                            <div className="text-center py-20 bg-slate-100 rounded-lg">
+                                <p className="text-slate-400 text-2xl font-bold italic">🔄 雲端同步中...</p>
+                            </div>
+                        )}
                     </div>
 
-                    <footer className="text-center text-[10px] text-slate-400 mt-10 font-bold uppercase tracking-widest">
+                    <footer className="text-center text-sm text-slate-500 mt-16 font-black border-t-2 pt-6">
                         警衛室勤務交接系統 - 內部專用
                     </footer>
                 </div>
