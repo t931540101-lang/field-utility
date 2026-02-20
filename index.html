@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>K9 指揮部 | 2026 雲端版</title>
+    <title>K9 指揮部 | 2026 專業版</title>
     <link rel="icon" href="IMG_0177.jpeg">
     <link rel="apple-touch-icon" href="IMG_0177.jpeg">
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -14,9 +14,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f1f5f9; color: #1e293b; padding-bottom: 100px; }
-        .medical-paper { background: white; border: 4px solid #1e293b; box-shadow: 8px 8px 0px #cbd5e1; border-radius: 8px; }
-        .stamp { border: 2px solid #ef4444; color: #ef4444; transform: rotate(-12deg); font-weight: 900; padding: 2px 8px; border-radius: 4px; display: inline-block; font-size: 14px; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; color: #1e293b; padding-bottom: 80px; }
+        .medical-paper { background: white; border: 2px solid #334155; box-shadow: 4px 4px 0px #cbd5e1; border-radius: 8px; }
+        .stamp { border: 2px solid #ef4444; color: #ef4444; transform: rotate(-10deg); font-weight: 900; padding: 2px 6px; border-radius: 4px; display: inline-block; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -74,11 +74,11 @@
             };
 
             return (
-                <div className="p-4 max-w-2xl mx-auto">
-                    <header className="flex justify-between items-center border-b-8 border-slate-800 pb-4 mb-8">
+                <div className="p-4 max-w-xl mx-auto">
+                    <header className="flex justify-between items-center border-b-4 border-slate-800 pb-3 mb-6">
                         <div>
-                            <h1 className="text-3xl font-black text-slate-800 tracking-tighter">K9 臨床病歷系統</h1>
-                            <p className="text-sm font-bold text-blue-600 italic">上班舒坦 | 雲端已掛載</p>
+                            <h1 className="text-2xl font-black text-slate-800 tracking-tight">K9 臨床病歷系統</h1>
+                            <p className="text-[10px] font-bold text-slate-400">專業臨床模式 | 雲端同步</p>
                         </div>
                         <div className="stamp">發射成功</div>
                     </header>
@@ -89,38 +89,35 @@
                         })).reverse() : [];
 
                         return (
-                            <div key={dog.id} className="medical-paper p-5 mb-10">
-                                <div className="flex justify-between items-center mb-4 border-b-4 border-slate-100 pb-2">
-                                    <span className="text-4xl font-black text-blue-700">{dog.name}</span>
-                                    <span className="text-xl font-bold bg-slate-100 px-3 py-1 rounded">
+                            <div key={dog.id} className="medical-paper p-4 mb-6">
+                                <div className="flex justify-between items-center mb-3 border-b-2 border-slate-50 pb-1">
+                                    <span className="text-2xl font-black text-blue-600">{dog.name}</span>
+                                    <span className="text-sm font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-500">
                                         {dog.weight} KG
                                     </span>
                                 </div>
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                     {logs.slice(0, 3).map(log => (
-                                        <div key={log.key} className="bg-slate-50 p-4 rounded-lg border-l-8 border-slate-800 relative shadow-sm">
-                                            <div className="text-xs font-bold text-slate-500 mb-1">{log.time}</div>
-                                            <p className="text-2xl font-bold text-slate-800 leading-snug">{log.note}</p>
-                                            <button onClick={() => deleteLog(dog.id, log.key)} className="absolute top-2 right-2 text-red-300 text-[10px]">刪除</button>
+                                        <div key={log.key} className="bg-slate-50 p-3 rounded border-l-4 border-slate-800 relative">
+                                            <div className="text-[10px] font-bold text-slate-400 mb-1">{log.time}</div>
+                                            <p className="text-lg font-bold text-slate-700 leading-snug">{log.note}</p>
+                                            <button onClick={() => deleteLog(dog.id, log.key)} className="absolute top-2 right-2 text-red-200 hover:text-red-500 text-[10px]">刪除</button>
                                         </div>
                                     ))}
                                 </div>
                                 <button onClick={() => addLog(dog.id, dog.name)} 
-                                    className="mt-6 w-full bg-slate-800 text-white py-5 font-black text-2xl rounded-xl shadow-xl active:scale-95 transition-all">
-                                    🚀 同步雲端 (SYNC)
+                                    className="mt-4 w-full bg-slate-800 text-white py-3 font-bold text-lg rounded-lg shadow-md active:bg-blue-700 transition-all">
+                                    🚀 寫入紀錄 (SYNC)
                                 </button>
                             </div>
                         );
                     })}
 
-                    <div className="mt-16 mb-24 text-center">
+                    <div className="mt-8 mb-10 text-center">
                          <button onClick={goToHub}
-                            className="bg-red-600 text-white px-10 py-5 rounded-full font-black text-2xl shadow-2xl active:scale-90 transition-transform">
+                            className="bg-red-500 text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg active:scale-95">
                              管理中心 →
                          </button>
-                         <p className="mt-6 text-slate-400 font-bold text-xs tracking-[0.2em] uppercase">
-                             Duty First | Internal System
-                         </p>
                     </div>
                 </div>
             );
