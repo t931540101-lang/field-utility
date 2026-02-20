@@ -1,11 +1,10 @@
-。<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>勤務交接簿 - 雲端版</title>
     <style>
-        /* 保持原有的簡潔窄螢幕優化 CSS */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f5f7; color: #333; margin: 0; padding: 15px; }
         .container { width: 100%; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); box-sizing: border-box; }
         h2 { text-align: center; color: #2c3e50; margin-top: 0; margin-bottom: 20px; font-size: 22px; }
@@ -52,8 +51,7 @@
 </div>
 
 <script>
-    // 1. 初始化 Firebase (這裡需要填入專屬設定)
-        // 1. 初始化 Firebase
+    // 1. 初始化 Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI907S1YdCWor48",
         authDomain: "factor-security-d1965.firebaseapp.com",
@@ -64,8 +62,6 @@
         appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
     };
 
-    
-    // 檢查是否已填寫設定，避免未設定時報錯
     if (firebaseConfig.apiKey !== "請填寫_API_KEY") {
         firebase.initializeApp(firebaseConfig);
     }
@@ -77,12 +73,10 @@
     const equipmentStatus = document.getElementById('equipmentStatus');
     const statusMessage = document.getElementById('statusMessage');
 
-        // 頁面載入時：設定今天日期，並自動去雲端抓最新紀錄
+    // 頁面載入時：設定今天日期，並自動去雲端抓最新紀錄
     window.onload = function() {
         const today = new Date().toISOString().split('T')[0];
         dutyDate.value = today;
-        
-        // 呼叫讀取雲端資料的函數
         loadLatestRecord();
     };
 
@@ -92,19 +86,14 @@
         
         showStatus('🔄 正在讀取上一班交接紀錄...');
         
-        // 針對 dutyLogs 資料夾，依照 timestamp 排序，並只抓取最後（最新）的一筆
         db.ref('dutyLogs').orderByChild('timestamp').limitToLast(1).once('value')
             .then((snapshot) => {
                 if (snapshot.exists()) {
                     snapshot.forEach((childSnapshot) => {
                         const data = childSnapshot.val();
-                        
-                        // 將雲端抓到的資料，自動填入畫面的格子裡
-                        // 如果有跨日交接的需求，日期也可以改成 data.date
                         shift.value = data.shift || 'day';
                         handoverNotes.value = data.notes || '';
                         equipmentStatus.value = data.equipment || '';
-                        
                         showStatus('✅ 已自動載入上一班最新紀錄！');
                     });
                 } else {
@@ -116,11 +105,6 @@
                 showStatus('❌ 讀取失敗，請檢查網路連線');
             });
     }
-
-    // 2. 將資料上傳到 Firebase 即時資料庫 (保留原本的這段不要動)
-    function saveToCloud() {
-// ... (下方保留你原本寫好的 saveToCloud 與 clearData 程式碼) ...
-
 
     // 2. 將資料上傳到 Firebase 即時資料庫
     function saveToCloud() {
@@ -137,7 +121,6 @@
             timestamp: firebase.database.ServerValue.TIMESTAMP
         };
 
-        // 寫入資料庫路徑： dutyLogs/日期_班別 (確保每班紀錄獨立存放)
         const recordId = dutyDate.value + "_" + shift.value;
         
         db.ref('dutyLogs/' + recordId).set(logData)
