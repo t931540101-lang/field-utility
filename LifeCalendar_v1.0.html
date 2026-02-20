@@ -3,118 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>警衛統一排班格式表 V7.5 - 超級大字版</title>
+    <title>警衛排班表 | 雲端極速版</title>
+    <link rel="icon" href="IMG_0177.jpeg">
+    <link rel="apple-touch-icon" href="IMG_0177.jpeg">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
-        :root { --paper: #f9f4e8; --ink: #2e5a44; --red: #c0392b; --gold: #b8860b; --line: #dcd3b6; }
-        body { margin: 0; font-family: sans-serif; background: #e8e2d0; -webkit-tap-highlight-color: transparent; }
-        .calendar-box { max-width: 500px; margin: 0 auto; background: var(--paper); min-height: 100vh; padding-bottom: 110px; }
-        
-        /* 姓名工號：超級巨字化 */
-        .user-info-bar { 
-            background: #000000; 
-            color: #ffffff; 
-            padding: 12px 15px; 
-            font-size: 22px; 
-            font-weight: 900; 
-            display: flex; 
-            justify-content: space-between; 
-            border-bottom: 3px solid var(--red);
-        }
-        
-        header { background: var(--ink); color: #fff; padding: 4px; text-align: center; position: sticky; top: 0; z-index: 100; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid var(--line); }
-        .weekday { text-align: center; padding: 4px 0; color: #8e835d; font-size: 12px; background: #f0e9d2; border-bottom: 1px solid var(--line); }
-        .cell { min-height: 78px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); position: relative; padding: 2px; display: flex; flex-direction: column; background: var(--paper); box-sizing: border-box; }
-        .day-num { font-size: 1rem; font-weight: bold; color: #4a4a4a; }
-        .is-weekend { color: var(--red); }
-        
-        .memo-text { font-size: 12px; font-weight: 900; text-align: center; margin: auto 0; line-height: 1.1; white-space: pre-wrap; width: 100%; }
-        .color-default { color: var(--ink); }
-        .color-holiday { color: var(--red); }
-        .color-special { color: var(--gold); }
-
-        .today { box-shadow: inset 0 0 0 3px var(--red); background: #fffcf5; z-index: 10; }
-        .toolbar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: #f2ebd5; border-top: 2px solid var(--line); padding: 5px 0 env(safe-area-inset-bottom); z-index: 200; }
-        .control-row { display: flex; justify-content: space-around; padding: 5px; gap: 5px; }
-        select, .clear-btn { padding: 8px 2px; border-radius: 6px; border: 1.5px solid var(--line); background: #fff; font-size: 13px; font-weight: bold; flex: 1; }
+        body { font-family: sans-serif; background-color: #e8e2d0; margin: 0; -webkit-tap-highlight-color: transparent; }
+        .grid-cell { min-height: 85px; border-right: 2px solid #dcd3b6; border-bottom: 2px solid #dcd3b6; }
+        .today-highlight { box-shadow: inset 0 0 0 4px #c0392b; background: #fffcf5; }
     </style>
 </head>
 <body>
-<div class="calendar-box">
-    <div class="user-info-bar" onclick="editInfo()">
-        <span id="uName">姓名：小黑</span>
-        <span id="uID">工號：D01762</span>
-    </div>
-    <header>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div onclick="changeMonth(-1)" style="font-size:18px; width:40px;">❮</div>
-            <div id="calendar-title" style="font-size: 15px; font-weight: bold;">2026年 3月</div>
-            <div onclick="changeMonth(1)" style="font-size:18px; width:40px;">❯</div>
-        </div>
-    </header>
-    <div class="grid" id="calendarGrid">
-        <div class="weekday">日</div><div class="weekday">一</div><div class="weekday">二</div>
-        <div class="weekday">三</div><div class="weekday">四</div><div class="weekday">五</div><div class="weekday">六</div>
-    </div>
-</div>
-<div class="toolbar">
-    <div class="control-row">
-        <select id="factorySelect" onchange="updateActiveStamp(this)"><option value="">🏢 廠區</option><option value="一廠">一廠</option><option value="二廠">二廠</option><option value="三廠">三廠</option></select>
-        <select id="typeSelect" onchange="updateActiveStamp(this)"><option value="">📝 項目</option><option value="日B班">☀️日B</option><option value="夜B班">🌙夜B</option><option value="夜E班">⚡夜E</option><option value="例假">🔴例假</option><option value="休假">🟢休假</option><option value="特休">⭐特休</option></select>
-        <button class="clear-btn" onclick="setClearMode()">擦除</button>
-    </div>
-</div>
-<script>
-    let curY = 2026, curM = 2, activeStamp = "", isClearMode = false;
-    function updateActiveStamp(el) { isClearMode = false; activeStamp = el.value; }
-    function setClearMode() { isClearMode = true; activeStamp = ""; }
-    function editInfo() {
-        const n = prompt("姓名：", localStorage.getItem('user-name')||"");
-        if (n !== null) {
-            const i = prompt("工號：", localStorage.getItem('user-id')||"");
-            if (i !== null) { localStorage.setItem('user-name', n); localStorage.setItem('user-id', i); updateUI(); }
-        }
-    }
-    function updateUI() {
-        document.getElementById('uName').innerText = "姓名：" + (localStorage.getItem('user-name') || "點擊填寫");
-        document.getElementById('uID').innerText = "工號：" + (localStorage.getItem('user-id') || "點擊填寫");
-    }
-    function renderCalendar() {
-        updateUI();
-        const grid = document.getElementById('calendarGrid');
-        grid.innerHTML = ""; 
-        ["日","一","二","三","四","五","六"].forEach(w => {
-            const div = document.createElement('div'); div.className = 'weekday'; div.innerText = w; grid.appendChild(div);
-        });
-        document.getElementById('calendar-title').innerText = `${curY}年 ${curM + 1}月`;
-        const firstDay = new Date(curY, curM, 1).getDay();
-        const daysInMonth = new Date(curY, curM + 1, 0).getDate();
-        for (let i = 0; i < firstDay; i++) grid.appendChild(Object.assign(document.createElement('div'), {className: 'cell'}));
-        for (let i = 1; i <= daysInMonth; i++) {
-            const cell = document.createElement('div');
-            const d = new Date(curY, curM, i);
-            cell.className = 'cell';
-            const dateKey = `${curY}-${curM + 1}-${i}`;
-            const note = localStorage.getItem('note-' + dateKey) || "";
-            let colorClass = "color-default";
-            if (note.includes("例假") || note.includes("休假")) colorClass = "color-holiday";
-            else if (note.includes("特休")) colorClass = "color-special";
-            cell.innerHTML = `<div class="day-num ${d.getDay()===0||d.getDay()===6?'is-weekend':''}">${i}</div><div class="memo-text ${colorClass}">${note}</div>`;
-            cell.onclick = () => {
-                const old = localStorage.getItem('note-' + dateKey) || "";
-                if (isClearMode) { save(dateKey, ""); }
-                else if (activeStamp) {
-                    let f = document.getElementById('factorySelect').value, t = document.getElementById('typeSelect').value;
-                    let n = (f && t) ? f + "\n" + t : (f || t);
-                    save(dateKey, old ? old + "\n" + n : n);
-                } else { const n = prompt("記事：", old); if (n !== null) save(dateKey, n); }
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI907S1YdCWor48",
+            authDomain: "factor-security-d1965.firebaseapp.com",
+            databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+            projectId: "factor-security-d1965",
+            storageBucket: "factor-security-d1965.firebasestorage.app",
+            messagingSenderId: "864846943143",
+            appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function App() {
+            const [curYear, setCurYear] = useState(2026);
+            const [curMonth, setCurMonth] = useState(2); // 0-indexed, 2 = 3月
+            const [schedules, setSchedules] = useState({});
+            
+            // 工具列狀態
+            const [factory, setFactory] = useState("");
+            const [shiftType, setShiftType] = useState("");
+            const [isClearMode, setIsClearMode] = useState(false);
+
+            // 讀取雲端班表資料
+            useEffect(() => {
+                const ref = db.ref('guardSchedules');
+                ref.on('value', snapshot => {
+                    setSchedules(snapshot.val() || {});
+                });
+                return () => ref.off();
+            }, []);
+
+            const changeMonth = (dir) => {
+                let m = curMonth + dir;
+                let y = curYear;
+                if (m < 0) { m = 11; y--; }
+                else if (m > 11) { m = 0; y++; }
+                setCurMonth(m);
+                setCurYear(y);
             };
-            grid.appendChild(cell);
+
+            const handleCellClick = (day) => {
+                const dateKey = `${curYear}-${curMonth + 1}-${day}`;
+                const currentNote = schedules[dateKey] || "";
+
+                if (isClearMode) {
+                    db.ref(`guardSchedules/${dateKey}`).remove();
+                } else if (factory || shiftType) {
+                    const newStamp = [factory, shiftType].filter(Boolean).join("\n");
+                    const updatedNote = currentNote ? `${currentNote}\n${newStamp}` : newStamp;
+                    db.ref(`guardSchedules/${dateKey}`).set(updatedNote);
+                } else {
+                    const note = prompt("輸入記事：", currentNote);
+                    if (note !== null) {
+                        if(note === "") db.ref(`guardSchedules/${dateKey}`).remove();
+                        else db.ref(`guardSchedules/${dateKey}`).set(note);
+                    }
+                }
+            };
+
+            // 產生月曆陣列
+            const firstDay = new Date(curYear, curMonth, 1).getDay();
+            const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
+            const today = new Date();
+            const isThisMonth = today.getFullYear() === curYear && today.getMonth() === curMonth;
+
+            const blanks = Array.from({ length: firstDay }, (_, i) => <div key={`blank-${i}`} className="grid-cell bg-[#f9f4e8]"></div>);
+            
+            const days = Array.from({ length: daysInMonth }, (_, i) => {
+                const day = i + 1;
+                const dateKey = `${curYear}-${curMonth + 1}-${day}`;
+                const note = schedules[dateKey] || "";
+                const isWeekend = new Date(curYear, curMonth, day).getDay() % 6 === 0;
+                const isToday = isThisMonth && today.getDate() === day;
+                
+                let textColor = "text-[#2e5a44]"; // 預設墨綠
+                if (note.includes("例假") || note.includes("休假")) textColor = "text-[#c0392b]"; // 紅色
+                if (note.includes("特休")) textColor = "text-[#b8860b]"; // 金色
+
+                return (
+                    <div key={day} onClick={() => handleCellClick(day)} 
+                         className={`grid-cell bg-[#f9f4e8] relative p-1 flex flex-col active:bg-slate-200 transition-colors ${isToday ? 'today-highlight' : ''}`}>
+                        <div className={`text-xl font-bold ${isWeekend ? 'text-[#c0392b]' : 'text-slate-700'}`}>{day}</div>
+                        <div className={`mt-auto text-lg font-black leading-tight text-center whitespace-pre-wrap ${textColor}`}>
+                            {note}
+                        </div>
+                    </div>
+                );
+            });
+
+            return (
+                <div className="max-w-lg mx-auto bg-[#f9f4e8] min-h-screen pb-32">
+                    <div className="bg-black text-white px-4 py-3 text-2xl font-black flex justify-between border-b-4 border-[#c0392b]">
+                        <span>姓名：小黑哥</span>
+                        <span>工號：D01762</span>
+                    </div>
+
+                    <header className="bg-[#2e5a44] text-white p-3 sticky top-0 z-50 flex justify-between items-center shadow-md">
+                        <button onClick={() => changeMonth(-1)} className="text-3xl px-4 active:scale-90">❮</button>
+                        <h1 className="text-2xl font-bold tracking-widest">{curYear}年 {curMonth + 1}月</h1>
+                        <button onClick={() => changeMonth(1)} className="text-3xl px-4 active:scale-90">❯</button>
+                    </header>
+
+                    <div className="grid grid-cols-7 border-t-2 border-[#dcd3b6]">
+                        {["日","一","二","三","四","五","六"].map(w => (
+                            <div key={w} className="text-center py-2 text-[#8e835d] font-bold text-lg bg-[#f0e9d2] border-b-2 border-[#dcd3b6]">
+                                {w}
+                            </div>
+                        ))}
+                        {blanks}
+                        {days}
+                    </div>
+
+                    {/* 底部工具列 */}
+                    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-lg bg-[#f2ebd5] border-t-4 border-[#dcd3b6] p-3 pb-8 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.1)]">
+                        <div className="flex gap-2">
+                            <select 
+                                value={factory} onChange={e => {setFactory(e.target.value); setIsClearMode(false);}}
+                                className="flex-1 p-3 rounded-lg border-2 border-[#dcd3b6] text-lg font-bold bg-white focus:outline-none focus:border-[#2e5a44]">
+                                <option value="">🏢 廠區</option>
+                                <option value="一廠">一廠</option>
+                                <option value="二廠">二廠</option>
+                                <option value="三廠">三廠</option>
+                            </select>
+                            
+                            <select 
+                                value={shiftType} onChange={e => {setShiftType(e.target.value); setIsClearMode(false);}}
+                                className="flex-1 p-3 rounded-lg border-2 border-[#dcd3b6] text-lg font-bold bg-white focus:outline-none focus:border-[#2e5a44]">
+                                <option value="">📝 項目</option>
+                                <option value="日B班">☀️日B</option>
+                                <option value="夜B班">🌙夜B</option>
+                                <option value="夜E班">⚡夜E</option>
+                                <option value="例假">🔴例假</option>
+                                <option value="休假">🟢休假</option>
+                                <option value="特休">⭐特休</option>
+                            </select>
+
+                            <button 
+                                onClick={() => { setIsClearMode(true); setFactory(""); setShiftType(""); }}
+                                className={`flex-1 p-3 rounded-lg border-2 font-black text-xl transition-colors ${isClearMode ? 'bg-red-600 text-white border-red-700' : 'bg-white text-red-600 border-red-300'}`}>
+                                {isClearMode ? '🗑️ 擦除中' : '擦除'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
         }
-    }
-    function save(k, n) { localStorage.setItem('note-' + k, n); renderCalendar(); }
-    function changeMonth(d) { curM += d; if (curM < 0) {curM=11;curY--;} else if (curM>11) {curM=0;curY++;} renderCalendar(); }
-    window.onload = renderCalendar;
-</script>
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
