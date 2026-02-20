@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>警衛排班表 | 雲端極速版</title>
+    <title>警衛排班表 | 截圖專用版</title>
     <link rel="icon" href="IMG_0177.jpeg">
     <link rel="apple-touch-icon" href="IMG_0177.jpeg">
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -14,8 +14,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
         body { font-family: sans-serif; background-color: #e8e2d0; margin: 0; -webkit-tap-highlight-color: transparent; }
-        .grid-cell { min-height: 85px; border-right: 2px solid #dcd3b6; border-bottom: 2px solid #dcd3b6; }
-        .today-highlight { box-shadow: inset 0 0 0 4px #c0392b; background: #fffcf5; }
+        /* 格子高度縮減，確保6週都能塞進一個畫面 */
+        .grid-cell { min-height: 65px; border-right: 1px solid #c2b99a; border-bottom: 1px solid #c2b99a; }
+        .today-highlight { box-shadow: inset 0 0 0 2px #c0392b; background: #fffcf5; }
     </style>
 </head>
 <body>
@@ -37,15 +38,13 @@
 
         function App() {
             const [curYear, setCurYear] = useState(2026);
-            const [curMonth, setCurMonth] = useState(2); // 0-indexed, 2 = 3月
+            const [curMonth, setCurMonth] = useState(2);
             const [schedules, setSchedules] = useState({});
             
-            // 工具列狀態
             const [factory, setFactory] = useState("");
             const [shiftType, setShiftType] = useState("");
             const [isClearMode, setIsClearMode] = useState(false);
 
-            // 讀取雲端班表資料
             useEffect(() => {
                 const ref = db.ref('guardSchedules');
                 ref.on('value', snapshot => {
@@ -82,7 +81,6 @@
                 }
             };
 
-            // 產生月曆陣列
             const firstDay = new Date(curYear, curMonth, 1).getDay();
             const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
             const today = new Date();
@@ -97,15 +95,16 @@
                 const isWeekend = new Date(curYear, curMonth, day).getDay() % 6 === 0;
                 const isToday = isThisMonth && today.getDate() === day;
                 
-                let textColor = "text-[#2e5a44]"; // 預設墨綠
-                if (note.includes("例假") || note.includes("休假")) textColor = "text-[#c0392b]"; // 紅色
-                if (note.includes("特休")) textColor = "text-[#b8860b]"; // 金色
+                let textColor = "text-[#2e5a44]";
+                if (note.includes("例假") || note.includes("休假")) textColor = "text-[#c0392b]";
+                if (note.includes("特休")) textColor = "text-[#b8860b]";
 
                 return (
                     <div key={day} onClick={() => handleCellClick(day)} 
-                         className={`grid-cell bg-[#f9f4e8] relative p-1 flex flex-col active:bg-slate-200 transition-colors ${isToday ? 'today-highlight' : ''}`}>
-                        <div className={`text-xl font-bold ${isWeekend ? 'text-[#c0392b]' : 'text-slate-700'}`}>{day}</div>
-                        <div className={`mt-auto text-lg font-black leading-tight text-center whitespace-pre-wrap ${textColor}`}>
+                         className={`grid-cell bg-[#f9f4e8] relative p-0.5 flex flex-col active:bg-slate-200 ${isToday ? 'today-highlight' : ''}`}>
+                        <div className={`text-sm font-bold ${isWeekend ? 'text-[#c0392b]' : 'text-slate-700'}`}>{day}</div>
+                        {/* 班別文字縮小，確保不會把格子撐大 */}
+                        <div className={`mt-auto text-xs font-black leading-tight text-center whitespace-pre-wrap ${textColor}`}>
                             {note}
                         </div>
                     </div>
@@ -113,21 +112,21 @@
             });
 
             return (
-                <div className="max-w-lg mx-auto bg-[#f9f4e8] min-h-screen pb-32">
-                    <div className="bg-black text-white px-4 py-3 text-2xl font-black flex justify-between border-b-4 border-[#c0392b]">
+                <div className="max-w-lg mx-auto bg-[#f9f4e8] min-h-screen pb-20">
+                    <div className="bg-black text-white px-3 py-2 text-lg font-black flex justify-between border-b-2 border-[#c0392b]">
                         <span>姓名：小黑哥</span>
                         <span>工號：D01762</span>
                     </div>
 
-                    <header className="bg-[#2e5a44] text-white p-3 sticky top-0 z-50 flex justify-between items-center shadow-md">
-                        <button onClick={() => changeMonth(-1)} className="text-3xl px-4 active:scale-90">❮</button>
-                        <h1 className="text-2xl font-bold tracking-widest">{curYear}年 {curMonth + 1}月</h1>
-                        <button onClick={() => changeMonth(1)} className="text-3xl px-4 active:scale-90">❯</button>
+                    <header className="bg-[#2e5a44] text-white p-2 sticky top-0 z-50 flex justify-between items-center shadow-md">
+                        <button onClick={() => changeMonth(-1)} className="text-xl px-4 active:scale-90">❮</button>
+                        <h1 className="text-lg font-bold tracking-widest">{curYear}年 {curMonth + 1}月</h1>
+                        <button onClick={() => changeMonth(1)} className="text-xl px-4 active:scale-90">❯</button>
                     </header>
 
-                    <div className="grid grid-cols-7 border-t-2 border-[#dcd3b6]">
+                    <div className="grid grid-cols-7 border-t border-[#c2b99a]">
                         {["日","一","二","三","四","五","六"].map(w => (
-                            <div key={w} className="text-center py-2 text-[#8e835d] font-bold text-lg bg-[#f0e9d2] border-b-2 border-[#dcd3b6]">
+                            <div key={w} className="text-center py-1 text-[#8e835d] font-bold text-sm bg-[#f0e9d2] border-b border-[#c2b99a]">
                                 {w}
                             </div>
                         ))}
@@ -135,12 +134,12 @@
                         {days}
                     </div>
 
-                    {/* 底部工具列 */}
-                    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-lg bg-[#f2ebd5] border-t-4 border-[#dcd3b6] p-3 pb-8 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.1)]">
-                        <div className="flex gap-2">
+                    {/* 底部工具列縮小，避免佔用截圖空間 */}
+                    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-lg bg-[#f2ebd5] border-t-2 border-[#c2b99a] p-2 pb-safe z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.1)]">
+                        <div className="flex gap-1.5">
                             <select 
                                 value={factory} onChange={e => {setFactory(e.target.value); setIsClearMode(false);}}
-                                className="flex-1 p-3 rounded-lg border-2 border-[#dcd3b6] text-lg font-bold bg-white focus:outline-none focus:border-[#2e5a44]">
+                                className="flex-1 p-1.5 rounded border border-[#c2b99a] text-sm font-bold bg-white focus:outline-none focus:border-[#2e5a44]">
                                 <option value="">🏢 廠區</option>
                                 <option value="一廠">一廠</option>
                                 <option value="二廠">二廠</option>
@@ -149,7 +148,7 @@
                             
                             <select 
                                 value={shiftType} onChange={e => {setShiftType(e.target.value); setIsClearMode(false);}}
-                                className="flex-1 p-3 rounded-lg border-2 border-[#dcd3b6] text-lg font-bold bg-white focus:outline-none focus:border-[#2e5a44]">
+                                className="flex-1 p-1.5 rounded border border-[#c2b99a] text-sm font-bold bg-white focus:outline-none focus:border-[#2e5a44]">
                                 <option value="">📝 項目</option>
                                 <option value="日B班">☀️日B</option>
                                 <option value="夜B班">🌙夜B</option>
@@ -161,17 +160,4 @@
 
                             <button 
                                 onClick={() => { setIsClearMode(true); setFactory(""); setShiftType(""); }}
-                                className={`flex-1 p-3 rounded-lg border-2 font-black text-xl transition-colors ${isClearMode ? 'bg-red-600 text-white border-red-700' : 'bg-white text-red-600 border-red-300'}`}>
-                                {isClearMode ? '🗑️ 擦除中' : '擦除'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+                                className={`flex-1 p-1.5 rounded border font-black text-sm transition-colors ${isClearMode ? 'bg-red-600 text-white border-red-700' : 'bg-
