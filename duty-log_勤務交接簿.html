@@ -3,152 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>勤務交接簿 - 雲端版</title>
-        <link rel="icon" href="IMG_0177.jpeg">
+    <title>勤務交接簿 | 台灣精銳</title>
+    <link rel="icon" href="IMG_0177.jpeg">
     <link rel="apple-touch-icon" href="IMG_0177.jpeg">
-
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f5f7; color: #333; margin: 0; padding: 15px; }
-        .container { width: 100%; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); box-sizing: border-box; }
-        h2 { text-align: center; color: #2c3e50; margin-top: 0; margin-bottom: 20px; font-size: 22px; }
-        label { display: block; margin-top: 15px; font-weight: 600; font-size: 15px; color: #555; }
-        input[type="date"], select, textarea { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ccd0d5; border-radius: 6px; box-sizing: border-box; font-size: 16px; background-color: #fafafa; }
-        input[type="date"]:focus, select:focus, textarea:focus { border-color: #3498db; outline: none; background-color: #fff; }
-        textarea { resize: vertical; height: 120px; }
-        .btn-group { display: flex; gap: 12px; margin-top: 25px; }
-        button { flex: 1; padding: 14px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; color: #fff; transition: background-color 0.2s; }
-        .btn-save { background-color: #2980b9; }
-        .btn-save:active { background-color: #2471a3; }
-        .btn-clear { background-color: #e74c3c; }
-        .status-msg { margin-top: 15px; text-align: center; font-size: 14px; color: #27ae60; font-weight: bold; min-height: 20px; }
-    </style>
     
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .duty-card { background: white; border-left: 8px solid #1e293b; box-shadow: 4px 4px 0px #cbd5e1; }
+        .important-red { color: #dc2626; font-weight: 900; }
+        .timestamp { font-size: 11px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #475569; }
+    </style>
 </head>
 <body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-<div class="container">
-    <h2>勤務交接簿 (雲端連線)</h2>
-    
-    <label for="dutyDate">日期</label>
-    <input type="date" id="dutyDate">
-
-    <label for="shift">班別</label>
-    <select id="shift">
-        <option value="day">早班 (07:00 - 19:00)</option>
-        <option value="night">晚班 (19:00 - 07:00)</option>
-    </select>
-
-    <label for="handoverNotes">重點交接事項與異常紀錄</label>
-    <textarea id="handoverNotes" placeholder="請輸入需交接的廠區狀況、人員進出異常或交代事項..."></textarea>
-
-    <label for="equipmentStatus">裝備與環境點交</label>
-    <textarea id="equipmentStatus" placeholder="無線電、鑰匙數量、巡邏設備狀態..."></textarea>
-
-    <div class="btn-group">
-        <button class="btn-save" onclick="saveToCloud()">上傳雲端交接</button>
-        <button class="btn-clear" onclick="clearData()">清除</button>
-    </div>
-    <div id="statusMessage" class="status-msg"></div>
-</div>
-
-<script>
-    // 1. 初始化 Firebase
-    const firebaseConfig = {
-        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI907S1YdCWor48",
-        authDomain: "factor-security-d1965.firebaseapp.com",
-        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
-        projectId: "factor-security-d1965",
-        storageBucket: "factor-security-d1965.firebasestorage.app",
-        messagingSenderId: "864846943143",
-        appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
-    };
-
-    if (firebaseConfig.apiKey !== "請填寫_API_KEY") {
-        firebase.initializeApp(firebaseConfig);
-    }
-    const db = firebase.database ? firebase.database() : null;
-
-    const dutyDate = document.getElementById('dutyDate');
-    const shift = document.getElementById('shift');
-    const handoverNotes = document.getElementById('handoverNotes');
-    const equipmentStatus = document.getElementById('equipmentStatus');
-    const statusMessage = document.getElementById('statusMessage');
-
-    // 頁面載入時：設定今天日期，並自動去雲端抓最新紀錄
-    window.onload = function() {
-        const today = new Date().toISOString().split('T')[0];
-        dutyDate.value = today;
-        loadLatestRecord();
-    };
-
-    // 3. 從 Firebase 讀取最新一筆交接紀錄
-    function loadLatestRecord() {
-        if (!db) return;
-        
-        showStatus('🔄 正在讀取上一班交接紀錄...');
-        
-        db.ref('dutyLogs').orderByChild('timestamp').limitToLast(1).once('value')
-            .then((snapshot) => {
-                if (snapshot.exists()) {
-                    snapshot.forEach((childSnapshot) => {
-                        const data = childSnapshot.val();
-                        shift.value = data.shift || 'day';
-                        handoverNotes.value = data.notes || '';
-                        equipmentStatus.value = data.equipment || '';
-                        showStatus('✅ 已自動載入上一班最新紀錄！');
-                    });
-                } else {
-                    showStatus('📝 雲端目前無紀錄，請開始填寫。');
-                }
-            })
-            .catch((error) => {
-                console.error("讀取失敗: ", error);
-                showStatus('❌ 讀取失敗，請檢查網路連線');
-            });
-    }
-
-    // 2. 將資料上傳到 Firebase 即時資料庫
-    function saveToCloud() {
-        if (!db) {
-            showStatus('⚠️ 請先完成 Firebase 設定金鑰');
-            return;
-        }
-
-        const logData = {
-            date: dutyDate.value,
-            shift: shift.value,
-            notes: handoverNotes.value,
-            equipment: equipmentStatus.value,
-            timestamp: firebase.database.ServerValue.TIMESTAMP
+        // 1. 妳的 Firebase 專屬設定
+        const firebaseConfig = {
+            apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI907S1YdCWor48",
+            authDomain: "factor-security-d1965.firebaseapp.com",
+            databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+            projectId: "factor-security-d1965",
+            storageBucket: "factor-security-d1965.firebasestorage.app",
+            messagingSenderId: "864846943143",
+            appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
         };
 
-        const recordId = dutyDate.value + "_" + shift.value;
-        
-        db.ref('dutyLogs/' + recordId).set(logData)
-            .then(() => {
-                showStatus('☁️ ✅ 交接紀錄已成功上傳雲端！');
-            })
-            .catch((error) => {
-                console.error("上傳失敗: ", error);
-                showStatus('❌ 上傳失敗，請檢查網路連線');
-            });
-    }
-
-    function clearData() {
-        if(confirm('確定要清除目前填寫的所有內容嗎？')) {
-            handoverNotes.value = '';
-            equipmentStatus.value = '';
-            showStatus('🗑️ 欄位已清除');
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
-    }
+        const db = firebase.database();
 
-    function showStatus(msg) {
-        statusMessage.innerText = msg;
-        setTimeout(() => { statusMessage.innerText = ''; }, 3000);
-    }
-</script>
+        function App() {
+            const [logs, setLogs] = useState([]);
 
+            // 2. 頁面開啟時，自動從雲端抓資料
+            useEffect(() => {
+                const logsRef = db.ref('reactLogs'); // 使用新的資料夾區分舊版
+                logsRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        const list = Object.keys(data).map(key => ({
+                            id: key,
+                            ...data[key]
+                        })).reverse(); // 讓最新的在最上面
+                        setLogs(list);
+                    }
+                });
+                return () => logsRef.off();
+            }, []);
+
+            // 3. 新增紀錄並傳送到雲端
+            const addEntry = () => {
+                const note = prompt("請輸入交接事項：");
+                if (!note) return;
+                const isUrgent = confirm("這件事很重要需要變紅字嗎？");
+                
+                const now = new Date();
+                const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${(now.getMinutes()<10?'0':'')+now.getMinutes()}`;
+                
+                const newLog = {
+                    time: timeStr,
+                    note: note,
+                    urgent: isUrgent,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                };
+
+                db.ref('reactLogs').push(newLog);
+            };
+
+            // 4. 雙擊卡片刪除紀錄
+            const deleteLog = (id) => {
+                if(confirm("確定刪除這條雲端紀錄嗎？")) {
+                    db.ref(`reactLogs/${id}`).remove();
+                }
+            };
+
+            return (
+                <div className="p-4 max-w-2xl mx-auto">
+                    <header className="flex justify-between items-center border-b-4 border-slate-800 pb-3 mb-6">
+                        <h1 className="text-2xl font-black text-slate-800">勤務交接簿</h1>
+                        <button onClick={addEntry} className="bg-slate-800 text-white px-4 py-2 rounded-full font-bold text-sm">
+                            + 新增紀錄
+                        </button>
+                    </header>
+
+                    <div className="space-y-4">
+                        {logs.map(log => (
+                            <div key={log.id} onDoubleClick={() => deleteLog(log.id)} className="duty-card p-4 relative animate-fade-in">
+                                <div className="flex items-center mb-2">
+                                    <span className="timestamp font-mono">{log.time}</span>
+                                    {log.urgent && <span className="ml-2 text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-black">重要</span>}
+                                </div>
+                                <p className={`text-base leading-relaxed ${log.urgent ? 'important-red text-lg' : 'text-slate-700'}`}>
+                                    {log.note}
+                                </p>
+                            </div>
+                        ))}
+                        {logs.length === 0 && <p className="text-center text-slate-400 italic mt-10">🔄 正在載入雲端紀錄...</p>}
+                    </div>
+
+                    <footer className="text-center text-[10px] text-slate-400 mt-10 font-bold uppercase tracking-widest">
+                        警衛室勤務交接系統 - 內部專用
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
