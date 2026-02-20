@@ -1,166 +1,40 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>警衛排班表 | 台灣精銳</title>
-    <link rel="icon" href="IMG_0177.jpeg">
-    <link rel="apple-touch-icon" href="IMG_0177.jpeg">
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <style>
-        body { font-family: sans-serif; background-color: #e8e2d0; margin: 0; -webkit-tap-highlight-color: transparent; }
-        .grid-cell { min-height: 70px; border-right: 1px solid #c2b99a; border-bottom: 1px solid #c2b99a; }
-        .today-highlight { box-shadow: inset 0 0 0 3px #c0392b; background: #fffcf5; }
-    </style>
-</head>
-<body>
-    <div id="root"></div>
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+// ... (前面的 Firebase 設定與內容都一樣，我們重點修改 App 函數內部)
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI907S1YdCWor48",
-            authDomain: "factor-security-d1965.firebaseapp.com",
-            databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
-            projectId: "factor-security-d1965",
-            storageBucket: "factor-security-d1965.firebasestorage.app",
-            messagingSenderId: "864846943143",
-            appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
-        };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+function App() {
+    const todayObj = new Date();
+    const [curYear, setCurYear] = useState(todayObj.getFullYear());
+    const [curMonth, setCurMonth] = useState(todayObj.getMonth());
+    const [schedules, setSchedules] = useState({});
+    
+    // 這裡改用 localStorage 記住姓名與工號
+    const [userName, setUserName] = useState(localStorage.getItem('guardName') || "小黑哥");
+    const [userID, setUserID] = useState(localStorage.getItem('guardID') || "D01762");
+    
+    const [factory, setFactory] = useState("");
+    const [shiftType, setShiftType] = useState("");
+    const [isClearMode, setIsClearMode] = useState(false);
 
-        function App() {
-            const todayObj = new Date();
-            const [curYear, setCurYear] = useState(todayObj.getFullYear());
-            const [curMonth, setCurMonth] = useState(todayObj.getMonth());
-            const [schedules, setSchedules] = useState({});
-            const [factory, setFactory] = useState("");
-            const [shiftType, setShiftType] = useState("");
-            const [isClearMode, setIsClearMode] = useState(false);
+    // 當姓名或工號改變時，自動存檔
+    useEffect(() => {
+        localStorage.setItem('guardName', userName);
+        localStorage.setItem('guardID', userID);
+    }, [userName, userID]);
 
-            useEffect(() => {
-                const ref = db.ref('guardSchedules');
-                ref.on('value', snapshot => { setSchedules(snapshot.val() || {}); });
-                return () => ref.off();
-            }, []);
+    // ... (中間的 handleCellClick 等功能保留)
 
-            const changeMonth = (dir) => {
-                let m = curMonth + dir;
-                let y = curYear;
-                if (m < 0) { m = 11; y--; }
-                else if (m > 11) { m = 0; y++; }
-                setCurMonth(m);
-                setCurYear(y);
-            };
-
-            const handleCellClick = (day) => {
-                const dateKey = `${curYear}-${curMonth + 1}-${day}`;
-                const currentNote = schedules[dateKey] || "";
-
-                if (isClearMode) {
-                    db.ref(`guardSchedules/${dateKey}`).remove();
-                } else if (factory || shiftType) {
-                    const newStamp = [factory, shiftType].filter(Boolean).join("\n");
-                    db.ref(`guardSchedules/${dateKey}`).set(newStamp);
-                } else {
-                    const note = prompt("輸入記事：", currentNote);
-                    if (note !== null) {
-                        if(note === "") db.ref(`guardSchedules/${dateKey}`).remove();
-                        else db.ref(`guardSchedules/${dateKey}`).set(note);
-                    }
-                }
-            };
-
-            const firstDay = new Date(curYear, curMonth, 1).getDay();
-            const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
-            const isThisMonth = todayObj.getFullYear() === curYear && todayObj.getMonth() === curMonth;
-
-            const blanks = Array.from({ length: firstDay }, (_, i) => <div key={`blank-${i}`} className="grid-cell bg-[#f9f4e8]"></div>);
-            
-            const days = Array.from({ length: daysInMonth }, (_, i) => {
-                const day = i + 1;
-                const dateKey = `${curYear}-${curMonth + 1}-${day}`;
-                const note = schedules[dateKey] || "";
-                const isWeekend = new Date(curYear, curMonth, day).getDay() % 6 === 0;
-                const isToday = isThisMonth && todayObj.getDate() === day;
+    return (
+        <div className="max-w-lg mx-auto bg-[#f9f4e8] min-h-screen pb-24">
+            {/* 上方的黑色看板，現在點擊文字就能直接修改 */}
+            <div className="bg-black text-white px-3 py-2 text-lg font-black flex justify-between border-b-2 border-[#c0392b]">
+                <div onClick={() => {
+                    const n = prompt("請輸入姓名：", userName);
+                    if(n) setUserName(n);
+                }}>姓名：{userName} ✎</div>
                 
-                let textColor = "text-[#2e5a44]";
-                if (note.includes("例假") || note.includes("休假")) textColor = "text-[#c0392b]";
-                if (note.includes("特休")) textColor = "text-[#b8860b]";
+                <div onClick={() => {
+                    const id = prompt("請輸入工號：", userID);
+                    if(id) setUserID(id);
+                }}>工號：{userID} ✎</div>
+            </div>
 
-                return (
-                    <div key={day} onClick={() => handleCellClick(day)} 
-                         className={`grid-cell bg-[#f9f4e8] relative p-1 flex flex-col active:bg-slate-200 ${isToday ? 'today-highlight' : ''}`}>
-                        <div className={`text-sm font-bold ${isWeekend ? 'text-[#c0392b]' : 'text-slate-700'}`}>{day}</div>
-                        <div className={`mt-auto text-[11px] font-black leading-tight text-center whitespace-pre-wrap ${textColor}`}>
-                            {note}
-                        </div>
-                    </div>
-                );
-            });
-
-            return (
-                <div className="max-w-lg mx-auto bg-[#f9f4e8] min-h-screen pb-24">
-                    <div className="bg-black text-white px-3 py-2 text-lg font-black flex justify-between border-b-2 border-[#c0392b]">
-                        <span>姓名：小黑哥</span>
-                        <span>工號：D01762</span>
-                    </div>
-
-                    <header className="bg-[#2e5a44] text-white p-2 sticky top-0 z-50 flex justify-between items-center shadow-md">
-                        <button onClick={() => changeMonth(-1)} className="text-xl px-4">❮</button>
-                        <h1 className="text-lg font-bold tracking-widest">{curYear}年 {curMonth + 1}月</h1>
-                        <button onClick={() => changeMonth(1)} className="text-xl px-4">❯</button>
-                    </header>
-
-                    <div className="grid grid-cols-7 border-t border-[#c2b99a]">
-                        {["日","一","二","三","四","五","六"].map(w => (
-                            <div key={w} className="text-center py-1 text-[#8e835d] font-bold text-sm bg-[#f0e9d2] border-b border-[#c2b99a]">
-                                {w}
-                            </div>
-                        ))}
-                        {blanks}
-                        {days}
-                    </div>
-
-                    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-lg bg-[#f2ebd5] border-t-2 border-[#c2b99a] p-2 pb-safe z-50 shadow-lg">
-                        <div className="flex gap-1">
-                            <select value={factory} onChange={e => {setFactory(e.target.value); setIsClearMode(false);}}
-                                className="flex-1 p-2 rounded border border-[#c2b99a] text-sm font-bold bg-white">
-                                <option value="">🏢 廠區</option>
-                                <option value="一廠">一廠</option>
-                                <option value="二廠">二廠</option>
-                                <option value="三廠">三廠</option>
-                            </select>
-                            
-                            <select value={shiftType} onChange={e => {setShiftType(e.target.value); setIsClearMode(false);}}
-                                className="flex-1 p-2 rounded border border-[#c2b99a] text-sm font-bold bg-white">
-                                <option value="">📝 項目</option>
-                                <option value="日B班">☀️日B</option>
-                                <option value="夜B班">🌙夜B</option>
-                                <option value="夜E班">⚡夜E</option>
-                                <option value="例假">🔴例假</option>
-                                <option value="休假">🟢休假</option>
-                                <option value="特休">⭐特休</option>
-                            </select>
-
-                            <button onClick={() => { setIsClearMode(!isClearMode); setFactory(""); setShiftType(""); }}
-                                className={`flex-1 p-2 rounded border font-black text-sm transition-colors ${isClearMode ? 'bg-red-600 text-white border-red-700' : 'bg-white text-slate-500 border-slate-300'}`}>
-                                {isClearMode ? "❌ 刪除中" : "橡皮擦"}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+            {/* ... (下方的日曆與工具列保留) */}
