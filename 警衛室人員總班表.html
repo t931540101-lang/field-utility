@@ -29,13 +29,15 @@
         input { width: 100%; border: none; text-align: center; font-size: 13px; background: transparent; pointer-events: none; font-weight: 700; outline: none; }
         .can-edit input { pointer-events: auto; background: #fffde7; }
         
-        /* 顏色加強版 */
-        .val-日 { color: #0d47a1; background: #e3f2fd; }
-        .val-夜 { color: #4a148c; background: #f3e5f5; }
-        .val-休, .val-例, .val-特, .val-❌ { color: #b71c1c; background: #ffebee; }
-        .weekend { color: #d32f2f; background: #fff5f5 !important; font-weight: 900; }
-        .summary-col { background: #f1f8e9 !important; font-weight: 900; color: #1b5e20; width: 40px; }
-    </style>
+       <style>
+    /* ... 之前的樣式 ... */
+    .val-日 { color: #0d47a1; background: #e3f2fd; }
+    .val-夜 { color: #4a148c; background: #f3e5f5; }
+    .val-休, .val-例, .val-❌ { color: #b71c1c; background: #ffebee; }
+    /* 特休專屬配色：深黃字 + 淺黃底 */
+    .val-特 { color: #f57f17; background: #fffde7; } 
+    /* ... 之後的樣式 ... */
+</style>
 </head>
 <body>
 
