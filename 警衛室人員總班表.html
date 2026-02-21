@@ -3,21 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026年02月警衛輪班總表</title>
+    <title>K9 警衛輪班總管理系統</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root { --primary: #d32f2f; --bg: #f4f7f6; --border: #dee2e6; }
         body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         .header-box { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 10px; }
+        .month-ctrl { display: flex; align-items: center; gap: 15px; font-weight: bold; font-size: 1.2rem; }
+        .btn-nav { padding: 5px 15px; cursor: pointer; background: #eee; border: none; border-radius: 5px; }
         .lock-btn { padding: 8px 18px; border-radius: 25px; border: none; background: #607d8b; color: white; cursor: pointer; font-weight: bold; }
         .lock-btn.unlocked { background: #43a047; }
+        
         .table-container { width: 100%; overflow-x: auto; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         table { border-collapse: collapse; min-width: 1600px; width: 100%; }
         th, td { border: 1px solid var(--border); padding: 6px 2px; text-align: center; font-size: 12px; }
         th { background: #f8f9fa; position: sticky; top: 0; z-index: 10; }
         .sticky-left { position: sticky; left: 0; background: #fff !important; z-index: 5; border-right: 2px solid #aaa !important; }
         .sticky-left-2 { position: sticky; left: 60px; background: #fff !important; z-index: 5; border-right: 2px solid #ddd !important; }
+        
         input { width: 100%; border: none; text-align: center; font-size: 13px; background: transparent; pointer-events: none; font-weight: bold; }
         .can-edit input { pointer-events: auto; background: #fffde7; }
         .val-❌, .val-休, .val-例, .val-特 { color: #d32f2f; }
@@ -28,31 +32,38 @@
     </style>
 </head>
 <body>
+
 <div class="header-box">
-    <div style="font-size: 1.2rem; font-weight: bold;">📅 2026年02月 警衛輪班總表</div>
+    <div class="month-ctrl">
+        <button class="btn-nav" onclick="changeMonth(-1)">❮</button>
+        <span id="currentMonthDisplay">2026年 2月</span>
+        <button class="btn-nav" onclick="changeMonth(1)">❯</button>
+    </div>
     <button id="lockBtn" class="lock-btn" onclick="toggleLock()">🔒 唯讀模式</button>
 </div>
+
 <div class="table-container">
-    <table>
+    <table id="rosterTable">
         <thead>
-            <tr id="dateHeader"><th class="sticky-left">組別</th><th class="sticky-left-2">姓名</th></tr>
-            <tr id="weekHeader"><th class="sticky-left">-</th><th class="sticky-left-2">-</th></tr>
+            <tr id="dateHeader"></tr>
+            <tr id="weekHeader"></tr>
         </thead>
         <tbody id="rosterBody"></tbody>
     </table>
 </div>
+
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
-        authDomain: "factor-security-d1965.firebaseapp.com",
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
         projectId: "factor-security-d1965",
-        storageBucket: "factor-security-d1965.firebasestorage.app",
-        messagingSenderId: "864846943143",
         appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
+    let curYear = 2026;
+    let curMonth = 1; // 0=1月, 1=2月...
     let isEditing = false;
     const staffData = [
         {group: "總務", name: "盧家慶"}, {group: "總務", name: "何鴻隆"},
@@ -62,58 +73,93 @@
     ];
     const weekNames = ["日", "一", "二", "三", "四", "五", "六"];
 
-    // 初始化表頭
-    const dHead = document.getElementById('dateHeader');
-    const wHead = document.getElementById('weekHeader');
-    for (let d = 1; d <= 28; d++) {
-        const dateTh = document.createElement('th');
-        dateTh.innerText = d;
-        dHead.appendChild(dateTh);
+    function initTable() {
+        const dHead = document.getElementById('dateHeader');
+        const wHead = document.getElementById('weekHeader');
+        const tbody = document.getElementById('rosterBody');
+        
+        // 清空舊表格
+        dHead.innerHTML = `<th class="sticky-left">組別</th><th class="sticky-left-2">姓名</th>`;
+        wHead.innerHTML = `<th class="sticky-left">-</th><th class="sticky-left-2">-</th>`;
+        tbody.innerHTML = '';
 
-        const dayOfWeek = weekNames[new Date(2026, 1, d).getDay()];
-        const weekTh = document.createElement('th');
-        weekTh.innerText = dayOfWeek;
-        if(dayOfWeek === "日" || dayOfWeek === "六") weekTh.className = "weekend";
-        wHead.appendChild(weekTh);
-    }
-    // 補足統計標題
-    ["日", "夜", "休"].forEach(t => {
-        const th = document.createElement('th'); th.className = "summary-col"; th.innerText = t;
-        dHead.appendChild(th);
-        wHead.appendChild(document.createElement('th'));
-    });
+        document.getElementById('currentMonthDisplay').innerText = `${curYear}年 ${curMonth + 1}月`;
+        const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
 
-    // 產生行
-    const tbody = document.getElementById('rosterBody');
-    staffData.forEach(p => {
-        let rowHtml = `<td class="sticky-left">${p.group}</td><td class="sticky-left-2"><b>${p.name}</b></td>`;
-        for (let d = 1; d <= 28; d++) {
-            rowHtml += `<td><input id="${p.name}_${d}" onchange="saveShift('${p.name}', ${d}, this.value)"></td>`;
+        // 產生標題列
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateTh = document.createElement('th');
+            dateTh.innerText = d;
+            dHead.appendChild(dateTh);
+
+            const dayOfWeek = weekNames[new Date(curYear, curMonth, d).getDay()];
+            const weekTh = document.createElement('th');
+            weekTh.innerText = dayOfWeek;
+            if(dayOfWeek === "日" || dayOfWeek === "六") weekTh.className = "weekend";
+            wHead.appendChild(weekTh);
         }
-        rowHtml += `<td id="sd_${p.name}" class="summary-col">0</td><td id="sn_${p.name}" class="summary-col">0</td><td id="so_${p.name}" class="summary-col">0</td>`;
-        const tr = document.createElement('tr'); tr.innerHTML = rowHtml; tbody.appendChild(tr);
-    });
-
-    db.ref('guardSchedules').on('value', (snapshot) => {
-        const data = snapshot.val() || {};
-        staffData.forEach(p => {
-            let dc=0, nc=0, oc=0;
-            for (let d = 1; d <= 28; d++) {
-                const id = `${p.name}_${d}`, val = data[id] || "";
-                const el = document.getElementById(id);
-                if(el) {
-                    el.value = val; el.className = "";
-                    if(val) el.classList.add('val-' + val.substring(0,1));
-                    if(val.includes("日")) dc++; else if(val.includes("夜")) nc++; else if(val!=="") oc++;
-                }
-            }
-            document.getElementById(`sd_${p.name}`).innerText = dc;
-            document.getElementById(`sn_${p.name}`).innerText = nc;
-            document.getElementById(`so_${p.name}`).innerText = oc;
+        
+        // 統計標題
+        ["日", "夜", "休"].forEach(t => {
+            const th = document.createElement('th'); th.className = "summary-col"; th.innerText = t;
+            dHead.appendChild(th);
+            wHead.appendChild(document.createElement('th'));
         });
-    });
 
-    function saveShift(n, d, v) { db.ref('guardSchedules/'+n+'_'+d).set(v); }
+        // 產生人員列
+        staffData.forEach(p => {
+            const tr = document.createElement('tr');
+            let rowHtml = `<td class="sticky-left">${p.group}</td><td class="sticky-left-2"><b>${p.name}</b></td>`;
+            for (let d = 1; d <= daysInMonth; d++) {
+                // 修改資料庫 Key 包含年月，避免混淆
+                rowHtml += `<td><input id="${curYear}_${curMonth+1}_${p.name}_${d}" onchange="saveShift('${p.name}', ${d}, this.value)"></td>`;
+            }
+            rowHtml += `<td id="sd_${p.name}" class="summary-col">0</td><td id="sn_${p.name}" class="summary-col">0</td><td id="so_${p.name}" class="summary-col">0</td>`;
+            tr.innerHTML = rowHtml;
+            tbody.appendChild(tr);
+        });
+
+        listenToData(daysInMonth);
+    }
+
+    function listenToData(days) {
+        // 監聽路徑也包含年月
+        db.ref('guardSchedules').off(); // 先關掉舊的監聽
+        db.ref('guardSchedules').on('value', (snapshot) => {
+            const data = snapshot.val() || {};
+            staffData.forEach(p => {
+                let dc=0, nc=0, oc=0;
+                for (let d = 1; d <= days; d++) {
+                    const id = `${curYear}_${curMonth+1}_${p.name}_${d}`;
+                    const val = data[id] || "";
+                    const el = document.getElementById(id);
+                    if(el) {
+                        el.value = val;
+                        el.className = val ? 'val-' + val.substring(0,1) : "";
+                        if(val.includes("日")) dc++; 
+                        else if(val.includes("夜")) nc++; 
+                        else if(val!=="") oc++;
+                    }
+                }
+                document.getElementById(`sd_${p.name}`).innerText = dc;
+                document.getElementById(`sn_${p.name}`).innerText = nc;
+                document.getElementById(`so_${p.name}`).innerText = oc;
+            });
+        });
+    }
+
+    function saveShift(name, day, val) {
+        const id = `${curYear}_${curMonth+1}_${name}_${day}`;
+        db.ref('guardSchedules/' + id).set(val);
+    }
+
+    function changeMonth(dir) {
+        curMonth += dir;
+        if (curMonth < 0) { curMonth = 11; curYear--; }
+        else if (curMonth > 11) { curMonth = 0; curYear++; }
+        initTable();
+    }
+
     function toggleLock() {
         if(!isEditing && prompt("人事密碼：") === "8888") {
             isEditing = true; document.body.classList.add('can-edit');
@@ -123,6 +169,8 @@
             document.getElementById('lockBtn').innerText = "🔒 唯讀模式"; document.getElementById('lockBtn').classList.remove('unlocked');
         }
     }
+
+    initTable(); // 初次啟動
 </script>
 </body>
 </html>
