@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰術排班表 | 獨立強化版</title>
+    <title>戰術排班表 | 獨立強化精簡版</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -11,10 +11,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #0f172a; color: #f1f5f9; margin: 0; }
-        .grid-cell { min-height: 80px; border: 1px solid #334155; }
-        .today-border { border: 3px solid #38bdf8 !important; background: #1e293b; }
+        /* 縮減格子高度，確保不被面板擋住 */
+        .grid-cell { min-height: 65px; border: 1px solid #334155; }
+        .today-border { border: 2px solid #38bdf8 !important; background: #1e293b; }
         .weekend-bg { background-color: #1e1b4b; }
-        select, button { font-size: 16px !important; }
+        /* 下方選單面板瘦身 */
+        .bottom-panel { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); }
     </style>
 </head>
 <body>
@@ -62,15 +64,12 @@
                 } else if (factory || shiftType) {
                     let content = "";
                     if (factory) content += factory + "\n";
-                    
-                    // 自動加上圖案分類
                     if (shiftType === "休假") content += "🔴 休假";
                     else if (shiftType === "特休") content += "🟡 特休";
                     else if (shiftType === "例假") content += "🟣 例假";
                     else if (shiftType === "日B") content += "☀️ 日B";
                     else if (shiftType === "夜B") content += "🌙 夜B";
                     else content += shiftType;
-
                     newSchedules[dateKey] = content;
                 } else {
                     const note = prompt("快速記事：", schedules[dateKey] || "");
@@ -87,21 +86,21 @@
             const isThisMonth = todayObj.getFullYear() === curYear && todayObj.getMonth() === curMonth;
 
             return (
-                <div className="max-w-lg mx-auto bg-[#0f172a] min-h-screen pb-32 shadow-2xl">
-                    <div className="bg-slate-900 text-white px-4 py-4 text-xl font-black flex justify-between border-b-4 border-blue-500 sticky top-0 z-[60]">
+                <div className="max-w-lg mx-auto bg-[#0f172a] min-h-screen pb-40 shadow-2xl">
+                    <div className="bg-slate-900 text-white px-4 py-3 text-lg font-black flex justify-between border-b-2 border-blue-500 sticky top-0 z-[60]">
                         <span onClick={() => { const n = prompt("輸入姓名", userName); if(n) setUserName(n); }}>👤 {userName}</span>
                         <span onClick={() => { const id = prompt("輸入工號", userID); if(id) setUserID(id); }}>🆔 {userID}</span>
                     </div>
 
-                    <header className="bg-blue-900 text-white p-4 flex justify-between items-center">
-                        <button onClick={() => changeMonth(-1)} className="text-2xl px-6 active:scale-75">❮</button>
-                        <h1 className="text-xl font-black tracking-widest">{curYear} / {curMonth + 1}月</h1>
-                        <button onClick={() => changeMonth(1)} className="text-2xl px-6 active:scale-75">❯</button>
+                    <header className="bg-blue-900 text-white p-3 flex justify-between items-center">
+                        <button onClick={() => changeMonth(-1)} className="text-xl px-4">❮</button>
+                        <h1 className="text-lg font-black">{curYear} / {curMonth + 1}月</h1>
+                        <button onClick={() => changeMonth(1)} className="text-xl px-4">❯</button>
                     </header>
 
                     <div className="grid grid-cols-7 border-t border-slate-700">
                         {["日","一","二","三","四","五","六"].map(w => (
-                            <div key={w} className="text-center py-2 text-slate-400 font-bold text-sm bg-slate-800/50">{w}</div>
+                            <div key={w} className="text-center py-1 text-slate-400 font-bold text-xs bg-slate-800/50">{w}</div>
                         ))}
                         {Array.from({ length: firstDay }).map((_, i) => <div key={`b-${i}`} className="grid-cell bg-slate-900/10"></div>)}
                         {Array.from({ length: daysInMonth }).map((_, i) => {
@@ -119,8 +118,8 @@
                             return (
                                 <div key={day} onClick={() => handleCellClick(day)} 
                                      className={`grid-cell p-1 flex flex-col relative active:bg-slate-700 transition-colors ${isToday ? 'today-border' : ''} ${isWeekend ? 'weekend-bg' : ''}`}>
-                                    <div className={`text-base font-bold ${isWeekend ? 'text-rose-400' : 'text-slate-500'}`}>{day}</div>
-                                    <div className={`mt-auto text-[13px] font-black leading-tight text-center whitespace-pre-wrap ${textColor}`}>
+                                    <div className={`text-sm font-bold ${isWeekend ? 'text-rose-400' : 'text-slate-500'}`}>{day}</div>
+                                    <div className={`mt-auto text-[11px] font-black leading-tight text-center whitespace-pre-wrap ${textColor}`}>
                                         {note}
                                     </div>
                                 </div>
@@ -128,28 +127,24 @@
                         })}
                     </div>
 
-                    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[95%] max-w-md bg-slate-900/95 backdrop-blur-md border-2 border-slate-700 p-3 rounded-2xl flex flex-col gap-2 z-[70] shadow-2xl text-white">
-                        <div className="flex gap-2">
+                    {/* 面板瘦身優化版 */}
+                    <div className="fixed bottom-2 left-1/2 -translate-x-1/2 w-[92%] max-w-sm bottom-panel border border-slate-700 p-2 rounded-xl flex flex-col gap-1.5 z-[70] shadow-2xl">
+                        <div className="flex gap-1.5">
                             <select value={factory} onChange={e => {setFactory(e.target.value); setIsClearMode(false);}} 
-                                    className="flex-1 p-3 rounded-xl bg-slate-800 text-base font-bold outline-none border border-slate-600">
+                                    className="flex-1 p-2 rounded-lg bg-slate-800 text-white text-sm font-bold border border-slate-600 outline-none">
                                 <option value="">🏢 廠區</option>
-                                <option value="一廠">一廠</option>
-                                <option value="二廠">二廠</option>
-                                <option value="三廠">三廠</option>
+                                <option value="一廠">一廠</option><option value="二廠">二廠</option><option value="三廠">三廠</option>
                             </select>
                             <button onClick={() => {setIsClearMode(!isClearMode); setFactory(""); setShiftType("");}} 
-                                    className={`flex-none px-6 rounded-xl font-black text-base shadow-lg ${isClearMode ? 'bg-rose-600' : 'bg-slate-700 text-slate-400'}`}>
+                                    className={`px-4 rounded-lg font-black text-sm ${isClearMode ? 'bg-rose-600 text-white' : 'bg-slate-700 text-slate-400'}`}>
                                 {isClearMode ? "刪除中" : "橡皮擦"}
                             </button>
                         </div>
                         <select value={shiftType} onChange={e => {setShiftType(e.target.value); setIsClearMode(false);}} 
-                                className="w-full p-3 rounded-xl bg-slate-800 text-base font-bold outline-none border border-slate-600">
-                            <option value="">📝 選擇假別或班別</option>
-                            <option value="日B">☀️ 日B</option>
-                            <option value="夜B">🌙 夜B</option>
-                            <option value="休假">🔴 休假 (紅)</option>
-                            <option value="特休">🟡 特休 (黃)</option>
-                            <option value="例假">🟣 例假 (紫)</option>
+                                className="w-full p-2 rounded-lg bg-slate-800 text-white text-sm font-bold border border-slate-600 outline-none">
+                            <option value="">📝 假別 / 班別</option>
+                            <option value="日B">☀️ 日B</option><option value="夜B">🌙 夜B</option>
+                            <option value="休假">🔴 休假</option><option value="特休">🟡 特休</option><option value="例假">🟣 例假</option>
                         </select>
                     </div>
                 </div>
