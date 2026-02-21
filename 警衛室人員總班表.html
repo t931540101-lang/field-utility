@@ -10,55 +10,37 @@
         :root { --primary: #d32f2f; --bg: #f4f7f6; --border: #dee2e6; }
         body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         .header-box { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 10px; }
-        .lock-btn { padding: 8px 18px; border-radius: 25px; border: none; background: #607d8b; color: white; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .lock-btn.unlocked { background: #43a047; box-shadow: 0 0 10px rgba(67,160,71,0.5); }
-        
-        /* 班表容器 */
+        .lock-btn { padding: 8px 18px; border-radius: 25px; border: none; background: #607d8b; color: white; cursor: pointer; font-weight: bold; }
+        .lock-btn.unlocked { background: #43a047; }
         .table-container { width: 100%; overflow-x: auto; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        table { border-collapse: collapse; min-width: 1500px; width: 100%; }
+        table { border-collapse: collapse; min-width: 1600px; width: 100%; }
         th, td { border: 1px solid var(--border); padding: 6px 2px; text-align: center; font-size: 12px; }
-        th { background: #f8f9fa; color: #333; position: sticky; top: 0; z-index: 10; height: 40px; }
-        
-        /* 固定欄位設定 */
+        th { background: #f8f9fa; position: sticky; top: 0; z-index: 10; }
         .sticky-left { position: sticky; left: 0; background: #fff !important; z-index: 5; border-right: 2px solid #aaa !important; }
         .sticky-left-2 { position: sticky; left: 60px; background: #fff !important; z-index: 5; border-right: 2px solid #ddd !important; }
-        
-        /* 輸入框美化 */
-        input { width: 100%; border: none; text-align: center; font-size: 13px; background: transparent; pointer-events: none; font-weight: bold; height: 30px; }
+        input { width: 100%; border: none; text-align: center; font-size: 13px; background: transparent; pointer-events: none; font-weight: bold; }
         .can-edit input { pointer-events: auto; background: #fffde7; }
-        
-        /* 狀態色彩直覺化 */
-        .val-❌ { color: #d32f2f; }
-        .val-日 { background: #e3f2fd; color: #1565c0; border-radius: 4px; }
-        .val-夜 { background: #f3e5f5; color: #7b1fa2; border-radius: 4px; }
-        .val-例, .val-休 { background: #ffebee; color: #c62828; border-radius: 4px; }
-        
-        /* 統計欄位 */
+        .val-❌, .val-休, .val-例, .val-特 { color: #d32f2f; }
+        .val-日 { color: #1565c0; }
+        .val-夜 { color: #7b1fa2; }
         .summary-col { background: #f1f8e9 !important; font-weight: bold; color: #2e7d32; }
+        .weekend { color: #d32f2f; background: #fff5f5; }
     </style>
 </head>
 <body>
-
 <div class="header-box">
-    <div style="font-size: 1.2rem; font-weight: bold; color: #2c3e50;">📅 2026年02月 警衛輪班總表</div>
+    <div style="font-size: 1.2rem; font-weight: bold;">📅 2026年02月 警衛輪班總表</div>
     <button id="lockBtn" class="lock-btn" onclick="toggleLock()">🔒 唯讀模式</button>
 </div>
-
 <div class="table-container">
-    <table id="rosterTable">
+    <table>
         <thead>
-            <tr id="dateHeader">
-                <th class="sticky-left" style="width: 60px;">組別</th>
-                <th class="sticky-left-2" style="width: 80px;">姓名</th>
-                <th class="summary-col">日</th>
-                <th class="summary-col">夜</th>
-                <th class="summary-col">休</th>
-            </tr>
+            <tr id="dateHeader"><th class="sticky-left">組別</th><th class="sticky-left-2">姓名</th></tr>
+            <tr id="weekHeader"><th class="sticky-left">-</th><th class="sticky-left-2">-</th></tr>
         </thead>
         <tbody id="rosterBody"></tbody>
     </table>
 </div>
-
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
@@ -72,95 +54,73 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     let isEditing = false;
-
-    // 根據您的紙本名單
     const staffData = [
-        {group: "總務", name: "盧家慶"},
-        {group: "總務", name: "何鴻隆"},
-        {group: "總務", name: "蔡易倫"},
-        {group: "總務", name: "邱鴻鈞"},
-        {group: "總務", name: "柳旭洲"},
-        {group: "總務", name: "魏榮志"},
+        {group: "總務", name: "盧家慶"}, {group: "總務", name: "何鴻隆"},
+        {group: "總務", name: "蔡易倫"}, {group: "總務", name: "邱鴻鈞"},
+        {group: "總務", name: "柳旭洲"}, {group: "總務", name: "魏榮志"},
         {group: "總務", name: "小黑哥"}
     ];
+    const weekNames = ["日", "一", "二", "三", "四", "五", "六"];
 
-    const headerRow = document.getElementById('dateHeader');
-    const tbody = document.getElementById('rosterBody');
-
-    // 1. 產生 1-28 號標題
+    // 初始化表頭
+    const dHead = document.getElementById('dateHeader');
+    const wHead = document.getElementById('weekHeader');
     for (let d = 1; d <= 28; d++) {
-        const th = document.createElement('th');
-        th.style.width = "40px";
-        th.innerText = d;
-        headerRow.insertBefore(th, headerRow.lastElementChild.previousElementSibling.previousElementSibling);
-    }
+        const dateTh = document.createElement('th');
+        dateTh.innerText = d;
+        dHead.appendChild(dateTh);
 
-    // 2. 產生人員列
-    staffData.forEach(person => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td class="sticky-left">${person.group}</td>
-            <td class="sticky-left-2"><b>${person.name}</b></td>
-        `;
+        const dayOfWeek = weekNames[new Date(2026, 1, d).getDay()];
+        const weekTh = document.createElement('th');
+        weekTh.innerText = dayOfWeek;
+        if(dayOfWeek === "日" || dayOfWeek === "六") weekTh.className = "weekend";
+        wHead.appendChild(weekTh);
+    }
+    // 補足統計標題
+    ["日", "夜", "休"].forEach(t => {
+        const th = document.createElement('th'); th.className = "summary-col"; th.innerText = t;
+        dHead.appendChild(th);
+        wHead.appendChild(document.createElement('th'));
+    });
+
+    // 產生行
+    const tbody = document.getElementById('rosterBody');
+    staffData.forEach(p => {
+        let rowHtml = `<td class="sticky-left">${p.group}</td><td class="sticky-left-2"><b>${p.name}</b></td>`;
         for (let d = 1; d <= 28; d++) {
-            tr.innerHTML += `<td><input id="${person.name}_${d}" onchange="saveShift('${person.name}', ${d}, this.value)" placeholder="-"></td>`;
+            rowHtml += `<td><input id="${p.name}_${d}" onchange="saveShift('${p.name}', ${d}, this.value)"></td>`;
         }
-        // 加入統計欄格子
-        tr.innerHTML += `
-            <td class="summary-col" id="sum_day_${person.name}">0</td>
-            <td class="summary-col" id="sum_night_${person.name}">0</td>
-            <td class="summary-col" id="sum_off_${person.name}">0</td>
-        `;
-        tbody.appendChild(tr);
+        rowHtml += `<td id="sd_${p.name}" class="summary-col">0</td><td id="sn_${p.name}" class="summary-col">0</td><td id="so_${p.name}" class="summary-col">0</td>`;
+        const tr = document.createElement('tr'); tr.innerHTML = rowHtml; tbody.appendChild(tr);
     });
 
-    // 3. 監聽與即時同步
     db.ref('guardSchedules').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            staffData.forEach(person => {
-                let dCount = 0, nCount = 0, oCount = 0;
-                for (let d = 1; d <= 28; d++) {
-                    const id = `${person.name}_${d}`;
-                    const val = data[id] || "";
-                    const input = document.getElementById(id);
-                    if (input) {
-                        input.value = val;
-                        // 清除舊樣式
-                        input.className = "";
-                        if(val) input.classList.add('val-' + val.substring(0,1));
-                        
-                        // 統計邏輯
-                        if(val.includes("日")) dCount++;
-                        if(val.includes("夜")) nCount++;
-                        if(val.includes("例") || val.includes("休") || val.includes("❌")) oCount++;
-                    }
+        const data = snapshot.val() || {};
+        staffData.forEach(p => {
+            let dc=0, nc=0, oc=0;
+            for (let d = 1; d <= 28; d++) {
+                const id = `${p.name}_${d}`, val = data[id] || "";
+                const el = document.getElementById(id);
+                if(el) {
+                    el.value = val; el.className = "";
+                    if(val) el.classList.add('val-' + val.substring(0,1));
+                    if(val.includes("日")) dc++; else if(val.includes("夜")) nc++; else if(val!=="") oc++;
                 }
-                // 更新統計數字
-                document.getElementById(`sum_day_${person.name}`).innerText = dCount;
-                document.getElementById(`sum_night_${person.name}`).innerText = nCount;
-                document.getElementById(`sum_off_${person.name}`).innerText = oCount;
-            });
-        }
+            }
+            document.getElementById(`sd_${p.name}`).innerText = dc;
+            document.getElementById(`sn_${p.name}`).innerText = nc;
+            document.getElementById(`so_${p.name}`).innerText = oc;
+        });
     });
 
-    function saveShift(name, day, val) {
-        db.ref('guardSchedules/' + name + '_' + day).set(val);
-    }
-
+    function saveShift(n, d, v) { db.ref('guardSchedules/'+n+'_'+d).set(v); }
     function toggleLock() {
-        if (!isEditing) {
-            if (prompt("請輸入人事管理密碼：") === "8888") {
-                isEditing = true;
-                document.body.classList.add('can-edit');
-                document.getElementById('lockBtn').innerText = "🔓 編輯模式";
-                document.getElementById('lockBtn').classList.add('unlocked');
-            }
-        } else {
-            isEditing = false;
-            document.body.classList.remove('can-edit');
-            document.getElementById('lockBtn').innerText = "🔒 唯讀模式";
-            document.getElementById('lockBtn').classList.remove('unlocked');
+        if(!isEditing && prompt("人事密碼：") === "8888") {
+            isEditing = true; document.body.classList.add('can-edit');
+            document.getElementById('lockBtn').innerText = "🔓 編輯中"; document.getElementById('lockBtn').classList.add('unlocked');
+        } else if(isEditing) {
+            isEditing = false; document.body.classList.remove('can-edit');
+            document.getElementById('lockBtn').innerText = "🔒 唯讀模式"; document.getElementById('lockBtn').classList.remove('unlocked');
         }
     }
 </script>
