@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>K9 雲端班表 | ShiftDays 框架</title>
+    <title>K9 雲端班表 | AI 精緻比例版</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -11,56 +11,55 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-        body { font-family: 'Inter', "Microsoft JhengHei", sans-serif; background-color: #ffffff; margin: 0; color: #333; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #ffffff; margin: 0; color: #333; }
         
-        /* ShiftDays 核心骨架：淺灰細線網格 */
+        /* 表格格線極淡化 */
         .grid-cell { 
-            min-height: 95px; 
-            border-right: 1px solid #f2f2f2; 
-            border-bottom: 1px solid #f2f2f2; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center;
-            padding-top: 8px;
+            min-height: 70px; /* 縮小高度，比例更精緻 */
+            border-right: 1px solid #f0f0f0; 
+            border-bottom: 1px solid #f0f0f0; 
+            position: relative;
+            padding: 4px;
         }
 
-        /* 今日高亮：藍色實心圓圈 */
+        /* 數字靠右上角 */
+        .date-number {
+            position: absolute;
+            top: 4px;
+            right: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #999;
+        }
+
+        /* 今日高亮藍圈 (縮小版) */
         .today-circle { 
             background: #007AFF; 
             color: white !important; 
             border-radius: 50%; 
-            width: 24px; 
-            height: 24px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 800;
+            width: 18px; height: 18px; 
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px;
         }
 
-        /* 膠囊標籤樣式 */
+        /* 標籤置中並微型化 */
         .shift-capsule {
-            margin-top: 6px;
-            padding: 2px 4px;
+            margin: 18px auto 0 auto; /* 避開右上角的數字 */
+            padding: 2px 0;
             width: 90%;
-            border-radius: 4px; /* ShiftDays 偏微方圓角 */
+            border-radius: 4px;
             font-size: 10px;
             font-weight: 800;
             text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
         }
         
-        /* ShiftDays 標誌配色 */
-        .bg-day   { background-color: #E8F2FF; color: #007AFF; } /* 日班：淺藍 */
-        .bg-night { background-color: #F3E9FF; color: #8E44AD; } /* 夜班：淺紫 */
-        .bg-off   { background-color: #FFE9E9; color: #FF3B30; } /* 休假：淺紅 */
-        .bg-special { background-color: #FFF9E0; color: #FFCC00; } /* 特休：淺黃 */
-        .bg-other { background-color: #F2F2F7; color: #8E8E93; } /* 其他：灰色 */
-
-        /* 隱藏捲軸 */
-        ::-webkit-scrollbar { display: none; }
+        /* 柔和配色方案 */
+        .bg-day   { background-color: #EBF5FF; color: #007AFF; }
+        .bg-night { background-color: #F5EEFF; color: #8E44AD; }
+        .bg-off   { background-color: #FFF0F0; color: #FF3B30; }
+        .bg-special { background-color: #FFFBE6; color: #D4A017; }
+        .bg-other { background-color: #F8F8F8; color: #888; }
     </style>
 </head>
 <body>
@@ -100,27 +99,27 @@
             const today = new Date();
 
             return (
-                <div className="max-w-md mx-auto bg-white min-h-screen pb-44">
-                    {/* ShiftDays 風格大標題 */}
-                    <div className="pt-10 px-6 pb-4 flex justify-between items-end">
-                        <div>
-                            <h1 className="text-4xl font-extrabold text-black">{curDate.getMonth() + 1}月</h1>
-                            <p className="text-gray-400 font-bold ml-1">{curDate.getFullYear()}</p>
+                <div className="max-w-md mx-auto bg-white min-h-screen pb-44 border-x border-gray-50 shadow-sm">
+                    {/* 精緻標題欄 */}
+                    <div className="pt-8 px-5 pb-3 flex justify-between items-center">
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-2xl font-black text-slate-800">{curDate.getMonth() + 1}月</span>
+                            <span className="text-gray-400 text-sm font-medium">{curDate.getFullYear()}</span>
                         </div>
-                        <div className="flex gap-6 mb-2">
-                            <button onClick={() => setCurDate(new Date(curDate.setMonth(curDate.getMonth()-1)))} className="text-gray-300 text-xl font-bold">❮</button>
-                            <button onClick={() => setCurDate(new Date(curDate.setMonth(curDate.getMonth()+1)))} className="text-gray-300 text-xl font-bold">❯</button>
+                        <div className="flex gap-4">
+                            <button onClick={() => setCurDate(new Date(curDate.setMonth(curDate.getMonth()-1)))} className="text-slate-300 hover:text-slate-500 p-2 text-xl">❮</button>
+                            <button onClick={() => setCurDate(new Date(curDate.setMonth(curDate.getMonth()+1)))} className="text-slate-300 hover:text-slate-500 p-2 text-xl">❯</button>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-7 border-b border-gray-100 mb-0">
-                        {["S","M","T","W","T","F","S"].map((w, idx) => (
-                            <div key={idx} className={`text-center py-2 text-[10px] font-black ${idx===0||idx===6 ? 'text-red-400' : 'text-gray-300'}`}>{w}</div>
+                    <div className="grid grid-cols-7 border-y border-slate-50">
+                        {["S","M","T","W","T","F","S"].map((w, i) => (
+                            <div key={i} className={`text-center py-2 text-[10px] font-bold ${i===0||i===6 ? 'text-red-300' : 'text-slate-300'}`}>{w}</div>
                         ))}
                     </div>
 
-                    <div className="grid grid-cols-7 border-l border-gray-50">
-                        {Array.from({ length: firstDay }).map((_, i) => <div key={`b-${i}`} className="grid-cell bg-gray-50/20"></div>)}
+                    <div className="grid grid-cols-7 border-l border-slate-50">
+                        {Array.from({ length: firstDay }).map((_, i) => <div key={`b-${i}`} className="grid-cell bg-slate-50/20"></div>)}
                         {Array.from({ length: daysInMonth }).map((_, i) => {
                             const day = i + 1;
                             const cellId = `${curDate.getFullYear()}_${curDate.getMonth() + 1}_${userName}_${day}`;
@@ -135,27 +134,29 @@
                             else if (note.includes("特")) badgeColor = "bg-special";
 
                             return (
-                                <div key={day} onClick={() => handleCellClick(day)} className="grid-cell active:bg-gray-50 transition-colors">
-                                    <span className={`text-sm font-semibold ${isToday ? 'today-circle' : (isWeekend ? 'text-red-400' : 'text-gray-800')}`}>{day}</span>
+                                <div key={day} onClick={() => handleCellClick(day)} className="grid-cell active:bg-slate-50 transition-colors">
+                                    <div className="date-number">
+                                        <span className={isToday ? 'today-circle' : (isWeekend ? 'text-red-400' : '')}>{day}</span>
+                                    </div>
                                     {note && <div className={`shift-capsule ${badgeColor}`}>{note}</div>}
                                 </div>
                             );
                         })}
                     </div>
 
-                    {/* 下方懸浮 Dock 選單 */}
-                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] bg-white/95 backdrop-blur shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-[28px] p-4 z-[100] border border-gray-100">
+                    {/* 下方操控台 (微調比例) */}
+                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] bg-white/95 backdrop-blur-md shadow-xl rounded-2xl p-4 z-[100] border border-slate-100">
                         <div className="flex gap-2 mb-3">
-                            <input type="text" value={shiftText} onChange={(e) => {setShiftText(e.target.value); setIsClearMode(false);}} placeholder="✏️ 手動輸入班別..." className="flex-1 bg-gray-100 rounded-xl p-3 text-center font-bold text-gray-700 outline-none" />
-                            <button onClick={() => {setIsClearMode(!isClearMode); setShiftText("");}} className={`px-4 rounded-xl font-bold ${isClearMode ? 'bg-red-500 text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}>橡皮擦</button>
+                            <input type="text" value={shiftText} onChange={(e) => {setShiftText(e.target.value); setIsClearMode(false);}} placeholder="✏️ 手動輸入班別..." className="flex-1 bg-slate-50 rounded-lg p-2.5 text-center font-bold text-slate-700 outline-none text-sm" />
+                            <button onClick={() => {setIsClearMode(!isClearMode); setShiftText("");}} className={`px-4 rounded-lg font-bold text-sm ${isClearMode ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-400'}`}>{isClearMode ? "刪除中" : "橡皮擦"}</button>
                         </div>
-                        <div className="grid grid-cols-4 gap-2">
-                            {["日B班", "夜B班", "夜E班", "休假", "例假", "特休", "補休", "支援"].map(s => (
-                                <button key={s} onClick={() => {setShiftText(s); setIsClearMode(false);}} className="bg-white border border-gray-100 py-2.5 rounded-xl text-[11px] font-black text-gray-500 shadow-sm active:scale-95 transition-transform">{s}</button>
+                        <div className="grid grid-cols-4 gap-1.5">
+                            {["日B班", "夜B班", "夜E班", "休假", "例假", "特休", "補休", "換班"].map(s => (
+                                <button key={s} onClick={() => {setShiftText(s); setIsClearMode(false);}} className="bg-white border border-slate-100 py-2 rounded-lg text-[11px] font-bold text-slate-500 active:bg-slate-50 transition-all">{s}</button>
                             ))}
                         </div>
-                        <div className="mt-4 text-center">
-                            <span className="text-[10px] text-gray-300 font-bold uppercase tracking-widest" onClick={() => { const n = prompt("修改姓名", userName); if(n) setUserName(n); }}>User: {userName} ✎</span>
+                        <div className="mt-3 text-center border-t border-slate-50 pt-2">
+                            <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider" onClick={() => { const n = prompt("修改姓名", userName); if(n) setUserName(n); }}>USER: {userName}</span>
                         </div>
                     </div>
                 </div>
