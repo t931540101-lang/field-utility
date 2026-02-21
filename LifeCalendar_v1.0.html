@@ -1,140 +1,142 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>個人排班表 | 自由輸入版</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #e8e2d0; margin: 0; }
-        .grid-cell { min-height: 80px; border-right: 1px solid #c2b99a; border-bottom: 1px solid #c2b99a; }
-        .today-highlight { box-shadow: inset 0 0 0 3px #c0392b; background: #fffcf5; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>K9 個人雲端班表 | 自由輸入版</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #e8e2d0; margin: 0; }
+        .grid-cell { min-height: 80px; border-right: 1px solid #c2b99a; border-bottom: 1px solid #c2b99a; }
+        .today-highlight { box-shadow: inset 0 0 0 3px #c0392b; background: #fffcf5; }
+    </style>
 </head>
 <body>
-    <div id="root"></div>
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-        function App() {
-            const todayObj = new Date();
-            const [curYear, setCurYear] = useState(todayObj.getFullYear());
-            const [curMonth, setCurMonth] = useState(todayObj.getMonth());
-            
-            // 讀取手機本地存檔
-            const [schedules, setSchedules] = useState(() => {
-                const saved = localStorage.getItem('localSchedules_v2');
-                return saved ? JSON.parse(saved) : {};
-            });
-            const [userName, setUserName] = useState(localStorage.getItem('guardName') || "小黑哥");
-            const [userID, setUserID] = useState(localStorage.getItem('guardID') || "D01762");
-            
-            // 自由輸入的內容
-            const [inputText, setInputText] = useState("");
-            const [isClearMode, setIsClearMode] = useState(false);
+        const firebaseConfig = {
+            apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+            databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+            projectId: "factor-security-d1965",
+            appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-            // 資料變動存入手機
-            useEffect(() => {
-                localStorage.setItem('localSchedules_v2', JSON.stringify(schedules));
-                localStorage.setItem('guardName', userName);
-                localStorage.setItem('guardID', userID);
-            }, [schedules, userName, userID]);
+        function App() {
+            const todayObj = new Date();
+            const [curYear, setCurYear] = useState(todayObj.getFullYear());
+            const [curMonth, setCurMonth] = useState(todayObj.getMonth());
+            const [schedules, setSchedules] = useState({});
+            const [userName, setUserName] = useState(localStorage.getItem('guardName') || "小黑哥");
+            const [userID, setUserID] = useState(localStorage.getItem('guardID') || "D01762");
+            
+            // 班別狀態：現在改成可以自由輸入的文字
+            const [shiftText, setShiftText] = useState("");
+            const [isClearMode, setIsClearMode] = useState(false);
 
-            const changeMonth = (dir) => {
-                let m = curMonth + dir; let y = curYear;
-                if (m < 0) { m = 11; y--; } else if (m > 11) { m = 0; y++; }
-                setCurMonth(m); setCurYear(y);
-            };
+            useEffect(() => {
+                const ref = db.ref('guardSchedules');
+                const listener = ref.on('value', (s) => setSchedules(s.val() || {}));
+                return () => ref.off('value', listener);
+            }, []);
 
-            const handleCellClick = (day) => {
-                const dateKey = `${curYear}-${curMonth + 1}-${day}`;
-                let newSchedules = { ...schedules };
+            useEffect(() => {
+                localStorage.setItem('guardName', userName);
+                localStorage.setItem('guardID', userID);
+            }, [userName, userID]);
 
-                if (isClearMode) {
-                    delete newSchedules[dateKey];
-                } else if (inputText) {
-                    newSchedules[dateKey] = inputText;
-                } else {
-                    const note = prompt("手動輸入記事：", schedules[dateKey] || "");
-                    if (note !== null) {
-                        if (note === "") delete newSchedules[dateKey];
-                        else newSchedules[dateKey] = note;
-                    }
-                }
-                setSchedules(newSchedules);
-            };
+            const changeMonth = (dir) => {
+                let m = curMonth + dir; let y = curYear;
+                if (m < 0) { m = 11; y--; } else if (m > 11) { m = 0; y++; }
+                setCurMonth(m); setCurYear(y);
+            };
 
-            const firstDay = new Date(curYear, curMonth, 1).getDay();
-            const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
-            const isThisMonth = todayObj.getFullYear() === curYear && todayObj.getMonth() === curMonth;
+            const handleCellClick = (day) => {
+                const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
+                if (isClearMode) {
+                    db.ref(`guardSchedules/${cellId}`).set("");
+                } else if (shiftText) {
+                    db.ref(`guardSchedules/${cellId}`).set(shiftText);
+                } else {
+                    alert("請先輸入或選擇班別！");
+                }
+            };
 
-            return (
-                <div className="max-w-lg mx-auto bg-[#f9f4e8] min-h-screen pb-48 shadow-2xl">
-                    <div className="bg-black text-white px-4 py-3 text-lg font-black flex justify-between border-b-2 border-[#c0392b]">
-                        <span onClick={() => { const n = prompt("修改姓名", userName); if(n) setUserName(n); }}>姓名：{userName} ✎</span>
-                        <span onClick={() => { const id = prompt("修改工號", userID); if(id) setUserID(id); }}>ID：{userID} ✎</span>
-                    </div>
+            const firstDay = new Date(curYear, curMonth, 1).getDay();
+            const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
+            const isThisMonth = todayObj.getFullYear() === curYear && todayObj.getMonth() === curMonth;
 
-                    <header className="bg-[#2e5a44] text-white p-3 sticky top-0 z-50 flex justify-between items-center shadow-md">
-                        <button onClick={() => changeMonth(-1)} className="text-xl px-4 active:scale-90">❮</button>
-                        <h1 className="text-lg font-bold tracking-widest">{curYear}年 {curMonth + 1}月</h1>
-                        <button onClick={() => changeMonth(1)} className="text-xl px-4 active:scale-90">❯</button>
-                    </header>
+            return (
+                <div className="max-w-lg mx-auto bg-[#f9f4e8] min-h-screen pb-40 shadow-2xl">
+                    <div className="bg-black text-white px-4 py-3 text-lg font-black flex justify-between border-b-2 border-[#c0392b]">
+                        <span className="cursor-pointer" onClick={() => { const n = prompt("輸入姓名", userName); if(n) setUserName(n); }}>姓名：{userName} ✎</span>
+                        <span className="cursor-pointer" onClick={() => { const id = prompt("輸入工號", userID); if(id) setUserID(id); }}>ID：{userID} ✎</span>
+                    </div>
 
-                    <div className="grid grid-cols-7 border-t border-[#c2b99a]">
-                        {["日","一","二","三","四","五","六"].map(w => (
-                            <div key={w} className={`text-center py-1 font-bold text-sm bg-[#f0e9d2] border-b border-[#c2b99a] ${w==='日'||w==='六' ? 'text-[#c0392b]' : 'text-[#8e835d]'}`}>{w}</div>
-                        ))}
-                        {Array.from({ length: firstDay }).map((_, i) => <div key={`b-${i}`} className="grid-cell bg-[#f9f4e8]"></div>)}
-                        {Array.from({ length: daysInMonth }).map((_, i) => {
-                            const day = i + 1;
-                            const dateKey = `${curYear}-${curMonth + 1}-${day}`;
-                            const note = schedules[dateKey] || "";
-                            const isWeekend = new Date(curYear, curMonth, day).getDay() % 6 === 0;
-                            const isToday = isThisMonth && todayObj.getDate() === day;
-                            
-                            let textColor = "text-[#2e5a44]";
-                            if (note.includes("休") || note.includes("例") || note.includes("❌")) textColor = "text-[#c0392b]";
-                            else if (note.includes("特休")) textColor = "text-[#f1c40f]";
-                            
-                            return (
-                                <div key={day} onClick={() => handleCellClick(day)} className={`grid-cell p-1 flex flex-col relative active:bg-slate-200 transition-colors ${isToday ? 'today-highlight' : ''}`}>
-                                    <div className={`text-sm font-bold ${isWeekend ? 'text-[#c0392b]' : 'text-slate-700'}`}>{day}</div>
-                                    <div className={`mt-auto text-[12px] font-black leading-tight text-center whitespace-pre-wrap ${textColor}`}>{note}</div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                    <header className="bg-[#2e5a44] text-white p-3 sticky top-0 z-50 flex justify-between items-center shadow-md">
+                        <button onClick={() => changeMonth(-1)} className="text-xl px-4">❮</button>
+                        <h1 className="text-lg font-bold">{curYear}年 {curMonth + 1}月</h1>
+                        <button onClick={() => changeMonth(1)} className="text-xl px-4">❯</button>
+                    </header>
 
-                    {/* 下方選單控制台 */}
-                    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-[#f2ebd5] border-t-2 border-[#c2b99a] p-3 z-[60] shadow-2xl">
-                        <div className="flex gap-2 mb-3">
-                            <input 
-                                type="text" 
-                                value={inputText} 
-                                onChange={(e) => {setInputText(e.target.value); setIsClearMode(false);}}
-                                placeholder="✏️ 手動輸入或選下方按鈕"
-                                className="flex-1 p-3 rounded border border-[#c2b99a] font-bold text-center outline-none focus:ring-2 focus:ring-[#2e5a44]"
-                            />
-                            <button onClick={() => {setIsClearMode(!isClearMode); setInputText("");}} className={`px-4 rounded border font-bold transition-colors ${isClearMode ? 'bg-red-600 text-white' : 'bg-white text-slate-500 border-[#c2b99a]'}`}>{isClearMode ? "刪除中" : "橡皮擦"}</button>
-                        </div>
-                        <div className="grid grid-cols-4 gap-1">
-                            {["日B班", "夜B班", "夜E班", "休假", "例假", "特休", "補休", "換班","國定假日"].map(s => (
-                                <button key={s} onClick={() => {setInputText(s); setIsClearMode(false);}} className="bg-white p-2 rounded border border-[#c2b99a] text-[12px] font-bold active:bg-[#2e5a44] active:text-white transition-colors">{s}</button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
+                    <div className="grid grid-cols-7 border-t border-[#c2b99a]">
+                        {["日","一","二","三","四","五","六"].map(w => (
+                            <div key={w} className={`text-center py-1 font-bold text-sm bg-[#f0e9d2] border-b border-[#c2b99a] ${w==='日'||w==='六' ? 'text-[#c0392b]' : 'text-[#8e835d]'}`}>{w}</div>
+                        ))}
+                        {Array.from({ length: firstDay }).map((_, i) => <div key={`b-${i}`} className="grid-cell bg-[#f9f4e8]"></div>)}
+                        {Array.from({ length: daysInMonth }).map((_, i) => {
+                            const day = i + 1;
+                            const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
+                            const note = schedules[cellId] || "";
+                            const isWeekend = new Date(curYear, curMonth, day).getDay() % 6 === 0;
+                            const isToday = isThisMonth && todayObj.getDate() === day;
+                            
+                            let textColor = "text-[#2e5a44]";
+                            if (note.includes("休") || note.includes("例") || note.includes("❌")) textColor = "text-[#c0392b]";
+                            else if (note.includes("特休")) textColor = "text-[#f1c40f]";
+                            
+                            return (
+                                <div key={day} onClick={() => handleCellClick(day)} className={`grid-cell p-1 flex flex-col relative active:bg-slate-200 ${isToday ? 'today-highlight' : ''}`}>
+                                    <div className={`text-sm font-bold ${isWeekend ? 'text-[#c0392b]' : 'text-slate-700'}`}>{day}</div>
+                                    <div className={`mt-auto text-[13px] font-black text-center whitespace-pre-wrap ${textColor}`}>{note}</div>
+                                </div>
+                            );
+                        })}
+                    </div>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+                    {/* 下方控制台：現在可以手動輸入 */}
+                    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-[#f2ebd5] border-t-2 border-[#c2b99a] p-3 z-[60] shadow-inner">
+                        <div className="flex gap-2 mb-2">
+                            <input 
+                                type="text" 
+                                value={shiftText} 
+                                onChange={(e) => {setShiftText(e.target.value); setIsClearMode(false);}}
+                                placeholder="✏️ 手動輸入或從下方選擇"
+                                className="flex-1 p-2 rounded border border-[#c2b99a] font-bold text-center outline-none focus:ring-2 focus:ring-[#2e5a44]"
+                            />
+                            <button onClick={() => {setIsClearMode(!isClearMode); setShiftText("");}} className={`px-4 rounded border font-bold transition-colors ${isClearMode ? 'bg-red-600 text-white' : 'bg-white text-slate-500 border-[#c2b99a]'}`}>{isClearMode ? "刪除模式" : "橡皮擦"}</button>
+                        </div>
+                        <div className="grid grid-cols-4 gap-1 text-[11px]">
+                            {["日B班", "夜B班", "夜E班", "休假", "例假", "特休", "補休", "換班"].map(s => (
+                                <button key={s} onClick={() => {setShiftText(s); setIsClearMode(false);}} className="bg-white p-2 rounded border border-[#c2b99a] active:bg-[#2e5a44] active:text-white">{s}</button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
-
