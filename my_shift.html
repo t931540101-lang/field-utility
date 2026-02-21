@@ -10,60 +10,43 @@
         :root { --primary: #d32f2f; --bg: #f0f2f5; }
         body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         .card { background: white; border-radius: 15px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .user-info { border-bottom: 2px solid var(--primary); margin-bottom: 15px; padding-bottom: 8px; text-align: center; }
-        
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-        .date-btn { 
-            padding: 10px 2px; background: white; border: 1px solid #ddd; border-radius: 10px; 
-            font-size: 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center;
-        }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 15px; }
+        .date-btn { padding: 10px 2px; background: white; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
         .date-btn span { font-size: 10px; color: #888; }
         .date-btn b { font-size: 16px; margin: 2px 0; }
-        
+        .weekend { color: #d32f2f !important; }
         .shift-val { font-size: 11px; font-weight: bold; min-height: 15px; }
         .is-day { background: #e3f2fd; border-color: #2196f3; color: #1565c0; }
         .is-night { background: #f3e5f5; border-color: #9c27b0; color: #7b1fa2; }
         .is-off { background: #ffebee; border-color: #f44336; color: #c62828; }
-
-        /* 彈出選單 */
         #menuOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:100; justify-content:center; align-items:center; }
         .menu-box { background:white; padding:20px; border-radius:15px; width:85%; max-width:350px; text-align:center; }
-        .menu-title { margin-bottom: 15px; font-weight: bold; color: #333; font-size: 18px; }
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .menu-btn { padding: 12px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .menu-btn { padding: 12px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-
 <div class="card">
-    <div class="user-info">
-        <h2 style="margin:0;">小黑哥 2月排班回報</h2>
-        <p style="font-size:12px; color:#666; margin:5px 0 0 0;">(點擊日期設定班別，同步至總班表)</p>
-    </div>
+    <h3 style="margin:0; text-align:center;">小黑哥 2月排班回報</h3>
     <div id="calendar" class="grid"></div>
 </div>
-
 <div id="menuOverlay">
     <div class="menu-box">
-        <div class="menu-title" id="menuDateTitle">選擇班別</div>
+        <div id="menuTitle" style="margin-bottom:15px; font-weight:bold;">選擇班別</div>
         <div class="menu-grid">
             <button class="menu-btn" style="background:#2196f3;" onclick="setShift('日B')">日B班</button>
             <button class="menu-btn" style="background:#1976d2;" onclick="setShift('日班')">日班</button>
-            
             <button class="menu-btn" style="background:#9c27b0;" onclick="setShift('夜B')">夜B班</button>
             <button class="menu-btn" style="background:#7b1fa2;" onclick="setShift('夜E')">夜E班</button>
-            
             <button class="menu-btn" style="background:#f44336;" onclick="setShift('休假')">⛱️ 休假</button>
             <button class="menu-btn" style="background:#e91e63;" onclick="setShift('特休')">特休</button>
             <button class="menu-btn" style="background:#ff5722;" onclick="setShift('例假')">例假</button>
             <button class="menu-btn" style="background:#7f8c8d;" onclick="setShift('❌')">不行❌</button>
-            
-            <button class="menu-btn" style="background:#aaa; grid-column: span 2;" onclick="setShift('')">❌ 清除內容</button>
+            <button class="menu-btn" style="background:#aaa; grid-column: span 2;" onclick="setShift('')">清除</button>
         </div>
-        <button style="margin-top:15px; background:none; border:none; color:#999; font-size: 16px;" onclick="closeMenu()">[ 取消 ]</button>
+        <button style="margin-top:15px; border:none; background:none; color:#999;" onclick="closeMenu()">[ 取消 ]</button>
     </div>
 </div>
-
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
@@ -76,51 +59,31 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    
-    const myName = "小黑哥"; 
-    let selectedDay = null;
+    const myName = "小黑哥"; let selectedDay = null;
+    const weekNames = ["日", "一", "二", "三", "四", "五", "六"];
 
     const container = document.getElementById('calendar');
     for (let d = 1; d <= 28; d++) {
+        const dayOfWeek = weekNames[new Date(2026, 1, d).getDay()];
         const btn = document.createElement('div');
-        btn.className = 'date-btn';
-        btn.id = `btn_${d}`;
-        btn.innerHTML = `<span>2月</span><b>${d}</b><div class="shift-val" id="val_${d}">-</div>`;
-        btn.onclick = () => openMenu(d);
+        btn.className = 'date-btn'; btn.id = `btn_${d}`;
+        btn.innerHTML = `<span class="${(dayOfWeek==='日'||dayOfWeek==='六')?'weekend':''}">(${dayOfWeek})</span><b>${d}</b><div class="shift-val" id="val_${d}">-</div>`;
+        btn.onclick = () => { selectedDay = d; document.getElementById('menuTitle').innerText=`2/${d} (${dayOfWeek}) 班別`; document.getElementById('menuOverlay').style.display='flex'; };
         container.appendChild(btn);
     }
 
-    db.ref('guardSchedules').on('value', (snapshot) => {
-        const data = snapshot.val();
+    db.ref('guardSchedules').on('value', (s) => {
+        const data = s.val() || {};
         for (let d = 1; d <= 28; d++) {
-            const btn = document.getElementById(`btn_${d}`);
-            const valDiv = document.getElementById(`val_${d}`);
-            const val = (data && data[myName + '_' + d]) ? data[myName + '_' + d] : '';
-            
-            valDiv.innerText = val || '-';
-            btn.className = 'date-btn'; 
-            if(val.includes('日')) btn.classList.add('is-day');
-            if(val.includes('夜')) btn.classList.add('is-night');
-            if(val.includes('休') || val.includes('例') || val.includes('❌')) btn.classList.add('is-off');
+            const val = data[myName+'_'+d] || "", el = document.getElementById(`btn_${d}`), vEl = document.getElementById(`val_${d}`);
+            vEl.innerText = val || "-"; el.className = 'date-btn';
+            if(val.includes('日')) el.classList.add('is-day');
+            else if(val.includes('夜')) el.classList.add('is-night');
+            else if(val!=="") el.classList.add('is-off');
         }
     });
-
-    function openMenu(d) {
-        selectedDay = d;
-        document.getElementById('menuDateTitle').innerText = "2月 " + d + " 日 班別設定";
-        document.getElementById('menuOverlay').style.display = 'flex';
-    }
-
-    function closeMenu() {
-        document.getElementById('menuOverlay').style.display = 'none';
-    }
-
-    function setShift(shiftType) {
-        if(selectedDay) {
-            db.ref('guardSchedules/' + myName + '_' + selectedDay).set(shiftType);
-            closeMenu();
-        }
-    }
+    function setShift(v) { if(selectedDay){ db.ref('guardSchedules/'+myName+'_'+selectedDay).set(v); closeMenu(); } }
+    function closeMenu() { document.getElementById('menuOverlay').style.display='none'; }
 </script>
 </body>
 </html>
