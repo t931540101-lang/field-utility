@@ -113,7 +113,7 @@
                     </div>
 
                     <div className="grid grid-cols-7 border-y border-slate-50">
-                        {["S","M","T","W","T","F","S"].map((w, i) => (
+                        {["日","ㄧ","二","三","四","五","六"].map((w, i) => (
                             <div key={i} className={`text-center py-2 text-[10px] font-bold ${i===0||i===6 ? 'text-red-300' : 'text-slate-300'}`}>{w}</div>
                         ))}
                     </div>
@@ -151,7 +151,7 @@
                             <button onClick={() => {setIsClearMode(!isClearMode); setShiftText("");}} className={`px-4 rounded-lg font-bold text-sm ${isClearMode ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-400'}`}>{isClearMode ? "刪除中" : "橡皮擦"}</button>
                         </div>
                         <div className="grid grid-cols-4 gap-1.5">
-                            {["日B班", "夜B班", "夜E班", "休假", "例假", "特休", "補休", "換班"].map(s => (
+                            {["日B班", "夜B班", "夜E班", "休假", "例假", "特休", "補休", "換班","國定假日"].map(s => (
                                 <button key={s} onClick={() => {setShiftText(s); setIsClearMode(false);}} className="bg-white border border-slate-100 py-2 rounded-lg text-[11px] font-bold text-slate-500 active:bg-slate-50 transition-all">{s}</button>
                             ))}
                         </div>
