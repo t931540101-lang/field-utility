@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>個人雲端班表 | 特休黃色版</title>
+    <title>K9 個人雲端班表 | 自由輸入版</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -13,7 +13,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #e8e2d0; margin: 0; }
-        .grid-cell { min-height: 75px; border-right: 1px solid #c2b99a; border-bottom: 1px solid #c2b99a; }
+        .grid-cell { min-height: 80px; border-right: 1px solid #c2b99a; border-bottom: 1px solid #c2b99a; }
         .today-highlight { box-shadow: inset 0 0 0 3px #c0392b; background: #fffcf5; }
     </style>
 </head>
@@ -35,18 +35,17 @@
             const todayObj = new Date();
             const [curYear, setCurYear] = useState(todayObj.getFullYear());
             const [curMonth, setCurMonth] = useState(todayObj.getMonth());
-            
             const [schedules, setSchedules] = useState({});
             const [userName, setUserName] = useState(localStorage.getItem('guardName') || "小黑哥");
             const [userID, setUserID] = useState(localStorage.getItem('guardID') || "D01762");
-            const [shiftType, setShiftType] = useState("");
+            
+            // 班別狀態：現在改成可以自由輸入的文字
+            const [shiftText, setShiftText] = useState("");
             const [isClearMode, setIsClearMode] = useState(false);
 
             useEffect(() => {
                 const ref = db.ref('guardSchedules');
-                const listener = ref.on('value', (snapshot) => {
-                    setSchedules(snapshot.val() || {});
-                });
+                const listener = ref.on('value', (s) => setSchedules(s.val() || {}));
                 return () => ref.off('value', listener);
             }, []);
 
@@ -56,20 +55,19 @@
             }, [userName, userID]);
 
             const changeMonth = (dir) => {
-                let m = curMonth + dir;
-                let y = curYear;
-                if (m < 0) { m = 11; y--; }
-                else if (m > 11) { m = 0; y++; }
-                setCurMonth(m);
-                setCurYear(y);
+                let m = curMonth + dir; let y = curYear;
+                if (m < 0) { m = 11; y--; } else if (m > 11) { m = 0; y++; }
+                setCurMonth(m); setCurYear(y);
             };
 
             const handleCellClick = (day) => {
                 const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
                 if (isClearMode) {
                     db.ref(`guardSchedules/${cellId}`).set("");
-                } else if (shiftType) {
-                    db.ref(`guardSchedules/${cellId}`).set(shiftType);
+                } else if (shiftText) {
+                    db.ref(`guardSchedules/${cellId}`).set(shiftText);
+                } else {
+                    alert("請先輸入或選擇班別！");
                 }
             };
 
@@ -78,16 +76,16 @@
             const isThisMonth = todayObj.getFullYear() === curYear && todayObj.getMonth() === curMonth;
 
             return (
-                <div className="max-w-lg mx-auto bg-[#f9f4e8] min-h-screen pb-24 shadow-2xl">
+                <div className="max-w-lg mx-auto bg-[#f9f4e8] min-h-screen pb-40 shadow-2xl">
                     <div className="bg-black text-white px-4 py-3 text-lg font-black flex justify-between border-b-2 border-[#c0392b]">
-                        <span className="cursor-pointer active:text-yellow-400" onClick={() => { const n = prompt("輸入姓名", userName); if(n) setUserName(n); }}>姓名：{userName} ✎</span>
-                        <span className="cursor-pointer active:text-yellow-400" onClick={() => { const id = prompt("輸入您的工號 ID", userID); if(id) setUserID(id); }}>ID：{userID} ✎</span>
+                        <span className="cursor-pointer" onClick={() => { const n = prompt("輸入姓名", userName); if(n) setUserName(n); }}>姓名：{userName} ✎</span>
+                        <span className="cursor-pointer" onClick={() => { const id = prompt("輸入工號", userID); if(id) setUserID(id); }}>ID：{userID} ✎</span>
                     </div>
 
                     <header className="bg-[#2e5a44] text-white p-3 sticky top-0 z-50 flex justify-between items-center shadow-md">
-                        <button onClick={() => changeMonth(-1)} className="text-xl px-4 active:scale-90">❮</button>
-                        <h1 className="text-lg font-bold tracking-widest">{curYear}年 {curMonth + 1}月</h1>
-                        <button onClick={() => changeMonth(1)} className="text-xl px-4 active:scale-90">❯</button>
+                        <button onClick={() => changeMonth(-1)} className="text-xl px-4">❮</button>
+                        <h1 className="text-lg font-bold">{curYear}年 {curMonth + 1}月</h1>
+                        <button onClick={() => changeMonth(1)} className="text-xl px-4">❯</button>
                     </header>
 
                     <div className="grid grid-cols-7 border-t border-[#c2b99a]">
@@ -102,32 +100,36 @@
                             const isWeekend = new Date(curYear, curMonth, day).getDay() % 6 === 0;
                             const isToday = isThisMonth && todayObj.getDate() === day;
                             
-                            // 顏色邏輯判斷
-                            let textColor = "text-[#2e5a44]"; // 預設深綠
-                            if (note.includes("例假") || note.includes("休假") || note.includes("❌")) {
-                                textColor = "text-[#c0392b]"; // 紅色
-                            } else if (note.includes("特休")) {
-                                textColor = "text-[#f1c40f]"; // 黃色！
-                            }
+                            let textColor = "text-[#2e5a44]";
+                            if (note.includes("休") || note.includes("例") || note.includes("❌")) textColor = "text-[#c0392b]";
+                            else if (note.includes("特休")) textColor = "text-[#f1c40f]";
                             
                             return (
-                                <div key={day} onClick={() => handleCellClick(day)} className={`grid-cell p-1 flex flex-col relative active:bg-slate-200 transition-colors ${isToday ? 'today-highlight' : ''}`}>
+                                <div key={day} onClick={() => handleCellClick(day)} className={`grid-cell p-1 flex flex-col relative active:bg-slate-200 ${isToday ? 'today-highlight' : ''}`}>
                                     <div className={`text-sm font-bold ${isWeekend ? 'text-[#c0392b]' : 'text-slate-700'}`}>{day}</div>
-                                    <div className={`mt-auto text-[13px] font-black leading-tight text-center whitespace-pre-wrap ${textColor}`}>{note}</div>
+                                    <div className={`mt-auto text-[13px] font-black text-center whitespace-pre-wrap ${textColor}`}>{note}</div>
                                 </div>
                             );
                         })}
                     </div>
 
-                    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-[#f2ebd5] border-t-2 border-[#c2b99a] p-3 flex gap-2 z-[60] shadow-[0_-4px_10px_rgba(0,0,0,0.1)]">
-                        <select value={shiftType} onChange={e => {setShiftType(e.target.value); setIsClearMode(false);}} className="flex-[2] p-3 rounded border bg-white text-base font-bold outline-none border-[#c2b99a]">
-                            <option value="">📝 選擇班別填入</option>
-                            <option value="日B班">☀️ 日B班</option><option value="夜B班">🌙 夜B班</option>
-                            <option value="夜E班">💜 夜E班</option><option value="休假">🟢 休假</option>
-                            <option value="例假">🔴 例假</option><option value="特休">⛱️ 特休</option>
-                            <option value="❌">❌ 不行</option>
-                        </select>
-                        <button onClick={() => {setIsClearMode(!isClearMode); setShiftType("");}} className={`flex-1 p-3 rounded border font-bold text-base transition-colors ${isClearMode ? 'bg-red-600 text-white' : 'bg-white text-slate-500 border-[#c2b99a]'}`}>{isClearMode ? "刪除中" : "橡皮擦"}</button>
+                    {/* 下方控制台：現在可以手動輸入 */}
+                    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-[#f2ebd5] border-t-2 border-[#c2b99a] p-3 z-[60] shadow-inner">
+                        <div className="flex gap-2 mb-2">
+                            <input 
+                                type="text" 
+                                value={shiftText} 
+                                onChange={(e) => {setShiftText(e.target.value); setIsClearMode(false);}}
+                                placeholder="✏️ 手動輸入或從下方選擇"
+                                className="flex-1 p-2 rounded border border-[#c2b99a] font-bold text-center outline-none focus:ring-2 focus:ring-[#2e5a44]"
+                            />
+                            <button onClick={() => {setIsClearMode(!isClearMode); setShiftText("");}} className={`px-4 rounded border font-bold transition-colors ${isClearMode ? 'bg-red-600 text-white' : 'bg-white text-slate-500 border-[#c2b99a]'}`}>{isClearMode ? "刪除模式" : "橡皮擦"}</button>
+                        </div>
+                        <div className="grid grid-cols-4 gap-1 text-[11px]">
+                            {["日B班", "夜B班", "夜E班", "休假", "例假", "特休", "補休", "換班"].map(s => (
+                                <button key={s} onClick={() => {setShiftText(s); setIsClearMode(false);}} className="bg-white p-2 rounded border border-[#c2b99a] active:bg-[#2e5a44] active:text-white">{s}</button>
+                            ))}
+                        </div>
                     </div>
                 </div>
             );
