@@ -3,30 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>個人班表回報 - 小黑哥</title>
+    <title>班表回報 - 小黑哥</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         body { font-family: sans-serif; background: #f0f2f5; padding: 15px; text-align: center; }
-        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; }
-        .date-btn { 
-            padding: 15px 5px; background: white; border: 1px solid #ddd; border-radius: 8px; 
-            font-size: 14px; cursor: pointer; transition: 0.2s;
-        }
-        .date-btn.active { background: #d32f2f; color: white; border-color: #d32f2f; }
-        .info { margin-bottom: 20px; color: #555; }
-        h2 { color: #2c3e50; }
+        .date-btn { padding: 15px 5px; background: white; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; cursor: pointer; }
+        .date-btn.active { background: #d32f2f; color: white; font-weight: bold; }
     </style>
 </head>
 <body>
-
-<div class="card">
-    <h2>我的排班需求</h2>
-    <p class="info">請點擊您「不行❌」的日期：</p>
-    <div id="calendar" class="grid">
-        </div>
-</div>
+    <h3>小黑哥 - 2月不行❌日期回報</h3>
+    <div id="calendar" class="grid"></div>
 
 <script>
     const firebaseConfig = {
@@ -38,52 +27,31 @@
         messagingSenderId: "864846943143",
         appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    
-    // --- 測試用：固定為您的名字 ---
-    const myName = "小黑哥"; 
+    const myName = "小黑哥"; // 每個警衛檔案改這個名字就好
 
-    // 產生 2 月 1-28 號按鈕
     const container = document.getElementById('calendar');
     for (let d = 1; d <= 28; d++) {
         const btn = document.createElement('div');
         btn.className = 'date-btn';
         btn.id = `btn_${d}`;
-        btn.innerText = d + ' 號';
-        btn.onclick = () => toggleDate(d);
+        btn.innerText = d;
+        btn.onclick = () => {
+            const ref = db.ref('guardSchedules/' + myName + '_' + d);
+            ref.once('value').then(s => ref.set(s.val() === '❌' ? '' : '❌'));
+        };
         container.appendChild(btn);
     }
 
-    // 監聽雲端狀態 (讓按鈕顏色跟雲端同步)
     db.ref('guardSchedules').on('value', (snapshot) => {
         const data = snapshot.val();
         for (let d = 1; d <= 28; d++) {
             const btn = document.getElementById(`btn_${d}`);
-            const cellId = `${myName}_${d}`;
-            if (data && data[cellId] === '❌') {
-                btn.classList.add('active');
-                btn.innerText = d + ' ❌';
-            } else {
-                btn.classList.remove('active');
-                btn.innerText = d + ' 號';
-            }
+            if (data && data[myName + '_' + d] === '❌') btn.classList.add('active');
+            else btn.classList.remove('active');
         }
     });
-
-    // 切換「不行」的狀態
-    function toggleDate(d) {
-        const cellId = `${myName}_${d}`;
-        db.ref('guardSchedules/' + cellId).once('value').then((snap) => {
-            if (snap.val() === '❌') {
-                db.ref('guardSchedules/' + cellId).set(''); // 取消 ❌
-            } else {
-                db.ref('guardSchedules/' + cellId).set('❌'); // 設為 ❌
-            }
-        });
-    }
 </script>
-
 </body>
 </html>
