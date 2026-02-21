@@ -1,132 +1,19 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026年02月警衛輪班表</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <style>
-        :root { --primary: #d32f2f; --bg: #f8f9fa; --border: #ccc; }
-        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .lock-btn { padding: 5px 15px; border-radius: 20px; border: none; background: #95a5a6; color: white; cursor: pointer; }
-        .lock-btn.unlocked { background: #27ae60; }
-        
-        /* 班表容器：支援手機橫向滑動 */
-        .table-container { width: 100%; overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        table { border-collapse: collapse; min-width: 1200px; width: 100%; }
-        th, td { border: 1px solid var(--border); padding: 8px 4px; text-align: center; font-size: 13px; }
-        th { background: #eee; position: sticky; top: 0; z-index: 10; }
-        .sticky-col { position: sticky; left: 0; background: #fdfdfd; z-index: 5; border-right: 2px solid var(--border); }
-        
-        /* 班別配色 */
-        input { width: 100%; border: none; text-align: center; font-size: 12px; background: transparent; pointer-events: none; }
-        .can-edit input { pointer-events: auto; background: #fffde7; }
-        .cell-holiday { color: #d32f2f; font-weight: bold; } /* 例假 */
-        .cell-day { color: #2c3e50; } /* 日班 */
-        .cell-night { color: #3498db; } /* 夜班 */
-    </style>
-</head>
-<body>
-
-<div class="header">
-    <h3 style="margin:0;">📅 2026年02月 警衛輪班表</h3>
-    <button id="lockBtn" class="lock-btn" onclick="toggleLock()">🔒 唯讀模式</button>
-</div>
-
-<div class="table-container">
-    <table id="rosterTable">
-        <thead>
-            <tr id="dateHeader">
-                <th class="sticky-col" style="width: 80px;">姓名</th>
-                </tr>
-        </thead>
-        <tbody id="rosterBody">
-            </tbody>
-    </table>
-</div>
-
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
-        authDomain: "factor-security-d1965.firebaseapp.com",
-        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
-        projectId: "factor-security-d1965",
-        storageBucket: "factor-security-d1965.firebasestorage.app",
-        messagingSenderId: "864846943143",
-        appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    let isEditing = false;
-
-    // 定義人員名單 (對應照片)
-    const staff = ["盧家慶", "何鴻隆", "蔡易倫", "邱鴻鈞", "柳旭洲", "魏榮志"];
-
-    // 1. 初始化表格結構
-    const headerRow = document.getElementById('dateHeader');
-    const tbody = document.getElementById('rosterBody');
-
-    // 產生 1-28 號標題 (2月)
-    for (let d = 1; d <= 28; d++) {
-        const th = document.createElement('th');
-        th.innerText = d;
-        headerRow.appendChild(th);
-    }
-
-    // 產生人員列
-    staff.forEach(name => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="sticky-col"><b>${name}</b></td>`;
-        for (let d = 1; d <= 28; d++) {
-            const cellId = `${name}_${d}`;
-            tr.innerHTML += `<td><input id="${cellId}" onchange="saveShift('${cellId}', this.value)" placeholder="-"></td>`;
-        }
-        tbody.appendChild(tr);
-    });
-
-    // 2. 實時同步資料
-    db.ref('guardSchedules').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            Object.keys(data).forEach(id => {
-                const input = document.getElementById(id);
+// 在總班表的渲染邏輯中，加入這段監聽
+db.ref('guard_requests').on('value', (snapshot) => {
+    const requests = snapshot.val();
+    if (requests) {
+        // 遍歷所有人事資料
+        Object.keys(requests).forEach(guardName => {
+            Object.keys(requests[guardName]).forEach(date => {
+                const status = requests[guardName][date];
+                // 找到總班表上對應的格子 (例如: id="盧家慶_18")
+                const cellId = `${guardName}_${date}`;
+                const input = document.getElementById(cellId);
                 if (input) {
-                    input.value = data[id];
-                    // 自動上色邏輯
-                    input.classList.remove('cell-holiday', 'cell-day', 'cell-night');
-                    if (data[id].includes('例') || data[id].includes('休')) input.classList.add('cell-holiday');
-                    if (data[id].includes('日')) input.classList.add('cell-day');
-                    if (data[id].includes('夜')) input.classList.add('cell-night');
+                    input.value = status; // 自動顯示 ❌ 或 班別
+                    if(status === '❌') input.style.color = 'red';
                 }
             });
-        }
-    });
-
-    // 3. 儲存與權限功能
-    function saveShift(id, val) {
-        db.ref('guardSchedules/' + id).set(val);
+        });
     }
-
-    function toggleLock() {
-        if (!isEditing) {
-            const pwd = prompt("請輸入人事管理密碼：");
-            if (pwd === "8888") {
-                isEditing = true;
-                document.body.classList.add('can-edit');
-                document.getElementById('lockBtn').innerText = "🔓 編輯模式";
-                document.getElementById('lockBtn').classList.add('unlocked');
-            } else { alert("密碼錯誤！"); }
-        } else {
-            isEditing = false;
-            document.body.classList.remove('can-edit');
-            document.getElementById('lockBtn').innerText = "🔒 唯讀模式";
-            document.getElementById('lockBtn').classList.remove('unlocked');
-        }
-    }
-</script>
-
-</body>
-</html>
+});
