@@ -98,21 +98,21 @@
                         ))}
                         {Array.from({ length: firstDay }).map((_, i) => <div key={`b-${i}`} className="grid-cell bg-[#f9f4e8]"></div>)}
                         // 在 React 的渲染邏輯中，我修改了 textColor 的判斷
-{Array.from({ length: daysInMonth }).map((_, i) => {
-    const day = i + 1;
-    const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
-    const note = schedules[cellId] || "";
-    // ...
+                        {Array.from({ length: daysInMonth }).map((_, i) => {
+                                     const day = i + 1;
+                                     const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
+                                     const note = schedules[cellId] || "";
+                                   // ...
     
-    let textColor = "text-[#2e5a44]"; // 預設綠
-    if (note.includes("例假") || note.includes("休假") || note.includes("❌")) {
-        textColor = "text-[#c0392b]"; // 假或不行變紅
-    } else if (note.includes("特休")) {
-        textColor = "text-[#f1c40f]"; // 特休變成金黃色！
-    }
+                                     let textColor = "text-[#2e5a44]"; // 預設綠
+                                     if (note.includes("例假") || note.includes("休假") || note.includes("❌")) {
+                                     textColor = "text-[#c0392b]"; // 假或不行變紅
+                                     } else if (note.includes("特休")) {
+                                     textColor = "text-[#f1c40f]"; // 特休變成金黃色！
+                                    }
     
-    // ... 回傳 DOM ...
-})}
+                                   // ... 回傳 DOM ...
+                               })}
                             
                             return (
                                 <div key={day} onClick={() => handleCellClick(day)} className={`grid-cell p-1 flex flex-col relative active:bg-slate-200 transition-colors ${isToday ? 'today-highlight' : ''}`}>
