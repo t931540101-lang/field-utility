@@ -2,20 +2,63 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>班表回報 - 小黑哥</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>個人排班回報 - 小黑哥</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 15px; text-align: center; }
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; }
-        .date-btn { padding: 15px 5px; background: white; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; cursor: pointer; }
-        .date-btn.active { background: #d32f2f; color: white; font-weight: bold; }
+        :root { --primary: #d32f2f; --bg: #f0f2f5; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .user-info { border-bottom: 2px solid var(--primary); margin-bottom: 20px; padding-bottom: 10px; }
+        
+        /* 日曆網格 */
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .date-btn { 
+            padding: 12px 5px; background: white; border: 1px solid #ddd; border-radius: 10px; 
+            font-size: 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center;
+        }
+        .date-btn span { font-size: 10px; color: #888; margin-bottom: 3px; }
+        .date-btn b { font-size: 16px; }
+        
+        /* 班別色彩 */
+        .shift-val { font-size: 12px; margin-top: 5px; font-weight: bold; }
+        .is-day { background: #e3f2fd; border-color: #2196f3; color: #1565c0; }
+        .is-night { background: #f3e5f5; border-color: #9c27b0; color: #7b1fa2; }
+        .is-off { background: #ffebee; border-color: #f44336; color: #c62828; }
+
+        /* 彈出選單 */
+        #menuOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:100; justify-content:center; align-items:center; }
+        .menu-box { background:white; padding:20px; border-radius:15px; width:80%; max-width:300px; text-align:center; }
+        .menu-title { margin-bottom: 15px; font-weight: bold; color: #333; }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .menu-btn { padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-    <h3>小黑哥 - 2月不行❌日期回報</h3>
+
+<div class="card">
+    <div class="user-info">
+        <h2 style="margin:0;">小黑哥 2月排班回報</h2>
+        <p style="font-size:12px; color:#666; margin:5px 0 0 0;">點擊日期即可設定班別</p>
+    </div>
     <div id="calendar" class="grid"></div>
+</div>
+
+<div id="menuOverlay">
+    <div class="menu-box">
+        <div class="menu-title" id="menuDateTitle">選擇班別</div>
+        <div class="menu-grid">
+            <button class="menu-btn" style="background:#2196f3;" onclick="setShift('日B')">日B班</button>
+            <button class="menu-btn" style="background:#9c27b0;" onclick="setShift('夜E')">夜E班</button>
+            <button class="menu-btn" style="background:#f44336;" onclick="setShift('特休')">特休</button>
+            <button class="menu-btn" style="background:#e91e63;" onclick="setShift('例假')">例假</button>
+            <button class="menu-btn" style="background:#7f8c8d;" onclick="setShift('❌')">不行❌</button>
+            <button class="menu-btn" style="background:#ccc; color:#333;" onclick="setShift('')">清除</button>
+        </div>
+        <button style="margin-top:15px; background:none; border:none; color:#999;" onclick="closeMenu()">取消</button>
+    </div>
+</div>
 
 <script>
     const firebaseConfig = {
@@ -29,29 +72,55 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const myName = "小黑哥"; // 每個警衛檔案改這個名字就好
+    
+    const myName = "小黑哥"; 
+    let selectedDay = null;
 
+    // 1. 產生日期按鈕
     const container = document.getElementById('calendar');
     for (let d = 1; d <= 28; d++) {
         const btn = document.createElement('div');
         btn.className = 'date-btn';
         btn.id = `btn_${d}`;
-        btn.innerText = d;
-        btn.onclick = () => {
-            const ref = db.ref('guardSchedules/' + myName + '_' + d);
-            ref.once('value').then(s => ref.set(s.val() === '❌' ? '' : '❌'));
-        };
+        btn.innerHTML = `<span>2月</span><b>${d}</b><div class="shift-val" id="val_${d}">-</div>`;
+        btn.onclick = () => openMenu(d);
         container.appendChild(btn);
     }
 
+    // 2. 監聽雲端並美化按鈕
     db.ref('guardSchedules').on('value', (snapshot) => {
         const data = snapshot.val();
         for (let d = 1; d <= 28; d++) {
             const btn = document.getElementById(`btn_${d}`);
-            if (data && data[myName + '_' + d] === '❌') btn.classList.add('active');
-            else btn.classList.remove('active');
+            const valDiv = document.getElementById(`val_${d}`);
+            const val = (data && data[myName + '_' + d]) ? data[myName + '_' + d] : '';
+            
+            valDiv.innerText = val || '-';
+            btn.className = 'date-btn'; // 重設
+            if(val.includes('日')) btn.classList.add('is-day');
+            if(val.includes('夜')) btn.classList.add('is-night');
+            if(val.includes('休') || val.includes('例') || val.includes('❌')) btn.classList.add('is-off');
         }
     });
+
+    // 3. 選單邏輯
+    function openMenu(d) {
+        selectedDay = d;
+        document.getElementById('menuDateTitle').innerText = "2月 " + d + " 日 班別設定";
+        document.getElementById('menuOverlay').style.display = 'flex';
+    }
+
+    function closeMenu() {
+        document.getElementById('menuOverlay').style.display = 'none';
+    }
+
+    function setShift(shiftType) {
+        if(selectedDay) {
+            db.ref('guardSchedules/' + myName + '_' + selectedDay).set(shiftType);
+            closeMenu();
+        }
+    }
 </script>
+
 </body>
 </html>
