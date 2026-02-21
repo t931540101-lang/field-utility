@@ -97,15 +97,22 @@
                             <div key={w} className={`text-center py-1 font-bold text-sm bg-[#f0e9d2] border-b border-[#c2b99a] ${w==='日'||w==='六' ? 'text-[#c0392b]' : 'text-[#8e835d]'}`}>{w}</div>
                         ))}
                         {Array.from({ length: firstDay }).map((_, i) => <div key={`b-${i}`} className="grid-cell bg-[#f9f4e8]"></div>)}
-                        {Array.from({ length: daysInMonth }).map((_, i) => {
-                            const day = i + 1;
-                            const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
-                            const note = schedules[cellId] || "";
-                            const isWeekend = new Date(curYear, curMonth, day).getDay() % 6 === 0;
-                            const isToday = isThisMonth && todayObj.getDate() === day;
-                            
-                            let textColor = "text-[#2e5a44]";
-                            if (note.includes("例假") || note.includes("休假") || note.includes("❌")) textColor = "text-[#c0392b]";
+                        // 在 React 的渲染邏輯中，我修改了 textColor 的判斷
+{Array.from({ length: daysInMonth }).map((_, i) => {
+    const day = i + 1;
+    const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
+    const note = schedules[cellId] || "";
+    // ...
+    
+    let textColor = "text-[#2e5a44]"; // 預設綠
+    if (note.includes("例假") || note.includes("休假") || note.includes("❌")) {
+        textColor = "text-[#c0392b]"; // 假或不行變紅
+    } else if (note.includes("特休")) {
+        textColor = "text-[#f1c40f]"; // 特休變成金黃色！
+    }
+    
+    // ... 回傳 DOM ...
+})}
                             
                             return (
                                 <div key={day} onClick={() => handleCellClick(day)} className={`grid-cell p-1 flex flex-col relative active:bg-slate-200 transition-colors ${isToday ? 'today-highlight' : ''}`}>
