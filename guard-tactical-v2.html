@@ -13,12 +13,10 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #0f172a; color: #f1f5f9; margin: 0; }
-        /* 調整格子，預留底部緩衝區 */
         .grid-cell { min-height: 60px; border: 1px solid #334155; }
         .today-border { border: 2px solid #38bdf8 !important; background: #1e293b; }
         .weekend-bg { background-color: #1e1b4b; }
         .shield-logo { width: 60px; height: 60px; object-fit: contain; }
-        /* 半透明超扁平選單 */
         .glass-panel { 
             background: rgba(15, 23, 42, 0.85); 
             backdrop-filter: blur(10px);
@@ -97,12 +95,13 @@
                     <div className="bg-slate-900 text-white p-3 border-b-2 border-blue-500 sticky top-0 z-[60] flex items-center shadow-2xl">
                         <img src="logo.png" className="shield-logo mr-3" alt="LOGO" />
                         <div className="flex-1">
-                            <h2 className="text-[10px] font-bold text-blue-400 uppercase tracking-tighter">Command Center</h2>
-                            <div className="flex justify-between items-end">
-                                <span onClick={() => { const n = prompt("輸入姓名", userName); if(n) setUserName(n); }} className="text-lg font-black tracking-widest">
+                            <h2 className="text-[10px] font-bold text-blue-400 uppercase tracking-tighter mb-1">Command Center</h2>
+                            <div className="flex justify-between items-center">
+                                <span onClick={() => { const n = prompt("輸入姓名", userName); if(n) setUserName(n); }} className="text-xl font-black tracking-widest">
                                     {userName}
                                 </span>
-                                <span onClick={() => { const id = prompt("輸入工號", userID); if(id) setUserID(id); }} className="text-xs font-bold text-slate-500 mb-0.5">
+                                {/* ID 改成白色且字體與名字一致 */}
+                                <span onClick={() => { const id = prompt("輸入工號", userID); if(id) setUserID(id); }} className="text-xl font-black text-white">
                                     ID: {userID}
                                 </span>
                             </div>
@@ -137,11 +136,9 @@
                                 </div>
                             );
                         })}
-                        {/* 關鍵：增加空的格子墊高底部，讓最後一排可以滑上來 */}
                         <div className="col-span-7 h-36"></div>
                     </div>
 
-                    {/* 超扁平化操作面板 */}
                     <div className="fixed bottom-0 left-0 w-full glass-panel z-[70] p-3 pb-8 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
                         <div className="max-w-md mx-auto flex flex-col gap-2">
                             <div className="flex gap-2">
