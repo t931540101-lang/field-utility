@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>K9 個人雲端班表 | 自由輸入版</title>
+    <title>K9 雲端班表 | 極簡 App 版</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -11,17 +11,32 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #e8e2d0; margin: 0; }
-        .grid-cell { min-height: 80px; border-right: 1px solid #c2b99a; border-bottom: 1px solid #c2b99a; }
-        .today-highlight { box-shadow: inset 0 0 0 3px #c0392b; background: #fffcf5; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #ffffff; margin: 0; -webkit-tap-highlight-color: transparent; }
+        .grid-cell { min-height: 85px; position: relative; border-bottom: 1px solid #f8f8f8; transition: all 0.1s; }
+        .grid-cell:active { background-color: #f0f0f0; }
+        
+        /* ShiftDays 風格圓角標籤 */
+        .shift-badge {
+            margin-top: 4px; padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 700;
+            display: inline-block; text-align: center; width: 90%; max-width: 60px;
+        }
+        .badge-day { background-color: #E3F2FD; color: #1E88E5; }    /* 日班藍 */
+        .badge-night { background-color: #F3E5F5; color: #8E24AA; }  /* 夜班紫 */
+        .badge-off { background-color: #FFEBEE; color: #E53935; }    /* 休假紅 */
+        .badge-special { background-color: #FFFDE7; color: #FBC02D; }/* 特休黃 */
+        .badge-other { background-color: #F5F5F5; color: #757575; }  /* 其他灰 */
+
+        .today-circle { 
+            background: #3498db; color: white !important; border-radius: 50%; 
+            width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
     <script type="text/babel">
         const { useState, useEffect } = React;
-
         const firebaseConfig = {
             apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
             databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
@@ -32,14 +47,9 @@
         const db = firebase.database();
 
         function App() {
-            const todayObj = new Date();
-            const [curYear, setCurYear] = useState(todayObj.getFullYear());
-            const [curMonth, setCurMonth] = useState(todayObj.getMonth());
+            const [curDate, setCurDate] = useState(new Date());
             const [schedules, setSchedules] = useState({});
             const [userName, setUserName] = useState(localStorage.getItem('guardName') || "小黑哥");
-            const [userID, setUserID] = useState(localStorage.getItem('guardID') || "D01762");
-            
-            // 班別狀態：現在改成可以自由輸入的文字
             const [shiftText, setShiftText] = useState("");
             const [isClearMode, setIsClearMode] = useState(false);
 
@@ -49,92 +59,78 @@
                 return () => ref.off('value', listener);
             }, []);
 
-            useEffect(() => {
-                localStorage.setItem('guardName', userName);
-                localStorage.setItem('guardID', userID);
-            }, [userName, userID]);
-
-            const changeMonth = (dir) => {
-                let m = curMonth + dir; let y = curYear;
-                if (m < 0) { m = 11; y--; } else if (m > 11) { m = 0; y++; }
-                setCurMonth(m); setCurYear(y);
-            };
-
             const handleCellClick = (day) => {
-                const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
-                if (isClearMode) {
-                    db.ref(`guardSchedules/${cellId}`).set("");
-                } else if (shiftText) {
-                    db.ref(`guardSchedules/${cellId}`).set(shiftText);
-                } else {
-                    alert("請先輸入或選擇班別！");
-                }
+                const cellId = `${curDate.getFullYear()}_${curDate.getMonth() + 1}_${userName}_${day}`;
+                if (isClearMode) db.ref(`guardSchedules/${cellId}`).set("");
+                else if (shiftText) db.ref(`guardSchedules/${cellId}`).set(shiftText);
             };
 
-            const firstDay = new Date(curYear, curMonth, 1).getDay();
-            const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
-            const isThisMonth = todayObj.getFullYear() === curYear && todayObj.getMonth() === curMonth;
+            const firstDay = new Date(curDate.getFullYear(), curDate.getMonth(), 1).getDay();
+            const daysInMonth = new Date(curDate.getFullYear(), curDate.getMonth() + 1, 0).getDate();
+            const today = new Date();
 
             return (
-                <div className="max-w-lg mx-auto bg-[#f9f4e8] min-h-screen pb-40 shadow-2xl">
-                    <div className="bg-black text-white px-4 py-3 text-lg font-black flex justify-between border-b-2 border-[#c0392b]">
-                        <span className="cursor-pointer" onClick={() => { const n = prompt("輸入姓名", userName); if(n) setUserName(n); }}>姓名：{userName} ✎</span>
-                        <span className="cursor-pointer" onClick={() => { const id = prompt("輸入工號", userID); if(id) setUserID(id); }}>ID：{userID} ✎</span>
+                <div className="max-w-md mx-auto bg-white min-h-screen pb-44">
+                    {/* 精緻頂欄 */}
+                    <div className="flex justify-between items-center px-6 py-4 bg-white border-b border-gray-50">
+                        <div className="flex flex-col">
+                            <span className="text-2xl font-bold text-gray-800">{curDate.getMonth() + 1}月</span>
+                            <span className="text-xs text-gray-400 font-medium tracking-widest">{curDate.getFullYear()}</span>
+                        </div>
+                        <div className="flex gap-4">
+                            <button onClick={() => setCurDate(new Date(curDate.setMonth(curDate.getMonth()-1)))} className="p-2 text-gray-300">❮</button>
+                            <button onClick={() => setCurDate(new Date(curDate.setMonth(curDate.getMonth()+1)))} className="p-2 text-gray-300">❯</button>
+                        </div>
                     </div>
 
-                    <header className="bg-[#2e5a44] text-white p-3 sticky top-0 z-50 flex justify-between items-center shadow-md">
-                        <button onClick={() => changeMonth(-1)} className="text-xl px-4">❮</button>
-                        <h1 className="text-lg font-bold">{curYear}年 {curMonth + 1}月</h1>
-                        <button onClick={() => changeMonth(1)} className="text-xl px-4">❯</button>
-                    </header>
-
-                    <div className="grid grid-cols-7 border-t border-[#c2b99a]">
-                        {["日","一","二","三","四","五","六"].map(w => (
-                            <div key={w} className={`text-center py-1 font-bold text-sm bg-[#f0e9d2] border-b border-[#c2b99a] ${w==='日'||w==='六' ? 'text-[#c0392b]' : 'text-[#8e835d]'}`}>{w}</div>
+                    <div className="grid grid-cols-7 text-center py-2 border-b border-gray-50">
+                        {["日","一","二","三","四","五","六"].map((w, idx) => (
+                            <span key={w} className={`text-[10px] font-bold ${idx===0||idx===6 ? 'text-red-300' : 'text-gray-300'}`}>{w}</span>
                         ))}
-                        {Array.from({ length: firstDay }).map((_, i) => <div key={`b-${i}`} className="grid-cell bg-[#f9f4e8]"></div>)}
+                    </div>
+
+                    <div className="grid grid-cols-7">
+                        {Array.from({ length: firstDay }).map((_, i) => <div key={`b-${i}`} className="grid-cell bg-gray-50/20"></div>)}
                         {Array.from({ length: daysInMonth }).map((_, i) => {
                             const day = i + 1;
-                            const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
+                            const cellId = `${curDate.getFullYear()}_${curDate.getMonth() + 1}_${userName}_${day}`;
                             const note = schedules[cellId] || "";
-                            const isWeekend = new Date(curYear, curMonth, day).getDay() % 6 === 0;
-                            const isToday = isThisMonth && todayObj.getDate() === day;
-                            
-                            let textColor = "text-[#2e5a44]";
-                            if (note.includes("休") || note.includes("例") || note.includes("❌")) textColor = "text-[#c0392b]";
-                            else if (note.includes("特休")) textColor = "text-[#f1c40f]";
-                            
+                            const isToday = today.getFullYear()===curDate.getFullYear() && today.getMonth()===curDate.getMonth() && today.getDate()===day;
+                            const isWeekend = new Date(curDate.getFullYear(), curDate.getMonth(), day).getDay() % 6 === 0;
+
+                            let badgeType = "badge-other";
+                            if (note.includes("日")) badgeType = "badge-day";
+                            else if (note.includes("夜") || note.includes("E")) badgeType = "badge-night";
+                            else if (note.includes("休") || note.includes("例") || note.includes("❌")) badgeType = "badge-off";
+                            else if (note.includes("特")) badgeType = "badge-special";
+
                             return (
-                                <div key={day} onClick={() => handleCellClick(day)} className={`grid-cell p-1 flex flex-col relative active:bg-slate-200 ${isToday ? 'today-highlight' : ''}`}>
-                                    <div className={`text-sm font-bold ${isWeekend ? 'text-[#c0392b]' : 'text-slate-700'}`}>{day}</div>
-                                    <div className={`mt-auto text-[13px] font-black text-center whitespace-pre-wrap ${textColor}`}>{note}</div>
+                                <div key={day} onClick={() => handleCellClick(day)} className="grid-cell flex flex-col items-center pt-2">
+                                    <span className={`text-sm font-medium ${isToday ? 'today-circle' : (isWeekend ? 'text-red-400' : 'text-gray-700')}`}>{day}</span>
+                                    {note && <div className={`shift-badge ${badgeType}`}>{note}</div>}
                                 </div>
                             );
                         })}
                     </div>
 
-                    {/* 下方控制台：現在可以手動輸入 */}
-                    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-[#f2ebd5] border-t-2 border-[#c2b99a] p-3 z-[60] shadow-inner">
-                        <div className="flex gap-2 mb-2">
-                            <input 
-                                type="text" 
-                                value={shiftText} 
-                                onChange={(e) => {setShiftText(e.target.value); setIsClearMode(false);}}
-                                placeholder="✏️ 手動輸入或從下方選擇"
-                                className="flex-1 p-2 rounded border border-[#c2b99a] font-bold text-center outline-none focus:ring-2 focus:ring-[#2e5a44]"
-                            />
-                            <button onClick={() => {setIsClearMode(!isClearMode); setShiftText("");}} className={`px-4 rounded border font-bold transition-colors ${isClearMode ? 'bg-red-600 text-white' : 'bg-white text-slate-500 border-[#c2b99a]'}`}>{isClearMode ? "刪除模式" : "橡皮擦"}</button>
+                    {/* 下方控制板：懸浮毛玻璃效果 */}
+                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] bg-white/80 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-[24px] p-4 border border-white/20 z-[100]">
+                        <div className="flex gap-2 mb-3">
+                            <input type="text" value={shiftText} onChange={(e) => {setShiftText(e.target.value); setIsClearMode(false);}} placeholder="✏️ 手動輸入" className="flex-1 bg-gray-100/50 border-none rounded-xl p-3 text-center font-bold text-gray-700 outline-none placeholder:text-gray-300" />
+                            <button onClick={() => {setIsClearMode(!isClearMode); setShiftText("");}} className={`px-4 rounded-xl font-bold transition-all ${isClearMode ? 'bg-red-500 text-white shadow-lg' : 'bg-gray-100 text-gray-400'}`}>橡皮擦</button>
                         </div>
-                        <div className="grid grid-cols-4 gap-1 text-[11px]">
+                        <div className="grid grid-cols-4 gap-2">
                             {["日B班", "夜B班", "夜E班", "休假", "例假", "特休", "補休", "換班"].map(s => (
-                                <button key={s} onClick={() => {setShiftText(s); setIsClearMode(false);}} className="bg-white p-2 rounded border border-[#c2b99a] active:bg-[#2e5a44] active:text-white">{s}</button>
+                                <button key={s} onClick={() => {setShiftText(s); setIsClearMode(false);}} className="bg-white/50 border border-gray-100 py-2.5 rounded-xl text-[11px] font-bold text-gray-600 shadow-sm active:scale-95 transition-transform">{s}</button>
                             ))}
+                        </div>
+                        <div className="mt-3 text-center">
+                            <span className="text-[10px] text-gray-300 font-medium" onClick={() => { const n = prompt("修改姓名", userName); if(n) setUserName(n); }}>當前使用者：{userName} ✎</span>
                         </div>
                     </div>
                 </div>
             );
         }
-
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
