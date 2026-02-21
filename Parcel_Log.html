@@ -2,23 +2,30 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title id="pageTitle">台灣精銳包裹登記平台</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root { --primary-color: #d32f2f; --bg-color: #f4f4f4; }
-        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg-color); padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { max-width: 700px; width: 100%; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg-color); padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .container { max-width: 700px; width: 100%; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); box-sizing: border-box; }
         .header-section { text-align: center; margin-bottom: 20px; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; }
         .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }
+        input, select { padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; width: 100%; box-sizing: border-box; }
         .full-width { grid-column: span 2; }
-        button.add-btn { grid-column: span 2; background: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        .search-bar { width: 100%; padding: 12px; border: 2px solid var(--primary-color); border-radius: 5px; margin: 20px 0; box-sizing: border-box; }
-        .parcel-card { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .info b { font-size: 16px; }
-        .btn-group { display: flex; gap: 5px; }
-        .btn-mail { background: #ff9800; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .status { padding: 8px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold; text-align: center; min-width: 60px; }
+        button.add-btn { grid-column: span 2; background: var(--primary-color); color: white; border: none; padding: 15px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .search-bar { width: 100%; padding: 12px; border: 2px solid var(--primary-color); border-radius: 5px; margin: 20px 0; box-sizing: border-box; font-size: 16px; }
+        
+        .parcel-card { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #ccc; }
+        .parcel-card.pending { border-left-color: #ff9800; }
+        .parcel-card.done { border-left-color: #2e7d32; background: #f9f9f9; }
+        
+        .info b { font-size: 16px; color: #333; }
+        .info p { margin: 5px 0; font-size: 14px; }
+        .btn-group { display: flex; flex-direction: column; gap: 8px; min-width: 80px; }
+        .btn-mail { background: #ff9800; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .status { padding: 8px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold; text-align: center; }
         .status.pending { background: #ffcdd2; color: #b71c1c; }
         .status.done { background: #c8e6c9; color: #2e7d32; }
     </style>
@@ -28,12 +35,13 @@
 <div class="container">
     <div class="header-section">
         <h2 id="mainTitle">台灣精銳包裹登記平台</h2>
+        <div id="syncStatus" style="font-size: 12px; color: green;">● 雲端同步中</div>
     </div>
 
     <div class="input-group">
         <input type="text" id="dept" placeholder="單位名稱 (如: 業務部)">
         <input type="text" id="receiver" placeholder="收件人姓名">
-        <input type="email" id="email" placeholder="同事的 Email (必填)">
+        <input type="email" id="email" placeholder="同事的 Email">
         <select id="type">
             <option value="一般包裹">📦 一般包裹</option>
             <option value="掛號信件">✉️ 掛號信件</option>
@@ -41,20 +49,43 @@
         </select>
         <input type="text" id="logistics" placeholder="物流公司 (如: 黑貓)">
         <input type="text" id="note" placeholder="備註 (如: 代付100元)" class="full-width">
-        <button class="add-btn" id="saveBtn" onclick="addParcel()">➕ 登記並加入清單</button>
+        <button class="add-btn" id="saveBtn" onclick="addParcel()">➕ 登記並加入雲端清單</button>
     </div>
 
-    <input type="text" class="search-bar" id="searchBar" onkeyup="searchParcels()" placeholder="🔍 快速搜尋...">
+    <input type="text" class="search-bar" id="searchBar" onkeyup="searchParcels()" placeholder="🔍 快速搜尋姓名或單位...">
     <div id="parcelList"></div>
 </div>
 
 <script>
-    // 妳的秘密雲端連結
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxm4CDB5i8V2CX6lbCu4gxI2TH-jGKFznI8H01CLlnKEh9Fdr71pfeQr7ai6VcVtAvomw/exec";
-    let parcels = JSON.parse(localStorage.getItem('parcels') || []);
+    // 小黑哥專屬 Firebase Config
+    const firebaseConfig = {
+        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+        authDomain: "factor-security-d1965.firebaseapp.com",
+        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+        projectId: "factor-security-d1965",
+        storageBucket: "factor-security-d1965.firebasestorage.app",
+        messagingSenderId: "864846943143",
+        appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+    };
 
-    renderParcels();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let localParcels = []; // 用於搜尋的本地緩存
 
+    // 1. 監聽 Firebase 數據（實時渲染）
+    db.ref('enterprise_parcels').orderByChild('timestamp').limitToLast(50).on('value', (snapshot) => {
+        const data = snapshot.val();
+        localParcels = [];
+        if (data) {
+            Object.keys(data).forEach(key => {
+                localParcels.push({ firebaseKey: key, ...data[key] });
+            });
+            localParcels.reverse(); // 最新排前面
+        }
+        renderParcels(localParcels);
+    });
+
+    // 2. 新增包裹到雲端
     async function addParcel() {
         const dept = document.getElementById('dept').value;
         const receiver = document.getElementById('receiver').value;
@@ -64,66 +95,46 @@
         const note = document.getElementById('note').value;
         const btn = document.getElementById('saveBtn');
 
-        if (!receiver || !email) { alert("姓名與 Email 為必填！"); return; }
+        if (!receiver) { alert("姓名為必填！"); return; }
 
         btn.disabled = true;
-        btn.innerText = "登記中...";
+        btn.innerText = "雲端存檔中...";
 
-        // 秘密同步到雲端
-        try {
-            const query = `type=parcel&dept=${encodeURIComponent(dept)}&receiver=${encodeURIComponent(receiver)}&email=${encodeURIComponent(email)}&pType=${encodeURIComponent(type)}&courier=${encodeURIComponent(logistics)}&note=${encodeURIComponent(note)}`;
-            fetch(`${SCRIPT_URL}?${query}`, { mode: 'no-cors' });
-            
-            // 原有的本地邏輯
-            const newParcel = {
-                id: Date.now(),
-                dept, receiver, email, type, logistics, note,
-                time: new Date().toLocaleString(),
-                status: 'pending'
-            };
+        const newParcel = {
+            dept, receiver, email, type, logistics, note,
+            time: new Date().toLocaleString(),
+            status: 'pending',
+            timestamp: Date.now()
+        };
 
-            parcels.unshift(newParcel);
-            localStorage.setItem('parcels', JSON.stringify(parcels));
-            renderParcels();
-            
-            alert("✅ 登記成功！");
-            
-            // 清空輸入框
-            document.getElementById('dept').value = '';
-            document.getElementById('receiver').value = '';
-            document.getElementById('email').value = '';
-            document.getElementById('logistics').value = '';
-            document.getElementById('note').value = '';
-        } catch (e) {
-            console.log("Silent Error");
-        } finally {
+        db.ref('enterprise_parcels').push(newParcel).then(() => {
+            alert("✅ 登記成功並已同步！");
             btn.disabled = false;
             btn.innerText = "➕ 登記並加入清單";
-        }
+            // 清空
+            ['dept', 'receiver', 'email', 'logistics', 'note'].forEach(id => document.getElementById(id).value = '');
+        }).catch(e => {
+            alert("同步失敗，請檢查網路");
+            btn.disabled = false;
+        });
     }
 
-    function sendEmail(id) {
-        const p = parcels.find(x => x.id === id);
-        const subject = encodeURIComponent(`[包裹到貨通知] 您好，您的 ${p.type} 已送達櫃台`);
-        const body = encodeURIComponent(`您好：\n\n您有一件來自 [${p.logistics}] 的 ${p.type} 已送達總機櫃台。\n登記時間：${p.time}\n備註：${p.note || '無'}\n\n請撥冗至櫃台領取，謝謝。`);
-        window.location.href = `mailto:${p.email}?subject=${subject}&body=${body}`;
-    }
-
-    function renderParcels(filter = '') {
+    // 3. 渲染清單
+    function renderParcels(dataList) {
         const list = document.getElementById('parcelList');
         list.innerHTML = '';
-        parcels.filter(p => p.receiver.includes(filter) || p.dept.includes(filter)).forEach(p => {
+        dataList.forEach(p => {
             const card = document.createElement('div');
-            card.className = 'parcel-card';
+            card.className = `parcel-card ${p.status}`;
             card.innerHTML = `
                 <div class="info">
-                    <b>[${p.dept}] ${p.receiver}</b>
+                    <b>[${p.dept || '未註明'}] ${p.receiver}</b>
                     <p>${p.type} | ${p.logistics} <br> <small>${p.time}</small></p>
                     ${p.note ? `<p style="color:red">📝 ${p.note}</p>` : ''}
                 </div>
                 <div class="btn-group">
-                    <button class="btn-mail" onclick="sendEmail(${p.id})">📧 寄信</button>
-                    <div class="status ${p.status}" onclick="toggleStatus(${p.id})">
+                    ${p.email ? `<button class="btn-mail" onclick="sendEmail('${p.firebaseKey}')">📧 寄信</button>` : ''}
+                    <div class="status ${p.status}" onclick="toggleStatus('${p.firebaseKey}', '${p.status}')">
                         ${p.status === 'pending' ? '待領' : '已領'}
                     </div>
                 </div>
@@ -132,15 +143,28 @@
         });
     }
 
-    function toggleStatus(id) {
-        const p = parcels.find(x => x.id === id);
-        p.status = p.status === 'pending' ? 'done' : 'pending';
-        localStorage.setItem('parcels', JSON.stringify(parcels));
-        renderParcels();
+    // 4. 切換狀態（雲端同步）
+    function toggleStatus(key, currentStatus) {
+        const nextStatus = currentStatus === 'pending' ? 'done' : 'pending';
+        db.ref('enterprise_parcels/' + key).update({ status: nextStatus });
     }
 
+    // 5. 發送 Email 邏輯
+    function sendEmail(key) {
+        const p = localParcels.find(x => x.firebaseKey === key);
+        const subject = encodeURIComponent(`[包裹到貨通知] 您好，您的 ${p.type} 已送達`);
+        const body = encodeURIComponent(`您好：\n\n您有一件來自 [${p.logistics}] 的 ${p.type} 已送達總機櫃台。\n登記時間：${p.time}\n備註：${p.note || '無'}\n\n請撥冗至櫃台領取，謝謝。`);
+        window.location.href = `mailto:${p.email}?subject=${subject}&body=${body}`;
+    }
+
+    // 6. 搜尋功能
     function searchParcels() {
-        renderParcels(document.getElementById('searchBar').value);
+        const term = document.getElementById('searchBar').value.toLowerCase();
+        const filtered = localParcels.filter(p => 
+            p.receiver.toLowerCase().includes(term) || 
+            (p.dept && p.dept.toLowerCase().includes(term))
+        );
+        renderParcels(filtered);
     }
 </script>
 
