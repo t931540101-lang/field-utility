@@ -7,28 +7,34 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --primary: #d32f2f; --bg: #f4f7f6; --border: #dee2e6; }
-        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        .header-box { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 10px; }
-        .month-ctrl { display: flex; align-items: center; gap: 15px; font-weight: bold; font-size: 1.2rem; }
-        .btn-nav { padding: 5px 15px; cursor: pointer; background: #eee; border: none; border-radius: 5px; }
-        .lock-btn { padding: 8px 18px; border-radius: 25px; border: none; background: #607d8b; color: white; cursor: pointer; font-weight: bold; }
-        .lock-btn.unlocked { background: #43a047; }
+        :root { --primary: #d32f2f; --bg: #f0f2f5; --border: #ccc; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .header-box { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .month-ctrl { display: flex; align-items: center; gap: 20px; font-weight: 900; font-size: 1.4rem; color: #2c3e50; }
+        .btn-nav { padding: 8px 18px; cursor: pointer; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; transition: 0.2s; }
+        .btn-nav:hover { background: #e9ecef; }
+        .lock-btn { padding: 10px 20px; border-radius: 30px; border: none; background: #607d8b; color: white; cursor: pointer; font-weight: bold; }
+        .lock-btn.unlocked { background: #43a047; box-shadow: 0 0 12px rgba(67,160,71,0.4); }
         
-        .table-container { width: 100%; overflow-x: auto; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        table { border-collapse: collapse; min-width: 1600px; width: 100%; }
-        th, td { border: 1px solid var(--border); padding: 6px 2px; text-align: center; font-size: 12px; }
-        th { background: #f8f9fa; position: sticky; top: 0; z-index: 10; }
-        .sticky-left { position: sticky; left: 0; background: #fff !important; z-index: 5; border-right: 2px solid #aaa !important; }
-        .sticky-left-2 { position: sticky; left: 60px; background: #fff !important; z-index: 5; border-right: 2px solid #ddd !important; }
+        /* 核心：電腦版寬度控制 */
+        .table-container { width: 100%; overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #eee; }
+        table { border-collapse: collapse; min-width: 1800px; width: 100%; table-layout: fixed; } /* 固定佈局防止拉伸 */
+        th, td { border: 1px solid var(--border); padding: 8px 0; text-align: center; font-size: 13px; }
+        th { background: #fdfcf9; color: #555; height: 40px; }
         
-        input { width: 100%; border: none; text-align: center; font-size: 13px; background: transparent; pointer-events: none; font-weight: bold; }
+        /* 鎖定姓名與組別 */
+        .sticky-left { position: sticky; left: 0; background: #fff !important; z-index: 5; border-right: 2px solid #999 !important; width: 50px; }
+        .sticky-left-2 { position: sticky; left: 50px; background: #fff !important; z-index: 5; border-right: 2px solid #ccc !important; width: 80px; }
+        
+        input { width: 100%; border: none; text-align: center; font-size: 13px; background: transparent; pointer-events: none; font-weight: 700; outline: none; }
         .can-edit input { pointer-events: auto; background: #fffde7; }
-        .val-❌, .val-休, .val-例, .val-特 { color: #d32f2f; }
-        .val-日 { color: #1565c0; }
-        .val-夜 { color: #7b1fa2; }
-        .summary-col { background: #f1f8e9 !important; font-weight: bold; color: #2e7d32; }
-        .weekend { color: #d32f2f; background: #fff5f5; }
+        
+        /* 顏色加強版 */
+        .val-日 { color: #0d47a1; background: #e3f2fd; }
+        .val-夜 { color: #4a148c; background: #f3e5f5; }
+        .val-休, .val-例, .val-特, .val-❌ { color: #b71c1c; background: #ffebee; }
+        .weekend { color: #d32f2f; background: #fff5f5 !important; font-weight: 900; }
+        .summary-col { background: #f1f8e9 !important; font-weight: 900; color: #1b5e20; width: 40px; }
     </style>
 </head>
 <body>
@@ -36,7 +42,7 @@
 <div class="header-box">
     <div class="month-ctrl">
         <button class="btn-nav" onclick="changeMonth(-1)">❮</button>
-        <span id="currentMonthDisplay">2026年 2月</span>
+        <span id="currentMonthDisplay">載入中...</span>
         <button class="btn-nav" onclick="changeMonth(1)">❯</button>
     </div>
     <button id="lockBtn" class="lock-btn" onclick="toggleLock()">🔒 唯讀模式</button>
@@ -59,11 +65,11 @@
         projectId: "factor-security-d1965",
         appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
     };
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     let curYear = 2026;
-    let curMonth = 1; // 0=1月, 1=2月...
+    let curMonth = 2; // 預設跳到 3 月測試
     let isEditing = false;
     const staffData = [
         {group: "總務", name: "盧家慶"}, {group: "總務", name: "何鴻隆"},
@@ -78,7 +84,6 @@
         const wHead = document.getElementById('weekHeader');
         const tbody = document.getElementById('rosterBody');
         
-        // 清空舊表格
         dHead.innerHTML = `<th class="sticky-left">組別</th><th class="sticky-left-2">姓名</th>`;
         wHead.innerHTML = `<th class="sticky-left">-</th><th class="sticky-left-2">-</th>`;
         tbody.innerHTML = '';
@@ -86,7 +91,6 @@
         document.getElementById('currentMonthDisplay').innerText = `${curYear}年 ${curMonth + 1}月`;
         const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
 
-        // 產生標題列
         for (let d = 1; d <= daysInMonth; d++) {
             const dateTh = document.createElement('th');
             dateTh.innerText = d;
@@ -99,19 +103,16 @@
             wHead.appendChild(weekTh);
         }
         
-        // 統計標題
         ["日", "夜", "休"].forEach(t => {
             const th = document.createElement('th'); th.className = "summary-col"; th.innerText = t;
             dHead.appendChild(th);
             wHead.appendChild(document.createElement('th'));
         });
 
-        // 產生人員列
         staffData.forEach(p => {
             const tr = document.createElement('tr');
             let rowHtml = `<td class="sticky-left">${p.group}</td><td class="sticky-left-2"><b>${p.name}</b></td>`;
             for (let d = 1; d <= daysInMonth; d++) {
-                // 修改資料庫 Key 包含年月，避免混淆
                 rowHtml += `<td><input id="${curYear}_${curMonth+1}_${p.name}_${d}" onchange="saveShift('${p.name}', ${d}, this.value)"></td>`;
             }
             rowHtml += `<td id="sd_${p.name}" class="summary-col">0</td><td id="sn_${p.name}" class="summary-col">0</td><td id="so_${p.name}" class="summary-col">0</td>`;
@@ -123,8 +124,7 @@
     }
 
     function listenToData(days) {
-        // 監聽路徑也包含年月
-        db.ref('guardSchedules').off(); // 先關掉舊的監聽
+        db.ref('guardSchedules').off();
         db.ref('guardSchedules').on('value', (snapshot) => {
             const data = snapshot.val() || {};
             staffData.forEach(p => {
@@ -135,7 +135,8 @@
                     const el = document.getElementById(id);
                     if(el) {
                         el.value = val;
-                        el.className = val ? 'val-' + val.substring(0,1) : "";
+                        el.className = "";
+                        if(val) el.classList.add('val-' + val.substring(0,1));
                         if(val.includes("日")) dc++; 
                         else if(val.includes("夜")) nc++; 
                         else if(val!=="") oc++;
@@ -170,7 +171,7 @@
         }
     }
 
-    initTable(); // 初次啟動
+    initTable();
 </script>
 </body>
 </html>
