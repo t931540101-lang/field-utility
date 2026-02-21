@@ -3,135 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>個人排班表 | 獨立存檔版</title>
+    <title>K9 個人雲端班表</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --top-bg: #000; --calendar-header: #3e5c4a; --date-bg: #fcf9ee; --text-color: #333; --weekend-color: #d32f2f; }
-        body { font-family: "Microsoft JhengHei", sans-serif; background: #e0ddd5; margin: 0; display: flex; flex-direction: column; height: 100vh; color: var(--text-color); }
-        
-        /* 頂部資訊欄 */
-        .info-bar { background: var(--top-bg); color: white; padding: 10px 15px; display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; }
-        
-        /* 月份切換欄 */
-        .month-header { background: var(--calendar-header); color: white; display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; font-size: 18px; }
-        
-        /* 月曆網格 */
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); background: #ccc; gap: 1px; flex: 1; }
-        .day-label { background: #dfd9c7; padding: 5px 0; text-align: center; font-size: 12px; font-weight: bold; }
-        .date-cell { background: var(--date-bg); position: relative; display: flex; flex-direction: column; align-items: flex-start; padding: 5px; min-height: 60px; cursor: pointer; }
-        .date-cell b { font-size: 14px; }
-        .date-cell.sun b, .date-cell.sat b { color: var(--weekend-color); }
-        
-        /* 班別顯示文字 */
-        .shift-text { width: 100%; text-align: center; margin-top: 10px; font-weight: bold; font-size: 13px; }
-        .val-日 { color: #1565c0; }
-        .val-夜 { color: #7b1fa2; }
-        .val-休, .val-例, .val-❌ { color: var(--weekend-color); }
-
-        /* 底部選單 */
-        .bottom-tools { background: #fff; padding: 15px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
-        select, .btn-erase { padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 14px; text-align: center; }
-        .btn-erase { background: #fff; cursor: pointer; border: 1px solid #ddd; }
-        .btn-erase.active { border: 2px solid var(--primary); background: #fff0f0; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #e8e2d0; margin: 0; }
+        .grid-cell { min-height: 75px; border-right: 1px solid #c2b99a; border-bottom: 1px solid #c2b99a; }
+        .today-highlight { box-shadow: inset 0 0 0 3px #c0392b; background: #fffcf5; }
     </style>
 </head>
 <body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-<div class="info-bar">
-    <span>姓名：小黑 🖋️</span>
-    <span>ID：D01762 🖋️</span>
-</div>
+        // --- Firebase 配置 ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+            authDomain: "factor-security-d1965.firebaseapp.com",
+            databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+            projectId: "factor-security-d1965",
+            storageBucket: "factor-security-d1965.firebasestorage.app",
+            messagingSenderId: "864846943143",
+            appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-<div class="month-header">
-    <span>◀</span>
-    <span>2026年 2月</span>
-    <span>▶</span>
-</div>
+        function App() {
+            const todayObj = new Date();
+            const [curYear, setCurYear] = useState(todayObj.getFullYear());
+            const [curMonth, setCurMonth] = useState(todayObj.getMonth());
+            
+            // 資料狀態
+            const [schedules, setSchedules] = useState({});
+            const [userName, setUserName] = useState(localStorage.getItem('guardName') || "小黑哥");
+            const [userID, setUserID] = useState(localStorage.getItem('guardID') || "D01762");
+            
+            const [shiftType, setShiftType] = useState("");
+            const [isClearMode, setIsClearMode] = useState(false);
 
-<div class="calendar-grid">
-    <div class="day-label" style="color:var(--weekend-color)">日</div>
-    <div class="day-label">一</div><div class="day-label">二</div><div class="day-label">三</div>
-    <div class="day-label">四</div><div class="day-label">五</div>
-    <div class="day-label" style="color:var(--weekend-color)">六</div>
-    
-    <div id="calendar-body" style="display: contents;"></div>
-</div>
+            // 1. 實時從 Firebase 讀取資料
+            useEffect(() => {
+                const ref = db.ref('guardSchedules');
+                const listener = ref.on('value', (snapshot) => {
+                    const data = snapshot.val() || {};
+                    setSchedules(data);
+                });
+                return () => ref.off('value', listener);
+            }, []);
 
-<div class="bottom-tools">
-    <select id="factorySelect">
-        <option value="廠區">🏢 廠區</option>
-    </select>
-    <select id="shiftSelect">
-        <option value="">📝 班別</option>
-        <option value="日B">日B班</option>
-        <option value="日班">日班</option>
-        <option value="夜B">夜B班</option>
-        <option value="夜E">夜E班</option>
-        <option value="休假">休假</option>
-        <option value="特休">特休</option>
-        <option value="例假">例假</option>
-        <option value="❌">不行❌</option>
-    </select>
-    <button id="eraseBtn" class="btn-erase" onclick="toggleErase()">橡皮擦</button>
-</div>
+            // 2. 當姓名變動時儲存到手機
+            useEffect(() => {
+                localStorage.setItem('guardName', userName);
+                localStorage.setItem('guardID', userID);
+            }, [userName, userID]);
 
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
-        authDomain: "factor-security-d1965.firebaseapp.com",
-        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
-        projectId: "factor-security-d1965",
-        storageBucket: "factor-security-d1965.firebasestorage.app",
-        messagingSenderId: "864846943143",
-        appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const myName = "小黑哥"; // 需對應總表上的姓名
-    let eraseMode = false;
+            const changeMonth = (dir) => {
+                let m = curMonth + dir;
+                let y = curYear;
+                if (m < 0) { m = 11; y--; }
+                else if (m > 11) { m = 0; y++; }
+                setCurMonth(m);
+                setCurYear(y);
+            };
 
-    // 1. 初始化月曆
-    const body = document.getElementById('calendar-body');
-    for (let d = 1; d <= 28; d++) {
-        const date = new Date(2026, 1, d);
-        const day = date.getDay(); // 0 是週日
-        const cell = document.createElement('div');
-        cell.className = `date-cell ${day === 0 ? 'sun' : (day === 6 ? 'sat' : '')}`;
-        cell.innerHTML = `<b>${d}</b><div class="shift-text" id="val_${d}"></div>`;
-        cell.onclick = () => handleCellClick(d);
-        body.appendChild(cell);
-    }
+            const handleCellClick = (day) => {
+                // 為了對接總表，Key 格式必須是 "姓名_日期"
+                const cellId = `${userName}_${day}`;
+                
+                if (isClearMode) {
+                    db.ref(`guardSchedules/${cellId}`).set("");
+                } else if (shiftType) {
+                    db.ref(`guardSchedules/${cellId}`).set(shiftType);
+                }
+            };
 
-    // 2. 處理點擊 (填入班別或擦除)
-    function handleCellClick(d) {
-        const path = `guardSchedules/${myName}_${d}`;
-        if (eraseMode) {
-            db.ref(path).set('');
-        } else {
-            const val = document.getElementById('shiftSelect').value;
-            if (val) db.ref(path).set(val);
+            const firstDay = new Date(curYear, curMonth, 1).getDay();
+            const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
+            const isThisMonth = todayObj.getFullYear() === curYear && todayObj.getMonth() === curMonth;
+
+            return (
+                <div className="max-w-lg mx-auto bg-[#f9f4e8] min-h-screen pb-24 shadow-2xl">
+                    {/* 頂部看板 */}
+                    <div className="bg-black text-white px-4 py-3 text-lg font-black flex justify-between border-b-2 border-[#c0392b]">
+                        <span onClick={() => { const n = prompt("輸入姓名 (須與總表一致)", userName); if(n) setUserName(n); }}>姓名：{userName} ✎</span>
+                        <span>ID：{userID}</span>
+                    </div>
+
+                    {/* 月份選擇 */}
+                    <header className="bg-[#2e5a44] text-white p-3 sticky top-0 z-50 flex justify-between items-center shadow-md">
+                        <button onClick={() => changeMonth(-1)} className="text-xl px-4 active:scale-90">❮</button>
+                        <h1 className="text-lg font-bold tracking-widest">{curYear}年 {curMonth + 1}月</h1>
+                        <button onClick={() => changeMonth(1)} className="text-xl px-4 active:scale-90">❯</button>
+                    </header>
+
+                    {/* 月曆網格 */}
+                    <div className="grid grid-cols-7 border-t border-[#c2b99a]">
+                        {["日","一","二","三","四","五","六"].map(w => (
+                            <div key={w} className="text-center py-1 text-[#8e835d] font-bold text-sm bg-[#f0e9d2] border-b border-[#c2b99a]">{w}</div>
+                        ))}
+                        {Array.from({ length: firstDay }).map((_, i) => <div key={`b-${i}`} className="grid-cell bg-[#f9f4e8]"></div>)}
+                        {Array.from({ length: daysInMonth }).map((_, i) => {
+                            const day = i + 1;
+                            const cellId = `${userName}_${day}`;
+                            const note = schedules[cellId] || "";
+                            const isWeekend = new Date(curYear, curMonth, day).getDay() % 6 === 0;
+                            const isToday = isThisMonth && todayObj.getDate() === day;
+                            
+                            let textColor = "text-[#2e5a44]";
+                            if (note.includes("例假") || note.includes("休假") || note.includes("❌")) textColor = "text-[#c0392b]";
+                            
+                            return (
+                                <div key={day} onClick={() => handleCellClick(day)} className={`grid-cell p-1 flex flex-col relative active:bg-slate-200 transition-colors ${isToday ? 'today-highlight' : ''}`}>
+                                    <div className={`text-sm font-bold ${isWeekend ? 'text-[#c0392b]' : 'text-slate-700'}`}>{day}</div>
+                                    <div className={`mt-auto text-[13px] font-black leading-tight text-center whitespace-pre-wrap ${textColor}`}>{note}</div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* 下方選單 */}
+                    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-[#f2ebd5] border-t-2 border-[#c2b99a] p-3 flex gap-2 z-[60] shadow-[0_-4px_10px_rgba(0,0,0,0.1)]">
+                        <select value={shiftType} onChange={e => {setShiftType(e.target.value); setIsClearMode(false);}} className="flex-[2] p-3 rounded border bg-white text-base font-bold outline-none border-[#c2b99a]">
+                            <option value="">📝 選擇班別填入</option>
+                            <option value="日B班">☀️ 日B班</option>
+                            <option value="夜B班">🌙 夜B班</option>
+                            <option value="夜E班">💜 夜E班</option>
+                            <option value="休假">🟢 休假</option>
+                            <option value="例假">🔴 例假</option>
+                            <option value="特休">⛱️ 特休</option>
+                            <option value="❌">❌ 不行</option>
+                        </select>
+                        <button onClick={() => {setIsClearMode(!isClearMode); setShiftType("");}} className={`flex-1 p-3 rounded border font-bold text-base transition-colors ${isClearMode ? 'bg-red-600 text-white' : 'bg-white text-slate-500 border-[#c2b99a]'}`}>{isClearMode ? "刪除模式" : "橡皮擦"}</button>
+                    </div>
+                </div>
+            );
         }
-    }
 
-    function toggleErase() {
-        eraseMode = !eraseMode;
-        document.getElementById('eraseBtn').classList.toggle('active', eraseMode);
-    }
-
-    // 3. 實時監聽
-    db.ref('guardSchedules').on('value', (s) => {
-        const data = s.val() || {};
-        for (let d = 1; d <= 28; d++) {
-            const val = data[myName + '_' + d] || "";
-            const el = document.getElementById(`val_${d}`);
-            if (el) {
-                el.innerText = val;
-                el.className = 'shift-text';
-                if (val) el.classList.add('val-' + val.substring(0,1));
-            }
-        }
-    });
-</script>
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
