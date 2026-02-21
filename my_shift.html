@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title> 個人雲端班表 | ID解鎖版</title>
+    <title>個人雲端班表 | 特休黃色版</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -50,7 +50,6 @@
                 return () => ref.off('value', listener);
             }, []);
 
-            // 儲存姓名與 ID 到本地
             useEffect(() => {
                 localStorage.setItem('guardName', userName);
                 localStorage.setItem('guardID', userID);
@@ -80,9 +79,8 @@
 
             return (
                 <div className="max-w-lg mx-auto bg-[#f9f4e8] min-h-screen pb-24 shadow-2xl">
-                    {/* 頂部資訊：兩邊都加上點擊修改功能 */}
                     <div className="bg-black text-white px-4 py-3 text-lg font-black flex justify-between border-b-2 border-[#c0392b]">
-                        <span className="cursor-pointer active:text-yellow-400" onClick={() => { const n = prompt("輸入姓名 (須與總表一致)", userName); if(n) setUserName(n); }}>姓名：{userName} ✎</span>
+                        <span className="cursor-pointer active:text-yellow-400" onClick={() => { const n = prompt("輸入姓名", userName); if(n) setUserName(n); }}>姓名：{userName} ✎</span>
                         <span className="cursor-pointer active:text-yellow-400" onClick={() => { const id = prompt("輸入您的工號 ID", userID); if(id) setUserID(id); }}>ID：{userID} ✎</span>
                     </div>
 
@@ -97,22 +95,20 @@
                             <div key={w} className={`text-center py-1 font-bold text-sm bg-[#f0e9d2] border-b border-[#c2b99a] ${w==='日'||w==='六' ? 'text-[#c0392b]' : 'text-[#8e835d]'}`}>{w}</div>
                         ))}
                         {Array.from({ length: firstDay }).map((_, i) => <div key={`b-${i}`} className="grid-cell bg-[#f9f4e8]"></div>)}
-                        // 在 React 的渲染邏輯中，我修改了 textColor 的判斷
                         {Array.from({ length: daysInMonth }).map((_, i) => {
-                                     const day = i + 1;
-                                     const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
-                                     const note = schedules[cellId] || "";
-                                   // ...
-    
-                                     let textColor = "text-[#2e5a44]"; // 預設綠
-                                     if (note.includes("例假") || note.includes("休假") || note.includes("❌")) {
-                                     textColor = "text-[#c0392b]"; // 假或不行變紅
-                                     } else if (note.includes("特休")) {
-                                     textColor = "text-[#f1c40f]"; // 特休變成金黃色！
-                                    }
-    
-                                   // ... 回傳 DOM ...
-                               })}
+                            const day = i + 1;
+                            const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
+                            const note = schedules[cellId] || "";
+                            const isWeekend = new Date(curYear, curMonth, day).getDay() % 6 === 0;
+                            const isToday = isThisMonth && todayObj.getDate() === day;
+                            
+                            // 顏色邏輯判斷
+                            let textColor = "text-[#2e5a44]"; // 預設深綠
+                            if (note.includes("例假") || note.includes("休假") || note.includes("❌")) {
+                                textColor = "text-[#c0392b]"; // 紅色
+                            } else if (note.includes("特休")) {
+                                textColor = "text-[#f1c40f]"; // 黃色！
+                            }
                             
                             return (
                                 <div key={day} onClick={() => handleCellClick(day)} className={`grid-cell p-1 flex flex-col relative active:bg-slate-200 transition-colors ${isToday ? 'today-highlight' : ''}`}>
