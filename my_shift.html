@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title> 個人雲端班表 | 全自動同步版</title>
+    <title>K9 個人雲端班表 | ID解鎖版</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -34,7 +34,7 @@
         function App() {
             const todayObj = new Date();
             const [curYear, setCurYear] = useState(todayObj.getFullYear());
-            const [curMonth, setCurMonth] = useState(todayObj.getMonth()); // 0-11
+            const [curMonth, setCurMonth] = useState(todayObj.getMonth());
             
             const [schedules, setSchedules] = useState({});
             const [userName, setUserName] = useState(localStorage.getItem('guardName') || "小黑哥");
@@ -42,7 +42,6 @@
             const [shiftType, setShiftType] = useState("");
             const [isClearMode, setIsClearMode] = useState(false);
 
-            // 實時監聽雲端資料
             useEffect(() => {
                 const ref = db.ref('guardSchedules');
                 const listener = ref.on('value', (snapshot) => {
@@ -51,6 +50,7 @@
                 return () => ref.off('value', listener);
             }, []);
 
+            // 儲存姓名與 ID 到本地
             useEffect(() => {
                 localStorage.setItem('guardName', userName);
                 localStorage.setItem('guardID', userID);
@@ -66,9 +66,7 @@
             };
 
             const handleCellClick = (day) => {
-                // 關鍵：存檔路徑必須包含 年_月_姓名_日，才能跟總表 V4.0 對接
                 const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
-                
                 if (isClearMode) {
                     db.ref(`guardSchedules/${cellId}`).set("");
                 } else if (shiftType) {
@@ -82,20 +80,18 @@
 
             return (
                 <div className="max-w-lg mx-auto bg-[#f9f4e8] min-h-screen pb-24 shadow-2xl">
-                    {/* 頂部資訊 */}
+                    {/* 頂部資訊：兩邊都加上點擊修改功能 */}
                     <div className="bg-black text-white px-4 py-3 text-lg font-black flex justify-between border-b-2 border-[#c0392b]">
-                        <span onClick={() => { const n = prompt("輸入姓名 (須與總表一致)", userName); if(n) setUserName(n); }}>姓名：{userName} ✎</span>
-                        <span>ID：{userID}</span>
+                        <span className="cursor-pointer active:text-yellow-400" onClick={() => { const n = prompt("輸入姓名 (須與總表一致)", userName); if(n) setUserName(n); }}>姓名：{userName} ✎</span>
+                        <span className="cursor-pointer active:text-yellow-400" onClick={() => { const id = prompt("輸入您的工號 ID", userID); if(id) setUserID(id); }}>ID：{userID} ✎</span>
                     </div>
 
-                    {/* 月份切換 */}
                     <header className="bg-[#2e5a44] text-white p-3 sticky top-0 z-50 flex justify-between items-center shadow-md">
                         <button onClick={() => changeMonth(-1)} className="text-xl px-4 active:scale-90">❮</button>
                         <h1 className="text-lg font-bold tracking-widest">{curYear}年 {curMonth + 1}月</h1>
                         <button onClick={() => changeMonth(1)} className="text-xl px-4 active:scale-90">❯</button>
                     </header>
 
-                    {/* 月曆格子 */}
                     <div className="grid grid-cols-7 border-t border-[#c2b99a]">
                         {["日","一","二","三","四","五","六"].map(w => (
                             <div key={w} className={`text-center py-1 font-bold text-sm bg-[#f0e9d2] border-b border-[#c2b99a] ${w==='日'||w==='六' ? 'text-[#c0392b]' : 'text-[#8e835d]'}`}>{w}</div>
@@ -120,7 +116,6 @@
                         })}
                     </div>
 
-                    {/* 下方選單 */}
                     <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-[#f2ebd5] border-t-2 border-[#c2b99a] p-3 flex gap-2 z-[60] shadow-[0_-4px_10px_rgba(0,0,0,0.1)]">
                         <select value={shiftType} onChange={e => {setShiftType(e.target.value); setIsClearMode(false);}} className="flex-[2] p-3 rounded border bg-white text-base font-bold outline-none border-[#c2b99a]">
                             <option value="">📝 選擇班別填入</option>
