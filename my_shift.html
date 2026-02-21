@@ -1,0 +1,8 @@
+<script>
+    const myName = "盧家慶"; // 每個警衛的檔案這行名字不同
+
+    function setNoGo(date) {
+        // 當警衛點擊日期，直接在雲端標記「❌」
+        db.ref('guard_requests/' + myName + '/' + date).set('❌');
+    }
+</script>
