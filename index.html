@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>K9 指揮部 | 2026 專業版</title>
-    <link rel="icon" href="IMG_0177.jpeg">
-    <link rel="apple-touch-icon" href="IMG_0177.jpeg">
+    
+    <link rel="icon" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
+    
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -69,8 +71,9 @@
                 if(confirm("確定刪除此條病歷紀錄嗎？")) db.ref(`k9Logs/${dogId}/${logKey}`).remove();
             };
 
+            // 💡 這裡修正了 404 問題，直接指向同目錄下的 me.html
             const goToHub = () => {
-                window.location.href = 'https://t931540101.github.io/field-utility/me.html';
+                window.location.href = 'me.html';
             };
 
             return (
@@ -116,7 +119,7 @@
 
                     <div className="mt-8 mb-10 text-center">
                          <button onClick={goToHub}
-                            className="bg-red-500 text-white px-8 py-3 rounded-full font-bold text-sm shadow-lg active:scale-95">
+                            className="bg-red-500 text-white px-10 py-4 rounded-full font-black text-xl shadow-lg active:scale-95 tracking-widest transition-all">
                              管理中心 →
                          </button>
                     </div>
@@ -128,4 +131,3 @@
     </script>
 </body>
 </html>
-
