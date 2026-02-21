@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>小黑哥專屬 - 同步實驗室</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #ffffff;
+            --primary: #2c3e50;
+            --accent: #27ae60;
+            --text: #333;
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 400px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .card { background: var(--card); border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        h3 { margin-top: 0; color: var(--primary); font-size: 1rem; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        
+        input, textarea { 
+            width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; 
+            border-radius: 8px; box-sizing: border-box; font-size: 16px; background: #fff;
+        }
+        button { 
+            width: 100%; padding: 15px; background: var(--primary); color: white; 
+            border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s;
+        }
+        button:active { background: var(--accent); transform: scale(0.98); }
+
+        /* 顯示區域樣式 */
+        .display-area { background: #eef2f3; border-radius: 10px; padding: 15px; min-height: 80px; margin-bottom: 10px; border-left: 5px solid var(--accent); }
+        .info-tag { font-size: 0.75rem; color: #666; margin-bottom: 5px; }
+        .msg-content { font-size: 1.1rem; font-weight: 500; color: #1a1a1a; word-wrap: break-word; }
+        .status-dot { height: 10px; width: 10px; background-color: #bbb; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .online { background-color: var(--accent); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>實驗室 V1.0</h2>
+        <div id="connectionStatus"><span class="status-dot" id="dot"></span>正在連線雲端...</div>
+    </div>
+
+    <div class="card">
+        <h3>最新接收訊息</h3>
+        <div class="display-area">
+            <div class="info-tag" id="senderInfo">等待資料中...</div>
+            <div class="msg-content" id="msgBody">尚未收到訊息</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>發送測試</h3>
+        <input type="text" id="myName" placeholder="本機稱呼 (如：手機、平板)">
+        <textarea id="myMsg" placeholder="輸入要傳送的文字..."></textarea>
+        <button onclick="sendData()">立刻同步發送</button>
+    </div>
+</div>
+
+<script>
+    // ⚠️ 首席工程師提醒：請在此換上您 Firebase 的 Config 資訊
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    // 初始化 Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // 監控連線狀態
+    const dot = document.getElementById('dot');
+    db.ref(".info/connected").on("value", (snap) => {
+        if (snap.val() === true) {
+            dot.classList.add('online');
+            document.getElementById('connectionStatus').innerText = "雲端連線中 (可即時同步)";
+        } else {
+            dot.classList.remove('online');
+            document.getElementById('connectionStatus').innerText = "連線中斷";
+        }
+    });
+
+    // --- 發送功能 ---
+    function sendData() {
+        const name = document.getElementById('myName').value || "未知設備";
+        const content = document.getElementById('myMsg').value;
+        
+        if (!content) {
+            alert("請輸入內容！");
+            return;
+        }
+
+        // 使用 set 覆蓋測試節點，確保兩台設備看到的永遠是「最新一筆」
+        db.ref('lab_sync_test').set({
+            user: name,
+            text: content,
+            time: new Date().toLocaleTimeString()
+        }).then(() => {
+            document.getElementById('myMsg').value = ""; // 發送完清空
+        });
+    }
+
+    // --- 接收功能 (實時監聽) ---
+    db.ref('lab_sync_test').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            document.getElementById('senderInfo').innerText = "來自：" + data.user + " | 時間：" + data.time;
+            document.getElementById('msgBody').innerText = data.text;
+            
+            // 讓手機震動一下（如果支援的話）
+            if (navigator.vibrate) navigator.vibrate(200);
+        }
+    });
+</script>
+
+</body>
+</html>
