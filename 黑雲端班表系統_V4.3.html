@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>黑雲端班表系統 V4.5</title>
+    <title>黑雲端班表系統 V4.6</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -12,39 +12,22 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #e8e2d0; margin: 0; overflow-x: hidden; }
         
-        body { 
-            font-family: 'Noto Sans TC', sans-serif; 
-            background-color: #e8e2d0; /* 換回您最愛的漂漂底色 */
-            margin: 0;
-            overflow-x: hidden;
-        }
-
-        /* 中央徽章浮水印 */
+        /* 修正後的中央徽章：使用固定圖檔或淡淡的透明度 */
         .watermark-bg {
             position: fixed;
-            top: 50%;
+            top: 55%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 80%; /* 放在中間，佔據 80% 寬度 */
-            opacity: 0.15; /* 調得很淡，確保不擋字 */
+            width: 70%;
+            opacity: 0.12; /* 調得很淡，確保不擋字 */
             z-index: 0;
-            pointer-events: none; /* 讓它不會被點到 */
+            pointer-events: none;
         }
 
-        .main-container {
-            position: relative;
-            z-index: 10;
-            background: rgba(249, 244, 232, 0.7); /* 半透明米色，透出底下的星星 */
-            min-height: 100vh;
-        }
-
-        .grid-cell { 
-            min-height: 85px; 
-            border-right: 1px solid rgba(194, 185, 154, 0.6); 
-            border-bottom: 1px solid rgba(194, 185, 154, 0.6); 
-        }
-        
+        .main-container { position: relative; z-index: 10; background: rgba(232, 226, 208, 0.6); min-height: 100vh; }
+        .grid-cell { min-height: 85px; border-right: 1px solid #c2b99a; border-bottom: 1px solid #c2b99a; }
         .today-highlight { box-shadow: inset 0 0 0 3px #c0392b; background: rgba(255, 252, 245, 0.8); }
         .val-text { font-weight: 900; font-size: 13px; text-align: center; }
         .color-day { color: #2e5a44; } 
@@ -53,33 +36,92 @@
     </style>
 </head>
 <body>
-    {/* 插入中央徽章圖片 */}
-    <img src="https://share.google/s2QYgr4o0iid94PN1" class="watermark-bg" alt="Logo">
+    {/* 使用穩定圖片來源，或您可以換成 GitHub 上的相對路徑 logo.png */}
+    <img src="https://raw.githubusercontent.com/t931540101-lang/field-utility/main/logo.png" class="watermark-bg" onerror="this.style.display='none'">
     
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect } = React;
-        // ... (Firebase 設定維持 V4.3 穩定版) ...
+        // Firebase 設定與 V4.3 相同
+        const firebaseConfig = {
+            apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+            databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+            projectId: "factor-security-d1965",
+            appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
         function App() {
-            // ... (邏輯維持不變) ...
+            const params = new URLSearchParams(window.location.search);
+            const [userName, setUserName] = useState(params.get('n') || localStorage.getItem('guardName') || "小黑哥");
+            const [userID, setUserID] = useState(params.get('id') || localStorage.getItem('guardID') || "D01762");
+            const [curYear, setCurYear] = useState(new Date().getFullYear());
+            const [curMonth, setCurMonth] = useState(new Date().getMonth());
+            const [schedules, setSchedules] = useState({});
+            const [shiftText, setShiftText] = useState("");
+            const [isClearMode, setIsClearMode] = useState(false);
+
+            useEffect(() => {
+                const ref = db.ref('guardSchedules');
+                const listener = ref.on('value', (s) => setSchedules(s.val() || {}));
+                return () => ref.off('value', listener);
+            }, []);
+
+            const firstDay = new Date(curYear, curMonth, 1).getDay();
+            const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
+
             return (
                 <div className="max-w-lg mx-auto main-container pb-52 shadow-2xl">
-                    {/* 這裡面的內容就維持 V4.3 那套漂亮的 UI */}
                     <div className="bg-black text-white px-4 py-3 text-lg font-black flex justify-between border-b-2 border-[#c0392b]">
-                        <span>姓名：{userName}</span>
+                        <span>姓名：{userName} ✎</span>
                         <span>工號：{userID}</span>
                     </div>
-
-                    <header className="bg-[#2e5a44] text-white p-4 flex justify-between items-center">
-                        <h1 className="text-xl font-black">黑雲端班表系統 V4.5</h1>
+                    <header className="bg-[#2e5a44] text-white p-4 flex justify-between items-center shadow-md">
+                        <button onClick={() => setCurMonth(curMonth - 1)} className="text-2xl px-4">❮</button>
+                        <div className="text-center">
+                            <h1 className="text-xl font-black">黑雲端班表系統 V4.6</h1>
+                            <p className="text-sm font-bold">{curYear}年 {curMonth + 1}月</p>
+                        </div>
+                        <button onClick={() => setCurMonth(curMonth + 1)} className="text-2xl px-4">❯</button>
                     </header>
-                    {/* ... (其餘月曆內容) ... */}
+                    <div className="grid grid-cols-7 border-t border-[#c2b99a]">
+                        {["日","一","二","三","四","五","六"].map(w => (
+                            <div key={w} className={`text-center py-2 font-black text-sm bg-[#f0e9d2]/80 border-b border-[#c2b99a] ${w==='日'||w==='六' ? 'text-red-600' : 'text-gray-600'}`}>{w}</div>
+                        ))}
+                        {Array.from({ length: firstDay }).map((_, i) => <div key={`b-${i}`} className="grid-cell"></div>)}
+                        {Array.from({ length: daysInMonth }).map((_, i) => {
+                            const day = i + 1;
+                            const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
+                            const note = schedules[cellId] || "";
+                            return (
+                                <div key={day} onClick={() => {
+                                    if(isClearMode) db.ref(`guardSchedules/${cellId}`).set("");
+                                    else if(shiftText) db.ref(`guardSchedules/${cellId}`).set(shiftText);
+                                }} className="grid-cell p-1 flex flex-col relative active:bg-white/50">
+                                    <div className="text-sm font-black text-gray-700">{day}</div>
+                                    <div className={`mt-auto mb-1 val-text ${note.includes('休')?'color-off':'color-day'}`}>{note}</div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white/90 p-4 z-[70] border-t border-gray-300">
+                        <div className="flex gap-2 mb-4">
+                            <input type="text" value={shiftText} onChange={(e)=>setShiftText(e.target.value)} className="flex-1 p-3 border-2 border-gray-300 rounded-xl font-bold text-center" placeholder="輸入班別"/>
+                            <button onClick={()=>setIsClearMode(!isClearMode)} className={`px-4 rounded-xl border-2 font-black ${isClearMode?'bg-red-600 text-white':'bg-white text-gray-400'}`}>抹</button>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2">
+                            {["日B班", "夜B班", "夜E班", "休假", "例假", "特休", "補休", "換班"].map(s => (
+                                <button key={s} onClick={()=>{setShiftText(s);setIsClearMode(false)}} className="bg-white border-2 border-gray-300 py-3 rounded-xl text-[13px] font-black">{s}</button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             );
         }
-        // ...
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
