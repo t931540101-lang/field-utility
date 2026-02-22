@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>K9 個人雲端班表 | 經典框架版</title>
+    <title>K9 個人雲端班表 | 自動帶入版</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -15,11 +15,10 @@
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #e8e2d0; margin: 0; }
         .grid-cell { min-height: 80px; border-right: 1px solid #c2b99a; border-bottom: 1px solid #c2b99a; }
         .today-highlight { box-shadow: inset 0 0 0 3px #c0392b; background: #fffcf5; }
-        /* 保持經典配色的標籤 */
         .val-text { font-weight: 900; font-size: 13px; text-align: center; }
-        .color-day { color: #2e5a44; } /* 經典日班綠 */
-        .color-off { color: #c0392b; } /* 經典休假紅 */
-        .color-special { color: #f39c12; } /* 特休黃 */
+        .color-day { color: #2e5a44; } 
+        .color-off { color: #c0392b; } 
+        .color-special { color: #f39c12; } 
     </style>
 </head>
 <body>
@@ -37,12 +36,19 @@
         const db = firebase.database();
 
         function App() {
+            // 💡 核心邏輯：從網址抓取名字(n)與工號(id)
+            const params = new URLSearchParams(window.location.search);
+            const urlName = params.get('n');
+            const urlID = params.get('id');
+
             const todayObj = new Date();
             const [curYear, setCurYear] = useState(todayObj.getFullYear());
             const [curMonth, setCurMonth] = useState(todayObj.getMonth());
             const [schedules, setSchedules] = useState({});
-            const [userName, setUserName] = useState(localStorage.getItem('guardName') || "小黑哥");
-            const [userID, setUserID] = useState(localStorage.getItem('guardID') || "D01762");
+            
+            // 優先順序：網址參數 > 本地記憶 > 預設值
+            const [userName, setUserName] = useState(urlName || localStorage.getItem('guardName') || "小黑哥");
+            const [userID, setUserID] = useState(urlID || localStorage.getItem('guardID') || "D01762");
             const [shiftText, setShiftText] = useState("");
             const [isClearMode, setIsClearMode] = useState(false);
 
@@ -52,6 +58,7 @@
                 return () => ref.off('value', listener);
             }, []);
 
+            // 儲存到手機記憶，下次點開就算沒加小尾巴也會記得
             useEffect(() => {
                 localStorage.setItem('guardName', userName);
                 localStorage.setItem('guardID', userID);
@@ -78,17 +85,15 @@
 
             return (
                 <div className="max-w-lg mx-auto bg-[#f9f4e8] min-h-screen pb-48 shadow-2xl">
-                    {/* 經典黑底頂欄 */}
                     <div className="bg-black text-white px-4 py-3 text-lg font-black flex justify-between border-b-2 border-[#c0392b]">
                         <span onClick={() => { const n = prompt("修改姓名", userName); if(n) setUserName(n); }}>姓名：{userName} ✎</span>
                         <span onClick={() => { const id = prompt("修改工號", userID); if(id) setUserID(id); }}>ID：{userID} ✎</span>
                     </div>
 
-                    {/* 經典墨綠標題 */}
                     <header className="bg-[#2e5a44] text-white p-3 sticky top-0 z-50 flex justify-between items-center shadow-md">
-                        <button onClick={() => changeMonth(-1)} className="text-xl px-4">❮</button>
+                        <button onClick={() => changeMonth(-1)} className="text-xl px-4 font-bold">❮</button>
                         <h1 className="text-lg font-bold tracking-widest">{curYear}年 {curMonth + 1}月</h1>
-                        <button onClick={() => changeMonth(1)} className="text-xl px-4">❯</button>
+                        <button onClick={() => changeMonth(1)} className="text-xl px-4 font-bold">❯</button>
                     </header>
 
                     <div className="grid grid-cols-7 border-t border-[#c2b99a]">
@@ -116,7 +121,6 @@
                         })}
                     </div>
 
-                    {/* 下方控制台：融入經典配色 */}
                     <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-[#f2ebd5] border-t-2 border-[#c2b99a] p-3 z-[60] shadow-inner">
                         <div className="flex gap-2 mb-3">
                             <input 
@@ -128,8 +132,8 @@
                             />
                             <button onClick={() => {setIsClearMode(!isClearMode); setShiftText("");}} className={`px-4 rounded-lg border font-bold ${isClearMode ? 'bg-red-600 text-white shadow-md' : 'bg-white text-slate-500 border-[#c2b99a]'}`}>{isClearMode ? "刪除中" : "橡皮擦"}</button>
                         </div>
-                        <div className="grid grid-cols-4 gap-1.5">
-                            {["日B班", "夜B班", "夜E班", "休假", "例假", "特休", "補休", "換班","國定假日"].map(s => (
+                        <div className="grid grid-cols-4 gap-1.5 text-center">
+                            {["日B班", "夜B班", "夜E班", "休假", "例假", "特休", "補休", "換班"].map(s => (
                                 <button key={s} onClick={() => {setShiftText(s); setIsClearMode(false);}} className="bg-white border border-[#c2b99a] py-2 rounded-lg text-[12px] font-bold text-slate-600 shadow-sm active:bg-[#2e5a44] active:text-white">{s}</button>
                             ))}
                         </div>
@@ -141,130 +145,5 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
-</body>
-</html><!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>個人排班回報 - 小黑哥</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <style>
-        :root { --primary: #d32f2f; --bg: #f0f2f5; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .user-info { border-bottom: 2px solid var(--primary); margin-bottom: 20px; padding-bottom: 10px; }
-        
-        /* 日曆網格 */
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        .date-btn { 
-            padding: 12px 5px; background: white; border: 1px solid #ddd; border-radius: 10px; 
-            font-size: 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center;
-        }
-        .date-btn span { font-size: 10px; color: #888; margin-bottom: 3px; }
-        .date-btn b { font-size: 16px; }
-        
-        /* 班別色彩 */
-        .shift-val { font-size: 12px; margin-top: 5px; font-weight: bold; }
-        .is-day { background: #e3f2fd; border-color: #2196f3; color: #1565c0; }
-        .is-night { background: #f3e5f5; border-color: #9c27b0; color: #7b1fa2; }
-        .is-off { background: #ffebee; border-color: #f44336; color: #c62828; }
-
-        /* 彈出選單 */
-        #menuOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:100; justify-content:center; align-items:center; }
-        .menu-box { background:white; padding:20px; border-radius:15px; width:80%; max-width:300px; text-align:center; }
-        .menu-title { margin-bottom: 15px; font-weight: bold; color: #333; }
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .menu-btn { padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
-    </style>
-</head>
-<body>
-
-<div class="card">
-    <div class="user-info">
-        <h2 style="margin:0;"> 2月排班回報</h2>
-        <p style="font-size:12px; color:#666; margin:5px 0 0 0;">點擊日期即可設定班別</p>
-    </div>
-    <div id="calendar" class="grid"></div>
-</div>
-
-<div id="menuOverlay">
-    <div class="menu-box">
-        <div class="menu-title" id="menuDateTitle">選擇班別</div>
-        <div class="menu-grid">
-            <button class="menu-btn" style="background:#2196f3;" onclick="setShift('日B')">日B班</button>
-            <button class="menu-btn" style="background:#9c27b0;" onclick="setShift('夜E')">夜E班</button>
-            <button class="menu-btn" style="background:#f44336;" onclick="setShift('特休')">特休</button>
-            <button class="menu-btn" style="background:#e91e63;" onclick="setShift('例假')">例假</button>
-            <button class="menu-btn" style="background:#7f8c8d;" onclick="setShift('❌')">不行❌</button>
-            <button class="menu-btn" style="background:#ccc; color:#333;" onclick="setShift('')">清除</button>
-        </div>
-        <button style="margin-top:15px; background:none; border:none; color:#999;" onclick="closeMenu()">取消</button>
-    </div>
-</div>
-
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
-        authDomain: "factor-security-d1965.firebaseapp.com",
-        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
-        projectId: "factor-security-d1965",
-        storageBucket: "factor-security-d1965.firebasestorage.app",
-        messagingSenderId: "864846943143",
-        appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    
-    const myName = "小黑哥"; 
-    let selectedDay = null;
-
-    // 1. 產生日期按鈕
-    const container = document.getElementById('calendar');
-    for (let d = 1; d <= 28; d++) {
-        const btn = document.createElement('div');
-        btn.className = 'date-btn';
-        btn.id = `btn_${d}`;
-        btn.innerHTML = `<span>2月</span><b>${d}</b><div class="shift-val" id="val_${d}">-</div>`;
-        btn.onclick = () => openMenu(d);
-        container.appendChild(btn);
-    }
-
-    // 2. 監聽雲端並美化按鈕
-    db.ref('guardSchedules').on('value', (snapshot) => {
-        const data = snapshot.val();
-        for (let d = 1; d <= 28; d++) {
-            const btn = document.getElementById(`btn_${d}`);
-            const valDiv = document.getElementById(`val_${d}`);
-            const val = (data && data[myName + '_' + d]) ? data[myName + '_' + d] : '';
-            
-            valDiv.innerText = val || '-';
-            btn.className = 'date-btn'; // 重設
-            if(val.includes('日')) btn.classList.add('is-day');
-            if(val.includes('夜')) btn.classList.add('is-night');
-            if(val.includes('休') || val.includes('例') || val.includes('❌')) btn.classList.add('is-off');
-        }
-    });
-
-    // 3. 選單邏輯
-    function openMenu(d) {
-        selectedDay = d;
-        document.getElementById('menuDateTitle').innerText = "2月 " + d + " 日 班別設定";
-        document.getElementById('menuOverlay').style.display = 'flex';
-    }
-
-    function closeMenu() {
-        document.getElementById('menuOverlay').style.display = 'none';
-    }
-
-    function setShift(shiftType) {
-        if(selectedDay) {
-            db.ref('guardSchedules/' + myName + '_' + selectedDay).set(shiftType);
-            closeMenu();
-        }
-    }
-</script>
-
 </body>
 </html>
