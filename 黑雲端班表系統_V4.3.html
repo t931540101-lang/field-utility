@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>黑雲端班表系統 V4.8</title>
+    <title>黑雲端班表系統 V4.9</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -13,27 +13,33 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #e8e2d0; margin: 0; overflow-x: hidden; }
+        
         .watermark-bg {
-            position: fixed;
-            top: 55%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 75%;
-            opacity: 0.12;
-            z-index: 0;
-            pointer-events: none;
+            position: fixed; top: 55%; left: 50%; transform: translate(-50%, -50%);
+            width: 70%; opacity: 0.12; z-index: 0; pointer-events: none;
         }
+
         .main-container { position: relative; z-index: 10; background: rgba(232, 226, 208, 0.7); min-height: 100vh; }
-        .grid-cell { min-height: 85px; border-right: 1px solid #c2b99a; border-bottom: 1px solid #c2b99a; }
+        
+        /* 縮小格子高度，讓螢幕容納更多日期 */
+        .grid-cell { min-height: 75px; border-right: 1px solid #c2b99a; border-bottom: 1px solid #c2b99a; }
+        
         .today-highlight { box-shadow: inset 0 0 0 3px #c0392b; background: rgba(255, 252, 245, 0.8); }
         .val-text { font-weight: 900; font-size: 13px; text-align: center; }
         .color-day { color: #2e5a44; } 
         .color-off { color: #c0392b; } 
-        .color-special { color: #f39c12; } 
+
+        /* 底部控制面板瘦身：高度縮減 */
+        .bottom-panel {
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 512px; background: rgba(255, 255, 255, 0.95);
+            padding: 8px 12px 20px 12px; /* 縮減內距 */
+            border-top: 1px solid #ccc; z-index: 70; backdrop-filter: blur(5px);
+        }
     </style>
 </head>
 <body>
-    <img src="logo.png" class="watermark-bg" alt="" onerror="this.style.display='none'">
+    <img src="logo.png" class="watermark-bg" onerror="this.style.display='none'">
     <div id="root"></div>
     <script type="text/babel">
         const { useState, useEffect } = React;
@@ -49,7 +55,6 @@
         function App() {
             const params = new URLSearchParams(window.location.search);
             const [userName, setUserName] = useState(params.get('n') || localStorage.getItem('guardName') || "小黑哥");
-            const [userID, setUserID] = useState(params.get('id') || localStorage.getItem('guardID') || "D01762");
             const [curYear, setCurYear] = useState(new Date().getFullYear());
             const [curMonth, setCurMonth] = useState(new Date().getMonth());
             const [schedules, setSchedules] = useState({});
@@ -62,58 +67,50 @@
                 return () => ref.off('value', listener);
             }, []);
 
-            const changeMonth = (dir) => {
-                let m = curMonth + dir; let y = curYear;
-                if (m < 0) { m = 11; y--; } else if (m > 11) { m = 0; y++; }
-                setCurMonth(m); setCurYear(y);
-            };
-
-            const firstDay = new Date(curYear, curMonth, 1).getDay();
             const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
+            const firstDay = new Date(curYear, curMonth, 1).getDay();
 
             return (
-                <div className="max-w-lg mx-auto main-container pb-52 shadow-2xl">
-                    <div className="bg-black text-white px-4 py-3 text-lg font-black flex justify-between border-b-2 border-[#c0392b] sticky top-0 z-[60]">
-                        <span onClick={() => { const n = prompt("修改姓名", userName); if(n) setUserName(n); }}>姓名：{userName} ✎</span>
-                        <span>ID：{userID}</span>
+                <div className="max-w-lg mx-auto main-container pb-40 shadow-2xl">
+                    <div className="bg-black text-white px-4 py-2 text-md font-black flex justify-between">
+                        <span>姓名：{userName}</span>
+                        <span>黑雲端 V4.9</span>
                     </div>
-                    <header className="bg-[#2e5a44] text-white p-4 flex justify-between items-center shadow-md">
-                        <button onClick={() => changeMonth(-1)} className="text-2xl px-4 font-bold">❮</button>
-                        <div className="text-center">
-                            <h1 className="text-xl font-black">黑雲端班表系統 V4.8</h1>
-                            <p className="text-sm font-bold">{curYear}年 {curMonth + 1}月</p>
-                        </div>
-                        <button onClick={() => changeMonth(1)} className="text-2xl px-4 font-bold">❯</button>
+                    <header className="bg-[#2e5a44] text-white p-3 flex justify-between items-center shadow-md">
+                        <button onClick={() => setCurMonth(curMonth-1)} className="px-4 text-xl">❮</button>
+                        <div className="text-center font-black">{curYear}年 {curMonth + 1}月</div>
+                        <button onClick={() => setCurMonth(curMonth+1)} className="px-4 text-xl">❯</button>
                     </header>
                     <div className="grid grid-cols-7 border-t border-[#c2b99a]">
                         {["日","一","二","三","四","五","六"].map(w => (
-                            <div key={w} className={`text-center py-2 font-black text-sm bg-[#f0e9d2]/80 border-b border-[#c2b99a] ${w==='日'||w==='六' ? 'text-red-600' : 'text-gray-600'}`}>{w}</div>
+                            <div key={w} className="text-center py-1 font-bold text-xs bg-[#f0e9d2] border-b border-[#c2b99a]">{w}</div>
                         ))}
                         {Array.from({ length: firstDay }).map((_, i) => <div key={`b-${i}`} className="grid-cell"></div>)}
                         {Array.from({ length: daysInMonth }).map((_, i) => {
                             const day = i + 1;
                             const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
                             const note = schedules[cellId] || "";
-                            const isWeekend = new Date(curYear, curMonth, day).getDay() % 6 === 0;
                             return (
                                 <div key={day} onClick={() => {
                                     if(isClearMode) db.ref(`guardSchedules/${cellId}`).set("");
                                     else if(shiftText) db.ref(`guardSchedules/${cellId}`).set(shiftText);
-                                }} className="grid-cell p-1 flex flex-col relative active:bg-white/50">
-                                    <div className={`text-sm font-black ${isWeekend ? 'text-red-500' : 'text-gray-700'}`}>{day}</div>
-                                    <div className={`mt-auto mb-1 val-text ${note.includes('休')||note.includes('例')?'color-off':'color-day'}`}>{note}</div>
+                                }} className="grid-cell p-1 flex flex-col active:bg-white/50">
+                                    <div className="text-xs font-bold text-gray-500">{day}</div>
+                                    <div className={`mt-auto mb-1 val-text ${note.includes('休')?'color-off':'color-day'}`}>{note}</div>
                                 </div>
                             );
                         })}
                     </div>
-                    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white/90 p-4 z-[70] border-t border-gray-300">
-                        <div className="flex gap-2 mb-4">
-                            <input type="text" value={shiftText} onChange={(e)=>setShiftText(e.target.value)} className="flex-1 p-3 border-2 border-gray-300 rounded-xl font-bold text-center" placeholder="輸入班別"/>
-                            <button onClick={()=>setIsClearMode(!isClearMode)} className={`px-4 rounded-xl border-2 font-black ${isClearMode?'bg-red-600 text-white':'bg-white text-gray-400'}`}>抹</button>
+
+                    {/* 這裡就是紅框瘦身後的面板 */}
+                    <div className="bottom-panel shadow-[0_-5px_15px_rgba(0,0,0,0.1)]">
+                        <div className="flex gap-2 mb-2">
+                            <input type="text" value={shiftText} onChange={(e)=>setShiftText(e.target.value)} className="flex-1 p-2 border border-gray-300 rounded-lg text-sm text-center font-bold" placeholder="點選下方班別或輸入"/>
+                            <button onClick={()=>setIsClearMode(!isClearMode)} className={`px-4 rounded-lg border font-bold text-xs ${isClearMode?'bg-red-600 text-white':'bg-white text-gray-400'}`}>抹</button>
                         </div>
-                        <div className="grid grid-cols-4 gap-2">
-                            {["日B班", "夜B班", "夜E班", "休假", "例假", "特休", "補休", "換班"].map(s => (
-                                <button key={s} onClick={()=>{setShiftText(s);setIsClearMode(false)}} className="bg-white border-2 border-gray-300 py-3 rounded-xl text-[13px] font-black">{s}</button>
+                        <div className="grid grid-cols-4 gap-1.5">
+                            {["日B", "夜B", "夜E", "休假", "例假", "特休", "補休", "換班"].map(s => (
+                                <button key={s} onClick={()=>{setShiftText(s);setIsClearMode(false)}} className="bg-white border border-gray-300 py-2 rounded-lg text-xs font-black text-gray-700 active:bg-[#2e5a44] active:text-white">{s}</button>
                             ))}
                         </div>
                     </div>
