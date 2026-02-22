@@ -2,117 +2,155 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>K9 警衛室 | 雲端訪客登記系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>K9 訪客登記系統 | 刪除功能版</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #f4f7f6; --danger: #e74c3c; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 450px; }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { text-align: center; color: var(--primary); margin-bottom: 15px; font-size: 1.2rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+        
+        /* 表單樣式 */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .full-width { grid-column: span 2; }
+        label { font-size: 0.85rem; color: #666; font-weight: bold; }
+        input, select, textarea { 
+            width: 100%; padding: 10px; margin: 5px 0 12px 0; border: 1px solid #ddd; 
+            border-radius: 6px; box-sizing: border-box; font-size: 16px; 
+        }
+        button { 
+            width: 100%; padding: 15px; background: var(--primary); color: white; 
+            border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer;
+        }
+        button:active { background: var(--accent); }
+
+        /* 顯示清單樣式 */
+        .log-item { background: #fff; border-left: 5px solid var(--accent); padding: 12px; margin-bottom: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-size: 0.9rem; position: relative; }
+        .log-header { display: flex; justify-content: space-between; font-weight: bold; color: var(--primary); margin-bottom: 5px; padding-right: 40px; }
+        .status-bar { text-align: center; font-size: 12px; color: var(--accent); margin-bottom: 10px; }
+        
+        /* 刪除按鈕樣式 */
+        .del-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: var(--danger);
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 5px;
+            border: 1px solid #ffeded;
+            border-radius: 4px;
+            background: #fffafa;
+        }
+        .del-btn:active { background: #ffebeb; }
+    </style>
 </head>
-<body class="bg-slate-100 p-4 font-sans">
-    <div class="max-w-4xl mx-auto">
-        <header class="bg-slate-800 text-white p-4 rounded-t-xl flex justify-between items-center shadow-lg">
-            <h1 class="text-xl font-black tracking-widest">📋 雲端訪客登記系統</h1>
-            <span class="text-sm bg-slate-700 px-3 py-1 rounded-full">總機電腦連線中</span>
-        </header>
+<body>
 
-        <div class="bg-white p-6 shadow-md border-x border-slate-200 grid grid-cols-1 md:grid-cols-4 gap-4">
-            <input id="vName" type="text" placeholder="訪客姓名" class="p-3 border-2 border-slate-200 rounded-lg outline-none focus:border-slate-800 transition-all">
-            <input id="vCompany" type="text" placeholder="所屬單位" class="p-3 border-2 border-slate-200 rounded-lg outline-none focus:border-slate-800 transition-all">
-            <input id="vReason" type="text" placeholder="入廠事由" class="p-3 border-2 border-slate-200 rounded-lg outline-none focus:border-slate-800 transition-all">
-            <button onclick="addVisitor()" class="bg-slate-800 text-white font-bold py-3 rounded-lg hover:bg-slate-700 active:scale-95 transition-all">登記進入</button>
+<div class="container">
+    <div class="status-bar" id="status">● 雲端連線中 (可刪除模式)</div>
+    
+    <div class="card">
+        <h2>訪客登入</h2>
+        <div class="form-grid">
+            <div><label>日期</label><input type="date" id="date"></div>
+            <div><label>訪客姓名</label><input type="text" id="vName"></div>
+            <div><label>來訪人數</label><input type="number" id="vCount" value="1"></div>
+            <div><label>電話</label><input type="tel" id="vPhone"></div>
+            <div class="full-width"><label>公司行號</label><input type="text" id="vComp"></div>
+            <div class="full-width"><label>受訪人員</label><input type="text" id="vTarget"></div>
+            <div><label>進廠時間</label><input type="time" id="timeIn"></div>
+            <div><label>出廠時間</label><input type="time" id="timeOut"></div>
+            <div class="full-width"><label>事由</label><textarea id="vReason" rows="2"></textarea></div>
         </div>
-
-        <div class="bg-white shadow-xl rounded-b-xl overflow-hidden mt-4">
-            <table class="w-full text-left">
-                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 text-sm">
-                    <tr>
-                        <th class="p-4">時間</th>
-                        <th class="p-4">姓名</th>
-                        <th class="p-4">單位</th>
-                        <th class="p-4">事由</th>
-                        <th class="p-4 text-center">操作</th>
-                    </tr>
-                </thead>
-                <tbody id="visitorList" class="divide-y divide-slate-100">
-                    </tbody>
-            </table>
-        </div>
-
-        <div class="mt-4 flex justify-end">
-            <button onclick="clearOldData()" class="text-slate-400 text-xs hover:text-red-500 transition-colors">⚠️ 清除所有訪客資料</button>
-        </div>
+        <button onclick="submitLog()">送出登記並同步</button>
     </div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
-            databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
-            projectId: "factor-security-d1965",
-            appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+    <div id="logList">
+        <h3 style="text-align:center; color:#666;">最新登記紀錄 (實時同步中)</h3>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+        authDomain: "factor-security-d1965.firebaseapp.com",
+        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+        projectId: "factor-security-d1965",
+        storageBucket: "factor-security-d1965.firebasestorage.app",
+        messagingSenderId: "864846943143",
+        appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    window.onload = () => {
+        const now = new Date();
+        document.getElementById('date').value = now.toISOString().split('T')[0];
+        document.getElementById('timeIn').value = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    };
+
+    function submitLog() {
+        const logData = {
+            date: document.getElementById('date').value,
+            name: document.getElementById('vName').value,
+            count: document.getElementById('vCount').value,
+            phone: document.getElementById('vPhone').value,
+            company: document.getElementById('vComp').value,
+            target: document.getElementById('vTarget').value,
+            timeIn: document.getElementById('timeIn').value,
+            timeOut: document.getElementById('timeOut').value,
+            reason: document.getElementById('vReason').value,
+            timestamp: Date.now()
         };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
 
-        // 新增訪客
-        function addVisitor() {
-            const name = document.getElementById('vName').value;
-            const company = document.getElementById('vCompany').value;
-            const reason = document.getElementById('vReason').value;
-            const time = new Date().toLocaleString('zh-TW', { hour12: false });
+        if(!logData.name) { alert("請輸入訪客姓名"); return; }
 
-            if (name && company) {
-                db.ref('visitors').push({
-                    name, company, reason, time
-                });
-                document.getElementById('vName').value = '';
-                document.getElementById('vCompany').value = '';
-                document.getElementById('vReason').value = '';
-            } else {
-                alert("請至少輸入姓名與單位！");
-            }
-        }
-
-        // 刪除單筆資料
-        function deleteVisitor(id) {
-            if(confirm("確定要刪除這筆登記資料嗎？")) {
-                db.ref(`visitors/${id}`).remove();
-            }
-        }
-
-        // 清除所有資料
-        function clearOldData() {
-            if(confirm("確定要【全部清空】嗎？這將刪除目前清單上所有訪客！")) {
-                db.ref('visitors').remove();
-            }
-        }
-
-        // 監聽 Firebase 數據
-        db.ref('visitors').on('value', (snapshot) => {
-            const list = document.getElementById('visitorList');
-            list.innerHTML = '';
-            const data = snapshot.val();
-            
-            if (data) {
-                Object.keys(data).reverse().forEach(id => {
-                    const v = data[id];
-                    list.innerHTML += `
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="p-4 text-slate-500 text-xs">${v.time}</td>
-                            <td class="p-4 font-bold text-slate-800">${v.name}</td>
-                            <td class="p-4 text-slate-600">${v.company}</td>
-                            <td class="p-4 text-slate-600">${v.reason}</td>
-                            <td class="p-4 text-center">
-                                <button onclick="deleteVisitor('${id}')" class="text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-all">
-                                    🗑️
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            } else {
-                list.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-400">目前尚無訪客登記</td></tr>';
-            }
+        db.ref('visitor_logs').push(logData).then(() => {
+            alert("登記成功！資料已同步。");
+            document.getElementById('vName').value = ""; 
         });
-    </script>
+    }
+
+    // 刪除功能邏輯
+    function deleteRecord(key) {
+        if(confirm("確定要刪除這筆訪客紀錄嗎？")) {
+            db.ref('visitor_logs/' + key).remove();
+        }
+    }
+
+    db.ref('visitor_logs').limitToLast(15).on('value', (snapshot) => {
+        const listDiv = document.getElementById('logList');
+        listDiv.innerHTML = '<h3 style="text-align:center; color:#666;">最新登記紀錄 (實時同步中)</h3>';
+        
+        const data = snapshot.val();
+        if (data) {
+            Object.keys(data).reverse().forEach(key => {
+                const item = data[key];
+                const html = `
+                    <div class="log-item">
+                        <span class="del-btn" onclick="deleteRecord('${key}')">刪除</span>
+                        <div class="log-header">
+                            <span>${item.name} (${item.count}人)</span>
+                            <span>${item.timeIn} 入</span>
+                        </div>
+                        <div style="color:#555;">
+                            公司：${item.company}<br>
+                            訪談：${item.target} | 事由：${item.reason}<br>
+                            電話：${item.phone} | 出廠：${item.timeOut || '尚未'}
+                        </div>
+                    </div>
+                `;
+                listDiv.innerHTML += html;
+            });
+        }
+    });
+</script>
+
 </body>
 </html>
