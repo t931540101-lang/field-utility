@@ -3,75 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小銀安卓機·戰術操典</title>
+    <title>小銀安卓機·戰術操典 V2.0</title>
     <style>
-        :root { --dark: #121212; --card: #1e1e1e; --accent: #ff6600; --blue: #00e5ff; --text: #e0e0e0; }
-        body { margin: 0; font-family: -apple-system, sans-serif; background: var(--dark); color: var(--text); }
-        .nav-bar { display: flex; overflow-x: auto; background: #000; padding: 10px; position: sticky; top: 0; z-index: 100; border-bottom: 2px solid var(--accent); }
-        .nav-item { padding: 10px 18px; white-space: nowrap; cursor: pointer; border-radius: 20px; margin-right: 10px; background: #333; font-size: 15px; transition: 0.3s; color: white; }
-        .nav-item.active { background: var(--accent); color: #000; font-weight: bold; }
+        :root { --dark: #0f172a; --card: #1e293b; --accent: #fbbf24; --blue: #38bdf8; --text: #f1f5f9; }
+        body { margin: 0; font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: var(--dark); color: var(--text); padding-bottom: 50px; }
+        
+        /* 頂部戰術狀態欄 */
+        .status-header { background: #000; padding: 15px; border-bottom: 3px solid var(--accent); text-align: center; }
+        .status-header h1 { margin: 0; font-size: 18px; letter-spacing: 2px; color: var(--accent); }
+        .system-time { font-family: monospace; font-size: 12px; color: var(--blue); }
+
+        .nav-bar { display: flex; overflow-x: auto; background: #111; padding: 12px 10px; position: sticky; top: 0; z-index: 100; gap: 10px; }
+        .nav-item { padding: 10px 20px; white-space: nowrap; cursor: pointer; border-radius: 8px; background: #334155; font-size: 14px; transition: 0.2s; color: white; border: 1px solid transparent; }
+        .nav-item.active { background: var(--accent); color: #000; font-weight: 900; border-color: white; }
+        
         .content { padding: 15px; }
-        .tutorial-card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); display: none; border: 1px solid #333; }
-        .tutorial-card.active { display: block; animation: fadeIn 0.4s; }
-        h2 { color: var(--accent); font-size: 20px; margin-top: 0; border-left: 5px solid var(--accent); padding-left: 12px; }
-        .step-list { padding-left: 20px; line-height: 1.8; font-size: 16px; }
-        .step-list li { margin-bottom: 10px; }
-        .hint { background: rgba(255, 102, 0, 0.1); padding: 12px; border-radius: 8px; font-size: 14px; color: #ffab70; border: 1px dashed var(--accent); margin-top: 15px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .tutorial-card { background: var(--card); border-radius: 15px; padding: 22px; margin-bottom: 15px; display: none; border: 1px solid #334155; position: relative; overflow: hidden; }
+        .tutorial-card::before { content: "TOP SECRET"; position: absolute; top: 10px; right: -25px; transform: rotate(45deg); font-size: 10px; background: rgba(251, 191, 36, 0.2); color: var(--accent); padding: 2px 30px; }
+        .tutorial-card.active { display: block; animation: slideUp 0.3s ease-out; }
+        
+        h2 { color: var(--accent); font-size: 19px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .step-list { padding-left: 5px; list-style: none; }
+        .step-list li { margin-bottom: 12px; font-size: 16px; display: flex; align-items: flex-start; gap: 10px; }
+        .step-number { background: var(--accent); color: #000; font-weight: bold; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; margin-top: 3px; }
+        
+        .hint { background: rgba(56, 189, 248, 0.1); padding: 15px; border-radius: 10px; font-size: 14px; color: var(--blue); border-left: 4px solid var(--blue); margin-top: 20px; }
+        
+        /* 底部快速存取 */
+        .quick-action { display: grid; grid-cols: 2; gap: 10px; margin-top: 10px; }
+        .action-btn { background: #334155; border: 1px solid var(--blue); color: var(--blue); padding: 10px; border-radius: 8px; text-align: center; font-size: 14px; text-decoration: none; }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-<div class="nav-bar" id="navBar">
-    <div class="nav-item active" onclick="showTab('recorder')">📸 紀錄器調教</div>
-    <div class="nav-item" onclick="showTab('audio')">🎵 音質優化</div>
-    <div class="nav-item" onclick="showTab('video')">📺 畫質/系統</div>
+<div class="status-header">
+    <h1>SILVER-ANDROID TACTICAL</h1>
+    <div class="system-time" id="clock">MISSION DATE: 2026-02-23</div>
+</div>
+
+<div class="nav-bar">
+    <div class="nav-item active" onclick="showTab('recorder', this)">📸 影像調教</div>
+    <div class="nav-item" onclick="showTab('audio', this)">🎵 聲學優化</div>
+    <div class="nav-item" onclick="showTab('video', this)">⚙️ 系統維護</div>
+    <div class="nav-item" onclick="showTab('notes', this)">📝 戰術隨筆</div>
 </div>
 
 <div class="content">
     <div id="recorder" class="tutorial-card active">
-        <h2>📸 紀錄器：防曝光與夜視</h2>
+        <h2>📸 紀錄器：證據等級設定</h2>
         <ul class="step-list">
-            <li>**曝光補償 (EV)**：設為 **-1.0** (防後車大燈洗白)。</li>
-            <li>**星光夜視**：務必開啟 **ON** (增加暗處細節)。</li>
-            <li>**年份校正**：請確認為 **2026年** (法律證據效力)。</li>
-            <li>**重力感應**：設為 **低** (避免頻繁鎖檔塞滿記憶卡)。</li>
+            <li><span class="step-number">1</span> <b>EV 補償：-1.0</b> (防止夜間車牌反光過曝)。</li>
+            <li><span class="step-number">2</span> <b>星光夜視：ON</b> (暗處細節增強)。</li>
+            <li><span class="step-number">3</span> <b>G-Sensor：低</b> (避免台灣路不平頻繁鎖檔)。</li>
         </ul>
-        <div class="hint">柔提醒：班長，年份對了、曝光壓住了，小銀的紀錄器才叫最強！✨</div>
+        <div class="hint">柔提醒：小黑哥，證據力取決於清晰度，EV值是核心！</div>
     </div>
 
     <div id="audio" class="tutorial-card">
-        <h2>🎵 流行樂最佳 EQ 設定</h2>
+        <h2>🎵 流行樂 EQ 戰術配置</h2>
         <ul class="step-list">
-            <li>進入「設定」 > 「聲音設定」 > 「等化器(EQ)」。</li>
-            <li>**60Hz (低音)**：向上推 +3。</li>
-            <li>**10kHz (高音)**：向上推 +2。</li>
-            <li>開啟 **「響度控制 (Loudness)」** 增加Q彈感。</li>
+            <li><span class="step-number">1</span> <b>60Hz 低音：+3</b> (鼓點力度感)。</li>
+            <li><span class="step-number">2</span> <b>10kHz 高音：+2</b> (人聲通透度)。</li>
+            <li><span class="step-number">3</span> <b>響度(Loudness)：開啟</b> (低音量時細節依然飽滿)。</li>
         </ul>
-        <div class="hint">柔提醒：這樣調，小黑班長聽歌時會更有熱血感喔！</div>
+        <div class="hint">柔提醒：這套參數最適合聽熱血流行的交接路程！</div>
     </div>
 
     <div id="video" class="tutorial-card">
-        <h2>📺 螢幕與系統優化</h2>
+        <h2>⚙️ 系統穩定性操典</h2>
         <ul class="step-list">
-            <li>**影片畫質**：飽和度調至 60%，色彩更鮮豔。</li>
-            <li>**倒車顯影**：在 R 檔畫面點擊中央，調高亮度至 65%。</li>
-            <li>**自動關屏**：設為 **1分鐘** (夜間不晃眼，變回普通後視鏡)。</li>
-            <li>**格式化**：建議每月一次，保持記憶卡穩定。</li>
+            <li><span class="step-number">1</span> <b>每 30 天格式化</b> (確保存取效率)。</li>
+            <li><span class="step-number">2</span> <b>倒車亮度：65%</b> (夜間倒車不吃力)。</li>
+            <li><span class="step-number">3</span> <b>自動屏保：1分鐘</b> (行車不干擾視線)。</li>
         </ul>
-        <div class="hint">柔提醒：系統清乾淨了，開導航才不會發脾氣喔！</div>
+        <div class="hint">柔提醒：機器不發火，導航才靈火！🔥</div>
+    </div>
+
+    <div id="notes" class="tutorial-card">
+        <h2>📝 戰術筆記：存檔區域</h2>
+        <textarea id="memo" rows="5" class="w-full bg-[#0f172a] text-white p-3 rounded border border-slate-500 w-full mb-3" placeholder="輸入今日勤務心得..."></textarea>
+        <button onclick="saveNote()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">儲存至本機</button>
+        <div id="savedNote" class="mt-4 text-xs italic text-slate-400"></div>
     </div>
 </div>
 
 <script>
-    function showTab(tabId) {
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('active');
-            if(item.getAttribute('onclick').includes(tabId)) item.classList.add('active');
-        });
+    function showTab(tabId, el) {
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        el.classList.add('active');
         document.querySelectorAll('.tutorial-card').forEach(card => card.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
     }
+
+    function saveNote() {
+        const val = document.getElementById('memo').value;
+        localStorage.setItem('tactical_note', val);
+        document.getElementById('savedNote').innerText = "已存檔於: " + new Date().toLocaleTimeString();
+    }
+    
+    // 初始化讀取
+    window.onload = () => {
+        document.getElementById('memo').value = localStorage.getItem('tactical_note') || "";
+    };
 </script>
 
 </body>
