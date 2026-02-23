@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>警衛室雲端工具箱 | V1.1</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; margin: 0; }
+        .tab-active { border-bottom: 4px solid #1e293b; color: #1e293b; font-weight: 900; }
+        .data-card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const firebaseConfig = {
+            apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+            databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+            projectId: "factor-security-d1965",
+            appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function App() {
+            const [userName, setUserName] = useState(localStorage.getItem('guardName') || "");
+            const [tab, setTab] = useState("parcel"); 
+            const [parcelList, setParcelList] = useState([]);
+            const [visitorList, setVisitorList] = useState([]);
+
+            useEffect(() => {
+                db.ref('parcelLogs').on('value', s => setParcelList(s.val() ? Object.keys(s.val()).map(k => ({id:k, ...s.val()[k]})).reverse() : []));
+                db.ref('visitorLogs').on('value', s => setVisitorList(s.val() ? Object.keys(s.val()).map(k => ({id:k, ...s.val()[k]})).reverse() : []));
+            }, []);
+
+            const getTime = () => {
+                const now = new Date();
+                return `${now.getHours()}:${(now.getMinutes()<10?'0':'')+now.getMinutes()}`;
+            };
+
+            const pickupParcel = (id) => {
+                const pickTime = prompt("領取時間：", getTime());
+                const name = prompt("領取人簽名：");
+                if(pickTime && name) db.ref(`parcelLogs/${id}`).update({ status: "已領取", pickupTime: pickTime, receiverSign: name });
+            };
+
+            const exitVisitor = (id) => {
+                const leaveTime = prompt("離開時間：", getTime());
+                if(leaveTime) db.ref(`visitorLogs/${id}`).update({ status: "已離開", leaveTime: leaveTime, confirmedBy: userName });
+            };
+
+            return (
+                <div className="max-w-md mx-auto min-h-screen pb-20">
+                    <div className="bg-slate-800 text-white p-3 text-xs flex justify-between">
+                        <span onClick={() => { const n = prompt("修改姓名", userName); if(n) { setUserName(n); localStorage.setItem('guardName', n); } }}>姓名：{userName || "未設定"} ✎</span>
+                    </div>
+                    <div className="flex bg-white shadow-sm sticky top-0 z-50">
+                        <button onClick={() => setTab("parcel")} className={`flex-1 py-4 text-center ${tab === 'parcel' ? 'tab-active' : 'text-slate-400'}`}>📦 包裹</button>
+                        <button onClick={() => setTab("visitor")} className={`flex-1 py-4 text-center ${tab === 'visitor' ? 'tab-active' : 'text-slate-400'}`}>👤 訪客</button>
+                    </div>
+                    <div className="p-4">
+                        {tab === "parcel" ? (
+                            <div className="space-y-3">
+                                <button onClick={() => {
+                                    const r = prompt("收件人："); const c = prompt("物流公司：");
+                                    if(r && c) db.ref('parcelLogs').push({ time: new Date().toLocaleString(), receiver: r, carrier: c, recorder: userName, status: "待領取", timestamp: firebase.database.ServerValue.TIMESTAMP });
+                                }} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black shadow-lg">+ 登記包裹</button>
+                                {parcelList.map(p => (
+                                    <div key={p.id} className={`data-card p-4 relative ${p.status === '已領取' ? 'bg-slate-50 opacity-60' : ''}`}>
+                                        <div className="text-xl font-black">{p.receiver} <span className="text-sm font-normal">({p.carrier})</span></div>
+                                        {p.status !== '已領取' ? <button onClick={() => pickupParcel(p.id)} className="mt-3 w-full py-2 border border-blue-600 text-blue-600 rounded-lg font-bold">簽收領取</button> : <div className="text-xs text-blue-600 mt-1">領取：{p.pickupTime} ({p.receiverSign})</div>}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                <button onClick={() => {
+                                    const n = prompt("訪客姓名："); const t = prompt("拜訪對象：");
+                                    if(n && t) db.ref('visitorLogs').push({ time: new Date().toLocaleString(), name: n, target: t, recorder: userName, status: "在場", timestamp: firebase.database.ServerValue.TIMESTAMP });
+                                }} className="w-full bg-emerald-600 text-white py-4 rounded-xl font-black shadow-lg">+ 登記訪客</button>
+                                {visitorList.map(v => (
+                                    <div key={v.id} className={`data-card p-4 relative ${v.status === '已離開' ? 'bg-slate-50 opacity-60' : ''}`}>
+                                        <div className="text-xl font-black">{v.name} <span className="text-sm font-normal">({v.target})</span></div>
+                                        {v.status !== '已離開' ? <button onClick={() => exitVisitor(v.id)} className="mt-3 w-full py-2 border border-emerald-600 text-emerald-600 rounded-lg font-bold">簽退離開</button> : <div className="text-xs text-emerald-600 mt-1">離開時間：{v.leaveTime}</div>}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
