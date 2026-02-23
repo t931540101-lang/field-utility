@@ -3,75 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>K9 訪客登記系統 | 刪除功能版</title>
+    <title>K9 訪客登記系統 | 雲端同步 V1.1</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #27ae60; --bg: #f4f7f6; --danger: #e74c3c; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 450px; }
         .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h2 { text-align: center; color: var(--primary); margin-bottom: 15px; font-size: 1.2rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
         
-        /* 表單樣式 */
+        /* 個人資訊顯示 */
+        .user-info { background: #1e293b; color: white; width: 100%; padding: 8px 15px; font-size: 12px; display: flex; justify-content: space-between; border-radius: 8px 8px 0 0; }
+        
+        h2 { text-align: center; color: var(--primary); margin-bottom: 15px; font-size: 1.2rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full-width { grid-column: span 2; }
         label { font-size: 0.85rem; color: #666; font-weight: bold; }
-        input, select, textarea { 
+        input, textarea { 
             width: 100%; padding: 10px; margin: 5px 0 12px 0; border: 1px solid #ddd; 
             border-radius: 6px; box-sizing: border-box; font-size: 16px; 
         }
-        button { 
-            width: 100%; padding: 15px; background: var(--primary); color: white; 
-            border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer;
-        }
-        button:active { background: var(--accent); }
+        .btn-submit { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .btn-submit:active { background: var(--accent); }
 
-        /* 顯示清單樣式 */
         .log-item { background: #fff; border-left: 5px solid var(--accent); padding: 12px; margin-bottom: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-size: 0.9rem; position: relative; }
-        .log-header { display: flex; justify-content: space-between; font-weight: bold; color: var(--primary); margin-bottom: 5px; padding-right: 40px; }
-        .status-bar { text-align: center; font-size: 12px; color: var(--accent); margin-bottom: 10px; }
+        .log-header { display: flex; justify-content: space-between; font-weight: bold; color: var(--primary); margin-bottom: 5px; padding-right: 50px; }
+        .del-btn { position: absolute; top: 10px; right: 10px; color: var(--danger); font-size: 11px; cursor: pointer; padding: 3px 6px; border: 1px solid #ffeded; border-radius: 4px; }
         
-        /* 刪除按鈕樣式 */
-        .del-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            color: var(--danger);
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            padding: 5px;
-            border: 1px solid #ffeded;
-            border-radius: 4px;
-            background: #fffafa;
-        }
-        .del-btn:active { background: #ffebeb; }
+        /* 簽退按鈕 */
+        .checkout-btn { margin-top: 10px; background: #fff; color: var(--accent); border: 1px solid var(--accent); padding: 8px; border-radius: 6px; width: 100%; font-weight: bold; font-size: 13px; }
+        .checkout-btn:active { background: var(--accent); color: white; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="status-bar" id="status">● 雲端連線中 (可刪除模式)</div>
+    <div class="user-info">
+        <span onclick="changeName()">姓名：<span id="userNameDisplay">未設定</span> ✎</span>
+        <span onclick="changeID()">工號：<span id="userIDDisplay">未設定</span> ✎</span>
+    </div>
     
     <div class="card">
-        <h2>訪客登入</h2>
+        <h2>訪客登記入廠</h2>
         <div class="form-grid">
-            <div><label>日期</label><input type="date" id="date"></div>
-            <div><label>訪客姓名</label><input type="text" id="vName"></div>
+            <div class="full-width"><label>訪客姓名</label><input type="text" id="vName"></div>
             <div><label>來訪人數</label><input type="number" id="vCount" value="1"></div>
             <div><label>電話</label><input type="tel" id="vPhone"></div>
             <div class="full-width"><label>公司行號</label><input type="text" id="vComp"></div>
             <div class="full-width"><label>受訪人員</label><input type="text" id="vTarget"></div>
-            <div><label>進廠時間</label><input type="time" id="timeIn"></div>
-            <div><label>出廠時間</label><input type="time" id="timeOut"></div>
-            <div class="full-width"><label>事由</label><textarea id="vReason" rows="2"></textarea></div>
+            <div class="full-width"><label>事由</label><textarea id="vReason" rows="1"></textarea></div>
         </div>
-        <button onclick="submitLog()">送出登記並同步</button>
+        <button class="btn-submit" onclick="submitLog()">送出登記並同步雲端</button>
     </div>
 
     <div id="logList">
-        <h3 style="text-align:center; color:#666;">最新登記紀錄 (實時同步中)</h3>
+        <h3 style="text-align:center; color:#666; font-size: 14px;">實時登記清單</h3>
     </div>
 </div>
 
@@ -89,64 +75,95 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    window.onload = () => {
-        const now = new Date();
-        document.getElementById('date').value = now.toISOString().split('T')[0];
-        document.getElementById('timeIn').value = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-    };
+    // 身分記憶邏輯
+    let userName = localStorage.getItem('guardName') || "";
+    let userID = localStorage.getItem('guardID') || "";
+
+    function updateUserInfo() {
+        document.getElementById('userNameDisplay').innerText = userName || "未設定";
+        document.getElementById('userIDDisplay').innerText = userID || "未設定";
+    }
+
+    function changeName() {
+        const n = prompt("請輸入您的姓名", userName);
+        if(n) { userName = n; localStorage.setItem('guardName', n); updateUserInfo(); }
+    }
+
+    function changeID() {
+        const id = prompt("請輸入您的工號", userID);
+        if(id) { userID = id; localStorage.setItem('guardID', id); updateUserInfo(); }
+    }
+
+    window.onload = updateUserInfo;
 
     function submitLog() {
+        if(!userName) return alert("請先點擊上方設定「姓名」！");
+        
+        const now = new Date();
+        const timeIn = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        
         const logData = {
-            date: document.getElementById('date').value,
+            date: now.toISOString().split('T')[0],
             name: document.getElementById('vName').value,
             count: document.getElementById('vCount').value,
             phone: document.getElementById('vPhone').value,
             company: document.getElementById('vComp').value,
             target: document.getElementById('vTarget').value,
-            timeIn: document.getElementById('timeIn').value,
-            timeOut: document.getElementById('timeOut').value,
+            timeIn: timeIn,
+            leaveTime: "",
+            recorder: userName,
             reason: document.getElementById('vReason').value,
             timestamp: Date.now()
         };
 
-        if(!logData.name) { alert("請輸入訪客姓名"); return; }
+        if(!logData.name) return alert("請輸入訪客姓名");
 
         db.ref('visitor_logs').push(logData).then(() => {
-            alert("登記成功！資料已同步。");
+            alert("登記成功！");
             document.getElementById('vName').value = ""; 
         });
     }
 
-    // 刪除功能邏輯
-    function deleteRecord(key) {
-        if(confirm("確定要刪除這筆訪客紀錄嗎？")) {
-            db.ref('visitor_logs/' + key).remove();
+    // 簽離邏輯：支援自由修改時間
+    function checkout(key) {
+        const now = new Date();
+        const defaultTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        const leaveTime = prompt("請確認/修改出廠時間：", defaultTime);
+        
+        if(leaveTime) {
+            db.ref('visitor_logs/' + key).update({ leaveTime: leaveTime });
         }
     }
 
-    db.ref('visitor_logs').limitToLast(15).on('value', (snapshot) => {
+    function deleteRecord(key) {
+        if(confirm("確定要刪除這筆紀錄嗎？")) db.ref('visitor_logs/' + key).remove();
+    }
+
+    // 即時監聽
+    db.ref('visitor_logs').limitToLast(10).on('value', (snapshot) => {
         const listDiv = document.getElementById('logList');
-        listDiv.innerHTML = '<h3 style="text-align:center; color:#666;">最新登記紀錄 (實時同步中)</h3>';
+        listDiv.innerHTML = '<h3 style="text-align:center; color:#666; font-size: 14px;">實時登記清單</h3>';
         
         const data = snapshot.val();
         if (data) {
             Object.keys(data).reverse().forEach(key => {
                 const item = data[key];
-                const html = `
-                    <div class="log-item">
+                const isOut = item.leaveTime !== "";
+                listDiv.innerHTML += `
+                    <div class="log-item" style="${isOut ? 'opacity: 0.6; border-left-color: #ccc;' : ''}">
                         <span class="del-btn" onclick="deleteRecord('${key}')">刪除</span>
                         <div class="log-header">
                             <span>${item.name} (${item.count}人)</span>
-                            <span>${item.timeIn} 入</span>
+                            <span style="color: ${isOut ? '#999' : '#27ae60'}">${isOut ? '已出廠' : '在場中'}</span>
                         </div>
-                        <div style="color:#555;">
+                        <div style="color:#555; line-height: 1.5;">
                             公司：${item.company}<br>
-                            訪談：${item.target} | 事由：${item.reason}<br>
-                            電話：${item.phone} | 出廠：${item.timeOut || '尚未'}
+                            拜訪：${item.target} | 入廠：${item.timeIn}<br>
+                            ${isOut ? '<b>出廠時間：' + item.leaveTime + '</b>' : ''}
                         </div>
+                        ${!isOut ? `<button class="checkout-btn" onclick="checkout('${key}')">簽退離開 (補填時間)</button>` : ''}
                     </div>
                 `;
-                listDiv.innerHTML += html;
             });
         }
     });
