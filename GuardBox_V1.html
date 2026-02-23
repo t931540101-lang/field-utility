@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>警衛室雲端工具箱 | V1.0</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; margin: 0; }
+        .tab-active { border-bottom: 4px solid #1e293b; color: #1e293b; font-weight: 900; }
+        .data-card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const firebaseConfig = {
+            apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+            databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+            projectId: "factor-security-d1965",
+            appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function App() {
+            // 姓名工號預設為空，增加專業感
+            const [userName, setUserName] = useState(localStorage.getItem('guardName') || "");
+            const [userID, setUserID] = useState(localStorage.getItem('guardID') || "");
+            const [tab, setTab] = useState("parcel"); 
+            const [parcelList, setParcelList] = useState([]);
+            const [visitorList, setVisitorList] = useState([]);
+
+            useEffect(() => {
+                const pRef = db.ref('parcelLogs');
+                const vRef = db.ref('visitorLogs');
+                pRef.on('value', s => {
+                    const data = s.val();
+                    setParcelList(data ? Object.keys(data).map(k => ({id:k, ...data[k]})).reverse() : []);
+                });
+                vRef.on('value', s => {
+                    const data = s.val();
+                    setVisitorList(data ? Object.keys(data).map(k => ({id:k, ...data[k]})).reverse() : []);
+                });
+                return () => { pRef.off(); vRef.off(); };
+            }, []);
+
+            const checkIdentity = () => {
+                if (!userName) { alert("請先設定您的姓名！"); return false; }
+                return true;
+            };
+
+            const addParcel = () => {
+                if(!checkIdentity()) return;
+                const receiver = prompt("收件人姓名：");
+                const carrier = prompt("物流公司 (黑貓/順豐/郵局...)：");
+                if(!receiver || !carrier) return;
+                db.ref('parcelLogs').push({
+                    time: new Date().toLocaleString(),
+                    receiver, carrier, recorder: userName,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+            };
+
+            const addVisitor = () => {
+                if(!checkIdentity()) return;
+                const name = prompt("訪客姓名：");
+                const carId = prompt("車牌號碼 (選填)：") || "無";
+                const target = prompt("拜訪對象：");
+                if(!name || !target) return;
+                db.ref('visitorLogs').push({
+                    time: new Date().toLocaleString(),
+                    name, carId, target, recorder: userName,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+            };
+
+            const deleteItem = (path, id) => {
+                if(confirm("確定刪除此紀錄？")) db.ref(`${path}/${id}`).remove();
+            };
+
+            return (
+                <div className="max-w-md mx-auto min-h-screen pb-20">
+                    <div className="bg-slate-800 text-white p-3 text-xs flex justify-between">
+                        <span onClick={() => { const n = prompt("修改姓名", userName); if(n) { setUserName(n); localStorage.setItem('guardName', n); } }}>姓名：{userName || "未設定"} ✎</span>
+                        <span onClick={() => { const id = prompt("修改工號", userID); if(id) { setUserID(id); localStorage.setItem('guardID', id); } }}>工號：{userID || "未設定"} ✎</span>
+                    </div>
+
+                    <div className="flex bg-white shadow-sm sticky top-0 z-50">
+                        <button onClick={() => setTab("parcel")} className={`flex-1 py-4 text-center ${tab === 'parcel' ? 'tab-active' : 'text-slate-400'}`}>📦 包裹登記</button>
+                        <button onClick={() => setTab("visitor")} className={`flex-1 py-4 text-center ${tab === 'visitor' ? 'tab-active' : 'text-slate-400'}`}>👤 訪客登記</button>
+                    </div>
+
+                    <div className="p-4">
+                        {tab === "parcel" ? (
+                            <div className="space-y-3">
+                                <button onClick={addParcel} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black mb-4 shadow-lg active:scale-95 transition-transform">+ 新增包裹</button>
+                                {parcelList.map(p => (
+                                    <div key={p.id} className="data-card p-4 relative">
+                                        <div className="text-[10px] text-slate-400 mb-1">{p.time}</div>
+                                        <div className="text-xl font-black text-slate-800">收件人：{p.receiver}</div>
+                                        <div className="text-sm text-slate-500 font-bold mt-1">物流：{p.carrier} | 登記：{p.recorder}</div>
+                                        <button onClick={() => deleteItem('parcelLogs', p.id)} className="absolute top-4 right-4 text-slate-300 hover:text-red-500">✕</button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                <button onClick={addVisitor} className="w-full bg-emerald-600 text-white py-4 rounded-xl font-black mb-4 shadow-lg active:scale-95 transition-transform">+ 新增訪客</button>
+                                {visitorList.map(v => (
+                                    <div key={v.id} className="data-card p-4 relative">
+                                        <div className="text-[10px] text-slate-400 mb-1">{v.time}</div>
+                                        <div className="text-xl font-black text-slate-800">訪客：{v.name}</div>
+                                        <div className="text-sm text-slate-500 font-bold mt-1">車牌：{v.carId} | 拜訪：{v.target}</div>
+                                        <div className="text-[10px] text-slate-400">登記人：{v.recorder}</div>
+                                        <button onClick={() => deleteItem('visitorLogs', v.id)} className="absolute top-4 right-4 text-slate-300 hover:text-red-500">✕</button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
