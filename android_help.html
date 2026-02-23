@@ -3,89 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小銀安卓機·戰術操典 V2.0</title>
+    <title>小銀·戰術操典 V3.0</title>
     <style>
-        :root { --dark: #0f172a; --card: #1e293b; --accent: #fbbf24; --blue: #38bdf8; --text: #f1f5f9; }
-        body { margin: 0; font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: var(--dark); color: var(--text); padding-bottom: 50px; }
-        
-        /* 頂部戰術狀態欄 */
+        :root { --dark: #0f172a; --card: #1e293b; --accent: #fbbf24; --blue: #38bdf8; --text: #f1f5f9; --red: #ef4444; }
+        body { margin: 0; font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: var(--dark); color: var(--text); padding-bottom: 30px; }
         .status-header { background: #000; padding: 15px; border-bottom: 3px solid var(--accent); text-align: center; }
         .status-header h1 { margin: 0; font-size: 18px; letter-spacing: 2px; color: var(--accent); }
-        .system-time { font-family: monospace; font-size: 12px; color: var(--blue); }
-
-        .nav-bar { display: flex; overflow-x: auto; background: #111; padding: 12px 10px; position: sticky; top: 0; z-index: 100; gap: 10px; }
-        .nav-item { padding: 10px 20px; white-space: nowrap; cursor: pointer; border-radius: 8px; background: #334155; font-size: 14px; transition: 0.2s; color: white; border: 1px solid transparent; }
-        .nav-item.active { background: var(--accent); color: #000; font-weight: 900; border-color: white; }
-        
+        .nav-bar { display: flex; overflow-x: auto; background: #111; padding: 12px 10px; position: sticky; top: 0; z-index: 100; gap: 8px; }
+        .nav-item { padding: 10px 18px; white-space: nowrap; cursor: pointer; border-radius: 8px; background: #334155; font-size: 14px; color: white; border: 1px solid transparent; }
+        .nav-item.active { background: var(--accent); color: #000; font-weight: 900; }
         .content { padding: 15px; }
-        .tutorial-card { background: var(--card); border-radius: 15px; padding: 22px; margin-bottom: 15px; display: none; border: 1px solid #334155; position: relative; overflow: hidden; }
-        .tutorial-card::before { content: "TOP SECRET"; position: absolute; top: 10px; right: -25px; transform: rotate(45deg); font-size: 10px; background: rgba(251, 191, 36, 0.2); color: var(--accent); padding: 2px 30px; }
+        .tutorial-card { background: var(--card); border-radius: 15px; padding: 20px; margin-bottom: 15px; display: none; border: 1px solid #334155; }
         .tutorial-card.active { display: block; animation: slideUp 0.3s ease-out; }
-        
-        h2 { color: var(--accent); font-size: 19px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
-        .step-list { padding-left: 5px; list-style: none; }
-        .step-list li { margin-bottom: 12px; font-size: 16px; display: flex; align-items: flex-start; gap: 10px; }
-        .step-number { background: var(--accent); color: #000; font-weight: bold; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; margin-top: 3px; }
-        
-        .hint { background: rgba(56, 189, 248, 0.1); padding: 15px; border-radius: 10px; font-size: 14px; color: var(--blue); border-left: 4px solid var(--blue); margin-top: 20px; }
-        
-        /* 底部快速存取 */
-        .quick-action { display: grid; grid-cols: 2; gap: 10px; margin-top: 10px; }
-        .action-btn { background: #334155; border: 1px solid var(--blue); color: var(--blue); padding: 10px; border-radius: 8px; text-align: center; font-size: 14px; text-decoration: none; }
-
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h2 { color: var(--accent); font-size: 18px; margin-bottom: 15px; border-left: 4px solid var(--accent); padding-left: 10px; }
+        .maintenance-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid var(--blue); }
+        .mile-input { background: #0f172a; border: 1px solid var(--blue); color: var(--accent); padding: 8px; width: 100%; border-radius: 5px; font-weight: bold; margin-top: 5px; }
+        .mile-remain { font-size: 24px; font-weight: 900; color: var(--blue); text-align: center; margin: 10px 0; }
+        .btn-save { background: var(--blue); color: #000; font-weight: 900; width: 100%; padding: 10px; border-radius: 8px; border: none; margin-top: 10px; }
+        .step-list { list-style: none; padding: 0; }
+        .step-list li { margin-bottom: 10px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div class="status-header">
-    <h1>SILVER-ANDROID TACTICAL</h1>
-    <div class="system-time" id="clock">MISSION DATE: 2026-02-23</div>
+    <h1>SILVER-TACTICAL V3.0</h1>
+    <div style="font-size: 12px; color: var(--blue);">SYSTEM STATUS: OPTIMIZED</div>
 </div>
 
 <div class="nav-bar">
-    <div class="nav-item active" onclick="showTab('recorder', this)">📸 影像調教</div>
-    <div class="nav-item" onclick="showTab('audio', this)">🎵 聲學優化</div>
-    <div class="nav-item" onclick="showTab('video', this)">⚙️ 系統維護</div>
-    <div class="nav-item" onclick="showTab('notes', this)">📝 戰術隨筆</div>
+    <div class="nav-item active" onclick="showTab('maint', this)">🔧 保養數據</div>
+    <div class="nav-item" onclick="showTab('recorder', this)">📸 影像紀錄</div>
+    <div class="nav-item" onclick="showTab('audio', this)">🎵 音效配置</div>
+    <div class="nav-item" onclick="showTab('history', this)">📜 維修清單</div>
 </div>
 
 <div class="content">
-    <div id="recorder" class="tutorial-card active">
-        <h2>📸 紀錄器：證據等級設定</h2>
+    <div id="maint" class="tutorial-card active">
+        <h2>🔧 里程監控：保養倒數</h2>
+        <div class="maintenance-box">
+            <label style="font-size: 13px;">目前總里程 (km):</label>
+            <input type="number" id="curMile" class="mile-input" placeholder="輸入當前里程" oninput="calcMile()">
+            <label style="font-size: 13px; display: block; margin-top: 15px;">下次更換機油里程 (km):</label>
+            <input type="number" id="nextMile" class="mile-input" placeholder="預計保養里程" oninput="calcMile()">
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <span style="font-size: 14px;">距離保養尚餘：</span>
+                <div id="remainResult" class="mile-remain">0 km</div>
+            </div>
+            <button class="btn-save" onclick="saveMaint()">💾 存入系統</button>
+        </div>
+    </div>
+
+    <div id="recorder" class="tutorial-card">
+        <h2>📸 影像：證據等級設定</h2>
         <ul class="step-list">
-            <li><span class="step-number">1</span> <b>EV 補償：-1.0</b> (防止夜間車牌反光過曝)。</li>
-            <li><span class="step-number">2</span> <b>星光夜視：ON</b> (暗處細節增強)。</li>
-            <li><span class="step-number">3</span> <b>G-Sensor：低</b> (避免台灣路不平頻繁鎖檔)。</li>
+            <li>✅ EV 補償：-1.0 (壓制強光)</li>
+            <li>✅ 格式化：每月 1 次 (穩定)</li>
+            <li>✅ 停車監控：低壓自動斷電</li>
         </ul>
-        <div class="hint">柔提醒：小黑哥，證據力取決於清晰度，EV值是核心！</div>
     </div>
 
     <div id="audio" class="tutorial-card">
-        <h2>🎵 流行樂 EQ 戰術配置</h2>
+        <h2>🎵 流行/熱血 EQ 戰術</h2>
         <ul class="step-list">
-            <li><span class="step-number">1</span> <b>60Hz 低音：+3</b> (鼓點力度感)。</li>
-            <li><span class="step-number">2</span> <b>10kHz 高音：+2</b> (人聲通透度)。</li>
-            <li><span class="step-number">3</span> <b>響度(Loudness)：開啟</b> (低音量時細節依然飽滿)。</li>
+            <li>🔥 低音 60Hz: +3</li>
+            <li>🔥 高音 10kHz: +2</li>
+            <li>🔥 響度: ON (動態飽滿)</li>
         </ul>
-        <div class="hint">柔提醒：這套參數最適合聽熱血流行的交接路程！</div>
     </div>
 
-    <div id="video" class="tutorial-card">
-        <h2>⚙️ 系統穩定性操典</h2>
-        <ul class="step-list">
-            <li><span class="step-number">1</span> <b>每 30 天格式化</b> (確保存取效率)。</li>
-            <li><span class="step-number">2</span> <b>倒車亮度：65%</b> (夜間倒車不吃力)。</li>
-            <li><span class="step-number">3</span> <b>自動屏保：1分鐘</b> (行車不干擾視線)。</li>
-        </ul>
-        <div class="hint">柔提醒：機器不發火，導航才靈火！🔥</div>
-    </div>
-
-    <div id="notes" class="tutorial-card">
-        <h2>📝 戰術筆記：存檔區域</h2>
-        <textarea id="memo" rows="5" class="w-full bg-[#0f172a] text-white p-3 rounded border border-slate-500 w-full mb-3" placeholder="輸入今日勤務心得..."></textarea>
-        <button onclick="saveNote()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">儲存至本機</button>
-        <div id="savedNote" class="mt-4 text-xs italic text-slate-400"></div>
+    <div id="history" class="tutorial-card">
+        <h2>📜 小銀維修/升級日誌</h2>
+        <textarea id="historyNotes" rows="6" class="mile-input" style="height: auto;" placeholder="2026-02-xx 更換 SSD..."></textarea>
+        <button class="btn-save" style="background: var(--accent);" onclick="saveHistory()">📝 紀錄更新</button>
     </div>
 </div>
 
@@ -97,15 +89,34 @@
         document.getElementById(tabId).classList.add('active');
     }
 
-    function saveNote() {
-        const val = document.getElementById('memo').value;
-        localStorage.setItem('tactical_note', val);
-        document.getElementById('savedNote').innerText = "已存檔於: " + new Date().toLocaleTimeString();
+    // 里程計算邏輯
+    function calcMile() {
+        const cur = document.getElementById('curMile').value;
+        const next = document.getElementById('nextMile').value;
+        const result = document.getElementById('remainResult');
+        const diff = next - cur;
+        result.innerText = diff + " km";
+        result.style.color = diff < 500 ? "var(--red)" : "var(--blue)";
     }
-    
-    // 初始化讀取
+
+    // 存檔功能
+    function saveMaint() {
+        localStorage.setItem('curMile', document.getElementById('curMile').value);
+        localStorage.setItem('nextMile', document.getElementById('nextMile').value);
+        alert('保養數據已儲存！');
+    }
+
+    function saveHistory() {
+        localStorage.setItem('silverHistory', document.getElementById('historyNotes').value);
+        alert('維修紀錄已更新！');
+    }
+
+    // 載入緩存
     window.onload = () => {
-        document.getElementById('memo').value = localStorage.getItem('tactical_note') || "";
+        document.getElementById('curMile').value = localStorage.getItem('curMile') || "";
+        document.getElementById('nextMile').value = localStorage.getItem('nextMile') || "";
+        document.getElementById('historyNotes').value = localStorage.getItem('silverHistory') || "";
+        calcMile();
     };
 </script>
 
