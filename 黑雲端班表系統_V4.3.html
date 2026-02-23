@@ -40,8 +40,11 @@
 
         function App() {
             const params = new URLSearchParams(window.location.search);
-            const [userName, setUserName] = useState(params.get('n') || localStorage.getItem('guardName') || "小黑哥");
-            const [userID, setUserID] = useState(params.get('id') || localStorage.getItem('guardID') || "D01762");
+            
+            // 初始設為空字串，優先讀取本地記憶
+            const [userName, setUserName] = useState(params.get('n') || localStorage.getItem('guardName') || "");
+            const [userID, setUserID] = useState(params.get('id') || localStorage.getItem('guardID') || "");
+            
             const [curYear, setCurYear] = useState(new Date().getFullYear());
             const [curMonth, setCurMonth] = useState(new Date().getMonth());
             const [schedules, setSchedules] = useState({});
@@ -55,6 +58,7 @@
             }, []);
 
             const handleCellClick = (day) => {
+                if (!userName) return alert("請先點擊頂部設定您的「姓名」，才能排班喔！");
                 const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
                 if (isClearMode) db.ref(`guardSchedules/${cellId}`).set("");
                 else if (shiftText) db.ref(`guardSchedules/${cellId}`).set(shiftText);
@@ -67,13 +71,13 @@
                 <div className="max-w-lg mx-auto main-container pb-40 shadow-2xl">
                     <div className="bg-black text-white px-4 py-2 text-md font-black flex justify-between sticky top-0 z-[60]">
                         <span className="cursor-pointer" onClick={() => { 
-                            const n = prompt("修改顯示姓名", userName); 
+                            const n = prompt("請輸入您的姓名", userName); 
                             if(n) { setUserName(n); localStorage.setItem('guardName', n); }
-                        }}>姓名：{userName} ✎</span>
+                        }}>姓名：{userName || "未設定"} ✎</span>
                         <span className="cursor-pointer" onClick={() => { 
-                            const id = prompt("修改工號", userID); 
+                            const id = prompt("請輸入您的工號", userID); 
                             if(id) { setUserID(id); localStorage.setItem('guardID', id); }
-                        }}>工號：{userID} ✎</span>
+                        }}>工號：{userID || "未設定"} ✎</span>
                     </div>
 
                     <header className="bg-[#2e5a44] text-white p-3 flex justify-between items-center shadow-md">
@@ -90,7 +94,7 @@
                         {Array.from({ length: daysInMonth }).map((_, i) => {
                             const day = i + 1;
                             const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
-                            const note = schedules[cellId] || "";
+                            const note = userName ? (schedules[cellId] || "") : "";
                             
                             let colorClass = "color-day";
                             if (note.includes("例")) colorClass = "color-example";
