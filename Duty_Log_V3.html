@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>勤務交接簿 | 雲端簽署版</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f1f5f9; }
+        .duty-card { background: white; border-left: 8px solid #1e293b; box-shadow: 0 4px 6px rgb(0 0 0 / 0.1); border-radius: 8px; }
+        .confirmed { background: #ecfdf5; border-left-color: #10b981; opacity: 0.8; }
+        .timestamp { font-size: 12px; background: #334155; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const firebaseConfig = {
+            apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+            databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+            projectId: "factor-security-d1965",
+            appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function App() {
+            const [logs, setLogs] = useState([]);
+            const [myName, setMyName] = useState(localStorage.getItem('guardName') || "");
+
+            useEffect(() => {
+                const ref = db.ref('reactLogs');
+                ref.on('value', (s) => {
+                    const data = s.val();
+                    if (data) setLogs(Object.keys(data).map(k => ({id:k, ...data[k]})).sort((a,b) => b.timestamp - a.timestamp));
+                });
+                return () => ref.off();
+            }, []);
+
+            const addEntry = () => {
+                const note = prompt("請輸入交接事項：");
+                if (!note) return;
+                const isUrgent = confirm("重要事項請按確定(變紅字)");
+                db.ref('reactLogs').push({
+                    time: new Date().toLocaleString('zh-TW', {hour12:false, month:'numeric', day:'numeric', hour:'numeric', minute:'numeric'}),
+                    note, urgent: isUrgent, timestamp: firebase.database.ServerValue.TIMESTAMP, confirmedBy: null
+                });
+            };
+
+            const confirmLog = (id) => {
+                const name = prompt("請輸入確認者姓名：", myName || "小黑哥");
+                if(name) {
+                    setMyName(name);
+                    localStorage.setItem('guardName', name);
+                    db.ref(`reactLogs/${id}`).update({ confirmedBy: name, confirmTime: new Date().toLocaleTimeString() });
+                }
+            };
+
+            return (
+                <div className="p-4 max-w-xl mx-auto">
+                    <header className="flex justify-between items-center mb-6 border-b-2 pb-4">
+                        <h1 className="text-2xl font-black text-slate-800">勤務交接簿</h1>
+                        <button onClick={addEntry} className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold shadow-lg">+ 新增</button>
+                    </header>
+                    <div className="space-y-4">
+                        {logs.map(log => (
+                            <div key={log.id} className={`duty-card p-4 relative ${log.confirmedBy ? 'confirmed' : ''}`}>
+                                <button onClick={() => confirm( "確定刪除？") && db.ref(`reactLogs/${log.id}`).remove()} className="absolute top-2 right-2 text-slate-300 hover:text-red-500">✕</button>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="timestamp">{log.time}</span>
+                                    {log.urgent && <span className="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded font-black animate-pulse">⚠️重要</span>}
+                                    {log.confirmedBy && <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded font-black">✓ 已閱：{log.confirmedBy}</span>}
+                                </div>
+                                <p className={`text-xl font-bold ${log.urgent ? 'text-red-600' : 'text-slate-800'} ${log.confirmedBy ? 'text-slate-400 italic' : ''}`}>{log.note}</p>
+                                {!log.confirmedBy && (
+                                    <button onClick={() => confirmLog(log.id)} className="mt-4 w-full py-2 bg-slate-100 text-slate-500 rounded font-bold border border-dashed border-slate-300 hover:bg-emerald-50 hover:text-emerald-700 transition-all text-sm">🖱️ 點擊簽署確認</button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
