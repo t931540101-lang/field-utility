@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>雲端排班表 | 戰術版 V5.2</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #e8e2d0; margin: 0; overflow-x: hidden; }
+        .grid-cell { min-height: 75px; border-right: 1px solid #c2b99a; border-bottom: 1px solid #c2b99a; }
+        .today-highlight { box-shadow: inset 0 0 0 3px #c0392b; background: rgba(255, 252, 245, 0.8); }
+        .val-text { font-weight: 900; font-size: 13px; text-align: center; }
+        .color-day { color: #2e5a44; }
+        .color-off { color: #c0392b; }
+        .color-example { color: #f97316; }
+        .color-special { color: #d4af37; }
+        .color-national { color: #2563eb; }
+        .bottom-panel { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 512px; background: rgba(255, 255, 255, 0.95); padding: 8px 12px 20px 12px; border-top: 1px solid #ccc; z-index: 70; backdrop-filter: blur(5px); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const firebaseConfig = {
+            apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+            databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+            projectId: "factor-security-d1965",
+            appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function App() {
+            const [userName, setUserName] = useState(localStorage.getItem('guardName') || "");
+            const [userID, setUserID] = useState(localStorage.getItem('guardID') || "");
+            const [curYear, setCurYear] = useState(new Date().getFullYear());
+            const [curMonth, setCurMonth] = useState(new Date().getMonth());
+            const [schedules, setSchedules] = useState({});
+            const [shiftText, setShiftText] = useState("");
+            const [isClearMode, setIsClearMode] = useState(false);
+
+            useEffect(() => {
+                const ref = db.ref('guardSchedules');
+                ref.on('value', (s) => setSchedules(s.val() || {}));
+                return () => ref.off();
+            }, []);
+
+            const handleCellClick = (day) => {
+                if (!userName) return alert("請先點擊頂部設定姓名！");
+                const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
+                db.ref(`guardSchedules/${cellId}`).set(isClearMode ? "" : shiftText);
+            };
+
+            const firstDay = new Date(curYear, curMonth, 1).getDay();
+            const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
+
+            return (
+                <div className="max-w-lg mx-auto pb-40 shadow-2xl bg-[#e8e2d0]/70 min-h-screen">
+                    <div className="bg-black text-white px-4 py-2 text-md font-black flex justify-between sticky top-0 z-[60]">
+                        <span className="cursor-pointer" onClick={() => { 
+                            const n = prompt("請輸入您的姓名", userName); 
+                            if(n) { setUserName(n); localStorage.setItem('guardName', n); }
+                        }}>姓名：{userName || "未設定"} ✎</span>
+                        <span className="cursor-pointer" onClick={() => { 
+                            const id = prompt("請輸入您的工號", userID); 
+                            if(id) { setUserID(id); localStorage.setItem('guardID', id); }
+                        }}>工號：{userID || "未設定"} ✎</span>
+                    </div>
+
+                    <header className="bg-[#2e5a44] text-white p-3 flex justify-between items-center shadow-md">
+                        <button onClick={() => setCurMonth(curMonth - 1)} className="px-4 text-xl font-bold">❮</button>
+                        <div className="text-center font-black">{curYear}年 {curMonth + 1}月</div>
+                        <button onClick={() => setCurMonth(curMonth + 1)} className="px-4 text-xl font-bold">❯</button>
+                    </header>
+
+                    <div className="grid grid-cols-7 border-t border-[#c2b99a]">
+                        {["日","一","二","三","四","五","六"].map(w => (
+                            <div key={w} className="text-center py-1 font-bold text-xs bg-[#f0e9d2] border-b border-[#c2b99a]">{w}</div>
+                        ))}
+                        {Array.from({ length: firstDay }).map((_, i) => <div key={`b-${i}`} className="grid-cell"></div>)}
+                        {Array.from({ length: daysInMonth }).map((_, i) => {
+                            const day = i + 1;
+                            const cellId = `${curYear}_${curMonth + 1}_${userName}_${day}`;
+                            const note = userName ? (schedules[cellId] || "") : "";
+                            let colorClass = "color-day";
+                            if (note.includes("例")) colorClass = "color-example";
+                            else if (note.includes("特")) colorClass = "color-special";
+                            else if (note.includes("國定")) colorClass = "color-national";
+                            else if (note.includes("休")) colorClass = "color-off";
+                            const isToday = new Date().getDate() === day && new Date().getMonth() === curMonth;
+                            return (
+                                <div key={day} onClick={() => handleCellClick(day)} className={`grid-cell p-1 flex flex-col active:bg-white/50 ${isToday ? 'today-highlight' : ''}`}>
+                                    <div className="text-xs font-bold text-gray-500">{day}</div>
+                                    <div className={`mt-auto mb-1 val-text ${colorClass}`}>{note}</div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="bottom-panel">
+                        <div className="flex gap-2 mb-2">
+                            <input type="text" value={shiftText} onChange={(e)=>{setShiftText(e.target.value); setIsClearMode(false);}} className="flex-1 p-2 border rounded-lg text-sm text-center font-bold" placeholder="點選班別"/>
+                            <button onClick={()=>setIsClearMode(!isClearMode)} className={`px-4 rounded-lg border font-bold text-xs ${isClearMode?'bg-red-600 text-white':'bg-white text-gray-400'}`}>抹</button>
+                        </div>
+                        <div className="grid grid-cols-4 gap-1.5">
+                            {["日B", "夜B", "夜E", "休假", "例假", "特休", "國定假日", "換班"].map(s => (
+                                <button key={s} onClick={()=>{setShiftText(s);setIsClearMode(false)}} className="bg-white border py-2 rounded-lg text-xs font-black text-gray-700 active:bg-[#2e5a44] active:text-white shadow-sm">{s}</button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
