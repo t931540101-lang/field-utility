@@ -1,19 +1,16 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>台灣精銳包裹登記平台 | V1.1</title>
+    <title>台灣精銳包裹登記平台</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root { --primary-color: #d32f2f; --bg-color: #f4f4f4; --accent-color: #34495e; --delete-color: #7f8c8d; }
-        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg-color); padding: 0; display: flex; flex-direction: column; align-items: center; }
-        
-        /* 頂部身分欄 */
-        .user-header { background: #1a1a1a; color: #fff; width: 100%; padding: 10px 20px; font-size: 12px; display: flex; justify-content: space-between; box-sizing: border-box; }
-        
-        .container { max-width: 700px; width: 100%; background: white; padding: 20px; border-radius: 0 0 12px 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); box-sizing: border-box; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg-color); padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .container { max-width: 700px; width: 100%; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); box-sizing: border-box; }
         .header-section { text-align: center; margin-bottom: 20px; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; }
         .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         input, select { padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; width: 100%; box-sizing: border-box; }
@@ -23,50 +20,48 @@
         
         .parcel-card { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid #ccc; position: relative; }
         .parcel-card.pending { border-left-color: #ff9800; }
-        .parcel-card.done { border-left-color: #2e7d32; background: #f9f9f9; opacity: 0.7; }
+        .parcel-card.done { border-left-color: #2e7d32; background: #f9f9f9; opacity: 0.8; }
         
         .info b { font-size: 17px; color: #333; }
         .info p { margin: 4px 0; font-size: 14px; }
         .loc-tag { background: #eee; color: var(--accent-color); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-block; margin-top: 3px; }
         
-        .btn-group { display: flex; flex-direction: column; gap: 8px; min-width: 95px; align-items: flex-end; }
+        .btn-group { display: flex; flex-direction: column; gap: 8px; min-width: 85px; align-items: flex-end; }
         .btn-mail { background: #ff9800; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; width: 100%; }
-        .status-btn { padding: 10px; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: bold; text-align: center; width: 100%; border: none; }
-        .status-btn.pending { background: #ffcdd2; color: #b71c1c; }
-        .status-btn.done { background: #c8e6c9; color: #2e7d32; }
-        .btn-delete { background: none; border: none; color: var(--delete-color); cursor: pointer; font-size: 18px; padding: 5px; }
+        .status { padding: 10px; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: bold; text-align: center; width: 100%; }
+        .status.pending { background: #ffcdd2; color: #b71c1c; }
+        .status.done { background: #c8e6c9; color: #2e7d32; }
+        
+        /* 刪除按鈕樣式 */
+        .btn-delete { background: none; border: none; color: var(--delete-color); cursor: pointer; font-size: 18px; padding: 5px; margin-top: 5px; transition: color 0.2s; }
+        .btn-delete:hover { color: #d32f2f; }
     </style>
 </head>
 <body>
 
-<div class="user-header">
-    <span onclick="changeName()">登記人：<span id="userNameDisplay">未設定</span> ✎</span>
-    <span onclick="changeID()">工號：<span id="userIDDisplay">未設定</span> ✎</span>
-</div>
-
 <div class="container">
     <div class="header-section">
         <h2>台灣精銳包裹登記平台</h2>
-        <div id="syncStatus" style="font-size: 12px; color: #27ae60;">● 雲端實時同步中 (V1.1)</div>
+        <div id="syncStatus" style="font-size: 12px; color: #27ae60;">● 雲端即時同步中</div>
     </div>
 
     <div class="input-group">
-        <input type="text" id="dept" placeholder="單位名稱 (如: 研發部)">
+        <input type="text" id="dept" placeholder="單位名稱">
         <input type="text" id="receiver" placeholder="收件人姓名">
-        <input type="email" id="email" placeholder="Email (寄發通知用)">
+        <input type="email" id="email" placeholder="同事的 Email">
         <select id="type">
-            <option value="📦 一般包裹">📦 一般包裹</option>
-            <option value="✉️ 掛號信件">✉️ 掛號信件</option>
-            <option value="❄️ 低溫冷藏">❄️ 低溫冷藏</option>
-            <option value="📑 重要文件">📑 重要文件</option>
+            <option value="一般包裹">📦 一般包裹</option>
+            <option value="掛號信件">✉️ 掛號信件</option>
+            <option value="低溫冷藏">❄️ 低溫冷藏</option>
+            <option value="重要文件">📑 重要文件</option>
         </select>
         <input type="text" id="logistics" placeholder="物流 (如: 黑貓)">
-        <input type="text" id="pLoc" placeholder="📍 寄放地點 (預設: 警衛室)">
+        <input type="text" id="pLoc" placeholder="📍 寄放地點">
         <input type="text" id="note" placeholder="備註 (如: 代付100元)" class="full-width">
         <button class="add-btn" id="saveBtn" onclick="addParcel()">➕ 登記並加入雲端清單</button>
     </div>
 
-    <input type="text" class="search-bar" id="searchBar" onkeyup="searchParcels()" placeholder="🔍 輸入姓名、單位或位置搜尋...">
+    <input type="text" class="search-bar" id="searchBar" onkeyup="searchParcels()" placeholder="🔍 快速搜尋...">
     <div id="parcelList"></div>
 </div>
 
@@ -84,25 +79,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     let localParcels = [];
-    let userName = localStorage.getItem('guardName') || "";
-    let userID = localStorage.getItem('guardID') || "";
-
-    function updateUserInfo() {
-        document.getElementById('userNameDisplay').innerText = userName || "未設定";
-        document.getElementById('userIDDisplay').innerText = userID || "未設定";
-    }
-
-    function changeName() {
-        const n = prompt("請輸入您的姓名", userName);
-        if(n) { userName = n; localStorage.setItem('guardName', n); updateUserInfo(); }
-    }
-
-    function changeID() {
-        const id = prompt("請輸入您的工號", userID);
-        if(id) { userID = id; localStorage.setItem('guardID', id); updateUserInfo(); }
-    }
-
-    window.onload = updateUserInfo;
 
     db.ref('enterprise_parcels').orderByChild('timestamp').limitToLast(50).on('value', (snapshot) => {
         const data = snapshot.val();
@@ -117,24 +93,25 @@
     });
 
     function addParcel() {
-        if (!userName) return alert("請先設定「登記人」姓名！");
+        const dept = document.getElementById('dept').value;
         const receiver = document.getElementById('receiver').value;
-        if (!receiver) { alert("收件人姓名為必填！"); return; }
-
+        const email = document.getElementById('email').value;
+        const type = document.getElementById('type').value;
+        const logistics = document.getElementById('logistics').value;
+        const pLoc = document.getElementById('pLoc').value;
+        const note = document.getElementById('note').value;
         const btn = document.getElementById('saveBtn');
+
+        if (!receiver) { alert("姓名為必填！"); return; }
+
         btn.disabled = true;
         btn.innerText = "正在同步...";
 
         const newParcel = {
-            dept: document.getElementById('dept').value,
-            receiver: receiver,
-            email: document.getElementById('email').value,
-            type: document.getElementById('type').value,
-            logistics: document.getElementById('logistics').value, 
-            location: document.getElementById('pLoc').value || "警衛室", 
-            note: document.getElementById('note').value,
+            dept, receiver, email, type, logistics, 
+            location: pLoc || "警衛室", 
+            note,
             time: new Date().toLocaleString(),
-            recorder: userName, // 紀錄是誰登記的
             status: 'pending',
             timestamp: Date.now()
         };
@@ -155,49 +132,38 @@
             card.innerHTML = `
                 <div class="info">
                     <b>[${p.dept || '未註明'}] ${p.receiver}</b>
-                    <p>${p.type} | 物流：${p.logistics} <br> <small>${p.time}</small></p>
+                    <p>${p.type} | ${p.logistics} <br> <small>${p.time}</small></p>
                     <div class="loc-tag">📍 位置：${p.location}</div>
-                    ${p.pickupTime ? `<p style="color:#2e7d32; font-size:12px; font-weight:bold; margin-top:5px;">✅ 領取於：${p.pickupTime} (${p.signPerson})</p>` : ''}
                     ${p.note ? `<p style="color:#d32f2f; font-size:13px; margin-top:5px;">📝 ${p.note}</p>` : ''}
                 </div>
                 <div class="btn-group">
-                    ${p.email && p.status === 'pending' ? `<button class="btn-mail" onclick="sendEmail('${p.firebaseKey}')">📧 寄信</button>` : ''}
-                    <button class="status-btn ${p.status}" onclick="handlePickup('${p.firebaseKey}', '${p.status}')">
-                        ${p.status === 'pending' ? '待領 (簽收)' : '已領取'}
-                    </button>
-                    <button class="btn-delete" onclick="deleteParcel('${p.firebaseKey}', '${p.receiver}')">🗑️</button>
+                    ${p.email ? `<button class="btn-mail" onclick="sendEmail('${p.firebaseKey}')">📧 寄信</button>` : ''}
+                    <div class="status ${p.status}" onclick="toggleStatus('${p.firebaseKey}', '${p.status}')">
+                        ${p.status === 'pending' ? '待領' : '已領'}
+                    </div>
+                    <button class="btn-delete" onclick="deleteParcel('${p.firebaseKey}', '${p.receiver}')" title="刪除此筆登記">🗑️</button>
                 </div>
             `;
             list.appendChild(card);
         });
     }
 
-    // 簽收領取邏輯：支援手動補填時間
-    function handlePickup(key, currentStatus) {
-        if (currentStatus === 'done') {
-            if(confirm("要將此包裹恢復為「待領」狀態嗎？")) {
-                db.ref('enterprise_parcels/' + key).update({ status: 'pending', pickupTime: null, signPerson: null });
-            }
-            return;
-        }
-
-        const now = new Date();
-        const defaultTime = `${now.getHours()}:${(now.getMinutes()<10?'0':'')+now.getMinutes()}`;
-        const pickTime = prompt("請確認領取時間：", defaultTime);
-        if(!pickTime) return;
-        
-        const sign = prompt("領取人簽名/代號：");
-        if(sign) {
-            db.ref('enterprise_parcels/' + key).update({ 
-                status: 'done', 
-                pickupTime: pickTime,
-                signPerson: sign 
-            });
-        }
+    function toggleStatus(key, currentStatus) {
+        const nextStatus = currentStatus === 'pending' ? 'done' : 'pending';
+        db.ref('enterprise_parcels/' + key).update({ status: nextStatus });
     }
 
+    // --- 新增：刪除功能 ---
     function deleteParcel(key, name) {
-        if (confirm(`⚠️ 確定要刪除「${name}」的紀錄嗎？`)) db.ref('enterprise_parcels/' + key).remove();
+        if (confirm(`⚠️ 確定要刪除「${name}」的包裹紀錄嗎？\n刪除後雲端資料將無法找回。`)) {
+            db.ref('enterprise_parcels/' + key).remove()
+                .then(() => {
+                    console.log("刪除成功");
+                })
+                .catch((error) => {
+                    alert("刪除失敗：" + error);
+                });
+        }
     }
 
     function sendEmail(key) {
@@ -216,138 +182,6 @@
         );
         renderParcels(filtered);
     }
-</script>
-
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>K9 包裹管理系統</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <style>
-        :root { --pending: #e74c3c; --done: #2ecc71; --primary: #34495e; --bg: #f8f9fa; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .container { width: 100%; max-width: 450px; margin: auto; }
-        .card { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h2 { text-align: center; color: var(--primary); font-size: 1.2rem; margin-top: 0; }
-        
-        /* 輸入區樣式 */
-        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
-        label { font-size: 0.8rem; color: #7f8c8d; font-weight: bold; }
-        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
-        .btn-add { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; }
-
-        /* 包裹列表樣式 */
-        .package-item { background: white; border-radius: 8px; padding: 15px; margin-bottom: 10px; border-left: 6px solid var(--pending); box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
-        .package-item.is-done { border-left-color: var(--done); opacity: 0.8; }
-        .pkg-info { font-size: 0.95rem; line-height: 1.6; }
-        .pkg-time { font-size: 0.75rem; color: #95a5a6; }
-        .btn-check { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); padding: 8px 15px; background: var(--done); color: white; border: none; border-radius: 5px; font-size: 0.8rem; }
-        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; color: white; margin-bottom: 5px; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div class="card">
-        <h2>📦 新包裹入庫</h2>
-        <div class="input-group">
-            <label>收件人姓名</label>
-            <input type="text" id="pReceiver" placeholder="必填">
-            <label>物流公司 / 類別</label>
-            <input type="text" id="pType" placeholder="黑貓、郵局、外送...">
-            <label>放置位置</label>
-            <input type="text" id="pLoc" placeholder="1 號櫃、冷藏、警衛桌下...">
-            <label>備註 (如：貨到付款 $500)</label>
-            <input type="text" id="pNote" placeholder="選填">
-        </div>
-        <button class="btn-add" onclick="addPackage()">存入雲端清單</button>
-    </div>
-
-    <div id="pkgList">
-        <h3 style="text-align:center; color:#7f8c8d; font-size: 1rem;">當前包裹狀態</h3>
-        </div>
-</div>
-
-<script>
-    // 延用小黑哥的 Firebase Config
-    const firebaseConfig = {
-        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
-        authDomain: "factor-security-d1965.firebaseapp.com",
-        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
-        projectId: "factor-security-d1965",
-        storageBucket: "factor-security-d1965.firebasestorage.app",
-        messagingSenderId: "864846943143",
-        appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // 新增包裹
-    function addPackage() {
-        const receiver = document.getElementById('pReceiver').value;
-        if(!receiver) { alert("請輸入收件人"); return; }
-
-        const pkgData = {
-            receiver: receiver,
-            type: document.getElementById('pType').value || "未註明",
-            location: document.getElementById('pLoc').value || "警衛室",
-            note: document.getElementById('pNote').value || "",
-            status: "pending", // 預設待領取
-            timeIn: new Date().toLocaleString(),
-            timestamp: Date.now()
-        };
-
-        db.ref('package_logs').push(pkgData).then(() => {
-            document.getElementById('pReceiver').value = "";
-            document.getElementById('pNote').value = "";
-        });
-    }
-
-    // 簽收功能
-    function checkOut(key) {
-        if(confirm("確認此包裹已被領取？")) {
-            db.ref('package_logs/' + key).update({
-                status: "done",
-                timeOut: new Date().toLocaleString()
-            });
-        }
-    }
-
-    // 實時監聽清單
-    db.ref('package_logs').limitToLast(20).on('value', (snapshot) => {
-        const listDiv = document.getElementById('pkgList');
-        listDiv.innerHTML = '<h3 style="text-align:center; color:#7f8c8d; font-size: 1rem;">當前包裹狀態 (實時同步)</h3>';
-        
-        const data = snapshot.val();
-        if (data) {
-            Object.keys(data).reverse().forEach(key => {
-                const pkg = data[key];
-                const isDone = pkg.status === 'done';
-                const html = `
-                    <div class="package-item ${isDone ? 'is-done' : ''}">
-                        <div class="status-badge" style="background:${isDone ? '#2ecc71':'#e74c3c'}">
-                            ${isDone ? '已領取' : '待領取'}
-                        </div>
-                        <div class="pkg-info">
-                            <strong>${pkg.receiver}</strong> - ${pkg.type}<br>
-                            位置：${pkg.location} ${pkg.note ? ' | 備註：'+pkg.note : ''}
-                        </div>
-                        <div class="pkg-time">
-                            入庫：${pkg.timeIn} ${pkg.timeOut ? '<br>領取：'+pkg.timeOut : ''}
-                        </div>
-                        ${!isDone ? `<button class="btn-check" onclick="checkOut('${key}')">簽收</button>` : ''}
-                    </div>
-                `;
-                listDiv.innerHTML += html;
-            });
-        }
-    });
 </script>
 
 </body>
