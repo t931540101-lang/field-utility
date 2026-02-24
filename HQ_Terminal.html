@@ -5,6 +5,38 @@
     <title>M-SECURITY | HQ 總部終端</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+    // 配置同上
+    const firebaseConfig = { ... }; 
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // 執行同步：推送到雲端
+    function pushBlacklist() {
+        const name = document.getElementById('targetName').value;
+        const plate = document.getElementById('targetPlate').value;
+        const reason = document.getElementById('targetReason').value;
+
+        if(!plate) return alert("請輸入車牌或工號！");
+
+        // 統一雲端路徑
+        db.ref('M_SECURITY/blacklist/' + plate).set({
+            name: name || "未提供姓名",
+            plate: plate,
+            reason: reason || "未註明原因",
+            syncTime: new Date().toLocaleString()
+        }).then(() => {
+            alert(">>> 戰術同步完成：黑名單已即時更新至雲端！");
+        });
+    }
+
+    // 刪除功能：解除管制
+    function removeBlacklist(plate) {
+        if(confirm("確定解除此人的管制狀態？")) {
+            db.ref('M_SECURITY/blacklist/' + plate).remove();
+        }
+    }
+</script>
     <style>
         body { background-color: #000; color: #00f2ff; font-family: "Microsoft JhengHei", sans-serif; padding: 20px; }
         .header { border-bottom: 2px solid #00f2ff; padding-bottom: 10px; margin-bottom: 20px; }
