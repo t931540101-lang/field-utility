@@ -2,111 +2,110 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>M-SECURITY | 指揮官後台</title>
+    <title>M-SECURITY | HQ 總部終端</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        /* 還原截圖中的黑底戰術風格 */
         body { background-color: #000; color: #00f2ff; font-family: "Microsoft JhengHei", sans-serif; padding: 20px; }
-        .header { border-bottom: 2px solid #00f2ff; padding-bottom: 10px; margin-bottom: 30px; }
-        h1 { font-size: 28px; letter-spacing: 2px; }
-        .database-id { color: #888; font-size: 12px; margin-top: -10px; margin-bottom: 20px; }
+        .header { border-bottom: 2px solid #00f2ff; padding-bottom: 10px; margin-bottom: 20px; }
+        .section { background: #111; padding: 20px; border-radius: 5px; border: 1px solid #333; margin-bottom: 30px; }
+        h2 { color: #4da1ff; font-size: 18px; margin-top: 0; border-left: 5px solid #00f2ff; padding-left: 10px; }
         
-        /* 輸入區域 */
-        .input-group { display: flex; gap: 10px; background: #111; padding: 20px; border-radius: 5px; margin-bottom: 30px; align-items: flex-end; }
-        .field { flex: 1; }
-        .field label { font-size: 12px; color: #4da1ff; display: block; margin-bottom: 5px; }
-        input { background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 10px; width: 100%; box-sizing: border-box; }
+        /* 戰術輸入框 */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        label { font-size: 12px; color: #888; display: block; margin-bottom: 5px; }
+        input { background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 10px; width: 100%; box-sizing: border-box; }
         
-        .btn-sync { background: #00f2ff; color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; height: 38px; }
-        .btn-sync:hover { background: #00b8cc; }
+        .btn { background: #00f2ff; color: #000; border: none; padding: 12px 25px; font-weight: bold; cursor: pointer; border-radius: 3px; }
+        .btn-red { background: #ff4d4f; color: #fff; }
 
-        /* 表格樣式 */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; color: #4da1ff; border-bottom: 1px solid #333; padding: 10px; font-size: 14px; }
-        td { padding: 15px 10px; border-bottom: 1px solid #222; font-size: 15px; color: #ccc; }
-        .btn-del { color: #ff4d4f; background: none; border: none; cursor: pointer; }
+        th { text-align: left; color: #4da1ff; border-bottom: 1px solid #333; padding: 10px; }
+        td { padding: 12px 10px; border-bottom: 1px solid #222; color: #ccc; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>M-SECURITY 資料庫管理後台</h1>
-        <div class="database-id">DATABASE ID: factor-security-d1965</div>
+        <div style="color: #888; font-size: 12px;">UNIT: HQ-COMMANDER | DB: factor-security-d1965</div>
     </div>
 
-    <div class="input-group">
-        <div class="field"><label>員工工號</label><input type="text" id="id" placeholder="如: K9001"></div>
-        <div class="field"><label>員工姓名</label><input type="text" id="name" placeholder="如: 小黑哥"></div>
-        <div class="field"><label>所屬單位</label><input type="text" id="dept" placeholder="如: 警衛組"></div>
-        <div class="field"><label>登記車牌</label><input type="text" id="plate" placeholder="如: ABC-1234"></div>
-        <button class="btn-sync" onclick="upload()">同步至雲端</button>
+    <div class="section">
+        <h2>👥 員工資料部署 (連動手機一般查詢)</h2>
+        <div class="grid">
+            <div><label>工號</label><input type="text" id="eID" placeholder="如: K9001"></div>
+            <div><label>姓名</label><input type="text" id="eName" placeholder="如: 小黑哥"></div>
+            <div><label>單位</label><input type="text" id="eDept" placeholder="如: 警衛組"></div>
+            <div><label>車牌</label><input type="text" id="ePlate" placeholder="如: ABC-1234"></div>
+        </div>
+        <button class="btn" onclick="upEmp()">同步至雲端</button>
+        <table id="eTab">
+            <thead><tr><th>工號</th><th>姓名</th><th>單位</th><th>車牌</th><th>操作</th></tr></thead>
+            <tbody id="eList"></tbody>
+        </table>
     </div>
 
-    <table>
-        <thead>
-            <tr><th>工號</th><th>姓名</th><th>單位</th><th>車牌</th><th>操作</th></tr>
-        </thead>
-        <tbody id="dataList"></tbody>
-    </table>
+    <div class="section" style="border-color: #ff4d4f;">
+        <h2 style="color: #ff4d4f; border-left-color: #ff4d4f;">🛑 管制黑名單發布 (連動手機進階頁面)</h2>
+        <div class="grid">
+            <div><label>管制對象</label><input type="text" id="bTarget" placeholder="姓名或車牌"></div>
+            <div><label>管制原因</label><input type="text" id="bReason" placeholder="如: 離職不歸還證件"></div>
+        </div>
+        <button class="btn btn-red" onclick="upBlack()">發布紅色警報</button>
+        <table id="bTab">
+            <thead><tr><th>對象</th><th>原因</th><th>時間</th><th>操作</th></tr></thead>
+            <tbody id="bList"></tbody>
+        </table>
+    </div>
 
-    <script>
-        // Firebase 初始化
-        const firebaseConfig = {
-            apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
-            databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
-            projectId: "factor-security-d1965",
-            appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+        projectId: "factor-security-d1965",
+        appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-        // 上傳員工資料
-        function upload() {
-            const id = document.getElementById('id').value.trim();
-            const name = document.getElementById('name').value.trim();
-            const dept = document.getElementById('dept').value.trim();
-            const plate = document.getElementById('plate').value.trim().toUpperCase();
-            
-            if(!id || !name) return alert("工號與姓名為必填欄位");
+    // 員工上傳
+    function upEmp() {
+        const id = document.getElementById('eID').value.trim();
+        const name = document.getElementById('eName').value.trim();
+        const dept = document.getElementById('eDept').value.trim();
+        const plate = document.getElementById('ePlate').value.trim().toUpperCase();
+        if(!id || !name) return alert("工號姓名必填");
+        const d = { id, name, dept, plate };
+        db.ref('employee_list/' + id).set(d);
+        if(plate) db.ref('employee_list/' + plate).set(d);
+        alert("員工資料已更新");
+    }
 
-            const empData = { id, name, dept, plate };
-            // 同時用工號與車牌建立索引，方便手機端查詢
-            db.ref('employee_list/' + id).set(empData);
-            if(plate) db.ref('employee_list/' + plate).set(empData);
-            
-            // 清空輸入框
-            document.querySelectorAll('input').forEach(i => i.value = '');
-            alert("雲端同步成功！");
+    // 黑名單上傳
+    function upBlack() {
+        const name = document.getElementById('bTarget').value.trim();
+        const reason = document.getElementById('bReason').value.trim();
+        if(!name) return alert("請輸入管制對象");
+        db.ref('blacklist_data').push({ name, reason, time: new Date().toLocaleDateString() });
+        alert("黑名單已同步至終端");
+    }
+
+    // 即時監看員工清單
+    db.ref('employee_list').on('value', s => {
+        const l = s.val(), b = document.getElementById('eList'); b.innerHTML = '';
+        for(let k in l) if(k === l[k].id) {
+            b.innerHTML += `<tr><td>${l[k].id}</td><td>${l[k].name}</td><td>${l[k].dept}</td><td>${l[k].plate}</td><td><button onclick="db.ref('employee_list/${l[k].id}').remove()" style="color:red;background:none;border:none;cursor:pointer;">刪除</button></td></tr>`;
         }
+    });
 
-        // 即時顯示資料清單
-        db.ref('employee_list').on('value', (snap) => {
-            const list = snap.val();
-            const tbody = document.getElementById('dataList');
-            tbody.innerHTML = '';
-            for(let key in list) {
-                // 只顯示工號作為主列，避免重複顯示車牌索引
-                if (key === list[key].id) {
-                    const item = list[key];
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${item.id}</td>
-                            <td>${item.name}</td>
-                            <td>${item.dept}</td>
-                            <td>${item.plate || '--'}</td>
-                            <td><button class="btn-del" onclick="removeData('${item.id}','${item.plate}')">刪除</button></td>
-                        </tr>`;
-                }
-            }
-        });
-
-        function removeData(id, plate) {
-            if(confirm("確定要刪除這筆員工資料嗎？")) {
-                db.ref('employee_list/' + id).remove();
-                if(plate) db.ref('employee_list/' + plate).remove();
-            }
+    // 即時監看黑名單
+    db.ref('blacklist_data').on('value', s => {
+        const l = s.val(), b = document.getElementById('bList'); b.innerHTML = '';
+        for(let k in l) {
+            b.innerHTML += `<tr><td>${l[k].name}</td><td>${l[k].reason}</td><td>${l[k].time}</td><td><button onclick="db.ref('blacklist_data/${k}').remove()" style="color:red;background:none;border:none;cursor:pointer;">撤銷</button></td></tr>`;
         }
-    </script>
+    });
+</script>
 </body>
 </html>
