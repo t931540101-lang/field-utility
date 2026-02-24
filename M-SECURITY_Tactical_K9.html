@@ -6,134 +6,107 @@
     <title>M-POLICE | K9 整合終端</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --police-blue: #3b82f6; --neon-green: #39ff14; --bg-dark: #f0f2f5; }
-        body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: var(--bg-dark); margin: 0; padding: 0; }
-        
-        /* 頂部藍色導覽列 */
-        .nav-header { background: linear-gradient(to bottom, #7ba6d9, #4a76a8); color: white; padding: 10px 0; text-align: center; }
-        .nav-tabs { display: flex; background: #6089b3; border-bottom: 2px solid #4a76a8; }
-        .tab { flex: 1; text-align: center; padding: 10px 0; font-size: 14px; color: #d1d5db; cursor: pointer; }
-        .tab.active { background: #4a76a8; color: white; font-weight: bold; }
-
-        .container { padding: 15px; }
-        .search-box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        
-        /* 查詢模式切換 */
-        .mode-row { margin-bottom: 15px; font-size: 14px; }
-        .badge-blue { background: #007bff; color: white; padding: 2px 8px; border-radius: 4px; }
-
-        textarea { width: 100%; border: 2px solid #ddd; border-radius: 4px; padding: 10px; font-size: 18px; box-sizing: border-box; height: 100px; }
-        
-        /* 戰術按鈕 */
-        .btn-main { background: linear-gradient(to bottom, #4da1ff, #2188ff); color: white; border: none; width: 100%; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-top: 10px; box-shadow: 0 4px #1a6edb; }
-        .btn-main:active { margin-top: 14px; box-shadow: 0 0px; }
-        
-        .btn-scan { background: linear-gradient(to bottom, #7fb9ff, #50a1ff); color: white; border: none; width: 100%; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-top: 15px; }
-        
-        .footer-btns { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-sub { flex: 1; background: linear-gradient(to bottom, #4da1ff, #2188ff); color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; }
-
-        /* 相機預覽區 */
-        #video-container { display: none; width: 100%; margin-top: 10px; border: 2px solid var(--neon-green); position: relative; }
-        video { width: 100%; height: auto; }
-
-        #result-display { margin-top: 20px; display: none; background: #fff; padding: 15px; border-radius: 8px; border-left: 10px solid var(--neon-green); }
+        :root { --police-blue: #4a76a8; --neon-green: #39ff14; --bg-dark: #f0f2f5; }
+        body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: var(--bg-dark); margin: 0; }
+        .nav-header { background: linear-gradient(to bottom, #7ba6d9, #4a76a8); color: white; padding: 12px 0; text-align: center; }
+        .nav-tabs { display: flex; background: #6089b3; border-bottom: 2px solid #4a76a8; sticky; top: 0; z-index: 100; }
+        .tab { flex: 1; text-align: center; padding: 12px 0; font-size: 14px; color: #d1d5db; cursor: pointer; }
+        .tab.active { background: #4a76a8; color: white; font-weight: bold; border-bottom: 3px solid var(--neon-green); }
+        .page { display: none; padding: 15px; }
+        .page.active { display: block; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        textarea, input { width: 100%; border: 2px solid #ddd; border-radius: 4px; padding: 12px; font-size: 18px; box-sizing: border-box; background: #fff; }
+        .btn-main { background: linear-gradient(to bottom, #4da1ff, #2188ff); color: white; border: none; width: 100%; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin: 10px 0; box-shadow: 0 4px #1a6edb; }
+        .btn-main:active { transform: translateY(2px); box-shadow: 0 2px #1a6edb; }
+        #reader { width: 100%; border: 2px solid var(--neon-green); display: none; margin-bottom: 10px; }
+        .log-item { border-left: 5px solid var(--police-blue); padding: 10px; background: #eef2f7; margin-bottom: 10px; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <div class="nav-header">
-        <h2 style="margin:0"><i>M-Police</i> 整合查詢</h2>
+<div class="nav-header"><h2 style="margin:0"><i>M-Police</i> 整合查詢</h2></div>
+
+<div class="nav-tabs">
+    <div class="tab active" onclick="showPage('page1', this)">一般</div>
+    <div class="tab" onclick="showPage('page2', this)">進階</div>
+    <div class="tab" onclick="showPage('page3', this)">應用</div>
+    <div class="tab">頻道</div>
+    <div class="tab">設定</div>
+</div>
+
+<div id="page1" class="page active">
+    <div class="card">
+        <div style="font-size:12px; color:#888;">車牌/工號檢索 (雲端連線)</div>
+        <textarea id="queryInput" placeholder="輸入資料或掃描條碼"></textarea>
+        <button class="btn-main" onclick="startQuery()">查 詢</button>
+        <div id="reader"></div>
+        <button class="btn-main" style="background:#6089b3;" onclick="startScan()">條 碼 掃 描</button>
     </div>
+    <div id="res"></div>
+</div>
 
-    <div class="nav-tabs">
-        <div class="tab active">一般</div>
-        <div class="tab">進階</div>
-        <div class="tab">應用</div>
-        <div class="tab">頻道</div>
-        <div class="tab">設定</div>
+<div id="page2" class="page">
+    <h3 style="color:#4a76a8;">⚠️ 高風險管制名單</h3>
+    <div class="card" id="blacklist">
+        <div class="log-item"><b>[離職人員]</b> 王XX - 禁止進入廠區</div>
+        <div class="log-item"><b>[異常廠商]</b> XX物流 - 曾有違規紀錄</div>
+        <p style="font-size:12px; color:gray;">資料每 24 小時自動更新一次</p>
     </div>
+</div>
 
-    <div class="container">
-        <div class="search-box">
-            <div class="mode-row">查詢模式：<span class="badge-blue">線上</span></div>
-            <div style="color:#888; font-size:12px; margin-bottom:5px;">車牌/工號</div>
-            <textarea id="queryInput" placeholder="請輸入欲查詢資料"></textarea>
-            
-            <button class="btn-main" onclick="startQuery()">查 詢</button>
-            <button class="btn-scan" onclick="toggleCamera()">條 碼 掃 描</button>
-            
-            <div id="video-container">
-                <video id="video" autoplay playsinline></video>
-                <div style="position:absolute; bottom:5px; width:100%; text-align:center;">
-                    <button onclick="closeCamera()" style="background:red; color:white; border:none; padding:5px 10px;">關閉相機</button>
-                </div>
-            </div>
-
-            <div class="footer-btns">
-                <button class="btn-sub" onclick="document.getElementById('queryInput').value=''">清 除</button>
-                <button class="btn-sub">資料同步</button>
-            </div>
-        </div>
-
-        <div id="result-display">
-            </div>
-
-        <div style="text-align:right; margin-top:20px; color:#888; font-size:12px;">
-            20260224_0810<br>
-            <span style="color:red">K9-UNIT-ACTIVE</span>
-        </div>
+<div id="page3" class="page">
+    <h3 style="color:#4a76a8;">🛠️ 警衛勤務工具</h3>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div class="card" onclick="alert('緊急通報已發送')" style="text-align:center; background:#fee2e2;">🚨 緊急支援</div>
+        <div class="card" onclick="alert('門哨狀態已切換')" style="text-align:center; background:#dcfce7;">🔓 遠端開門</div>
+        <div class="card" onclick="alert('日誌備份中')" style="text-align:center; background:#e0f2fe;">📋 勤務日誌</div>
+        <div class="card" onclick="location.reload()" style="text-align:center; background:#fef3c7;">🔄 同步數據</div>
     </div>
+</div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
-            databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
-            projectId: "factor-security-d1965",
-            appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+<script>
+    // 頁面切換邏輯
+    function showPage(id, el) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        el.classList.add('active');
+        if(id !== 'page1') stopScan(); // 切換頁面停止掃描
+    }
 
-        let stream = null;
-
-        // 相機功能連動
-        async function toggleCamera() {
-            const container = document.getElementById('video-container');
-            const video = document.getElementById('video');
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                video.srcObject = stream;
-                container.style.display = 'block';
-            } catch (err) {
-                alert("無法啟動相機：" + err);
+    // 條碼掃描庫整合
+    let html5QrCode;
+    function startScan() {
+        document.getElementById('reader').style.display = 'block';
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            { fps: 10, qrbox: { width: 250, height: 150 } },
+            (decodedText) => {
+                document.getElementById('queryInput').value = decodedText;
+                stopScan();
+                startQuery(); // 掃到自動查詢
             }
-        }
+        ).catch(err => alert("相機啟動失敗"));
+    }
 
-        function closeCamera() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                document.getElementById('video-container').style.display = 'none';
-            }
-        }
-
-        function startQuery() {
-            const val = document.getElementById('queryInput').value.trim().toUpperCase();
-            const res = document.getElementById('result-display');
-            if(!val) return;
-
-            // 模擬查詢雲端資料
-            db.ref('employee_list/' + val).once('value', (s) => {
-                const data = s.val();
-                res.style.display = 'block';
-                if(data) {
-                    res.innerHTML = `<h3>身份確認</h3><p>姓名：${data.name}</p><p>單位：${data.dept}</p><p>工號：${data.id}</p>`;
-                } else {
-                    res.innerHTML = `<h3 style="color:red">查無資料</h3><p>該車牌/工號未登錄於雲端資料庫。</p>`;
-                }
+    function stopScan() {
+        if(html5QrCode) {
+            html5QrCode.stop().then(() => {
+                document.getElementById('reader').style.display = 'none';
             });
         }
-    </script>
+    }
+
+    // 模擬 Firebase 查詢
+    function startQuery() {
+        const val = document.getElementById('queryInput').value.trim().toUpperCase();
+        if(!val) return;
+        const res = document.getElementById('res');
+        res.innerHTML = `<div class="card" style="border-left:8px solid #39ff14;"><b>檢索結果：${val}</b><p>身份：正式員工</p><p>單位：安全部 (K9)</p></div>`;
+    }
+</script>
 </body>
 </html>
