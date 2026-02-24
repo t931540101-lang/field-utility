@@ -8,31 +8,42 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --nav-blue: #4a76a8; --bg-blue: #e6f0fa; --btn-blue: #3b82f6; }
-        body { font-family: sans-serif; background: var(--bg-blue); margin: 0; padding: 0; }
-        .header { background: linear-gradient(to bottom, #7ba6d9, #4a76a8); color: white; padding: 18px 0; text-align: center; }
-        .header h1 { margin: 0; font-style: italic; font-size: 26px; letter-spacing: 1px; }
+        /* 視覺還原：漸層藍標題 + 淡藍背景 */
+        :root { --header-grad: linear-gradient(to bottom, #7ba6d9, #4a76a8); --bg: #e6f0fa; --tab-blue: #6089b3; --tab-active: #4a76a8; --btn-grad: linear-gradient(to bottom, #4da1ff, #2188ff); }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 0; }
+        
+        /* 頂部 Header */
+        .header { background: var(--header-grad); color: white; padding: 18px 0; text-align: center; }
+        .header h1 { margin: 0; font-style: italic; font-size: 26px; letter-spacing: 2px; }
 
-        /* 分頁標籤 */
-        .tabs { display: flex; background: #6089b3; border-bottom: 1px solid #3a5d85; }
-        .tab { flex: 1; text-align: center; padding: 14px 0; color: #d1d5db; font-size: 14px; cursor: pointer; border-right: 1px solid #4a76a8; }
-        .tab.active { background: #4a76a8; color: white; font-weight: bold; }
+        /* 分頁 Tabs */
+        .tabs { display: flex; background: var(--tab-blue); }
+        .tab { flex: 1; text-align: center; padding: 14px 0; color: #d1d5db; font-size: 15px; cursor: pointer; border-right: 1px solid rgba(255,255,255,0.1); }
+        .tab.active { background: var(--tab-active); color: white; font-weight: bold; }
 
         .container { padding: 15px; }
-        .page { display: none; }
-        .page.active { display: block; }
+        .query-mode { margin: 10px 0; font-size: 16px; font-weight: bold; }
+        .badge { background: #007bff; color: white; padding: 2px 10px; border-radius: 4px; font-size: 13px; margin-left: 5px; }
 
-        /* 一般查詢 UI */
-        .input-card { background: white; border: 2px solid #a5c7f2; border-radius: 6px; padding: 12px; margin-bottom: 15px; }
-        textarea { width: 100%; border: none; font-size: 20px; outline: none; height: 70px; font-weight: bold; }
+        /* 輸入框卡片 */
+        .input-card { background: white; border: 2px solid #a5c7f2; border-radius: 6px; padding: 12px; margin-bottom: 15px; position: relative; }
+        .input-card label { color: #888; font-size: 13px; display: block; margin-bottom: 5px; }
+        textarea { width: 100%; border: none; font-size: 18px; outline: none; resize: none; height: 65px; font-weight: bold; }
+
+        /* 按鈕樣式 */
         .btn { border: none; border-radius: 8px; color: white; font-size: 22px; font-weight: bold; padding: 16px; width: 100%; margin-bottom: 15px; cursor: pointer; box-shadow: 0 4px #1a6edb; }
-        .btn-query { background: linear-gradient(to bottom, #4da1ff, #2188ff); }
+        .btn-query { background: var(--btn-grad); }
         .btn-scan { background: linear-gradient(to bottom, #7fb9ff, #50a1ff); }
-        #qr-reader { width: 100%; display: none; margin-bottom: 15px; border: 2px solid var(--nav-blue); border-radius: 8px; }
-        .res-display { margin-top: 20px; padding: 15px; background: #fff; border-radius: 8px; border-left: 10px solid #28a745; display: none; }
-        
-        /* 頻道與設定樣式 */
-        .list-item { background: white; padding: 15px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #ccc; }
+        .btn-footer-group { display: flex; gap: 10px; }
+        .btn-footer { flex: 1; background: var(--btn-grad); padding: 12px; font-size: 16px; box-shadow: 0 3px #1a6edb; }
+
+        /* 系統資訊 */
+        .sys-info { text-align: right; margin-top: 40px; color: #888; font-size: 12px; font-family: monospace; }
+        .unit-active { color: red; font-weight: bold; }
+
+        /* 掃描區與結果 */
+        #reader { width: 100%; display: none; margin-bottom: 15px; border: 2px solid var(--tab-active); border-radius: 8px; overflow: hidden; }
+        #res { margin-top: 15px; padding: 15px; background: white; border-radius: 8px; border-left: 10px solid #28a745; display: none; }
     </style>
 </head>
 <body>
@@ -40,82 +51,71 @@
     <div class="header"><h1>M-Police 整合查詢</h1></div>
 
     <div class="tabs">
-        <div class="tab active" onclick="goP('p1', this)">一般</div>
-        <div class="tab" onclick="goP('p2', this)">進階</div>
-        <div class="tab" onclick="goP('p3', this)">應用</div>
-        <div class="tab" onclick="goP('p4', this)">頻道</div>
-        <div class="tab" onclick="goP('p5', this)">設定</div>
+        <div class="tab active">一般</div>
+        <div class="tab">進階</div>
+        <div class="tab">應用</div>
+        <div class="tab">頻道</div>
+        <div class="tab">設定</div>
     </div>
 
     <div class="container">
-        <div id="p1" class="page active">
-            <div style="font-weight:bold; margin-bottom:10px;">查詢模式：<span style="background:#007bff; color:white; padding:2px 8px; border-radius:4px;">線上</span></div>
-            <div class="input-card"><label style="color:#888;font-size:12px;">車牌/工號</label><textarea id="vIn"></textarea></div>
-            <div id="qr-reader"></div>
-            <button class="btn btn-query" onclick="doQ()">查 詢</button>
-            <button class="btn btn-scan" id="sBtn" onclick="tkS()">條 碼 掃 描</button>
-            <div id="rB" class="res-display"></div>
+        <div class="query-mode">查詢模式：<span class="badge">線上</span></div>
+        
+        <div class="input-card">
+            <label>車牌/工號</label>
+            <textarea id="mainIn" placeholder="請輸入欲查詢資料"></textarea>
         </div>
 
-        <div id="p2" class="page">
-            <h3 style="color:var(--nav-blue)">🛡️ 進階管制名單</h3>
-            <div class="list-item" style="border-left:5px solid red;"><b>[拒絕往來]</b> 某某工程車 (車號 XXX)</div>
+        <div id="reader"></div>
+
+        <button class="btn btn-query" onclick="doQuery()">查 詢</button>
+        <button class="btn btn-scan" id="scanBtn" onclick="toggleScanner()">條 碼 掃 描</button>
+        
+        <div class="btn-footer-group">
+            <button class="btn btn-footer" onclick="document.getElementById('mainIn').value=''">清 除</button>
+            <button class="btn btn-footer">資料同步</button>
         </div>
 
-        <div id="p3" class="page">
-            <h3 style="color:var(--nav-blue)">🛠️ 勤務工具</h3>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <div class="list-item" style="text-align:center;">🚨 緊急通報</div>
-                <div class="list-item" style="text-align:center;">📋 勤務日誌</div>
-            </div>
-        </div>
+        <div id="res"></div>
 
-        <div id="p4" class="page">
-            <h3 style="color:var(--nav-blue)">📡 勤務通訊頻道</h3>
-            <div class="list-item"><b>CH-01:</b> 正門大廳崗哨</div>
-            <div class="list-item"><b>CH-02:</b> 後方停車場巡邏</div>
-            <div class="list-item"><b>CH-03:</b> 行政辦公區</div>
-        </div>
-
-        <div id="p5" class="page">
-            <h3 style="color:var(--nav-blue)">⚙️ 系統設定</h3>
-            <div class="list-item"><b>連線狀態:</b> <span style="color:green">● ONLINE</span></div>
-            <div class="list-item"><b>資料庫版本:</b> 20260224_0810</div>
-            <button class="btn btn-scan" style="background:#4a76a8; font-size:16px;">檢查更新</button>
+        <div class="sys-info">
+            20260224_0810<br>
+            <span class="unit-active">K9-UNIT-ACTIVE</span>
         </div>
     </div>
 
 <script>
-    function goP(id, el) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        el.classList.add('active');
-        if(id !== 'p1') clS();
-    }
-    let sc = null;
-    function tkS() {
-        const r = document.getElementById('qr-reader');
-        if (sc) { clS(); } else {
+    // 這裡放入你之前的 Firebase 設定
+    let scn = null;
+
+    function toggleScanner() {
+        const r = document.getElementById('reader');
+        if (scn) { stopScan(); } else {
             r.style.display = 'block';
-            sc = new Html5Qrcode("qr-reader");
-            sc.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, (t) => {
-                document.getElementById('vIn').value = t;
-                clS(); doQ();
-            }).catch(e => alert("相機啟動失敗"));
-            document.getElementById('sBtn').innerText = "關 閉 掃 描";
+            scn = new Html5Qrcode("reader");
+            scn.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, (txt) => {
+                document.getElementById('mainIn').value = txt;
+                stopScan();
+                doQuery();
+            }).catch(e => alert("鏡頭啟動失敗"));
+            document.getElementById('scanBtn').innerText = "關 閉 掃 描";
         }
     }
-    function clS() {
-        if(sc) { sc.stop().then(() => { sc = null; document.getElementById('qr-reader').style.display = 'none'; document.getElementById('sBtn').innerText = "條 碼 掃 描"; }); }
+
+    function stopScan() {
+        if(scn) { scn.stop().then(() => { scn = null; document.getElementById('reader').style.display = 'none'; document.getElementById('scanBtn').innerText = "條 碼 掃 描"; }); }
     }
-    function doQ() {
-        const v = document.getElementById('vIn').value.trim().toUpperCase();
-        if(!v) return;
-        const b = document.getElementById('rB');
-        b.style.display = 'block';
-        b.innerHTML = `<h3>查詢中...</h3>`;
-        setTimeout(() => { b.innerHTML = `<h3>[ 查詢結果 ]</h3><p>對象：${v}</p><p>狀態：<b>內部員工 - 准予通行</b></p>`; }, 400);
+
+    function doQuery() {
+        const val = document.getElementById('mainIn').value.trim();
+        if(!val) return;
+        const box = document.getElementById('res');
+        box.style.display = 'block';
+        box.innerHTML = `<h3>查詢中...</h3>`;
+        // 這裡對接 Firebase
+        setTimeout(() => {
+            box.innerHTML = `<h3>[ 查詢結果 ]</h3><p>工號：${val}</p><p>權限：<b>廠區准入 OK</b></p>`;
+        }, 500);
     }
 </script>
 </body>
