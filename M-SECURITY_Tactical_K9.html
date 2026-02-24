@@ -3,34 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-Police 整合查詢</title>
+    <title>M-Security 整合查詢</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root { --nav-blue: #4a76a8; --bg-blue: #e6f0fa; --btn-grad: linear-gradient(to bottom, #4da1ff, #2188ff); }
         body { font-family: sans-serif; background: var(--bg-blue); margin: 0; padding: 0; }
+        
+        /* 頂部標題列 */
         .header { background: linear-gradient(to bottom, #7ba6d9, #4a76a8); color: white; padding: 18px 0; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .header h1 { margin: 0; font-style: italic; font-size: 26px; }
+        .header h1 { margin: 0; font-style: italic; font-size: 26px; letter-spacing: 1px; }
+
+        /* 五分頁標籤列 */
         .tabs { display: flex; background: #6089b3; }
         .tab { flex: 1; text-align: center; padding: 14px 0; color: #d1d5db; font-size: 15px; cursor: pointer; border-right: 1px solid #4a76a8; }
         .tab.active { background: #4a76a8; color: white; font-weight: bold; }
+
         .container { padding: 15px; }
         .page { display: none; }
         .page.active { display: block; }
+
+        /* 輸入卡片區 */
         .input-card { background: white; border: 2px solid #a5c7f2; border-radius: 6px; padding: 12px; margin-bottom: 15px; }
-        textarea, input { width: 100%; border: none; font-size: 18px; outline: none; font-weight: bold; background: transparent; box-sizing: border-box; }
-        .btn { border: none; border-radius: 8px; color: white; font-size: 20px; font-weight: bold; padding: 14px; width: 100%; margin-bottom: 10px; cursor: pointer; box-shadow: 0 4px #1a6edb; }
+        textarea { width: 100%; border: none; font-size: 20px; outline: none; height: 70px; font-weight: bold; background: transparent; resize: none; }
+
+        /* 按鈕樣式 */
+        .btn { border: none; border-radius: 8px; color: white; font-size: 22px; font-weight: bold; padding: 16px; width: 100%; margin-bottom: 12px; cursor: pointer; box-shadow: 0 4px #1a6edb; }
         .btn-query { background: var(--btn-grad); }
         .btn-scan { background: linear-gradient(to bottom, #7fb9ff, #50a1ff); }
-        .btn-orange { background: linear-gradient(to bottom, #ff9f43, #ff6b6b); box-shadow: 0 4px #d35400; }
+        
+        /* 下方功能按鈕組 */
+        .btn-group { display: flex; gap: 10px; }
+        .btn-sm { flex: 1; padding: 12px; font-size: 16px; }
+
+        /* 結果顯示 */
         .res-box { margin-top: 15px; padding: 15px; background: white; border-radius: 8px; border-left: 10px solid #28a745; display: none; }
-        .app-section { background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-top: 10px; display: none; }
+        
         .sys-info { text-align: right; margin-top: 30px; color: #888; font-size: 12px; font-family: monospace; }
     </style>
 </head>
 <body>
 
-    <div class="header"><h1>M-Police 整合查詢</h1></div>
+    <div class="header"><h1>M-Security 整合查詢</h1></div>
 
     <div class="tabs">
         <div class="tab active" onclick="switchPage(0)">一般</div>
@@ -42,42 +56,36 @@
 
     <div class="container">
         <div id="p0" class="page active">
+            <div style="margin-bottom:10px; font-weight:bold;">查詢模式：<span id="syncStatus" style="background:#007bff;color:white;padding:2px 8px;border-radius:4px;">線上</span></div>
             <div class="input-card">
-                <label style="color:#888;font-size:13px;">查詢身分 (工號/車牌)</label>
-                <textarea id="valIn" placeholder="輸入資料..."></textarea>
+                <label style="color:#888;font-size:13px;">車牌/工號</label>
+                <textarea id="valIn" placeholder="請輸入欲查詢資料"></textarea>
             </div>
+            
             <button class="btn btn-query" onclick="doQuery()">查 詢</button>
+            <button class="btn btn-scan">條 碼 掃 描</button>
+            
+            <div class="btn-group">
+                <button class="btn btn-query btn-sm" onclick="clearAll()">清 除</button>
+                <button class="btn btn-query btn-sm" onclick="manualSync()">資料同步</button>
+            </div>
+
             <div id="result" class="res-box"></div>
         </div>
 
         <div id="p1" class="page">
             <h3 style="color:var(--nav-blue)">🛑 管制黑名單</h3>
-            <div id="blackContent">同步中...</div>
+            <div id="blackContent" style="background:white; padding:15px; border-radius:8px;">正在同步雲端資料...</div>
         </div>
 
-        <div id="p2" class="page">
-            <button class="btn btn-scan" onclick="toggleApp('dutyBox')">📝 勤務交接簿</button>
-            <button class="btn btn-scan" onclick="toggleApp('visitorBox')">👤 訪客即時登記</button>
-            <button class="btn btn-orange" onclick="toggleApp('dogBox')">🐕 狗狗醫療資料</button>
-
-            <div id="dutyBox" class="app-section">
-                <textarea id="dutyNote" style="height:80px; border:1px solid #eee;" placeholder="輸入交接重點..."></textarea>
-                <button class="btn btn-query" style="font-size:14px; padding:8px;" onclick="upDuty()">送出交接</button>
-            </div>
-
-            <div id="visitorBox" class="app-section">
-                <input type="text" id="vPlate" placeholder="訪客車牌" style="border:1px solid #eee; padding:8px; margin-bottom:5px;">
-                <input type="text" id="vReason" placeholder="來訪目的" style="border:1px solid #eee; padding:8px; margin-bottom:5px;">
-                <button class="btn btn-query" style="font-size:14px; padding:8px;" onclick="upVisitor()">確認登記</button>
-            </div>
-
-            <div id="dogBox" class="app-section"><div id="dogList">載入中...</div></div>
+        <div class="sys-info">
+            20260224_0810<br>
+            <span style="color:red; font-weight:bold;">K9-UNIT-ACTIVE</span>
         </div>
-
-        <div class="sys-info">20260224_2330<br><span style="color:red; font-weight:bold;">K9-UNIT-ACTIVE</span></div>
     </div>
 
 <script>
+    // 1. Firebase 初始化
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
@@ -87,62 +95,76 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    function switchPage(idx) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById('p' + idx).classList.add('active');
-        document.querySelectorAll('.tab')[idx].classList.add('active');
-        if(idx === 1) syncBlack();
+    // 2. 核心功能：同步與存檔
+    function manualSync() {
+        document.getElementById('syncStatus').innerText = "同步中...";
+        db.ref('blacklist_data').once('value', (snap) => {
+            const data = snap.val();
+            if(data) {
+                localStorage.setItem('M_POLICE_BLACK', JSON.stringify(data));
+                alert(">>> 戰術同步完成：本地資料庫已更新！");
+                document.getElementById('syncStatus').innerText = "線上";
+                if(document.getElementById('p1').classList.contains('active')) renderBlack(data);
+            }
+        });
     }
 
-    function toggleApp(id) {
-        document.querySelectorAll('.app-section').forEach(s => s.style.display = 'none');
-        document.getElementById(id).style.display = 'block';
-        if(id === 'dogBox') syncDogs();
+    function renderBlack(data) {
+        let html = '';
+        Object.values(data).forEach(i => {
+            html += `<p style="color:red;"><b>● ${i.name}</b><br><small>原因：${i.reason} (${i.time})</small></p><hr>`;
+        });
+        document.getElementById('blackContent').innerHTML = html || '目前無管制名單';
     }
 
+    // 3. 查詢邏輯
     function doQuery() {
         const v = document.getElementById('valIn').value.trim().toUpperCase();
         if(!v) return;
         const res = document.getElementById('result');
         res.style.display = 'block';
-        db.ref('blacklist_data').once('value', s => {
-            const b = s.val(), f = b ? Object.values(b).find(i => i.name.includes(v)) : null;
-            if(f) { res.style.borderLeftColor = 'red'; res.innerHTML = `<h3 style="color:red;">🚨 管制對象</h3>姓名：${f.name}<br>原因：${f.reason}`; }
-            else { db.ref('employee_list/' + v).once('value', e => {
-                const d = e.val();
-                if(d) { res.style.borderLeftColor = '#28a745'; res.innerHTML = `<h3>✅ 員工確認</h3>姓名：${d.name}<br>單位：${d.dept}`; }
-                else { res.style.borderLeftColor = '#888'; res.innerHTML = `<h3>查無資料</h3>訪客請進行登記。`; }
-            }); }
-        });
+        res.innerHTML = "偵測中...";
+
+        // 優先對比黑名單
+        const localData = JSON.parse(localStorage.getItem('M_POLICE_BLACK') || '{}');
+        const isBlack = Object.values(localData).find(i => i.name.includes(v));
+
+        if(isBlack) {
+            res.style.borderLeft = "10px solid #ff4d4f";
+            res.innerHTML = `<h3 style="color:red;">🚨 管制對象</h3><p>姓名：${isBlack.name}</p><p>原因：${isBlack.reason}</p>`;
+        } else {
+            // 查員工庫
+            db.ref('employee_list/' + v).once('value', (snap) => {
+                const e = snap.val();
+                if(e) {
+                    res.style.borderLeft = "10px solid #28a745";
+                    res.innerHTML = `<h3>✅ 員工確認</h3><p>姓名：${e.name}</p><p>單位：${e.dept}</p>`;
+                } else {
+                    res.style.borderLeft = "10px solid #888";
+                    res.innerHTML = `<h3>⚠️ 查無存檔</h3><p>對象：${v}</p><p>狀態：正常通行(訪客)</p>`;
+                }
+            });
+        }
     }
 
-    function upDuty() {
-        const t = document.getElementById('dutyNote').value;
-        if(t) db.ref('M_SECURITY/duty_logs').push({content:t, time:new Date().toLocaleString()}).then(()=>alert("已存檔"));
+    function clearAll() {
+        document.getElementById('valIn').value = '';
+        document.getElementById('result').style.display = 'none';
     }
 
-    function upVisitor() {
-        const p = document.getElementById('vPlate').value;
-        if(p) db.ref('M_SECURITY/visitor_logs').push({plate:p, reason:document.getElementById('vReason').value, time:new Date().toLocaleString()}).then(()=>alert("登記完成"));
+    function switchPage(idx) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('p' + idx).classList.add('active');
+        document.querySelectorAll('.tab')[idx].classList.add('active');
+        if(idx === 1) {
+            const data = JSON.parse(localStorage.getItem('M_POLICE_BLACK') || '{}');
+            renderBlack(data);
+        }
     }
 
-    function syncDogs() {
-        db.ref('M_SECURITY/dog_health').on('value', s => {
-            let h = '<b>🐕 K9 夥伴清單</b><hr>';
-            const d = s.val();
-            if(d) Object.values(d).forEach(i => h += `<p>${i.name}: ${i.medical}</p>`);
-            document.getElementById('dogList').innerHTML = h;
-        });
-    }
-
-    function syncBlack() {
-        db.ref('blacklist_data').on('value', s => {
-            let h = ''; const d = s.val();
-            if(d) Object.values(d).forEach(i => h += `<p style="color:red;">● ${i.name}<br><small>${i.reason}</small></p><hr>`);
-            document.getElementById('blackContent').innerHTML = h || '查無管制';
-        });
-    }
+    // 自動啟動同步
+    manualSync();
 </script>
 </body>
 </html>
