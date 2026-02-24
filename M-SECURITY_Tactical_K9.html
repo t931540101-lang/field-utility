@@ -8,36 +8,47 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --nav-blue: #4a76a8; --bg-light: #e6f0fa; --police-green: #28a745; }
-        body { font-family: sans-serif; background: var(--bg-light); margin: 0; padding: 0; }
+        :root { --nav-blue: #4a76a8; --bg-blue: #e6f0fa; --btn-blue: #3b82f6; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg-blue); margin: 0; padding: 0; overflow-x: hidden; }
         
-        .header { background: linear-gradient(to bottom, #7ba6d9, #4a76a8); color: white; padding: 15px 0; text-align: center; }
-        .header h1 { margin: 0; font-style: italic; font-size: 24px; letter-spacing: 1px; }
+        /* 100% 還原截圖頂部 */
+        .header { background: linear-gradient(to bottom, #7ba6d9, #4a76a8); color: white; padding: 18px 0; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .header h1 { margin: 0; font-style: italic; font-size: 26px; letter-spacing: 1px; font-weight: bold; }
 
-        .tabs { display: flex; background: #6089b3; border-bottom: 1px solid #3a5d85; position: sticky; top: 0; z-index: 1000; }
-        .tab { flex: 1; text-align: center; padding: 12px 0; color: #d1d5db; font-size: 14px; cursor: pointer; border-right: 1px solid #4a76a8; }
-        .tab.active { background: #4a76a8; color: white; font-weight: bold; border-bottom: 3px solid #39ff14; }
+        /* 分頁標籤 */
+        .tabs { display: flex; background: #6089b3; border-bottom: 1px solid #3a5d85; }
+        .tab { flex: 1; text-align: center; padding: 14px 0; color: #d1d5db; font-size: 15px; cursor: pointer; border-right: 1px solid #4a76a8; }
+        .tab.active { background: #4a76a8; color: white; font-weight: bold; }
 
         .container { padding: 15px; }
         .page { display: none; }
         .page.active { display: block; }
 
-        .search-card { background: white; border-radius: 5px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        .badge-online { background: #007bff; color: white; padding: 2px 10px; border-radius: 4px; font-size: 13px; }
+        /* 查詢模式 */
+        .mode-line { margin: 10px 0; font-size: 16px; font-weight: bold; }
+        .badge-online { background: #007bff; color: white; padding: 3px 12px; border-radius: 4px; font-size: 14px; margin-left: 5px; }
 
-        .input-area { border: 2px solid #a5c7f2; border-radius: 4px; padding: 10px; margin-bottom: 15px; }
-        textarea, input { width: 100%; border: none; font-size: 18px; outline: none; background: transparent; }
+        /* 輸入框樣式還原 */
+        .input-card { background: white; border: 2px solid #a5c7f2; border-radius: 6px; padding: 12px; margin-bottom: 15px; }
+        .input-card label { color: #888; font-size: 14px; display: block; margin-bottom: 5px; }
+        textarea { width: 100%; border: none; font-size: 20px; outline: none; resize: none; height: 70px; font-weight: bold; color: #333; }
 
-        .btn { border: none; border-radius: 6px; color: white; font-size: 18px; font-weight: bold; padding: 14px; width: 100%; margin-bottom: 12px; cursor: pointer; }
+        /* 按鈕視覺還原 */
+        .btn { border: none; border-radius: 8px; color: white; font-size: 22px; font-weight: bold; padding: 16px; width: 100%; margin-bottom: 15px; cursor: pointer; box-shadow: 0 4px #1a6edb; transition: 0.1s; }
+        .btn:active { transform: translateY(3px); box-shadow: 0 1px #1a6edb; }
         .btn-query { background: linear-gradient(to bottom, #4da1ff, #2188ff); }
         .btn-scan { background: linear-gradient(to bottom, #7fb9ff, #50a1ff); }
         
-        /* 頻道與設定專用樣式 */
-        .channel-item { background: #fff; padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
-        .setting-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #eee; }
+        .footer-row { display: flex; gap: 12px; }
+        .btn-footer { flex: 1; background: linear-gradient(to bottom, #4da1ff, #2188ff); padding: 12px; font-size: 16px; border-radius: 6px; box-shadow: 0 3px #1a6edb; }
+
+        /* 隱藏的掃描區 */
+        #qr-reader { width: 100%; display: none; margin-bottom: 15px; border: 2px solid var(--nav-blue); border-radius: 8px; overflow: hidden; }
+
+        /* 結果顯示 */
+        .res-display { margin-top: 20px; padding: 15px; background: #fff; border-radius: 8px; border-left: 10px solid #28a745; display: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         
-        #qr-reader { width: 100%; display: none; margin-bottom: 10px; border: 2px solid #4a76a8; }
-        .footer-status { text-align: right; margin-top: 30px; color: #888; font-size: 12px; font-family: monospace; }
+        .sys-info { text-align: right; margin-top: 40px; color: #888; font-size: 12px; font-family: monospace; line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -45,95 +56,99 @@
     <div class="header"><h1>M-SECURITY 整合查詢</h1></div>
 
     <div class="tabs">
-        <div class="tab active" onclick="switchPage('general', this)">一般</div>
-        <div class="tab" onclick="switchPage('advanced', this)">進階</div>
-        <div class="tab" onclick="switchPage('app', this)">應用</div>
-        <div class="tab" onclick="switchPage('channel', this)">頻道</div>
-        <div class="tab" onclick="switchPage('setup', this)">設定</div>
+        <div class="tab active" onclick="goPage('p1', this)">一般</div>
+        <div class="tab" onclick="goPage('p2', this)">進階</div>
+        <div class="tab" onclick="goPage('p3', this)">應用</div>
+        <div class="tab">頻道</div>
+        <div class="tab">設定</div>
     </div>
 
     <div class="container">
-        <div id="general" class="page active">
-            <div class="search-card">
-                <div style="margin-bottom:10px;">查詢模式：<span class="badge-online">線上</span></div>
-                <div class="input-area"><textarea id="mainInput" placeholder="請輸入車牌或工號"></textarea></div>
-                <div id="qr-reader"></div>
-                <button class="btn btn-query" onclick="doQuery()">查 詢</button>
-                <button class="btn btn-scan" id="scanBtn" onclick="toggleScan()">條 碼 掃 描</button>
+        <div id="p1" class="page active">
+            <div class="mode-line">查詢模式：<span class="badge-online">線上</span></div>
+            
+            <div class="input-card">
+                <label>車牌/工號</label>
+                <textarea id="valInput" placeholder="請輸入欲查詢資料"></textarea>
             </div>
-            <div id="result" style="display:none; background:#fff; padding:15px; border-radius:5px; border-left:10px solid #28a745;"></div>
+            
+            <div id="qr-reader"></div>
+
+            <button class="btn btn-query" onclick="doAction()">查 詢</button>
+            <button class="btn btn-scan" id="scanBtn" onclick="toggleScanner()">條 碼 掃 描</button>
+            
+            <div class="footer-row">
+                <button class="btn btn-footer" onclick="document.getElementById('valInput').value=''">清 除</button>
+                <button class="btn btn-footer">資料同步</button>
+            </div>
+            
+            <div id="resultBox" class="res-display"></div>
         </div>
 
-        <div id="advanced" class="page">
-            <div class="search-card"><h3 style="color:red; margin:0;">🛑 管制黑名單</h3><hr>
-                <p>● [A-09] 違規廠商</p><p>● [B-21] 禁入人員</p>
+        <div id="p2" class="page">
+            <h3 style="color:var(--nav-blue);">🛡️ 勤務進階管制</h3>
+            <div style="background:white; padding:15px; border-radius:8px;">
+                <p style="color:red; font-weight:bold;">⚠️ 目前管制車輛：3 輛</p>
+                <hr>
+                <p>1. ABC-1234 (多次違規)</p>
+                <p>2. K9-8888 (重點觀察)</p>
             </div>
         </div>
 
-        <div id="app" class="page">
+        <div id="p3" class="page">
+            <h3 style="color:var(--nav-blue);">🛠️ 勤務應用連結</h3>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <div class="search-card" style="text-align:center; background:#fff5f5;">🚨 緊急通報</div>
-                <div class="search-card" style="text-align:center;">📍 崗哨回報</div>
+                <div style="background:white; padding:20px; text-align:center; border-radius:8px;">🚨 緊急通報</div>
+                <div style="background:white; padding:20px; text-align:center; border-radius:8px;">📋 巡邏日誌</div>
             </div>
         </div>
 
-        <div id="channel" class="page">
-            <div class="search-card" style="padding:0;">
-                <div class="channel-item"><span>📻 CH-01 全廠崗哨</span><b style="color:green;">● 在線</b></div>
-                <div class="channel-item"><span>📻 CH-02 物流卸貨</span><b style="color:gray;">○ 離線</b></div>
-                <div class="channel-item"><span>📻 CH-03 巡邏回報</span><b style="color:green;">● 在線</b></div>
-            </div>
-            <div style="margin-top:15px; background:#fff; padding:10px; font-size:12px; color:#555;">
-                [19:35] K9-01: 一號門區一切正常。
-            </div>
+        <div class="sys-info">
+            20260224_0810<br>
+            <span style="color:red; font-weight:bold;">K9-UNIT-ACTIVE</span>
         </div>
-
-        <div id="setup" class="page">
-            <div class="search-card">
-                <div class="setting-item"><span>自動同步雲端資料</span><input type="checkbox" checked></div>
-                <div class="setting-item"><span>相機掃描震動反饋</span><input type="checkbox" checked></div>
-                <div class="setting-item"><span>資料庫版本</span><span>2026.02.24</span></div>
-                <div class="setting-item"><span>登出系統</span><span style="color:red; font-weight:bold;">LOGOUT</span></div>
-            </div>
-            <div style="text-align:center; font-size:11px; color:#aaa; margin-top:10px;">
-                系統開發：K9 SECURITY TEAM
-            </div>
-        </div>
-
-        <div class="footer-status">20260224_0810<br><span style="color:red">K9-UNIT-ACTIVE</span></div>
     </div>
 
 <script>
-    function switchPage(id, el) {
+    // 1. 頁面切換
+    function goPage(id, el) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         el.classList.add('active');
-        if(id !== 'general') stopScan(); 
+        if(id !== 'p1') closeScan(); 
     }
 
-    let scanner = null;
-    function toggleScan() {
-        if (scanner) { stopScan(); } 
-        else {
-            document.getElementById('qr-reader').style.display = 'block';
-            scanner = new Html5Qrcode("qr-reader");
-            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
-                document.getElementById('mainInput').value = text;
-                stopScan(); doQuery();
-            }).catch(e => alert("鏡頭錯誤"));
+    // 2. 掃描引擎整合
+    let scn = null;
+    function toggleScanner() {
+        const r = document.getElementById('qr-reader');
+        if (scn) { closeScan(); } else {
+            r.style.display = 'block';
+            scn = new Html5Qrcode("qr-reader");
+            scn.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 250, height: 150 } }, (txt) => {
+                document.getElementById('valInput').value = txt;
+                closeScan();
+                doAction();
+            }).catch(e => alert("鏡頭故障或被阻擋"));
             document.getElementById('scanBtn').innerText = "關 閉 掃 描";
         }
     }
-    function stopScan() {
-        if(scanner) { scanner.stop().then(() => { scanner = null; document.getElementById('qr-reader').style.display = 'none'; document.getElementById('scanBtn').innerText = "條 碼 掃 描"; }); }
+    function closeScan() {
+        if(scn) { scn.stop().then(() => { scn = null; document.getElementById('qr-reader').style.display = 'none'; document.getElementById('scanBtn').innerText = "條 碼 掃 描"; }); }
     }
-    function doQuery() {
-        const val = document.getElementById('mainInput').value.trim();
+
+    // 3. 雲端查詢邏輯
+    function doAction() {
+        const val = document.getElementById('valInput').value.trim().toUpperCase();
         if(!val) return;
-        const res = document.getElementById('result');
-        res.style.display = 'block';
-        res.innerHTML = `<b>查詢結果：${val}</b><br>身份：內部員工<br>單位：生產部`;
+        const box = document.getElementById('resultBox');
+        box.style.display = 'block';
+        box.innerHTML = `<h3>查詢中...</h3>`;
+        // 模擬對接 Firebase
+        setTimeout(() => {
+            box.innerHTML = `<h3>[ 查詢結果 ]</h3><p>對象：${val}</p><p>權限：<b>內部員工 - 廠區通行 OK</b></p>`;
+        }, 400);
     }
 </script>
 </body>
