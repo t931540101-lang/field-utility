@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>M-SECURITY | K9 終端</title>
+    <style>
+        :root {
+            --bg: #050505;
+            --main: #ff9800;
+            --sub: #00d2ff;
+            --border: #333;
+        }
+        body { background: var(--bg); color: #fff; font-family: monospace; margin: 0; padding: 15px; }
+        .header { border-bottom: 1px solid var(--main); padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .title { color: var(--main); font-weight: 900; font-size: 24px; }
+        
+        .entry-box { background: #111; border: 1px solid var(--border); padding: 10px; margin-bottom: 15px; }
+        input, select { background: #000; border: 1px solid var(--border); color: var(--sub); padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 8px; font-size: 16px; }
+        input:focus { border-color: var(--main); outline: none; }
+        
+        .btn-exe { background: var(--main); color: #000; border: none; padding: 12px; width: 100%; font-weight: 900; cursor: pointer; }
+        .search { border: 1px solid var(--sub); background: transparent; color: var(--sub); padding: 8px; width: 100%; box-sizing: border-box; margin-bottom: 15px; }
+
+        .log-card { border-left: 5px solid var(--main); background: #1a1a1a; padding: 12px; margin-bottom: 8px; font-size: 14px; position: relative; }
+        .log-card.done { border-left-color: #4caf50; opacity: 0.6; }
+        .log-card b { color: var(--main); font-size: 18px; }
+        .log-card p { margin: 5px 0; color: #aaa; }
+        
+        .btn-status { background: transparent; border: 1px solid var(--main); color: var(--main); padding: 5px 10px; font-size: 12px; cursor: pointer; }
+        .done .btn-status { border-color: #4caf50; color: #4caf50; }
+        .btn-del { position: absolute; top: 10px; right: 10px; color: #444; border: none; background: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="title">M-SECURITY</div>
+        <div style="font-size: 10px; color: var(--sub);">UNIT: K9-OFFLINE</div>
+    </div>
+
+    <div class="entry-box">
+        <input type="text" id="dept" placeholder="單位 / DEPT">
+        <input type="text" id="name" placeholder="對象 / SUBJECT">
+        <select id="type">
+            <option>📦 GENERAL (一般)</option>
+            <option>✉️ DOCUMENT (掛號)</option>
+            <option>❄️ COLD (低溫)</option>
+        </select>
+        <button class="btn-exe" onclick="add()">DEPLOY / 部署</button>
+    </div>
+
+    <input type="text" class="search" id="s" onkeyup="search()" placeholder="🔍 SEARCH / 檢索...">
+
+    <div id="list"></div>
+
+    <script>
+        let db = JSON.parse(localStorage.getItem('m_sec_k9')) || [];
+        function save() { localStorage.setItem('m_sec_k9', JSON.stringify(db)); render(); }
+        function add() {
+            const n = document.getElementById('name').value;
+            if(!n) return;
+            db.unshift({ id: Date.now(), d: document.getElementById('dept').value || 'NA', n: n, t: document.getElementById('type').value, time: new Date().toLocaleString(), s: 'p', sign: '' });
+            save(); document.getElementById('name').value = '';
+        }
+        function toggle(id) {
+            const p = db.find(x => x.id === id);
+            if(p.s === 'p') {
+                const s = prompt("SIGNATURE / 簽收人：");
+                if(s) { p.s = 'd'; p.sign = `${new Date().toLocaleTimeString()} [${s}]`; }
+            } else { if(confirm("REBOOT / 重設？")) { p.s = 'p'; p.sign = ''; } }
+            save();
+        }
+        function render(items = db) {
+            const l = document.getElementById('list'); l.innerHTML = '';
+            items.forEach(p => {
+                const div = document.createElement('div');
+                div.className = `log-card ${p.s==='d'?'done':''}`;
+                div.innerHTML = `
+                    <button class="btn-del" onclick="if(confirm('DEL?')){db=db.filter(x=>x.id!==${p.id});save();}">✕</button>
+                    <b>${p.n}</b>
+                    <p>${p.d} | ${p.t}</p>
+                    <p style="font-size:11px">${p.time}</p>
+                    ${p.sign ? `<p style="color:#4caf50; font-weight:bold;">>>> ${p.sign}</p>` : ''}
+                    <button class="btn-status" onclick="toggle(${p.id})">${p.s==='p'?'SIGN':'CLOSED'}</button>
+                `;
+                l.appendChild(div);
+            });
+        }
+        function search() {
+            const t = document.getElementById('s').value.toLowerCase();
+            render(db.filter(p => p.n.toLowerCase().includes(t) || p.d.toLowerCase().includes(t)));
+        }
+        window.onload = render;
+    </script>
+</body>
+</html>
