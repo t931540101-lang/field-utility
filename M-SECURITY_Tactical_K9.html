@@ -7,56 +7,53 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --nav-blue: #4a76a8; --bg-blue: #e6f0fa; --btn-grad: linear-gradient(to bottom, #4da1ff, #2188ff); --danger: #ff4d4f; }
-        body { font-family: sans-serif; background: var(--bg-blue); margin: 0; padding: 0; }
-        .header { background: linear-gradient(to bottom, #7ba6d9, #4a76a8); color: white; padding: 18px 0; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .header h1 { margin: 0; font-style: italic; font-size: 24px; }
-        .tabs { display: flex; background: #6089b3; }
-        .tab { flex: 1; text-align: center; padding: 14px 0; color: #d1d5db; font-size: 15px; cursor: pointer; }
-        .tab.active { background: #4a76a8; color: white; font-weight: bold; border-bottom: 3px solid #fff; }
+        :root { --main-blue: #4a76a8; --danger-red: #ff4d4f; --success-green: #28a745; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 0; color: #333; }
+        
+        /* 手機窄螢幕比例優化 */
+        .header { background: var(--main-blue); color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 20px; }
+        .tabs { display: flex; background: #fff; border-bottom: 1px solid #ddd; }
+        .tab { flex: 1; text-align: center; padding: 12px; font-size: 14px; cursor: pointer; color: #666; }
+        .tab.active { color: var(--main-blue); border-bottom: 3px solid var(--main-blue); font-weight: bold; }
+
         .container { padding: 15px; }
-        .page { display: none; }
-        .page.active { display: block; }
-        .input-card { background: white; border: 2px solid #a5c7f2; border-radius: 6px; padding: 12px; margin-bottom: 15px; }
-        textarea { width: 100%; border: none; font-size: 20px; outline: none; height: 60px; font-weight: bold; background: transparent; resize: none; }
-        .btn { border: none; border-radius: 8px; color: white; font-size: 20px; font-weight: bold; padding: 16px; width: 100%; margin-bottom: 12px; cursor: pointer; box-shadow: 0 4px #1a6edb; }
-        .btn-query { background: var(--btn-grad); }
-        .res-box { margin-top: 15px; padding: 15px; background: white; border-radius: 8px; border-left: 10px solid #28a745; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .black-item { background: #fff; padding: 10px; border-radius: 5px; border-left: 5px solid var(--danger); margin-bottom: 10px; }
+        .card { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        
+        /* 輸入區塊 */
+        textarea { width: 100%; border: 1px solid #ccc; border-radius: 5px; font-size: 18px; padding: 10px; box-sizing: border-box; resize: none; height: 60px; margin-bottom: 10px; }
+        .btn { width: 100%; border: none; border-radius: 5px; padding: 15px; font-size: 18px; font-weight: bold; cursor: pointer; color: white; }
+        .btn-blue { background: var(--main-blue); }
+        
+        /* 結果顯示 */
+        #result { display: none; margin-top: 15px; border-left: 8px solid #ccc; transition: 0.3s; }
+        .res-title { font-weight: bold; font-size: 18px; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="header"><h1>M-Police 整合查詢</h1></div>
+    <div class="header">M-Police 戰術終端</div>
 
     <div class="tabs">
         <div class="tab active" onclick="switchPage(0)">一般查詢</div>
-        <div class="tab" onclick="switchPage(1)">黑名單</div>
+        <div class="tab" onclick="switchPage(1)">管制名單</div>
     </div>
 
     <div class="container">
-        <div id="p0" class="page active">
-            <div style="margin-bottom:10px;">系統狀態：<span id="st" style="color:green;">● 在線同步中</span></div>
-            <div class="input-card">
-                <label style="color:#888;font-size:12px;">輸入工號、車牌或姓名</label>
-                <textarea id="valIn" placeholder="請輸入資料..."></textarea>
+        <div id="p0" class="page">
+            <div class="card">
+                <textarea id="valIn" placeholder="輸入工號、車牌或姓名"></textarea>
+                <button class="btn btn-blue" onclick="doQuery()">執行偵測</button>
             </div>
-            <button class="btn btn-query" onclick="doQuery()">開始偵測</button>
-            <div id="result" class="res-box"></div>
+            <div id="result" class="card"></div>
         </div>
 
-        <div id="p1" class="page">
-            <h3 style="color:var(--danger)">🛑 總部發布管制名單</h3>
-            <div id="blackContent">同步中...</div>
-        </div>
-
-        <div style="text-align:center; margin-top:30px; color:#999; font-size:11px; font-family:monospace;">
-            UNIT: K9-ACTIVE | VER: 20260224
+        <div id="p1" class="page" style="display:none;">
+            <div id="blackList" class="container">載入中...</div>
         </div>
     </div>
 
 <script>
-    // Firebase 初始化
+    // Firebase 配置 (與總部一致)
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
@@ -66,63 +63,78 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 切換分頁
-    function switchPage(idx) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById('p' + idx).classList.add('active');
-        document.querySelectorAll('.tab')[idx].classList.add('active');
-        if(idx === 1) syncBlack();
+    // 1. Local Storage 存檔功能建議
+    function saveToLocal(key, data) {
+        localStorage.setItem('M_POLICE_' + key, JSON.stringify(data));
     }
 
-    // 同步黑名單 (對接後台 blacklist_data)
-    function syncBlack() {
-        const box = document.getElementById('blackContent');
+    function getLocal(key) {
+        const data = localStorage.getItem('M_POLICE_' + key);
+        return data ? JSON.parse(data) : null;
+    }
+
+    // 2. 雲端同步並備份至本地
+    function syncData() {
         db.ref('blacklist_data').on('value', (snap) => {
             const data = snap.val();
-            if(!data) { box.innerHTML = "目前無管制紀錄"; return; }
-            let html = '';
-            for(let k in data) {
-                html += `<div class="black-item"><b>${data[k].name}</b><br><small>原因：${data[k].reason}</small><br><small style="color:#999">${data[k].time}</small></div>`;
+            if(data) {
+                saveToLocal('BLACKLIST', data); // 存入 Local Storage
+                renderBlacklist(data);
             }
-            box.innerHTML = html;
         });
     }
 
-    // 整合查詢 (自動過濾黑名單與員工)
+    function renderBlacklist(data) {
+        let html = '<h3 style="color:var(--danger-red)">🛑 總部管制中</h3>';
+        for(let k in data) {
+            html += `<div class="card" style="border-left:5px solid var(--danger-red)">
+                        <b>${data[k].name}</b><br><small>原因：${data[k].reason}</small>
+                     </div>`;
+        }
+        document.getElementById('blackList').innerHTML = html;
+    }
+
+    // 3. 查詢邏輯
     function doQuery() {
         const v = document.getElementById('valIn').value.trim().toUpperCase();
-        if(!v) return alert("請輸入查詢內容");
+        if(!v) return;
         const res = document.getElementById('result');
         res.style.display = 'block';
-        res.innerHTML = "正在連線總部資料庫...";
+        
+        // 優先從本地快取找 (確保訊號差也能用)
+        const localBlack = getLocal('BLACKLIST');
+        let found = localBlack ? Object.values(localBlack).find(i => i.name.includes(v)) : null;
 
-        // 1. 先查黑名單
-        db.ref('blacklist_data').once('value', (snap) => {
-            const bList = snap.val();
-            let foundBlack = null;
-            if(bList) {
-                foundBlack = Object.values(bList).find(i => i.name.includes(v) || (i.reason && i.reason.includes(v)));
-            }
-
-            if(foundBlack) {
-                res.style.borderLeft = "10px solid #ff4d4f";
-                res.innerHTML = `<h3 style="color:red;">🚨 管制對象：紅色警報</h3><p>姓名：${foundBlack.name}</p><p>原因：${foundBlack.reason}</p><p>發布日期：${foundBlack.time}</p>`;
-            } else {
-                // 2. 查員工清單 (對接後台 employee_list)
-                db.ref('employee_list/' + v).once('value', (eSnap) => {
-                    const e = eSnap.val();
-                    if(e) {
-                        res.style.borderLeft = "10px solid #28a745";
-                        res.innerHTML = `<h3>✅ 員工身份確認</h3><p>姓名：${e.name}</p><p>單位：${e.dept}</p><p>車牌：${e.plate}</p>`;
-                    } else {
-                        res.style.borderLeft = "10px solid #888";
-                        res.innerHTML = `<h3>⚠️ 查無存檔</h3><p>對象：${v}</p><p>建議：執行現場查驗或引導至訪客登記。</p>`;
-                    }
-                });
-            }
-        });
+        if(found) {
+            res.style.borderLeftColor = 'var(--danger-red)';
+            res.innerHTML = `<div class="res-title" style="color:var(--danger-red)">🚨 管制對象</div>
+                             姓名：${found.name}<br>原因：${found.reason}`;
+        } else {
+            // 查員工資料庫
+            db.ref('employee_list/' + v).once('value', (s) => {
+                const e = s.val();
+                if(e) {
+                    res.style.borderLeftColor = 'var(--success-green)';
+                    res.innerHTML = `<div class="res-title" style="color:var(--success-green)">✅ 員工確認</div>
+                                     姓名：${e.name}<br>單位：${e.dept}`;
+                } else {
+                    res.style.borderLeftColor = '#ccc';
+                    res.innerHTML = `查無資料，請引導至訪客登記。`;
+                }
+            });
+        }
     }
+
+    function switchPage(idx) {
+        document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('p' + idx).style.display = 'block';
+        document.querySelectorAll('.tab')[idx].classList.add('active');
+        if(idx === 1) syncData();
+    }
+
+    // 初始化同步
+    syncData();
 </script>
 </body>
 </html>
