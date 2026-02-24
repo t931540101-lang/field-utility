@@ -7,6 +7,63 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script>
+    // 你的雲端配置
+    const firebaseConfig = {
+        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+        authDomain: "factor-security-d1965.firebaseapp.com",
+        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+        projectId: "factor-security-d1965",
+        storageBucket: "factor-security-d1965.firebasestorage.app",
+        messagingSenderId: "864846943143",
+        appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // 關鍵：即時抓取雲端黑名單並顯示在「進階」分頁
+    function syncBlacklist() {
+        const listContainer = document.querySelector('#page1 .blacklist-content'); // 對應進階頁容器
+        db.ref('M_SECURITY/blacklist').on('value', (snapshot) => {
+            const data = snapshot.val();
+            let html = '<h3 style="color:red">🛑 管制黑名單 (雲端同步)</h3>';
+            if (data) {
+                Object.values(data).forEach(item => {
+                    html += `<div style="padding:15px; background:white; margin-bottom:10px; border-radius:5px; border-left:5px solid red;">
+                                <b style="font-size:18px;">${item.name}</b><br>
+                                <span style="color:#666;">車牌/工號：${item.plate}</span><br>
+                                <span style="color:red; font-weight:bold;">原因：${item.reason}</span>
+                             </div>`;
+                });
+            } else {
+                html += '<p style="color:gray;">目前資料庫無管制紀錄</p>';
+            }
+            if(listContainer) listContainer.innerHTML = html;
+        });
+    }
+
+    // 擴充功能：一般查詢時若遇到黑名單自動警示
+    function doQuery() {
+        const val = document.getElementById('mainIn').value.trim().toUpperCase();
+        if(!val) return;
+        const res = document.getElementById('res');
+        res.style.display = 'block';
+
+        // 先查黑名單路徑
+        db.ref('M_SECURITY/blacklist/' + val).once('value', (snap) => {
+            const blackData = snap.val();
+            if(blackData) {
+                res.innerHTML = `<div style="background:#ffebee; border:4px solid red; padding:15px;">
+                                    <h2 style="color:red; margin:0;">⚠️ 警告：管制對象</h2>
+                                    <p>姓名：${blackData.name}</p>
+                                    <p>原因：${blackData.reason}</p>
+                                 </div>`;
+            } else {
+                res.innerHTML = `<h3>[ 查詢結果 ]</h3><p>工號：${val}</p><p>狀態：<b>正常通行</b></p>`;
+            }
+        });
+    }
+</script>
     <style>
         :root { --header-grad: linear-gradient(to bottom, #7ba6d9, #4a76a8); --bg: #e6f0fa; --tab-blue: #6089b3; --tab-active: #4a76a8; --btn-grad: linear-gradient(to bottom, #4da1ff, #2188ff); }
         body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 0; }
