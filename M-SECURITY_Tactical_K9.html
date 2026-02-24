@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-Police 整合查詢 V3.2</title>
+    <title>M-Police 整合查詢 V3.3</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -25,8 +25,6 @@
         .btn-group { display: flex; gap: 10px; }
         .btn-sm { flex: 1; padding: 12px; font-size: 16px; }
         .res-box { margin-top: 15px; padding: 15px; background: white; border-radius: 8px; border-left: 10px solid #ccc; display: none; }
-        .log-card { background: white; border-left: 8px solid var(--dark); padding: 12px; margin-bottom: 10px; border-radius: 4px; }
-        .confirmed { border-left-color: var(--accent); background: #ecfdf5; }
         .sys-info { text-align: right; margin-top: 30px; color: #888; font-size: 11px; }
     </style>
 </head>
@@ -52,19 +50,13 @@
         </div>
         <div id="result" class="res-box"></div>
     </div>
-
-    <div id="p1" class="page"><div id="vList">載入訪客資料...</div></div>
-    <div id="p2" class="page"><div id="dogList">載入 K9 數據...</div></div>
-    <div id="p3" class="page">
-        <button class="btn btn-query" style="background:var(--dark);" onclick="addDuty()">+ 新增交接</button>
-        <div id="dutyList"></div>
-    </div>
-    
-    <div class="sys-info">MOI-API CONNECTED | 2026-V3.2</div>
+    <div id="p1" class="page"><div id="vList">載入訪客中...</div></div>
+    <div id="p2" class="page"><div id="dogList">載入 K9 中...</div></div>
+    <div id="p3" class="page"><div id="dutyList">載入交接中...</div></div>
 </div>
 
 <script>
-    // Firebase 初始化 (保持原本配置)
+    // Firebase 初始化 (省略，請使用原本配置)
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
@@ -74,64 +66,35 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    function switchPage(idx) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById('p' + idx).classList.add('active');
-        document.querySelectorAll('.tab')[idx].classList.add('active');
-        if(idx === 3) syncDuty();
-    }
-
-    // 核心查詢邏輯 + 內政部跳轉
     function doQuery() {
         const v = document.getElementById('valIn').value.trim().toUpperCase();
         if(!v) return;
         const res = document.getElementById('result');
         res.style.display = 'block';
         
-        // 1. 內部資料庫查核
         db.ref('employee_list/' + v).once('value', e => {
             const d = e.val();
-            let html = '';
-            if(d) {
-                res.style.borderLeftColor = '#28a745';
-                html = `<h3>✅ 內部員工</h3>姓名：${d.name}<br>單位：${d.dept}`;
-            } else {
-                res.style.borderLeftColor = '#888';
-                html = `查無內部存檔。`;
-            }
-
-            // 2. 加入「內政部失竊查核」按鈕 (判斷是否為車牌格式)
+            let html = d ? `<h3>✅ 內部員工</h3>姓名：${d.name}<br>單位：${d.dept}` : `查無內部存檔。`;
             if(v.length >= 2) {
-                html += `<hr><div style="font-size:14px; color:#666; margin-bottom:5px;">外部查核選項：</div>
-                         <button class="btn btn-moi" onclick="openMOI('${v}')">🔍 查核內政部失竊紀錄</button>
-                         <div style="font-size:11px; color:red; margin-top:5px;">※ 點擊後將下載官方 CSV 報告檔</div>`;
+                html += `<hr><button class="btn btn-moi" onclick="openMOI('${v}')">🔍 查核內政部失竊紀錄</button>`;
             }
             res.innerHTML = html;
         });
     }
 
-    // 跳轉內政部官方 API 路徑
+    // 解決彈窗問題：直接跳轉不使用 window.open
     function openMOI(plate) {
-        const type = prompt("請選擇牌照種類：\nA:汽車 B:重機 C:輕機", "A");
+        const type = prompt("選擇種類：A汽車, B重機, C輕機", "A");
         if(!type) return;
-        const url = `https://od.moi.gov.tw/adm/veh/query_veh?_m=query&vehType=${type}&vehNumber=${plate}`;
-        window.open(url, '_blank');
+        // 直接在當前頁面導向下載連結
+        window.location.href = `https://od.moi.gov.tw/adm/veh/query_veh?_m=query&vehType=${type}&vehNumber=${plate}`;
     }
 
-    // 交接功能 (保持 V3.1)
-    function addDuty() {
-        const n = prompt("交接事項：");
-        if(n) db.ref('reactLogs').push({ note: n, timestamp: Date.now(), time: new Date().toLocaleString() });
-    }
-    function syncDuty() {
-        db.ref('reactLogs').limitToLast(5).on('value', s => {
-            const list = document.getElementById('dutyList'); list.innerHTML = '';
-            const data = s.val();
-            if(data) Object.keys(data).reverse().forEach(k => {
-                list.innerHTML += `<div class="log-card">${data[k].note}</div>`;
-            });
-        });
+    function switchPage(idx) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('p' + idx).classList.add('active');
+        document.querySelectorAll('.tab')[idx].classList.add('active');
     }
 </script>
 </body>
