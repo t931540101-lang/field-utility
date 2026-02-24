@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M-SECURITY | 指揮官後台</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        :root { --admin-blue: #00d2ff; --admin-bg: #0a0b0d; --row-bg: #16181d; }
+        body { background: var(--admin-bg); color: var(--admin-blue); font-family: 'Segoe UI', sans-serif; padding: 20px; }
+        .container { max-width: 900px; margin: auto; }
+        .header { border-bottom: 2px solid var(--admin-blue); padding-bottom: 10px; margin-bottom: 25px; }
+        
+        /* 錄入區域 */
+        .input-card { background: var(--row-bg); padding: 20px; border-radius: 8px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 10px; align-items: end; }
+        .input-group label { display: block; font-size: 11px; margin-bottom: 5px; }
+        input { background: #000; border: 1px solid #334; color: #fff; padding: 10px; width: 100%; box-sizing: border-box; }
+        .btn-add { background: var(--admin-blue); color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; height: 38px; }
+
+        /* 清單區域 */
+        table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+        th { text-align: left; border-bottom: 2px solid #334; padding: 12px; font-size: 13px; }
+        td { padding: 12px; border-bottom: 1px solid #222; font-size: 15px; color: #ccc; }
+        .btn-del { color: #ff3131; background: none; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>M-SECURITY 資料庫管理後台</h1>
+        <p style="font-size: 12px; color: #666;">DATABASE ID: factor-security-d1965</p>
+    </div>
+
+    <div class="input-card">
+        <div class="input-group"><label>員工工號</label><input type="text" id="staffID" placeholder="如: K9001"></div>
+        <div class="input-group"><label>員工姓名</label><input type="text" id="staffName" placeholder="如: 小黑哥"></div>
+        <div class="input-group"><label>所屬單位</label><input type="text" id="staffDept" placeholder="如: 警衛組"></div>
+        <div class="input-group"><label>登記車牌</label><input type="text" id="staffPlate" placeholder="如: ABC-1234"></div>
+        <button class="btn-add" onclick="uploadData()">同步至雲端</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>工號</th><th>姓名</th><th>單位</th><th>車牌</th><th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="dataTable">
+            </tbody>
+    </table>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+        projectId: "factor-security-d1965",
+        appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function uploadData() {
+        const id = document.getElementById('staffID').value.trim();
+        const name = document.getElementById('staffName').value.trim();
+        const dept = document.getElementById('staffDept').value.trim();
+        const plate = document.getElementById('staffPlate').value.trim().toUpperCase();
+
+        if (!id || !name) return alert("工號與姓名為必填！");
+
+        // 核心邏輯：為了讓 M-POLICE 查驗端「搜尋一個關鍵字」就能查到
+        // 我們要在資料庫裡存兩份索引：一份用工號當 Key，一份用車牌當 Key
+        const staffObj = { id, name, dept, plate };
+
+        const updates = {};
+        updates['/employee_list/' + id] = staffObj;
+        if(plate) updates['/employee_list/' + plate] = staffObj;
+
+        db.ref().update(updates).then(() => {
+            alert("雲端同步成功！");
+            document.querySelectorAll('input').forEach(i => i.value = '');
+        });
+    }
+
+    // 監聽並顯示清單
+    db.ref('employee_list').on('value', (s) => {
+        const data = s.val();
+        const table = document.getElementById('dataTable');
+        table.innerHTML = '';
+        if (data) {
+            // 排除重複顯示（因為同一個人有工號跟車牌兩筆資料）
+            const shown = new Set();
+            Object.keys(data).forEach(key => {
+                const p = data[key];
+                if (!shown.has(p.id)) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${p.id}</td><td>${p.name}</td><td>${p.dept}</td><td>${p.plate}</td>
+                                    <td><button class="btn-del" onclick="deleteData('${p.id}', '${p.plate}')">刪除</button></td>`;
+                    table.appendChild(tr);
+                    shown.add(p.id);
+                }
+            });
+        }
+    });
+
+    function deleteData(id, plate) {
+        if (confirm("確定刪除此員工資料？")) {
+            const updates = {};
+            updates['/employee_list/' + id] = null;
+            if(plate) updates['/employee_list/' + plate] = null;
+            db.ref().update(updates);
+        }
+    }
+</script>
+</body>
+</html>
