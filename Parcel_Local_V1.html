@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>台灣精銳包裹登記 | 單機離線版</title>
+    <style>
+        :root { --primary-color: #d32f2f; --bg-color: #f4f4f4; --accent-color: #34495e; --delete-color: #7f8c8d; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg-color); padding: 0; display: flex; flex-direction: column; align-items: center; }
+        .user-header { background: #1a1a1a; color: #fff; width: 100%; padding: 10px 20px; font-size: 12px; display: flex; justify-content: space-between; box-sizing: border-box; }
+        .container { max-width: 700px; width: 100%; background: white; padding: 20px; border-radius: 0 0 12px 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); box-sizing: border-box; }
+        .header-section { text-align: center; margin-bottom: 20px; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; }
+        .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        input, select { padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; width: 100%; box-sizing: border-box; }
+        .full-width { grid-column: span 2; }
+        button.add-btn { grid-column: span 2; background: var(--primary-color); color: white; border: none; padding: 15px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .search-bar { width: 100%; padding: 12px; border: 2px solid var(--primary-color); border-radius: 5px; margin: 20px 0; box-sizing: border-box; font-size: 16px; }
+        .parcel-card { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid #ccc; position: relative; }
+        .parcel-card.pending { border-left-color: #ff9800; }
+        .parcel-card.done { border-left-color: #2e7d32; background: #f9f9f9; opacity: 0.7; }
+        .info b { font-size: 17px; color: #333; }
+        .info p { margin: 4px 0; font-size: 14px; }
+        .loc-tag { background: #eee; color: var(--accent-color); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-block; margin-top: 3px; }
+        .btn-group { display: flex; flex-direction: column; gap: 8px; min-width: 95px; align-items: flex-end; }
+        .status-btn { padding: 10px; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: bold; text-align: center; width: 100%; border: none; }
+        .status-btn.pending { background: #ffcdd2; color: #b71c1c; }
+        .status-btn.done { background: #c8e6c9; color: #2e7d32; }
+        .btn-delete { background: none; border: none; color: var(--delete-color); cursor: pointer; font-size: 18px; padding: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="user-header">
+    <span onclick="changeName()">登記人：<span id="userNameDisplay">未設定</span> ✎</span>
+    <span id="syncStatus" style="color: #ff9800;">● 離線儲存模式 (單機版)</span>
+</div>
+
+<div class="container">
+    <div class="header-section">
+        <h2>台灣精銳包裹登記平台</h2>
+        <div style="font-size: 12px; color: #666;">資料儲存於此設備，無須網路</div>
+    </div>
+
+    <div class="input-group">
+        <input type="text" id="dept" placeholder="單位名稱">
+        <input type="text" id="receiver" placeholder="收件人姓名">
+        <select id="type">
+            <option value="📦 一般包裹">📦 一般包裹</option>
+            <option value="✉️ 掛號信件">✉️ 掛號信件</option>
+            <option value="❄️ 低溫冷藏">❄️ 低溫冷藏</option>
+            <option value="📑 重要文件">📑 重要文件</option>
+        </select>
+        <input type="text" id="logistics" placeholder="物流公司">
+        <input type="text" id="pLoc" placeholder="📍 寄放地點">
+        <input type="text" id="note" placeholder="備註事項" class="full-width">
+        <button class="add-btn" onclick="addParcel()">➕ 登記並儲存至本機</button>
+    </div>
+
+    <input type="text" class="search-bar" id="searchBar" onkeyup="searchParcels()" placeholder="🔍 快速搜尋...">
+    <div id="parcelList"></div>
+</div>
+
+<script>
+    let localParcels = JSON.parse(localStorage.getItem('offlineParcels')) || [];
+    let userName = localStorage.getItem('guardName') || "";
+
+    function updateUserInfo() {
+        document.getElementById('userNameDisplay').innerText = userName || "未設定";
+    }
+
+    function changeName() {
+        const n = prompt("請輸入您的姓名", userName);
+        if(n) { userName = n; localStorage.setItem('guardName', n); updateUserInfo(); }
+    }
+
+    function addParcel() {
+        const receiver = document.getElementById('receiver').value;
+        if (!receiver) return alert("收件人必填！");
+
+        const newParcel = {
+            id: Date.now(),
+            dept: document.getElementById('dept').value,
+            receiver: receiver,
+            type: document.getElementById('type').value,
+            logistics: document.getElementById('logistics').value, 
+            location: document.getElementById('pLoc').value || "警衛室", 
+            note: document.getElementById('note').value,
+            time: new Date().toLocaleString(),
+            status: 'pending',
+            pickupTime: null,
+            signPerson: null
+        };
+
+        localParcels.unshift(newParcel);
+        saveAndRender();
+        ['dept', 'receiver', 'logistics', 'pLoc', 'note'].forEach(id => document.getElementById(id).value = '');
+    }
+
+    function handlePickup(id) {
+        const p = localParcels.find(x => x.id === id);
+        if (p.status === 'done') {
+            if(confirm("重置為待領？")) { p.status = 'pending'; p.pickupTime = null; p.signPerson = null; }
+        } else {
+            const time = prompt("領取時間：", `${new Date().getHours()}:${new Date().getMinutes()}`);
+            const sign = prompt("領取者：");
+            if(time && sign) { p.status = 'done'; p.pickupTime = time; p.signPerson = sign; }
+        }
+        saveAndRender();
+    }
+
+    function deleteParcel(id) {
+        if (confirm("確定刪除？")) {
+            localParcels = localParcels.filter(x => x.id !== id);
+            saveAndRender();
+        }
+    }
+
+    function saveAndRender() {
+        localStorage.setItem('offlineParcels', JSON.stringify(localParcels));
+        renderParcels(localParcels);
+    }
+
+    function renderParcels(dataList) {
+        const list = document.getElementById('parcelList');
+        list.innerHTML = '';
+        dataList.forEach(p => {
+            const card = document.createElement('div');
+            card.className = `parcel-card ${p.status}`;
+            card.innerHTML = `
+                <div class="info">
+                    <b>[${p.dept || '未註明'}] ${p.receiver}</b>
+                    <p>${p.type} | ${p.logistics} <br> <small>${p.time}</small></p>
+                    <div class="loc-tag">📍 位置：${p.location}</div>
+                    ${p.pickupTime ? `<p style="color:#2e7d32; font-size:12px; font-weight:bold; margin-top:5px;">✅ 領取：${p.pickupTime} (${p.signPerson})</p>` : ''}
+                </div>
+                <div class="btn-group">
+                    <button class="status-btn ${p.status}" onclick="handlePickup(${p.id})">${p.status === 'pending' ? '簽收' : '已領'}</button>
+                    <button class="btn-delete" onclick="deleteParcel(${p.id})">🗑️</button>
+                </div>`;
+            list.appendChild(card);
+        });
+    }
+
+    function searchParcels() {
+        const term = document.getElementById('searchBar').value.toLowerCase();
+        const filtered = localParcels.filter(p => p.receiver.toLowerCase().includes(term) || (p.dept && p.dept.toLowerCase().includes(term)));
+        renderParcels(filtered);
+    }
+
+    window.onload = () => { updateUserInfo(); renderParcels(localParcels); };
+</script>
+</body>
+</html>
