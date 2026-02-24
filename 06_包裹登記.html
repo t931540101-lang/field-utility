@@ -1,4 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>台灣精銳包裹登記平台 | V1.1</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        :root { --primary-color: #d32f2f; --bg-color: #f4f4f4; --accent-color: #34495e; --delete-color: #7f8c8d; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg-color); padding: 0; display: flex; flex-direction: column; align-items: center; }
+        
+        /* 頂部身分欄 */
+        .user-header { background: #1a1a1a; color: #fff; width: 100%; padding: 10px 20px; font-size: 12px; display: flex; justify-content: space-between; box-sizing: border-box; }
+        
+        .container { max-width: 700px; width: 100%; background: white; padding: 20px; border-radius: 0 0 12px 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); box-sizing: border-box; }
+        .header-section { text-align: center; margin-bottom: 20px; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; }
+        .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        input, select { padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; width: 100%; box-sizing: border-box; }
+        .full-width { grid-column: span 2; }
+        button.add-btn { grid-column: span 2; background: var(--primary-color); color: white; border: none; padding: 15px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .search-bar { width: 100%; padding: 12px; border: 2px solid var(--primary-color); border-radius: 5px; margin: 20px 0; box-sizing: border-box; font-size: 16px; }
+        
+        .parcel-card { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid #ccc; position: relative; }
+        .parcel-card.pending { border-left-color: #ff9800; }
+        .parcel-card.done { border-left-color: #2e7d32; background: #f9f9f9; opacity: 0.7; }
+        
+        .info b { font-size: 17px; color: #333; }
+        .info p { margin: 4px 0; font-size: 14px; }
+        .loc-tag { background: #eee; color: var(--accent-color); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-block; margin-top: 3px; }
+        
+        .btn-group { display: flex; flex-direction: column; gap: 8px; min-width: 95px; align-items: flex-end; }
+        .btn-mail { background: #ff9800; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; width: 100%; }
+        .status-btn { padding: 10px; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: bold; text-align: center; width: 100%; border: none; }
+        .status-btn.pending { background: #ffcdd2; color: #b71c1c; }
+        .status-btn.done { background: #c8e6c9; color: #2e7d32; }
+        .btn-delete { background: none; border: none; color: var(--delete-color); cursor: pointer; font-size: 18px; padding: 5px; }
+    </style>
+</head>
+<body>
 
+<div class="user-header">
+    <span onclick="changeName()">登記人：<span id="userNameDisplay">未設定</span> ✎</span>
+    <span onclick="changeID()">工號：<span id="userIDDisplay">未設定</span> ✎</span>
+</div>
+
+<div class="container">
+    <div class="header-section">
+        <h2>台灣精銳包裹登記平台</h2>
+        <div id="syncStatus" style="font-size: 12px; color: #27ae60;">● 雲端實時同步中 (V1.1)</div>
+    </div>
+
+    <div class="input-group">
+        <input type="text" id="dept" placeholder="單位名稱 (如: 研發部)">
+        <input type="text" id="receiver" placeholder="收件人姓名">
+        <input type="email" id="email" placeholder="Email (寄發通知用)">
+        <select id="type">
+            <option value="📦 一般包裹">📦 一般包裹</option>
+            <option value="✉️ 掛號信件">✉️ 掛號信件</option>
+            <option value="❄️ 低溫冷藏">❄️ 低溫冷藏</option>
+            <option value="📑 重要文件">📑 重要文件</option>
+        </select>
+        <input type="text" id="logistics" placeholder="物流 (如: 黑貓)">
+        <input type="text" id="pLoc" placeholder="📍 寄放地點 (預設: 警衛室)">
+        <input type="text" id="note" placeholder="備註 (如: 代付100元)" class="full-width">
+        <button class="add-btn" id="saveBtn" onclick="addParcel()">➕ 登記並加入雲端清單</button>
+    </div>
+
+    <input type="text" class="search-bar" id="searchBar" onkeyup="searchParcels()" placeholder="🔍 輸入姓名、單位或位置搜尋...">
+    <div id="parcelList"></div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+        authDomain: "factor-security-d1965.firebaseapp.com",
+        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+        projectId: "factor-security-d1965",
+        storageBucket: "factor-security-d1965.firebasestorage.app",
+        messagingSenderId: "864846943143",
+        appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let localParcels = [];
+    let userName = localStorage.getItem('guardName') || "";
+    let userID = localStorage.getItem('guardID') || "";
+
+    function updateUserInfo() {
+        document.getElementById('userNameDisplay').innerText = userName || "未設定";
+        document.getElementById('userIDDisplay').innerText = userID || "未設定";
+    }
+
+    function changeName() {
+        const n = prompt("請輸入您的姓名", userName);
+        if(n) { userName = n; localStorage.setItem('guardName', n); updateUserInfo(); }
+    }
+
+    function changeID() {
+        const id = prompt("請輸入您的工號", userID);
+        if(id) { userID = id; localStorage.setItem('guardID', id); updateUserInfo(); }
+    }
+
+    window.onload = updateUserInfo;
+
+    db.ref('enterprise_parcels').orderByChild('timestamp').limitToLast(50).on('value', (snapshot) => {
+        const data = snapshot.val();
+        localParcels = [];
+        if (data) {
+            Object.keys(data).forEach(key => {
+                localParcels.push({ firebaseKey: key, ...data[key] });
+            });
+            localParcels.reverse();
+        }
+        renderParcels(localParcels);
+    });
+
+    function addParcel() {
+        if (!userName) return alert("請先設定「登記人」姓名！");
+        const receiver = document.getElementById('receiver').value;
+        if (!receiver) { alert("收件人姓名為必填！"); return; }
+
+        const btn = document.getElementById('saveBtn');
+        btn.disabled = true;
+        btn.innerText = "正在同步...";
+
+        const newParcel = {
+            dept: document.getElementById('dept').value,
+            receiver: receiver,
+            email: document.getElementById('email').value,
+            type: document.getElementById('type').value,
+            logistics: document.getElementById('logistics').value, 
+            location: document.getElementById('pLoc').value || "警衛室", 
+            note: document.getElementById('note').value,
+            time: new Date().toLocaleString(),
+            recorder: userName, // 紀錄是誰登記的
+            status: 'pending',
+            timestamp: Date.now()
+        };
+
+        db.ref('enterprise_parcels').push(newParcel).then(() => {
+            btn.disabled = false;
+            btn.innerText = "➕ 登記並加入雲端清單";
+            ['dept', 'receiver', 'email', 'logistics', 'pLoc', 'note'].forEach(id => document.getElementById(id).value = '');
+        });
+    }
+
+    function renderParcels(dataList) {
+        const list = document.getElementById('parcelList');
+        list.innerHTML = '';
+        dataList.forEach(p => {
+            const card = document.createElement('div');
+            card.className = `parcel-card ${p.status}`;
+            card.innerHTML = `
+                <div class="info">
+                    <b>[${p.dept || '未註明'}] ${p.receiver}</b>
+                    <p>${p.type} | 物流：${p.logistics} <br> <small>${p.time}</small></p>
+                    <div class="loc-tag">📍 位置：${p.location}</div>
+                    ${p.pickupTime ? `<p style="color:#2e7d32; font-size:12px; font-weight:bold; margin-top:5px;">✅ 領取於：${p.pickupTime} (${p.signPerson})</p>` : ''}
+                    ${p.note ? `<p style="color:#d32f2f; font-size:13px; margin-top:5px;">📝 ${p.note}</p>` : ''}
+                </div>
+                <div class="btn-group">
+                    ${p.email && p.status === 'pending' ? `<button class="btn-mail" onclick="sendEmail('${p.firebaseKey}')">📧 寄信</button>` : ''}
+                    <button class="status-btn ${p.status}" onclick="handlePickup('${p.firebaseKey}', '${p.status}')">
+                        ${p.status === 'pending' ? '待領 (簽收)' : '已領取'}
+                    </button>
+                    <button class="btn-delete" onclick="deleteParcel('${p.firebaseKey}', '${p.receiver}')">🗑️</button>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    // 簽收領取邏輯：支援手動補填時間
+    function handlePickup(key, currentStatus) {
+        if (currentStatus === 'done') {
+            if(confirm("要將此包裹恢復為「待領」狀態嗎？")) {
+                db.ref('enterprise_parcels/' + key).update({ status: 'pending', pickupTime: null, signPerson: null });
+            }
+            return;
+        }
+
+        const now = new Date();
+        const defaultTime = `${now.getHours()}:${(now.getMinutes()<10?'0':'')+now.getMinutes()}`;
+        const pickTime = prompt("請確認領取時間：", defaultTime);
+        if(!pickTime) return;
+        
+        const sign = prompt("領取人簽名/代號：");
+        if(sign) {
+            db.ref('enterprise_parcels/' + key).update({ 
+                status: 'done', 
+                pickupTime: pickTime,
+                signPerson: sign 
+            });
+        }
+    }
+
+    function deleteParcel(key, name) {
+        if (confirm(`⚠️ 確定要刪除「${name}」的紀錄嗎？`)) db.ref('enterprise_parcels/' + key).remove();
+    }
+
+    function sendEmail(key) {
+        const p = localParcels.find(x => x.firebaseKey === key);
+        const subject = encodeURIComponent(`[包裹到貨通知] 您好，您的 ${p.type} 已送達`);
+        const body = encodeURIComponent(`您好：\n\n您有一件來自 [${p.logistics}] 的 ${p.type} 已送達總機櫃台。\n放置位置：${p.location}\n登記時間：${p.time}\n備註：${p.note || '無'}\n\n請撥冗至櫃台領取，謝謝。`);
+        window.location.href = `mailto:${p.email}?subject=${subject}&body=${body}`;
+    }
+
+    function searchParcels() {
+        const term = document.getElementById('searchBar').value.toLowerCase();
+        const filtered = localParcels.filter(p => 
+            p.receiver.toLowerCase().includes(term) || 
+            (p.dept && p.dept.toLowerCase().includes(term)) ||
+            (p.location && p.location.toLowerCase().includes(term))
+        );
+        renderParcels(filtered);
+    }
+</script>
+
+</body>
+</html>
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
