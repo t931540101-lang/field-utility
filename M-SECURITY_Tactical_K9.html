@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-Police 整合查詢 V3.3</title>
+    <title>M-Police 整合查詢 V3.4</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --nav-blue: #4a76a8; --bg-blue: #e6f0fa; --btn-grad: linear-gradient(to bottom, #4da1ff, #2188ff); --accent: #27ae60; --danger: #e74c3c; --dark: #1e293b; }
+        :root { --nav-blue: #4a76a8; --bg-blue: #e6f0fa; --btn-grad: linear-gradient(to bottom, #4da1ff, #2188ff); --accent: #27ae60; --danger: #e74c3c; }
         body { font-family: sans-serif; background: var(--bg-blue); margin: 0; padding: 0; }
         .header { background: linear-gradient(to bottom, #7ba6d9, #4a76a8); color: white; padding: 18px 0; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .header h1 { margin: 0; font-style: italic; font-size: 26px; letter-spacing: 1px; }
@@ -18,45 +18,47 @@
         .page { display: none; }
         .page.active { display: block; }
         .input-card { background: white; border: 2px solid #a5c7f2; border-radius: 6px; padding: 12px; margin-bottom: 15px; }
-        textarea, input { width: 100%; border: none; font-size: 18px; outline: none; font-weight: bold; background: transparent; box-sizing: border-box; }
-        .btn { border: none; border-radius: 8px; color: white; font-size: 22px; font-weight: bold; padding: 16px; width: 100%; margin-bottom: 12px; cursor: pointer; box-shadow: 0 4px #1a6edb; text-align: center; }
+        textarea { width: 100%; border: none; font-size: 24px; outline: none; height: 60px; font-weight: bold; background: transparent; resize: none; }
+        .btn { border: none; border-radius: 8px; color: white; font-size: 22px; font-weight: bold; padding: 16px; width: 100%; margin-bottom: 12px; cursor: pointer; box-shadow: 0 4px #1a6edb; }
         .btn-query { background: var(--btn-grad); }
-        .btn-moi { background: #084796; font-size: 16px; padding: 10px; box-shadow: 0 3px #052d5e; margin-top: 10px; }
         .btn-group { display: flex; gap: 10px; }
-        .btn-sm { flex: 1; padding: 12px; font-size: 16px; }
+        .btn-sm { flex: 1; padding: 12px; font-size: 16px; background: var(--btn-grad); color:white; border:none; border-radius:8px; font-weight:bold; }
         .res-box { margin-top: 15px; padding: 15px; background: white; border-radius: 8px; border-left: 10px solid #ccc; display: none; }
-        .sys-info { text-align: right; margin-top: 30px; color: #888; font-size: 11px; }
+        .sys-info { text-align: right; margin-top: 30px; color: #888; font-size: 12px; font-family: monospace; }
     </style>
 </head>
 <body>
 
-<div class="header"><h1>M-Police 整合查詢</h1></div>
+    <div class="header"><h1>M-Police 整合查詢</h1></div>
 
-<div class="tabs">
-    <div class="tab active" onclick="switchPage(0)">查詢</div>
-    <div class="tab" onclick="switchPage(1)">訪客</div>
-    <div class="tab" onclick="switchPage(2)">K9醫療</div>
-    <div class="tab" onclick="switchPage(3)">交接</div>
-    <div class="tab" onclick="switchPage(4)">設定</div>
-</div>
-
-<div class="container">
-    <div id="p0" class="page active">
-        <div class="input-card"><textarea id="valIn" placeholder="輸入車牌或工號"></textarea></div>
-        <button class="btn btn-query" onclick="doQuery()">執行查詢</button>
-        <div class="btn-group">
-            <button class="btn btn-query btn-sm" onclick="document.getElementById('valIn').value=''; document.getElementById('result').style.display='none';">清除</button>
-            <button class="btn btn-query btn-sm" onclick="alert('同步完成')">同步</button>
-        </div>
-        <div id="result" class="res-box"></div>
+    <div class="tabs">
+        <div class="tab active" onclick="switchPage(0)">查詢</div>
+        <div class="tab" onclick="switchPage(1)">訪客</div>
+        <div class="tab" onclick="switchPage(2)">K9醫療</div>
+        <div class="tab" onclick="switchPage(3)">交接</div>
+        <div class="tab" onclick="switchPage(4)">設定</div>
     </div>
-    <div id="p1" class="page"><div id="vList">載入訪客中...</div></div>
-    <div id="p2" class="page"><div id="dogList">載入 K9 中...</div></div>
-    <div id="p3" class="page"><div id="dutyList">載入交接中...</div></div>
-</div>
+
+    <div class="container">
+        <div id="p0" class="page active">
+            <div style="margin-bottom:10px; font-weight:bold;">系統狀態：<span style="color:green;">● 在線同步中</span></div>
+            <div class="input-card"><textarea id="valIn" placeholder="輸入車牌/工號"></textarea></div>
+            <button class="btn btn-query" onclick="doQuery()">執 行 偵 測</button>
+            <div class="btn-group">
+                <button class="btn-sm" onclick="clearRes()">清 除</button>
+                <button class="btn-sm" onclick="location.reload()">同步更新</button>
+            </div>
+            <div id="result" class="res-box"></div>
+        </div>
+
+        <div id="p1" class="page"><div id="vList">載入訪客數據...</div></div>
+        <div id="p2" class="page"><div id="dogList">載入 K9 夥伴數據...</div></div>
+        <div id="p3" class="page"><div id="dutyList">載入交接日誌...</div></div>
+    </div>
+
+    <div class="sys-info">20260225_LIGHT_VER<br><span style="color:red; font-weight:bold;">K9-UNIT-ACTIVE</span></div>
 
 <script>
-    // Firebase 初始化 (省略，請使用原本配置)
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
@@ -71,23 +73,35 @@
         if(!v) return;
         const res = document.getElementById('result');
         res.style.display = 'block';
-        
-        db.ref('employee_list/' + v).once('value', e => {
-            const d = e.val();
-            let html = d ? `<h3>✅ 內部員工</h3>姓名：${d.name}<br>單位：${d.dept}` : `查無內部存檔。`;
-            if(v.length >= 2) {
-                html += `<hr><button class="btn btn-moi" onclick="openMOI('${v}')">🔍 查核內政部失竊紀錄</button>`;
+        res.innerHTML = "正在連線總部...";
+
+        // 優先查黑名單
+        db.ref('blacklist_data').once('value', s => {
+            const bl = s.val();
+            let foundBl = bl ? Object.values(bl).find(i => i.name.includes(v)) : null;
+
+            if(foundBl) {
+                res.style.borderLeftColor = 'red';
+                res.innerHTML = `<h3 style="color:red;">🚨 管制對象：紅色警報</h3>姓名：${foundBl.name}<br>原因：${foundBl.reason}`;
+            } else {
+                // 查一般員工
+                db.ref('employee_list/' + v).once('value', e => {
+                    const ed = e.val();
+                    if(ed) {
+                        res.style.borderLeftColor = '#28a745';
+                        res.innerHTML = `<h3>✅ 內部員工</h3>姓名：${ed.name}<br>單位：${ed.dept}<br>車牌：${ed.plate}`;
+                    } else {
+                        res.style.borderLeftColor = '#888';
+                        res.innerHTML = `<h3>⚠️ 查無存檔</h3>對象：${v}<br><button onclick="window.location.href='https://od.moi.gov.tw/adm/veh/query_veh'" style="margin-top:10px; padding:8px; width:100%; background:#084796; color:white; border:none; border-radius:5px;">🔍 手動查核內政部 (外部)</button>`;
+                    }
+                });
             }
-            res.innerHTML = html;
         });
     }
 
-    // 解決彈窗問題：直接跳轉不使用 window.open
-    function openMOI(plate) {
-        const type = prompt("選擇種類：A汽車, B重機, C輕機", "A");
-        if(!type) return;
-        // 直接在當前頁面導向下載連結
-        window.location.href = `https://od.moi.gov.tw/adm/veh/query_veh?_m=query&vehType=${type}&vehNumber=${plate}`;
+    function clearRes() {
+        document.getElementById('valIn').value = '';
+        document.getElementById('result').style.display = 'none';
     }
 
     function switchPage(idx) {
@@ -95,6 +109,7 @@
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.getElementById('p' + idx).classList.add('active');
         document.querySelectorAll('.tab')[idx].classList.add('active');
+        // 對應分頁資料載入邏輯
     }
 </script>
 </body>
