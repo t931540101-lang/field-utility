@@ -2,93 +2,72 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>M-SECURITY | HQ 總部終端</title>
+    <title>M-SECURITY | HQ 總部終端 V5.5</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script>
-    // 配置同上
-    const firebaseConfig = { ... }; 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // 執行同步：推送到雲端
-    function pushBlacklist() {
-        const name = document.getElementById('targetName').value;
-        const plate = document.getElementById('targetPlate').value;
-        const reason = document.getElementById('targetReason').value;
-
-        if(!plate) return alert("請輸入車牌或工號！");
-
-        // 統一雲端路徑
-        db.ref('M_SECURITY/blacklist/' + plate).set({
-            name: name || "未提供姓名",
-            plate: plate,
-            reason: reason || "未註明原因",
-            syncTime: new Date().toLocaleString()
-        }).then(() => {
-            alert(">>> 戰術同步完成：黑名單已即時更新至雲端！");
-        });
-    }
-
-    // 刪除功能：解除管制
-    function removeBlacklist(plate) {
-        if(confirm("確定解除此人的管制狀態？")) {
-            db.ref('M_SECURITY/blacklist/' + plate).remove();
-        }
-    }
-</script>
     <style>
         body { background-color: #000; color: #00f2ff; font-family: "Microsoft JhengHei", sans-serif; padding: 20px; }
         .header { border-bottom: 2px solid #00f2ff; padding-bottom: 10px; margin-bottom: 20px; }
         .section { background: #111; padding: 20px; border-radius: 5px; border: 1px solid #333; margin-bottom: 30px; }
         h2 { color: #4da1ff; font-size: 18px; margin-top: 0; border-left: 5px solid #00f2ff; padding-left: 10px; }
-        
-        /* 戰術輸入框 */
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px; }
         label { font-size: 12px; color: #888; display: block; margin-bottom: 5px; }
-        input { background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 10px; width: 100%; box-sizing: border-box; }
-        
+        input, select { background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 10px; width: 100%; box-sizing: border-box; }
         .btn { background: #00f2ff; color: #000; border: none; padding: 12px 25px; font-weight: bold; cursor: pointer; border-radius: 3px; }
         .btn-red { background: #ff4d4f; color: #fff; }
-
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; color: #4da1ff; border-bottom: 1px solid #333; padding: 10px; }
-        td { padding: 12px 10px; border-bottom: 1px solid #222; color: #ccc; }
+        th { text-align: left; color: #4da1ff; border-bottom: 1px solid #333; padding: 10px; font-size: 14px; }
+        td { padding: 12px 10px; border-bottom: 1px solid #222; color: #ccc; font-size: 14px; }
+        .confirmed { color: #10b981; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>M-SECURITY 資料庫管理後台</h1>
-        <div style="color: #888; font-size: 12px;">UNIT: HQ-COMMANDER | DB: factor-security-d1965</div>
+        <div style="color: #888; font-size: 12px;">UNIT: HQ-COMMANDER | STATUS: ONLINE</div>
     </div>
 
     <div class="section">
-        <h2>👥 員工資料部署 (連動手機一般查詢)</h2>
+        <h2>👥 員工資料部署 / 🛑 管制黑名單</h2>
         <div class="grid">
-            <div><label>工號</label><input type="text" id="eID" placeholder="如: K9001"></div>
-            <div><label>姓名</label><input type="text" id="eName" placeholder="如: 小黑哥"></div>
-            <div><label>單位</label><input type="text" id="eDept" placeholder="如: 警衛組"></div>
-            <div><label>車牌</label><input type="text" id="ePlate" placeholder="如: ABC-1234"></div>
+            <input type="text" id="eID" placeholder="工號">
+            <input type="text" id="eName" placeholder="姓名">
+            <input type="text" id="eDept" placeholder="單位">
+            <input type="text" id="ePlate" placeholder="車牌">
         </div>
-        <button class="btn" onclick="upEmp()">同步至雲端</button>
-        <table id="eTab">
-            <thead><tr><th>工號</th><th>姓名</th><th>單位</th><th>車牌</th><th>操作</th></tr></thead>
-            <tbody id="eList"></tbody>
-        </table>
+        <button class="btn" onclick="upEmp()">同步員工</button>
+        <button class="btn btn-red" onclick="upBlack()">發布黑名單</button>
+        <div id="dataDisp" style="margin-top:20px; max-height: 200px; overflow-y: auto;">
+            <table id="eTab"><thead><tr><th>類別</th><th>對象</th><th>詳情</th><th>操作</th></tr></thead><tbody id="masterList"></tbody></table>
+        </div>
     </div>
 
-    <div class="section" style="border-color: #ff4d4f;">
-        <h2 style="color: #ff4d4f; border-left-color: #ff4d4f;">🛑 管制黑名單發布 (連動手機進階頁面)</h2>
+    <div class="section">
+        <h2>🐕 K9 臨床紀錄更新</h2>
         <div class="grid">
-            <div><label>管制對象</label><input type="text" id="bTarget" placeholder="姓名或車牌"></div>
-            <div><label>管制原因</label><input type="text" id="bReason" placeholder="如: 離職不歸還證件"></div>
+            <select id="k9Name">
+                <option value="布丁">張布丁</option><option value="小白">蔡小白</option><option value="小花">蔡小花</option>
+                <option value="來順">來順</option><option value="瓜瓜">哈蜜瓜</option><option value="貴貴">蔡頭貴</option>
+                <option value="蔡哺">蔡哺</option><option value="有錢">有錢</option>
+            </select>
+            <input type="text" id="k9Note" placeholder="輸入當前醫療或狀況紀錄">
         </div>
-        <button class="btn btn-red" onclick="upBlack()">發布紅色警報</button>
-        <table id="bTab">
-            <thead><tr><th>對象</th><th>原因</th><th>時間</th><th>操作</th></tr></thead>
-            <tbody id="bList"></tbody>
-        </table>
+        <button class="btn" onclick="upK9()">更新 K9 狀態</button>
+    </div>
+
+    <div class="section">
+        <h2>📡 前線即時狀態監控 (訪客 & 交接)</h2>
+        <div class="grid" style="grid-template-columns: 1fr 1fr;">
+            <div>
+                <h3 style="font-size:14px; color:#4da1ff;">最近訪客登記</h3>
+                <table id="vTab"><thead><tr><th>姓名</th><th>時間</th></tr></thead><tbody id="vList"></tbody></table>
+            </div>
+            <div>
+                <h3 style="font-size:14px; color:#4da1ff;">最新勤務交接</h3>
+                <table id="dTab"><thead><tr><th>事項</th><th>簽署</th></tr></thead><tbody id="dList"></tbody></table>
+            </div>
+        </div>
     </div>
 
 <script>
@@ -101,42 +80,52 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 員工上傳
+    // --- 員工與黑名單邏輯 ---
     function upEmp() {
-        const id = document.getElementById('eID').value.trim();
-        const name = document.getElementById('eName').value.trim();
-        const dept = document.getElementById('eDept').value.trim();
-        const plate = document.getElementById('ePlate').value.trim().toUpperCase();
-        if(!id || !name) return alert("工號姓名必填");
+        const id = document.getElementById('eID').value.trim(), name = document.getElementById('eName').value.trim();
+        const dept = document.getElementById('eDept').value.trim(), plate = document.getElementById('ePlate').value.trim().toUpperCase();
+        if(!id) return alert("請輸入工號");
         const d = { id, name, dept, plate };
         db.ref('employee_list/' + id).set(d);
         if(plate) db.ref('employee_list/' + plate).set(d);
-        alert("員工資料已更新");
+        alert("員工同步成功");
     }
 
-    // 黑名單上傳
     function upBlack() {
-        const name = document.getElementById('bTarget').value.trim();
-        const reason = document.getElementById('bReason').value.trim();
-        if(!name) return alert("請輸入管制對象");
+        const name = document.getElementById('eName').value.trim();
+        const reason = document.getElementById('eDept').value.trim(); // 借用單位欄位當原因
+        if(!name) return alert("請在姓名欄輸入黑名單對象");
         db.ref('blacklist_data').push({ name, reason, time: new Date().toLocaleDateString() });
-        alert("黑名單已同步至終端");
+        alert("黑名單發布成功");
     }
 
-    // 即時監看員工清單
+    // --- K9 醫療邏輯 ---
+    function upK9() {
+        const dog = document.getElementById('k9Name').value;
+        const note = document.getElementById('k9Note').value;
+        if(!note) return alert("內容不可空白");
+        db.ref('k9Logs/' + dog).push({ note, timestamp: Date.now(), time: new Date().toLocaleString() });
+        alert(dog + " 紀錄已更新");
+        document.getElementById('k9Note').value = '';
+    }
+
+    // --- 即時數據監控 ---
     db.ref('employee_list').on('value', s => {
-        const l = s.val(), b = document.getElementById('eList'); b.innerHTML = '';
-        for(let k in l) if(k === l[k].id) {
-            b.innerHTML += `<tr><td>${l[k].id}</td><td>${l[k].name}</td><td>${l[k].dept}</td><td>${l[k].plate}</td><td><button onclick="db.ref('employee_list/${l[k].id}').remove()" style="color:red;background:none;border:none;cursor:pointer;">刪除</button></td></tr>`;
-        }
+        const l = s.val(), b = document.getElementById('masterList'); b.innerHTML = '';
+        for(let k in l) if(k === l[k].id) b.innerHTML += `<tr><td>員工</td><td>${l[k].name}</td><td>${l[k].plate}</td><td><button onclick="db.ref('employee_list/${l[k].id}').remove()">刪除</button></td></tr>`;
     });
 
-    // 即時監看黑名單
-    db.ref('blacklist_data').on('value', s => {
-        const l = s.val(), b = document.getElementById('bList'); b.innerHTML = '';
-        for(let k in l) {
-            b.innerHTML += `<tr><td>${l[k].name}</td><td>${l[k].reason}</td><td>${l[k].time}</td><td><button onclick="db.ref('blacklist_data/${k}').remove()" style="color:red;background:none;border:none;cursor:pointer;">撤銷</button></td></tr>`;
-        }
+    db.ref('visitor_logs').limitToLast(5).on('value', s => {
+        const l = s.val(), b = document.getElementById('vList'); b.innerHTML = '';
+        if(l) Object.values(l).reverse().forEach(v => { b.innerHTML += `<tr><td>${v.name}</td><td>${v.timeIn}</td></tr>`; });
+    });
+
+    db.ref('reactLogs').limitToLast(5).on('value', s => {
+        const l = s.val(), b = document.getElementById('dList'); b.innerHTML = '';
+        if(l) Object.keys(l).reverse().forEach(k => {
+            const d = l[k];
+            b.innerHTML += `<tr><td>${d.note.substring(0,10)}..</td><td class="${d.confirmedBy?'confirmed':''}">${d.confirmedBy || '未閱'}</td></tr>`;
+        });
     });
 </script>
 </body>
