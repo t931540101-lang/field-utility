@@ -3,40 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-Police 整合查詢 V5.2</title>
+    <title>M-Police 整合查詢 V5.5</title>
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" href="icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root { --nav-blue: #4a76a8; --bg-blue: #e6f0fa; --btn-grad: linear-gradient(to bottom, #4da1ff, #2188ff); --accent: #27ae60; --npa-gold: #f39c12; }
         body { font-family: sans-serif; background: var(--bg-blue); margin: 0; padding: 0; }
-        
-        /* 頂部 Logo 與標題區塊 */
-        .header { background: linear-gradient(to bottom, #7ba6d9, #4a76a8); color: white; padding: 15px 0; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .logo-img { height: 80px; filter: drop-shadow(0 0 8px rgba(0,242,255,0.6)); margin-bottom: 5px; }
-        .header h1 { margin: 0; font-style: italic; font-size: 22px; letter-spacing: 1px; }
-
-        .tabs { display: flex; background: #6089b3; }
-        .tab { flex: 1; text-align: center; padding: 14px 0; color: #d1d5db; font-size: 14px; border-right: 1px solid #4a76a8; }
+        .header { background: linear-gradient(to bottom, #1a2a6c, #4a76a8); color: white; padding: 20px 0; text-align: center; }
+        .logo-main { height: 70px; filter: drop-shadow(0 0 10px #00f2ff); margin-bottom: 5px; }
+        .tabs { display: flex; background: #6089b3; position: sticky; top: 0; z-index: 100; }
+        .tab { flex: 1; text-align: center; padding: 14px 0; color: #d1d5db; font-size: 14px; }
         .tab.active { background: #4a76a8; color: white; font-weight: bold; }
         .container { padding: 15px; }
         .page { display: none; }
         .page.active { display: block; }
         .card { background: white; border: 2px solid #a5c7f2; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
-        textarea { width: 100%; border: none; font-size: 24px; outline: none; font-weight: bold; background: transparent; resize: none; height: 60px; }
-        .btn { border: none; border-radius: 8px; color: white; font-size: 22px; font-weight: bold; padding: 16px; width: 100%; margin-bottom: 12px; box-shadow: 0 4px #1a6edb; }
-        .btn-query { background: var(--btn-grad); width: 100%; }
-        .npa-btn { display: block; text-align: center; background: #1a2a6c; color: white; padding: 15px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 10px; border: 2px solid var(--npa-gold); }
-        .res-box { margin-top: 15px; padding: 15px; background: white; border-radius: 8px; border-left: 10px solid #ccc; display: none; }
+        textarea { width: 100%; border: none; font-size: 24px; font-weight: bold; background: transparent; resize: none; height: 60px; }
+        .npa-btn { display: block; text-align: center; background: #1a2a6c; color: white; padding: 15px; border-radius: 8px; text-decoration: none; font-weight: bold; border: 2px solid var(--npa-gold); }
+        .dog-card { background: white; border-left: 6px solid var(--nav-blue); padding: 12px; margin-bottom: 10px; border-radius: 4px; position: relative; }
+        .dog-icon { position: absolute; right: 10px; top: 10px; height: 30px; opacity: 0.3; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <img src="https://raw.githubusercontent.com/31540101-lang/31540101-lang.github.io/main/logo.png" 
-     class="logo-img" 
-     onerror="this.src='https://r.jina.ai/i/0571618685e14b539da331f24d101211'"
-     alt="M-POLICE LOGO">
-    <h1>M-Police 整合查詢系統</h1>
+    <img src="icon.png" class="logo-main" onerror="this.src='https://r.jina.ai/i/0571618685e14b539da331f24d101211'">
+    <h1>M-Police 戰術系統</h1>
 </div>
 
 <div class="tabs">
@@ -49,16 +45,19 @@
 <div class="container">
     <div id="p0" class="page active">
         <div class="card"><textarea id="valIn" placeholder="輸入車牌或工號"></textarea></div>
-        <button class="btn btn-query" onclick="doQuery()">執 行 偵 測</button>
-        <div id="result" class="res-box"></div>
+        <button class="btn-query" onclick="doQuery()" style="width:100%; padding:15px; background:var(--btn-grad); color:white; border:none; border-radius:8px; font-size:20px; font-weight:bold;">執行偵測</button>
+        <div id="result" style="margin-top:15px; display:none; padding:15px; background:white; border-radius:8px; border-left:10px solid #ccc;"></div>
     </div>
-    <div id="p1" class="page"><div id="vList">載入中...</div></div>
-    <div id="p2" class="page"><div id="dogList">載入中...</div></div>
-    <div id="p3" class="page"><div id="dutyList">載入中...</div></div>
-</div>
+
+    <div id="p2" class="page">
+        <h3 style="color:var(--nav-blue); border-bottom:2px solid var(--nav-blue); padding-bottom:5px;">🐕 K9 戰術醫療監控</h3>
+        <div id="dogList"></div>
+    </div>
+    
+    </div>
 
 <script>
-    // Firebase 配置與邏輯 (與 V5.1 相同，此處省略以保持簡潔)
+    // Firebase 配置 (請保持你的原配置)
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
@@ -72,15 +71,27 @@
         const v = document.getElementById('valIn').value.trim().toUpperCase();
         if(!v) return;
         const res = document.getElementById('result');
-        res.style.display = 'block'; res.innerHTML = "正在連線...";
+        res.style.display = 'block'; res.innerHTML = "連線中...";
         db.ref('employee_list/' + v).once('value', e => {
             const d = e.val();
-            let html = d ? `<h3 style="color:green;">✅ 內部員工</h3>姓名：${d.name}<br>單位：${d.dept}` : `<h3>⚠️ 查無存檔</h3>`;
-            if(v.length >= 2) {
-                html += `<hr><a href="https://eze8.npa.gov.tw/NpaE8ServerRWD/CL_Query.jsp" target="_blank" class="npa-btn">🔍 警政署 RWD 查贓</a>`;
-            }
+            let html = d ? `<h3 style="color:green;">✅ 員工確認</h3>姓名：${d.name}<br>單位：${d.dept}` : `<h3>⚠️ 查無存檔</h3>`;
+            html += `<hr><a href="https://eze8.npa.gov.tw/NpaE8ServerRWD/CL_Query.jsp" target="_blank" class="npa-btn">🔍 警政署 RWD 查贓</a>`;
             res.innerHTML = html;
-            res.style.borderLeftColor = d ? '#28a745' : '#888';
+        });
+    }
+
+    function syncK9() {
+        db.ref('k9Logs').on('value', s => {
+            const all = s.val(), dogs = [{id:'布丁',n:'張布丁'},{id:'小白',n:'蔡小白'},{id:'小花',n:'蔡小花'},{id:'來順',n:'來順'},{id:'瓜瓜',n:'哈蜜瓜'},{id:'貴貴',n:'蔡頭貴'},{id:'蔡哺',n:'蔡哺'},{id:'有錢',n:'有錢'}];
+            let h = '';
+            dogs.forEach(d => {
+                const logs = all && all[d.id] ? Object.values(all[d.id]).sort((a,b)=>b.timestamp-a.timestamp) : [];
+                h += `<div class="dog-card">
+                        <img src="k9_logo.png" class="dog-icon" onerror="this.style.display='none'">
+                        <b>${d.n}</b><br><small>${logs[0] ? logs[0].note : '今日尚無紀錄'}</small>
+                      </div>`;
+            });
+            document.getElementById('dogList').innerHTML = h;
         });
     }
 
@@ -89,8 +100,8 @@
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.getElementById('p' + idx).classList.add('active');
         document.querySelectorAll('.tab')[idx].classList.add('active');
+        if(idx === 2) syncK9();
     }
-    // ... 其餘同步邏輯 (K9, Visitor, Duty) ...
 </script>
 </body>
 </html>
