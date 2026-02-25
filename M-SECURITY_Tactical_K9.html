@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-Police 整合查詢 V5.0</title>
+    <title>M-Police 整合查詢 V5.1</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --nav-blue: #4a76a8; --bg-blue: #e6f0fa; --btn-grad: linear-gradient(to bottom, #4da1ff, #2188ff); --accent: #27ae60; --danger: #e74c3c; --npa-gold: #f39c12; }
+        :root { --nav-blue: #4a76a8; --bg-blue: #e6f0fa; --btn-grad: linear-gradient(to bottom, #4da1ff, #2188ff); --accent: #27ae60; --danger: #e74c3c; --dark: #1e293b; --npa-gold: #f39c12; }
         body { font-family: sans-serif; background: var(--bg-blue); margin: 0; padding: 0; }
         .header { background: linear-gradient(to bottom, #7ba6d9, #4a76a8); color: white; padding: 18px 0; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .header h1 { margin: 0; font-style: italic; font-size: 26px; letter-spacing: 1px; }
@@ -18,11 +18,12 @@
         .page { display: none; }
         .page.active { display: block; }
         .card { background: white; border: 2px solid #a5c7f2; border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        textarea { width: 100%; border: none; font-size: 24px; outline: none; font-weight: bold; background: transparent; resize: none; height: 60px; }
+        textarea, input { width: 100%; border: none; font-size: 20px; outline: none; font-weight: bold; background: transparent; box-sizing: border-box; }
         .btn { border: none; border-radius: 8px; color: white; font-size: 22px; font-weight: bold; padding: 16px; width: 100%; margin-bottom: 12px; cursor: pointer; box-shadow: 0 4px #1a6edb; }
         .btn-query { background: var(--btn-grad); }
-        /* 警政署專用按鈕樣式 */
-        .npa-btn { display: block; text-align: center; background: #1a2a6c; color: white; padding: 15px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 10px; font-size: 18px; border: 2px solid #f39c12; }
+        .npa-btn { display: block; text-align: center; background: #1a2a6c; color: white; padding: 15px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 10px; font-size: 18px; border: 2px solid var(--npa-gold); }
+        .log-item { background: white; border-left: 8px solid var(--dark); padding: 12px; margin-bottom: 10px; border-radius: 4px; }
+        .confirmed { border-left-color: var(--accent); background: #ecfdf5; }
         .res-box { margin-top: 15px; padding: 15px; background: white; border-radius: 8px; border-left: 10px solid #ccc; display: none; }
         .sys-info { text-align: right; margin-top: 30px; color: #888; font-size: 11px; }
     </style>
@@ -45,14 +46,32 @@
         <button class="btn btn-query" onclick="doQuery()">執 行 偵 測</button>
         <div id="result" class="res-box"></div>
     </div>
+
+    <div id="p1" class="page">
+        <div class="card">
+            <h3 style="margin-top:0;">訪客登記入廠</h3>
+            <input type="text" id="vName" placeholder="訪客姓名" style="border-bottom: 1px solid #eee;">
+            <input type="text" id="vComp" placeholder="公司 / 拜訪對象" style="border-bottom: 1px solid #eee;">
+            <button class="btn btn-query" style="font-size:16px; padding:12px; margin-top:10px;" onclick="upVisitor()">確認登記</button>
+        </div>
+        <div id="vList"></div>
+    </div>
+
+    <div id="p2" class="page">
+        <h3 style="color:var(--nav-blue)">🐕 K9 戰術醫療監控</h3>
+        <div id="dogList"></div>
+    </div>
+
+    <div id="p3" class="page">
+        <button class="btn btn-query" style="background:var(--dark);" onclick="addDuty()">+ 新增交接事項</button>
+        <div id="dutyList"></div>
+    </div>
     
-    <div id="p1" class="page"><div id="vList">載入訪客資料...</div></div>
-    <div id="p2" class="page"><div id="dogList">載入 K9 數據...</div></div>
-    <div id="p3" class="page"><div id="dutyList">載入交明日誌...</div></div>
+    <div class="sys-info">FINAL STABLE VER | 20260225</div>
 </div>
 
 <script>
-    // Firebase 初始化 (請使用原配置)
+    // 1. Firebase 配置
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
@@ -62,33 +81,26 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // 2. 查詢與跳轉邏輯
     function doQuery() {
         const v = document.getElementById('valIn').value.trim().toUpperCase();
         if(!v) return;
         const res = document.getElementById('result');
-        res.style.display = 'block';
-        res.innerHTML = "正在連線總部資料庫...";
+        res.style.display = 'block'; res.innerHTML = "正在連線...";
 
         db.ref('employee_list/' + v).once('value', e => {
             const d = e.val();
-            let html = d ? `<h3 style="color:#28a745;">✅ 內部員工確認</h3>姓名：${d.name}<br>單位：${d.dept}` : `<h3 style="color:#666;">⚠️ 查無內部資料</h3>`;
-            
+            let html = d ? `<h3 style="color:green;">✅ 內部員工</h3>姓名：${d.name}<br>單位：${d.dept}` : `<h3>⚠️ 查無存檔</h3>`;
             if(v.length >= 2) {
-                html += `
-                <hr>
-                <div style="background:#000; padding:10px; border-radius:8px; border:2px solid var(--npa-gold);">
-                    <p style="margin:0 0 8px 0; color:var(--npa-gold); font-size:14px; font-weight:bold;">🚨 警政署失竊車輛即時查詢：</p>
-                    <a href="https://eze8.npa.gov.tw/NpaE8ServerRWD/CL_Query.jsp" target="_blank" class="npa-btn">
-                       進入官方 RWD 查贓系統
-                    </a>
-                </div>
-                <div style="font-size:11px; color:#888; margin-top:10px; text-align:center;">( 官方系統優化版，不卡頓、不白屏 )</div>`;
+                html += `<hr><p style="color:var(--npa-gold); font-size:14px; font-weight:bold;">警政署 RWD 查贓系統：</p>
+                         <a href="https://eze8.npa.gov.tw/NpaE8ServerRWD/CL_Query.jsp" target="_blank" class="npa-btn">開啟官方查詢頁面</a>`;
             }
             res.innerHTML = html;
             res.style.borderLeftColor = d ? '#28a745' : '#888';
         });
     }
 
+    // 3. 分頁與同步
     function switchPage(idx) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -98,11 +110,50 @@
         if(idx === 2) syncK9();
         if(idx === 3) syncDuty();
     }
-    
-    // 這裡保留您原本的 K9、訪客、交接同步代碼... (已整合入 V4.5)
-    function syncK9() { /* ... */ }
-    function syncDuty() { /* ... */ }
-    function syncVisitor() { /* ... */ }
+
+    function syncK9() {
+        db.ref('k9Logs').on('value', s => {
+            const all = s.val(), dogs = [{id:'布丁',n:'張布丁'},{id:'小白',n:'蔡小白'},{id:'小花',n:'蔡小花'},{id:'來順',n:'來順'},{id:'瓜瓜',n:'哈蜜瓜'},{id:'貴貴',n:'蔡頭貴'},{id:'蔡哺',n:'蔡哺'},{id:'有錢',n:'有錢'}];
+            let h = '';
+            dogs.forEach(d => {
+                const logs = all && all[d.id] ? Object.values(all[d.id]).sort((a,b)=>b.timestamp-a.timestamp) : [];
+                h += `<div class="card" style="border-left:5px solid var(--nav-blue);"><b>${d.n}</b><br><small>${logs[0] ? logs[0].note : '尚無紀錄'}</small></div>`;
+            });
+            document.getElementById('dogList').innerHTML = h;
+        });
+    }
+
+    function addDuty() {
+        const n = prompt("輸入交接：");
+        if(n) db.ref('reactLogs').push({ note: n, timestamp: Date.now(), time: new Date().toLocaleString() });
+    }
+
+    function syncDuty() {
+        db.ref('reactLogs').limitToLast(10).on('value', s => {
+            const list = document.getElementById('dutyList'); list.innerHTML = '';
+            const data = s.val();
+            if(data) Object.keys(data).reverse().forEach(k => {
+                const i = data[k];
+                list.innerHTML += `<div class="log-item ${i.confirmedBy ? 'confirmed' : ''}">
+                    <b>[${i.time}]</b><br>${i.note}
+                    ${!i.confirmedBy ? `<button onclick="confirmDuty('${k}')" style="width:100%; margin-top:5px;">🖱️ 簽署</button>` : `<br><small>已閱：${i.confirmedBy}</small>`}
+                </div>`;
+            });
+        });
+    }
+    function confirmDuty(k) { const n = prompt("姓名：", "小黑哥"); if(n) db.ref('reactLogs/'+k).update({confirmedBy:n}); }
+
+    function upVisitor() {
+        const name = document.getElementById('vName').value;
+        if(name) db.ref('visitor_logs').push({ name: name, company: document.getElementById('vComp').value, timeIn: new Date().getHours()+":"+new Date().getMinutes(), timestamp: Date.now() }).then(()=>alert("已同步"));
+    }
+    function syncVisitor() {
+        db.ref('visitor_logs').limitToLast(5).on('value', s => {
+            const list = document.getElementById('vList'); list.innerHTML = '';
+            const data = s.val();
+            if(data) Object.values(data).reverse().forEach(i => list.innerHTML += `<div class="card" style="border-left:5px solid var(--accent);"><b>${i.name}</b><br><small>${i.company} | ${i.timeIn}</small></div>`);
+        });
+    }
 </script>
 </body>
 </html>
