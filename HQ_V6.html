@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M-SECURITY | HQ 旗艦終端 V6.0</title>
+    <title>M-SECURITY | HQ 旗艦終端 V6.1</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --main-cyan: #00f2ff; --warn-red: #ff4d4f; --bg-dark: #050505; }
+        :root { --main-cyan: #00f2ff; --warn-red: #ff4d4f; --bg-dark: #050505; --log-green: #2ecc71; }
         body { background-color: var(--bg-dark); color: var(--main-cyan); font-family: "Microsoft JhengHei", sans-serif; padding: 15px; margin: 0; }
         .header { border-bottom: 2px solid var(--main-cyan); padding: 15px; text-align: center; background: #000; margin-bottom: 20px; }
         .section { background: #111; padding: 20px; border: 1px solid #333; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 0 15px rgba(0, 242, 255, 0.1); }
-        h2 { color: #fff; font-size: 18px; border-left: 5px solid var(--main-cyan); padding-left: 12px; margin: 0 0 20px 0; }
+        h2 { color: #fff; font-size: 18px; border-left: 5px solid var(--main-cyan); padding-left: 12px; margin: 0 0 20px 0; display: flex; justify-content: space-between; align-items: center; }
         .grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 15px; }
         @media (min-width: 600px) { .grid { grid-template-columns: 1fr 1fr; } }
         input { background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 5px; font-size: 16px; width: 100%; box-sizing: border-box; }
@@ -20,17 +20,43 @@
         .btn { flex: 1; padding: 15px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; font-size: 16px; }
         .btn-blue { background: var(--main-cyan); color: #000; }
         .btn-red { background: var(--warn-red); color: #fff; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #000; }
-        th { background: #1a1a1a; color: var(--main-cyan); padding: 12px; text-align: left; border-bottom: 2px solid #333; font-size: 14px; }
+        
+        /* 表格樣式優化 */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #000; }
+        th { background: #1a1a1a; color: var(--main-cyan); padding: 12px; text-align: left; border-bottom: 2px solid #333; font-size: 14px; position: sticky; top: 0; }
         td { padding: 12px; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; }
-        .scroll-box { max-height: 350px; overflow-y: auto; border: 1px solid #222; margin-top: 10px; }
+        .scroll-box { max-height: 300px; overflow-y: auto; border: 1px solid #222; }
+        
+        /* 日誌專用顏色 */
+        .log-user { color: var(--log-green); font-weight: bold; }
+        .log-target { color: #f1c40f; }
+        .log-time { color: #888; font-size: 12px; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1 style="margin:0; font-style: italic; letter-spacing: 2px;">M-SECURITY HQ TERMINAL</h1>
-        <div style="color: #666; font-size: 11px;">REBORN V6.0 | STATUS: INITIALIZED</div>
+        <div style="color: #666; font-size: 11px;">REBORN V6.1 | STATUS: ONLINE (RECORDS ENABLED)</div>
+    </div>
+
+    <div class="section" style="border-color: var(--log-green);">
+        <h2>📡 實時查詢日誌 <span style="font-size: 12px; color: var(--log-green);">LIVE FEED</span></h2>
+        <div class="scroll-box">
+            <table>
+                <thead>
+                    <tr>
+                        <th width="20%">時間</th>
+                        <th width="20%">查詢員</th>
+                        <th width="20%">查詢內容</th>
+                        <th>勤務類型</th>
+                    </tr>
+                </thead>
+                <tbody id="logTable">
+                    <tr><td colspan="4" style="text-align:center; color:#444;">等待終端連線...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div class="section">
@@ -46,7 +72,7 @@
             <button class="btn btn-red" onclick="saveData('blacklist_data')">發布黑名單</button>
         </div>
 
-        <div class="scroll-box">
+        <div class="scroll-box" style="max-height: 200px; margin-top: 15px;">
             <table>
                 <thead><tr><th>對象</th><th>工號/原因</th><th>車牌</th><th>操作</th></tr></thead>
                 <tbody id="liveTable"></tbody>
@@ -64,7 +90,6 @@
     </div>
 
 <script>
-    // Firebase 配置
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
@@ -74,24 +99,43 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // --- 新增：監聽查詢日誌 ---
+    // 假設手機端將紀錄存在 'search_logs' 路徑
+    db.ref('search_logs').limitToLast(50).on('value', snap => {
+        const tbody = document.getElementById('logTable');
+        tbody.innerHTML = '';
+        const logs = [];
+        snap.forEach(child => { logs.unshift(child.val()); }); // 最新的排上面
+
+        if(logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#444;">( 目前尚無查詢紀錄 )</td></tr>';
+            return;
+        }
+
+        logs.forEach(log => {
+            tbody.innerHTML += `
+                <tr>
+                    <td class="log-time">${log.time || '---'}</td>
+                    <td class="log-user">${log.user || '未知員警'}</td>
+                    <td class="log-target">${log.query || '---'}</td>
+                    <td style="font-size: 12px;">${log.duty || '---'}</td>
+                </tr>
+            `;
+        });
+    });
+
     // 核心儲存邏輯 (V6.0 版)
     function saveData(path) {
         const id = document.getElementById('eID').value.trim();
         const name = document.getElementById('eName').value.trim();
         const plate = document.getElementById('ePlate').value.trim().toUpperCase();
         const reason = document.getElementById('eReason').value.trim();
-
         if(!name) return alert("❌ 請至少輸入姓名");
-
         const data = { id, name, plate, reason, timestamp: new Date().toLocaleString() };
-
-        // 決定存檔路徑：員工用工號當 Key，黑名單用 push
         const ref = (path === 'employee_list') ? db.ref(path + '/' + (id || 'TEMP_' + Date.now())) : db.ref(path).push();
-        
         ref.set(data).then(() => {
-            alert("✅ 已完成連動至：" + (path === 'employee_list' ? '員工名單' : '黑名單'));
-            // 清空所有輸入框
-            document.querySelectorAll('input').forEach(i => i.value = '');
+            alert("✅ 已完成部署");
+            document.querySelectorAll('.section:nth-child(2) input').forEach(i => i.value = '');
         }).catch(err => alert("🚨 失敗：" + err.message));
     }
 
@@ -106,16 +150,12 @@
         });
     }
 
-    // 全自動表格監聽：不再漏掉任何人
+    // 表格監聽
     db.ref('employee_list').on('value', snap => {
         const data = snap.val();
         const tbody = document.getElementById('liveTable');
         tbody.innerHTML = '';
-        if(!data) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#444;">( 暫無資料，等待部署 )</td></tr>';
-            return;
-        }
-
+        if(!data) return;
         Object.keys(data).forEach(key => {
             const item = data[key];
             tbody.innerHTML += `<tr>
