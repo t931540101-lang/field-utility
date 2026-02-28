@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-SECURITY | 戰術終端 V7.4</title>
+    <title>M-SECURITY | 戰術終端 V7.5</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -13,44 +13,30 @@
             --btn-blue: linear-gradient(to bottom, #74b9ff, #0984e3);
             --alert-red: #ff0000;
         }
-
         body { margin: 0; background: #b0bec5; font-family: "Microsoft JhengHei", sans-serif; overflow: hidden; height: 100vh; width: 100vw; }
-
-        /* --- 登入畫面 (針對手機窄螢幕比例優化) --- */
         #login-page { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 100vh; background: #e3f2fd; padding-top: 15%; }
         .login-title { color: #0d47a1; font-style: italic; font-weight: bold; font-size: 20px; margin-bottom: 20px; }
         .login-box { width: 85%; max-width: 320px; background: white; border: 1px solid #90caf9; padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
-        /* --- 主面板 --- */
         #main-terminal { display: none; height: 100vh; flex-direction: column; }
-        .alert-bar { background: #000; color: var(--alert-red); padding: 5px; text-align: center; font-size: 11px; font-weight: bold; letter-spacing: 1px; }
-        .header-banner { background: var(--mp-grad); padding: 12px 0; text-align: center; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .alert-bar { background: #000; color: var(--alert-red); padding: 5px; text-align: center; font-size: 11px; font-weight: bold; }
+        .header-banner { background: var(--mp-grad); padding: 12px 0; text-align: center; color: white; }
         .header-banner h1 { margin: 0; font-size: 20px; font-style: italic; font-weight: 900; }
-        
         .tabs { display: flex; background: #546e7a; }
         .tab { flex: 1; text-align: center; padding: 10px 0; color: white; cursor: pointer; font-size: 13px; border-right: 1px solid #455a64; font-weight: bold; }
         .tab.active { background: var(--mp-blue); }
-
         .content { flex: 1; padding: 10px; background: #cfd8dc; overflow-y: auto; }
         .status-row { padding-bottom: 8px; font-size: 12px; display: flex; align-items: center; gap: 5px; font-weight: bold; }
         .status-box { width: 12px; height: 12px; background: #4caf50; border: 1px solid #fff; border-radius: 50%; }
-
-        /* 查詢卡片與輸入框 */
-        .search-card { background: #fff; border: 1px solid #999; padding: 12px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .search-card { background: #fff; border: 1px solid #999; padding: 12px; border-radius: 4px; }
         input, select { width: 100%; height: 42px; border: 1px solid #ccc; margin-bottom: 8px; padding: 0 10px; font-size: 16px; box-sizing: border-box; border-radius: 4px; outline: none; }
-        
         .btn-mp { width: 100%; height: 46px; color: white; font-weight: bold; font-size: 16px; background: var(--btn-blue); border: none; border-radius: 4px; cursor: pointer; }
-        .btn-mp:active { filter: brightness(0.8); }
         .btn-row { display: flex; gap: 5px; margin-bottom: 8px; }
-
-        /* 結果顯示區 (修正字體大小) */
-        .res-box { margin-top: 10px; padding: 15px; border-radius: 4px; display: none; text-align: center; box-shadow: inset 0 0 5px rgba(0,0,0,0.1); }
+        .res-box { margin-top: 10px; padding: 15px; border-radius: 4px; display: none; text-align: center; }
         .res-ok { background: #e8f5e9; border: 2px solid #2e7d32; color: #1b5e20; }
         .res-warn { background: #ffebee; border: 2px solid #c62828; color: #b71c1c; animation: flash 0.6s infinite; }
         @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        
         .info-label { font-size: 12px; color: #666; margin-top: 5px; }
-        .info-value { font-size: 18px; color: #000; font-weight: bold; line-height: 1.4; }
+        .info-value { font-size: 18px; color: #000; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -70,7 +56,7 @@
     </div>
 
     <div id="main-terminal">
-        <div class="alert-bar">[通報] 數據中心已同步，目前為雲端模式</div>
+        <div class="alert-bar">[通報] 數據中心已同步，目前為雲端監控模式</div>
         <div class="header-banner"><h1>M-Security 整合查詢</h1></div>
         <div class="tabs">
             <div class="tab active">一般</div><div class="tab">進階</div><div class="tab">其他</div>
@@ -94,20 +80,15 @@
     </div>
 
 <script>
-    // 1. Firebase 配置
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
         projectId: "factor-security-d1965",
         appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
     };
-
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 2. 頁面載入時讀取 Local Storage 紀錄
     window.onload = function() {
         const savedUser = localStorage.getItem('ms_user');
         const savedDuty = localStorage.getItem('ms_duty');
@@ -115,58 +96,57 @@
         if(savedDuty) document.getElementById('dutyType').value = savedDuty;
     };
 
-    // 3. 登入邏輯 (含 Local Storage 存檔)
     function doLogin() {
         const user = document.getElementById('userName').value;
         const duty = document.getElementById('dutyType').value;
         const code = document.getElementById('loginCode').value;
-
         if(!code) { alert("請輸入登錄碼"); return; }
-        
-        // 存檔個人化資訊
         localStorage.setItem('ms_user', user);
         localStorage.setItem('ms_duty', duty);
-
         document.getElementById('login-page').style.display = 'none';
         document.getElementById('main-terminal').style.display = 'flex';
     }
 
-    // 4. 查詢邏輯 (修正單位不顯示問題)
+    // --- 核心更新：加入查詢紀錄回傳功能 ---
     function qSearch() {
         const val = document.getElementById('qInput').value.trim().toUpperCase();
+        const currentUser = document.getElementById('userName').value || "未知用戶";
+        const currentDuty = document.getElementById('dutyType').value;
+        
         if(!val) return;
         
         const resBox = document.getElementById('res');
         const resInfo = document.getElementById('res-info');
-        
         resBox.style.display = 'block';
-        resBox.className = "res-box";
-        resBox.style.background = "#fff";
         resInfo.innerHTML = "正在調取雲端檔案...";
 
-        // 優先檢查黑名單
+        // 1. 先寫入紀錄到後台 (search_logs)
+        db.ref('search_logs').push({
+            user: currentUser,
+            query: val,
+            duty: currentDuty,
+            time: new Date().toLocaleString('zh-TW', {hour12: false})
+        });
+
+        // 2. 執行原本的查詢邏輯
         db.ref('blacklist_data').orderByChild('name').equalTo(val).once('value', s => {
             if(s.exists()){
                 resBox.className = "res-box res-warn";
                 resInfo.innerHTML = `<div style="font-size:18px;">⚠️ 警戒對象</div><div class="info-value">${val}</div>`;
             } else {
-                // 檢查員工清單
                 db.ref('employee_list/' + val).once('value', s2 => {
                     if(s2.exists()){
                         const d = s2.val();
-                        resBox.className = "res-box res-ok";
-                        
-                        // 修正：自動判定多個可能的欄位名稱 (dept, unit, reason)
                         const displayUnit = d.dept || d.reason || d.unit || '未註記';
-                        
+                        resBox.className = "res-box res-ok";
                         resInfo.innerHTML = `
                             <div style="font-size:16px;">✅ 內部員工</div>
                             <div class="info-label">姓名</div><div class="info-value">${d.name || '未知'}</div>
                             <div class="info-label">單位 / 屬性</div><div class="info-value" style="color:#1b5e20;">${displayUnit}</div>
                         `;
                     } else {
-                        resBox.style.background = "#eeeeee";
-                        resBox.style.border = "1px solid #ccc";
+                        resBox.className = "res-box";
+                        resBox.style.background = "#eee";
                         resInfo.innerHTML = `<div style="padding:10px; color:#666;">查無此紀錄</div>`;
                     }
                 });
