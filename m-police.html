@@ -3,40 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-SECURITY | 小神捕 V7.7</title>
+    <title>M-SECURITY | 手機終端 V7.8</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root { --p-blue: #005a9c; --bg: #e6eef5; }
-        body { margin: 0; background: var(--bg); font-family: sans-serif; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--bg); font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
 
-        /* --- 登入頁面 --- */
-        #login-page { height: 100vh; background: #fff; display: flex; flex-direction: column; align-items: center; }
-        .header { width: 100%; background: linear-gradient(#dbe9f4, #8eb9d7); padding: 20px 0; text-align: center; border-bottom: 3px solid var(--p-blue); position: relative; }
-        .badge { width: 55px; margin-bottom: 5px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
-        .title { color: #003366; font-weight: bold; font-size: 24px; letter-spacing: 1px; }
+        /* --- 登入頁面 (手機優化) --- */
+        #login-page { min-height: 100vh; background: #fff; display: flex; flex-direction: column; align-items: center; padding-bottom: 30px; }
+        .header { width: 100%; background: linear-gradient(#dbe9f4, #8eb9d7); padding: 25px 0; text-align: center; border-bottom: 3px solid var(--p-blue); }
+        .badge { width: 60px; margin-bottom: 8px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
+        .title { color: #003366; font-weight: bold; font-size: 22px; letter-spacing: 1px; }
 
-        .form { width: 85%; max-width: 350px; margin-top: 20px; }
-        .row { border: 1px solid #99b3cc; display: flex; margin-bottom: 12px; border-radius: 4px; overflow: hidden; height: 45px; }
-        .lbl { background: #f0f4f7; width: 60px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-right: 1px solid #99b3cc; color: #333; }
-        .row input { border: none; flex: 1; padding: 0 10px; font-size: 18px; outline: none; }
+        .form { width: 90%; margin-top: 20px; }
+        .row { border: 1px solid #99b3cc; display: flex; margin-bottom: 12px; border-radius: 6px; overflow: hidden; height: 50px; }
+        .lbl { background: #f0f4f7; width: 65px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-right: 1px solid #99b3cc; color: #333; font-size: 14px; }
+        .row input { border: none; flex: 1; padding: 0 15px; font-size: 18px; outline: none; background: #fff; }
 
-        /* 日夜班選擇器 */
-        .shift-row { display: flex; justify-content: center; gap: 25px; margin: 15px 0; padding: 10px; background: #f9f9f9; border-radius: 5px; border: 1px dashed #99b3cc; }
-        .shift-lbl { font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 5px; color: #444; }
+        /* 日夜班選擇器 (加寬好按) */
+        .shift-row { display: flex; justify-content: center; gap: 40px; margin: 15px 0; padding: 15px; background: #f9f9f9; border-radius: 8px; border: 1px dashed #99b3cc; }
+        .shift-lbl { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; color: #444; cursor: pointer; }
+        .shift-lbl input { width: 22px; height: 22px; }
 
-        .btn-main { background: linear-gradient(#1e90ff, #005a9c); color: #fff; border: none; padding: 14px 0; font-size: 18px; font-weight: bold; border-radius: 5px; width: 100%; box-shadow: 0 3px 6px rgba(0,0,0,0.2); }
+        .btn-main { background: linear-gradient(#1e90ff, #005a9c); color: #fff; border: none; padding: 15px 0; font-size: 20px; font-weight: bold; border-radius: 6px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.2); margin-top: 10px; }
 
         /* --- 主查詢介面 --- */
         #main-terminal { display: none; }
-        .nav { background: var(--p-blue); color: #fff; padding: 12px; text-align: center; font-weight: bold; display: flex; justify-content: space-between; }
-        .alert { background: rgba(0,0,0,0.8); color: #ff3333; padding: 5px; text-align: center; font-size: 11px; font-weight: bold; border-bottom: 1px solid #ff3333; }
+        .nav { background: var(--p-blue); color: #fff; padding: 15px; text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; font-size: 16px; }
+        .alert { background: rgba(0,0,0,0.9); color: #ff3333; padding: 6px; text-align: center; font-size: 12px; font-weight: bold; border-bottom: 1px solid #ff3333; }
         .content { padding: 15px; }
-        .search-area { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .search-area input { width: 100%; padding: 12px; font-size: 20px; border: 2px solid var(--p-blue); border-radius: 4px; text-align: center; margin-bottom: 10px; box-sizing: border-box; }
+        .search-area { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .search-area input { width: 100%; padding: 15px; font-size: 22px; border: 2px solid var(--p-blue); border-radius: 6px; text-align: center; margin-bottom: 15px; outline: none; }
         
-        .res-display { margin-top: 15px; padding: 15px; border-radius: 8px; display: none; text-align: center; border: 2px solid #ccc; background: #fff; }
-        .res-ok { border-color: #4caf50; background: #e8f5e9; }
+        /* 查詢結果區 */
+        .res-display { margin-top: 20px; padding: 20px; border-radius: 10px; display: none; text-align: center; border: 2px solid #ccc; background: #fff; }
+        .res-ok { border-color: #4caf50; background: #f1f8e9; }
         .res-warn { border-color: #f44336; background: #ffebee; }
     </style>
 </head>
@@ -46,31 +49,31 @@
     <div class="header">
         <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/National_Police_Agency_Logo_of_the_Republic_of_China.svg/200px-National_Police_Agency_Logo_of_the_Republic_of_China.svg.png" class="badge">
         <div class="title">內政部警政署</div>
-        <div style="font-size:12px; color:#003366;">M-Police 整合查詢終端</div>
+        <div style="font-size:13px; color:#003366; margin-top:3px;">M-Police 整合查詢終端</div>
     </div>
     <div class="form">
-        <div class="row"><div class="lbl">帳號</div><input type="text" id="pUser" placeholder="員警證號"></div>
-        <div class="row"><div class="lbl">密碼</div><input type="password" id="pPass" placeholder="密碼"></div>
+        <div class="row"><div class="lbl">帳號</div><input type="text" id="pUser" inputmode="numeric" placeholder="請輸入證號"></div>
+        <div class="row"><div class="lbl">密碼</div><input type="password" id="pPass" inputmode="numeric" placeholder="請輸入密碼"></div>
         
         <div class="shift-row">
             <label class="shift-lbl"><input type="radio" name="shift" value="日班" checked> ☀️日班</label>
             <label class="shift-lbl"><input type="radio" name="shift" value="夜班"> 🌙夜班</label>
         </div>
 
-        <button class="btn-main" onclick="doLogin()">登 入</button>
+        <button class="btn-main" onclick="doLogin()">登 入 系 統</button>
     </div>
 </div>
 
 <div id="main-terminal">
     <div class="nav">
-        <span onclick="location.reload()">⬅ 返回</span>
+        <span onclick="location.reload()" style="font-size:14px;">⬅ 返回</span>
         <span id="shift-title">M-Police 指揮端</span>
-        <span onclick="location.reload()" style="font-size:12px;">登出</span>
+        <span onclick="location.reload()" style="font-size:14px;">登出</span>
     </div>
-    <div class="alert">[通報] 本系統僅供公務查詢使用，嚴禁非公務行為。</div>
+    <div class="alert">[通報] 本系統僅供公務查詢，嚴禁非公務行為。</div>
     <div class="content">
         <div class="search-area">
-            <input type="text" id="qInput" placeholder="輸入工號或車牌" oninput="this.value=this.value.toUpperCase()">
+            <input type="text" id="qInput" placeholder="輸入工號/車牌" oninput="this.value=this.value.toUpperCase()">
             <button class="btn-main" onclick="qSearch()">開 始 查 詢</button>
         </div>
         <div id="res-box" class="res-display"><div id="res-info"></div></div>
@@ -78,7 +81,7 @@
 </div>
 
 <script>
-    // 確保留下你正確的 Firebase 設定
+    // Firebase 設定
     const firebaseConfig = { databaseURL: "https://m-security-v7-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -88,12 +91,13 @@
         const p = document.getElementById('pPass').value;
         const s = document.querySelector('input[name="shift"]:checked').value;
 
+        // 小黑哥專用帳密
         if(u === "0905" && p === "0905") {
             document.getElementById('login-page').style.display = 'none';
             document.getElementById('main-terminal').style.display = 'block';
             document.getElementById('shift-title').innerText = `M-Police [${s}]`;
         } else {
-            alert("帳密錯誤！");
+            alert("⚠️ 帳號或密碼錯誤！");
         }
     }
 
@@ -104,28 +108,36 @@
         if(!val) return;
 
         resBox.style.display = 'none';
-        const [s1, s2] = await Promise.all([
-            db.ref('black_list/' + val).once('value'),
-            db.ref('employee_list/' + val).once('value')
-        ]);
+        
+        // 抓取 211 位大軍資料
+        try {
+            const [s1, s2] = await Promise.all([
+                db.ref('black_list/' + val).once('value'),
+                db.ref('employee_list/' + val).once('value')
+            ]);
 
-        resBox.style.display = 'block';
-        if(s1.exists()){
-            resBox.className = "res-display res-warn";
-            resInfo.innerHTML = `<div style="color:red; font-weight:bold;">⚠️ 警戒對象</div>
-                                 <div style="font-size:32px; color:red; font-weight:bold;">${val}</div>`;
-        } else if(s2.exists()){
-            const d = s2.val();
-            resBox.className = "res-display res-ok";
-            resInfo.innerHTML = `
-                <div style="color:#1b5e20; font-weight:bold;">✅ 驗證通過</div>
-                <div style="font-size:28px; font-weight:bold; margin:5px 0;">${d.name}</div>
-                <div style="font-size:18px; color:#444;">單位：${d.reason || '未註記'}</div>
-            `;
-        } else {
-            resBox.className = "res-display";
-            resBox.style.background = "#eee";
-            resInfo.innerHTML = "🔍 查無資料";
+            resBox.style.display = 'block';
+            if(s1.exists()){
+                resBox.className = "res-display res-warn";
+                resInfo.innerHTML = `<div style="color:red; font-weight:bold; font-size:18px;">⚠️ 警戒對象</div>
+                                     <div style="font-size:36px; color:red; font-weight:bold; margin:10px 0;">${val}</div>
+                                     <div style="color:#666;">狀態：禁止進入</div>`;
+            } else if(s2.exists()){
+                const d = s2.val();
+                resBox.className = "res-display res-ok";
+                resInfo.innerHTML = `
+                    <div style="color:#1b5e20; font-weight:bold; font-size:18px;">✅ 驗證通過</div>
+                    <div style="font-size:32px; font-weight:bold; margin:10px 0;">${d.name}</div>
+                    <div style="font-size:20px; color:#444; font-weight:bold;">單位：${d.reason || '未註記'}</div>
+                    <div style="font-size:14px; color:#999; margin-top:10px;">工號：${d.id}</div>
+                `;
+            } else {
+                resBox.className = "res-display";
+                resBox.style.background = "#eee";
+                resInfo.innerHTML = "🔍 資料庫查無資料";
+            }
+        } catch(e) {
+            alert("網路連接異常，請重新查詢");
         }
     }
 </script>
