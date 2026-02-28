@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M-SECURITY | HQ 數據部署中心 V7.2</title>
+    <title>M-SECURITY | HQ 數據部署中心 V7.3</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --cyan: #00f2ff; --warn: #ff4d4f; --bg: #050505; --card: #111; --border: #333; --gold: #f1c40f; }
+        :root { --cyan: #00f2ff; --warn: #ff4d4f; --bg: #050505; --card: #111; --border: #333; }
         body { background: var(--bg); color: white; font-family: "Microsoft JhengHei", sans-serif; margin: 0; padding: 0; }
         header { background: #000; padding: 12px; text-align: center; border-bottom: 2px solid var(--cyan); }
         nav { display: flex; background: #111; border-bottom: 1px solid var(--border); }
@@ -16,20 +16,22 @@
         .content { padding: 15px; display: none; }
         .content.active { display: block; }
         
-        /* 部署區 */
         .deploy-box { background: #111; border: 1px dashed var(--cyan); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; margin-bottom: 10px; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
+        input { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; margin-bottom: 10px; border-radius: 4px; box-sizing: border-box; }
         .btn { width: 100%; padding: 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; }
         .btn-cyan { background: var(--cyan); color: #000; }
         .btn-red { background: var(--warn); color: #fff; }
+
+        /* 批次操作管理區 */
+        .batch-bar { display: flex; justify-content: space-between; align-items: center; background: #222; padding: 10px; border-radius: 4px 4px 0 0; border: 1px solid #333; }
+        .preview-section { background: #111; border: 1px solid #333; border-top: none; border-radius: 0 0 8px 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: #1a1a1a; color: var(--cyan); padding: 10px; text-align: left; border-bottom: 1px solid #333; }
+        td { padding: 12px 10px; border-bottom: 1px solid #222; }
+        .scroll-box { max-height: 450px; overflow-y: auto; }
         
-        /* 預覽表格 */
-        .preview-section { background: #111; border: 1px solid #222; border-radius: 8px; padding: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { background: #1a1a1a; color: var(--cyan); padding: 10px; text-align: left; }
-        td { padding: 10px; border-bottom: 1px solid #222; }
-        .scroll-box { max-height: 400px; overflow-y: auto; }
-        .action-btn { color: var(--warn); cursor: pointer; text-decoration: underline; }
+        /* 勾選框樣式優化 */
+        input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; margin: 0; vertical-align: middle; }
     </style>
 </head>
 <body>
@@ -37,27 +39,34 @@
 <header><h1 style="margin:0; font-style:italic; color:var(--cyan);">M-SECURITY HQ</h1></header>
 
 <nav>
-    <div class="tab-btn active" onclick="switchTab('manage')">資料部署與總表</div>
+    <div class="tab-btn active" onclick="switchTab('manage')">資料部署與管理</div>
     <div class="tab-btn" onclick="switchTab('monitor')">監控日誌</div>
 </nav>
 
 <div id="manage" class="content active">
-    <h2 style="font-size:16px; color:var(--cyan);">🛠️ 戰略資料部署 (更新給前端)</h2>
     <div class="deploy-box">
+        <h2 style="font-size:15px; color:var(--cyan); margin-top:0;">🛠️ 新增戰略資料</h2>
         <input type="text" id="eID" placeholder="工號 / 車位 (例: N00571)">
         <input type="text" id="eName" placeholder="對象姓名">
-        <input type="text" id="ePlate" placeholder="車牌號碼 (例: BGD-7527)">
+        <input type="text" id="ePlate" placeholder="車牌號碼">
         <input type="text" id="eReason" placeholder="單位 / 備註資訊">
-        <button class="btn btn-cyan" onclick="deploy('employee_list')">部署資料 (員工/車輛)</button>
-        <button class="btn btn-red" onclick="deploy('blacklist_data')" style="margin-top:10px;">發布警戒 (黑名單)</button>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-cyan" onclick="deploy('employee_list')">部署員工資料</button>
+            <button class="btn btn-red" onclick="deploy('blacklist_data')" style="background:#8b0000;">發布黑名單</button>
+        </div>
     </div>
 
-    <h2 style="font-size:16px; color:var(--cyan);">📋 雲端資料庫總表 (確認是否輸入成功)</h2>
+    <div class="batch-bar">
+        <div style="font-size:12px;">
+            <input type="checkbox" id="selectAll" onclick="toggleAll(this)"> 全選
+        </div>
+        <button onclick="batchDelete()" style="background:var(--warn); color:white; border:none; padding:5px 15px; border-radius:4px; font-weight:bold; cursor:pointer;">⚠️ 撤銷選取資料</button>
+    </div>
     <div class="preview-section">
         <div class="scroll-box">
             <table>
                 <thead>
-                    <tr><th>類別</th><th>對象/車牌</th><th>備註/單位</th><th>操作</th></tr>
+                    <tr><th width="40"></th><th width="60">類別</th><th>姓名/車牌</th><th>單位/備註</th></tr>
                 </thead>
                 <tbody id="masterTableBody"></tbody>
             </table>
@@ -66,7 +75,7 @@
 </div>
 
 <div id="monitor" class="content">
-    <h2 style="font-size:16px; color:var(--cyan);">📡 實時監控日誌</h2>
+    <h2 style="font-size:16px; color:var(--cyan);">📡 實時查詢監控</h2>
     <div id="feed" style="max-height:500px; overflow-y:auto; font-size:12px;"></div>
 </div>
 
@@ -87,10 +96,10 @@
         event.currentTarget.classList.add('active');
     }
 
-    // 部署邏輯
+    // 部署資料
     function deploy(path) {
         const name = document.getElementById('eName').value.trim();
-        const id = document.getElementById('eID').value.trim() || Date.now();
+        const id = document.getElementById('eID').value.trim() || Date.now().toString();
         if(!name) return alert("請輸入姓名！");
         db.ref(path + '/' + id).set({
             name: name, id: id,
@@ -98,59 +107,74 @@
             reason: document.getElementById('eReason').value,
             timestamp: new Date().toLocaleString()
         }).then(() => {
-            alert("✅ 成功！資料已寫入雲端。");
+            alert("✅ 部署成功");
             document.querySelectorAll('.deploy-box input').forEach(i => i.value = "");
-            refreshTable(); // 自動重整表單
+            refreshTable();
         });
     }
 
-    // 撤銷邏輯
-    function revoke(path, id) {
-        if(confirm("確定要從雲端撤銷這筆資料嗎？")) {
-            db.ref(path + '/' + id).remove().then(() => refreshTable());
-        }
-    }
-
-    // 全自動總表讀取
+    // 讀取總表與渲染
     function refreshTable() {
         const tbody = document.getElementById('masterTableBody');
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">同步中...</td></tr>';
-        
+        tbody.innerHTML = '';
         Promise.all([
             db.ref('employee_list').once('value'),
             db.ref('blacklist_data').once('value')
         ]).then(results => {
-            tbody.innerHTML = '';
             const emps = results[0].val();
             const blacks = results[1].val();
-
             if(emps) Object.keys(emps).forEach(k => renderRow(tbody, '員工', emps[k], 'employee_list', k));
-            if(blacks) Object.keys(blacks).forEach(k => renderRow(tbody, '⚠️黑名單', blacks[k], 'blacklist_data', k));
+            if(blacks) Object.keys(blacks).forEach(k => renderRow(tbody, '警報', blacks[k], 'blacklist_data', k));
         });
     }
 
     function renderRow(target, type, data, path, id) {
-        const color = type.includes('黑名單') ? 'var(--warn)' : 'var(--cyan)';
-        target.innerHTML += `
-            <tr>
-                <td style="color:${color}">${type}</td>
-                <td>${data.name}<br><small style="color:#666">${data.plate || '無車牌'}</small></td>
-                <td>${data.reason || '無'}</td>
-                <td><span class="action-btn" onclick="revoke('${path}', '${id}')">[撤銷]</span></td>
-            </tr>`;
+        const isBlack = type === '警報';
+        const row = `<tr>
+            <td><input type="checkbox" class="item-check" data-path="${path}" data-id="${id}"></td>
+            <td style="color:${isBlack?'var(--warn)':'var(--cyan)'}">${type}</td>
+            <td><b>${data.name}</b><br><small style="color:#777">${data.plate||'無車牌'}</small></td>
+            <td style="font-size:11px;">${data.reason||'-'}</td>
+        </tr>`;
+        target.innerHTML += row;
+    }
+
+    // 全選切換
+    function toggleAll(source) {
+        const checkboxes = document.querySelectorAll('.item-check');
+        checkboxes.forEach(cb => cb.checked = source.checked);
+    }
+
+    // 批次刪除邏輯
+    function batchDelete() {
+        const selected = document.querySelectorAll('.item-check:checked');
+        if(selected.length === 0) return alert("請先勾選要撤銷的資料！");
+        
+        if(confirm(`確定要一次撤銷這 ${selected.length} 筆資料嗎？資料將從雲端永久刪除。`)) {
+            const promises = [];
+            selected.forEach(cb => {
+                const path = cb.getAttribute('data-path');
+                const id = cb.getAttribute('data-id');
+                promises.push(db.ref(path + '/' + id).remove());
+            });
+            
+            Promise.all(promises).then(() => {
+                alert("✅ 批次撤銷完成！");
+                document.getElementById('selectAll').checked = false;
+                refreshTable();
+            });
+        }
     }
 
     // 監聽日誌
     db.ref('search_logs').limitToLast(10).on('value', snap => {
-        const feed = document.getElementById('feed');
-        feed.innerHTML = '';
+        const feed = document.getElementById('feed'); feed.innerHTML = '';
         snap.forEach(c => {
             const l = c.val();
-            feed.innerHTML = `<div style="padding:10px; border-bottom:1px solid #222;">[${l.time}] ${l.user} 查詢：${l.query}</div>` + feed.innerHTML;
+            feed.innerHTML = `<div style="padding:10px; border-bottom:1px solid #222;">[${l.time}] ${l.user} 查：${l.query}</div>` + feed.innerHTML;
         });
     });
 
-    // 初始載入總表
     refreshTable();
 </script>
 </body>
