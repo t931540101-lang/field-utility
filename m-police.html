@@ -3,165 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-SECURITY | V6.0</title>
+    <title>M-Security 整合查詢系統</title>
     <style>
-        /* 引入小黑哥情資：大廠專用戰術變數 */
         :root {
-            --primary: #0b57d0;       /* 專業警務藍 */
-            --bg-body: #f1f3f4;       /* 系統淺灰底 */
-            --surface: #ffffff;       /* 純白卡片面 */
-            --text-main: #1f1f1f;     /* 高對比黑 */
-            --text-sub: #70757a;      /* 說明文字灰 */
-            --input-bg: #f8f9fa;      /* 輸入框底色 */
-            --gold: #fbbc04;          /* VIP 警戒金 */
-            --btn-height: 52px;       /* 戰術黃金高度 */
+            --mp-blue: #3273b5;       /* 實機頁籤藍 */
+            --mp-dark-gray: #333;
+            --mp-bg: #e1f5fe;
+            --btn-grad: linear-gradient(to bottom, #74b9ff, #0984e3);
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-body);
-            font-family: Arial, "Microsoft JhengHei", sans-serif;
-            color: var(--text-main);
+            margin: 0; background-color: #b0bec5;
+            font-family: "Microsoft JhengHei", sans-serif;
         }
 
-        /* 頂部戰術狀態列 */
-        .header {
-            background-color: var(--primary);
-            color: white;
-            padding: 20px 16px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        /* 頂部重要警訊 */
+        .alert-bar {
+            background: #000; color: #ff3e3e; padding: 5px;
+            font-size: 13px; font-weight: bold; text-align: center;
         }
 
-        .header h1 {
-            margin: 0;
-            font-size: 20px;
-            letter-spacing: 2px;
-            font-weight: 500;
+        /* 戰術頁籤 */
+        .tabs {
+            display: flex; background: #546e7a; color: white;
+        }
+        .tab {
+            flex: 1; text-align: center; padding: 12px 0;
+            border-right: 1px solid #455a64; font-weight: bold;
+        }
+        .tab.active { background: var(--mp-blue); }
+
+        .main-content {
+            background: #cfd8dc; padding: 10px; min-height: 300px;
         }
 
-        .status-bar {
-            background: #001d35;
-            color: #a8c7fa;
-            font-size: 10px;
-            padding: 4px 0;
-            text-align: center;
-            text-transform: uppercase;
+        /* 線上狀態區 */
+        .status-area {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px; font-size: 14px;
+        }
+        .status-box {
+            width: 20px; height: 20px; background: var(--mp-blue);
+            border: 1px solid #fff;
         }
 
-        .container {
-            padding: 16px;
+        /* 查詢輸入區 */
+        .search-box {
+            background: #fff; border: 1px solid #999; padding: 10px;
         }
-
-        /* 戰術卡片 */
-        .card {
-            background: var(--surface);
-            border-radius: 16px; /* 仿 Google 圓角樣式 */
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        label {
-            display: block;
-            font-size: 13px;
-            color: var(--text-sub);
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-
-        /* 戰術輸入框：48px 高度優化單手操作 */
         input {
-            width: 100%;
-            height: var(--btn-height);
-            background-color: var(--input-bg);
-            border: 1px solid #dadce0;
-            border-radius: 8px;
-            padding: 0 16px;
-            font-size: 18px;
-            font-weight: bold;
-            box-sizing: border-box;
-            outline: none;
-            transition: all 0.2s;
+            width: 100%; height: 45px; border: 1px solid #ccc;
+            font-size: 20px; padding: 0 10px; box-sizing: border-box;
         }
 
-        input:focus {
-            background-color: #fff;
-            border: 2px solid var(--primary);
-            box-shadow: 0 0 0 4px rgba(11, 87, 208, 0.1);
+        /* 雙排按鈕配置 */
+        .btn-group {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px;
         }
-
-        /* 核心按鈕：仿照你給的 .nCP5yc 質感 */
-        .btn-action {
-            background-color: var(--primary);
-            color: white;
-            width: 100%;
-            height: var(--btn-height);
-            border: none;
-            border-radius: 26px; /* 膠囊形按鈕 */
-            font-size: 18px;
-            font-weight: 500;
-            cursor: pointer;
-            margin-top: 10px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-            transition: transform 0.1s, opacity 0.2s;
+        .btn {
+            height: 55px; border: 1px solid #1565c0; color: white;
+            font-size: 18px; font-weight: bold; border-radius: 2px;
+            background: var(--btn-grad); cursor: pointer;
         }
-
-        .btn-action:active {
-            transform: scale(0.98);
-            opacity: 0.9;
-        }
-
-        /* 查詢結果區 (隱藏中，等待顯示) */
-        .result-box {
-            border-left: 5px solid var(--gold);
-            background: #fffdf5;
-            padding: 15px;
-            border-radius: 8px;
-            display: none; /* 預設隱藏 */
-        }
-
-        .result-name {
-            font-size: 24px;
-            font-weight: 900;
-            color: var(--text-main);
-        }
+        .btn-full { grid-column: span 2; background: #607d8b; border: 1px solid #455a64; }
     </style>
 </head>
 <body>
 
-    <div class="status-bar">Unit: HQ-Mobile | Secure Link Active</div>
-    <div class="header">
-        <h1>M-SECURITY TERMINAL</h1>
+    <div class="alert-bar">[通報] 廠區周邊發現可疑車輛，請夥伴注意巡查</div>
+
+    <div class="tabs">
+        <div class="tab active">一般</div>
+        <div class="tab">進階</div>
+        <div class="tab">頻道</div>
+        <div class="tab">其他</div>
     </div>
 
-    <div class="container">
-        <div class="card">
-            <label>🎯 目標車牌 / 工號查詢</label>
-            <input type="text" id="queryIn" placeholder="請輸入資料..." autocomplete="off">
-            <button class="btn-action" onclick="showMockResult()">執 行 戰 術 搜 索</button>
+    <div class="main-content">
+        <div class="status-area">
+            <span>查詢模式：</span>
+            <div class="status-box"></div>
+            <span>線上</span>
         </div>
 
-        <div id="mockResult" class="card result-box">
-            <label>🔍 偵測結果</label>
-            <div class="result-name">盧家慶 (測試數據)</div>
-            <div style="font-size: 14px; color: var(--text-sub); margin-top: 5px;">
-                單位：警衛課 | 車牌：ABC-1234
+        <div class="search-box">
+            <input type="text" placeholder="車號 / 證號">
+            
+            <div class="btn-group">
+                <button class="btn">查 詢</button>
+                <button class="btn">條碼掃描</button>
+                <button class="btn btn-full">清 除</button>
             </div>
         </div>
-
-        <p style="text-align: center; color: var(--text-sub); font-size: 12px; margin-top: 30px;">
-            ⚠️ 僅供授權警衛人員使用，嚴禁外洩
-        </p>
     </div>
 
-    <script>
-        function showMockResult() {
-            // 這只是讓小黑哥看看「便當打開後的樣子」
-            document.getElementById('mockResult').style.display = 'block';
-            window.scrollTo(0, document.body.scrollHeight);
-        }
-    </script>
 </body>
 </html>
