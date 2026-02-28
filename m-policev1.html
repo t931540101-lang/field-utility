@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>小神捕 V8.1 | 瘦身版</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        body { margin: 0; background: #e6eef5; font-family: sans-serif; text-align: center; }
+        .header { background: linear-gradient(#dbe9f4, #8eb9d7); padding: 20px 0; border-bottom: 3px solid #005a9c; }
+        .badge { width: 60px; height: 60px; }
+        
+        /* --- 1. [通報] 瘦身樣式 --- */
+        .alert-bar {
+            background: rgba(0,0,0,0.8);
+            color: #ff3333;
+            padding: 4px 8px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            border-bottom: 1px solid #ff3333;
+        }
+
+        .box { width: 90%; background: white; padding: 15px; margin: 15px auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); box-sizing: border-box; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #99b3cc; border-radius: 4px; font-size: 18px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #005a9c; color: white; border: none; border-radius: 5px; font-size: 20px; font-weight: bold; margin-top: 10px; }
+
+        /* --- 2. 結果顯示框瘦身 --- */
+        .res-box { margin-top: 15px; padding: 10px; border-radius: 4px; display: none; text-align: center; border: 2px solid #ccc; }
+        .res-ok { border-color: #4caf50; background: #e8f5e9; }
+        .res-warn { border-color: #f44336; background: #ffebee; }
+
+        /* --- 3. [重點] 縮小 ✅⚠️ 符號 --- */
+        .status-icon {
+            font-size: 18px;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+
+<div id="login-page">
+    <div class="header">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/National_Police_Agency_Logo_of_the_Republic_of_China.svg/200px-National_Police_Agency_Logo_of_the_Republic_of_China.svg.png" class="badge">
+        <div style="color:#003366; font-size:24px; font-weight:bold;">內政部警政署</div>
+    </div>
+    <div class="box">
+        <input type="text" id="pUser" placeholder="帳號 (0905)">
+        <input type="password" id="pPass" placeholder="密碼 (0905)">
+        <div style="margin:15px 0; font-size:18px;">
+            <input type="radio" name="shift" value="日班" checked> ☀️日班
+            <span style="margin:0 10px;"></span>
+            <input type="radio" name="shift" value="夜班"> 🌙夜班
+        </div>
+        <button onclick="doLogin()">登 入 系 統</button>
+    </div>
+</div>
+
+<div id="main-page" style="display:none;">
+    <div style="background:#005a9c; color:white; padding:12px; font-weight:bold; display:flex; justify-content:space-between;">
+        <span onclick="location.reload()">⬅ 返回</span>
+        <span id="shift-title">M-Police 指揮端</span>
+        <span onclick="location.reload()">登出</span>
+    </div>
+    
+    <div class="alert-bar">[通報] 本系統僅供公務查詢使用，嚴禁非公務行為。</div>
+    
+    <div class="box">
+        <input type="text" id="qInput" placeholder="輸入工號或車牌" oninput="this.value=this.value.toUpperCase()">
+        <button onclick="qSearch()">開 始 查 詢</button>
+    </div>
+    
+    <div id="res-box" class="res-box">
+        <div id="res-info"></div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = { databaseURL: "https://m-security-v7-default-rtdb.firebaseio.com/" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function doLogin() {
+        const u = document.getElementById('pUser').value;
+        const p = document.getElementById('pPass').value;
+        const s = document.querySelector('input[name="shift"]:checked').value;
+        if(u === "0905" && p === "0905") {
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('main-page').style.display = 'block';
+            document.getElementById('shift-title').innerText = "M-Police [" + s + "]";
+        } else { alert("帳密錯誤"); }
+    }
+
+    async function qSearch() {
+        const val = document.getElementById('qInput').value.trim();
+        const resBox = document.getElementById('res-box');
+        const resInfo = document.getElementById('res-info');
+        if(!val) return;
+
+        resBox.style.display = 'none';
+        const [s1, s2] = await Promise.all([
+            db.ref('black_list/' + val).once('value'),
+            db.ref('employee_list/' + val).once('value')
+        ]);
+
+        resBox.style.display = 'block';
+
+        // 第三個連動修改：JS 顯示邏輯
+        if(s1.exists()){
+            resBox.className = "res-box res-warn";
+            resInfo.innerHTML = `
+                <div style="font-size:16px; color:#b71c1c; margin-bottom:5px;">
+                    <span class="status-icon">⚠️</span> 警戒對象
+                </div>
+                <div style="font-size:32px; color:red; font-weight:bold;">${val}</div>
+            `;
+        } else if(s2.exists()){
+            const d = s2.val();
+            resBox.className = "res-box res-ok";
+            resInfo.innerHTML = `
+                <div style="font-size:16px; color:#1b5e20; margin-bottom:5px;">
+                    <span class="status-icon">✅</span> 內部員工
+                </div>
+                <div style="font-size:24px; color:#000; font-weight:bold;">姓名：${d.name}</div>
+                <div style="font-size:18px; color:#444; margin-top:5px;">單位：${d.reason || d.dept || '未註記'}</div>
+            `;
+        } else {
+            resBox.className = "res-box";
+            resBox.style.background = "#eee";
+            resInfo.innerHTML = "🔍 查無資料";
+        }
+    }
+</script>
+</body>
+</html>
