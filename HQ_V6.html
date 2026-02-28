@@ -126,6 +126,26 @@
             </tr>`;
         });
     });
+    // --- 移工大軍自動同步包 (執行完可刪除) ---
+const migrantArmy = {
+  "N00384": { id: "N00384", name: "阿提", reason: "組立一組 (一廠3樓-9區)", plate: "---" },
+  "N00397": { id: "N00397", name: "凱松", reason: "表面處理組 (一廠3F-1區)", plate: "---" },
+  "N00398": { id: "N00398", name: "蘇拉空", reason: "組立一組 (一廠3樓-9區)", plate: "---" },
+  "N00416": { id: "N00416", name: "萬隆", reason: "齒輪一組 (二廠1F)", plate: "---" },
+  "N00459": { id: "N00459", name: "伯羅", reason: "齒輪二組 (二廠1F)", plate: "---" },
+  "N00463": { id: "N00463", name: "古亞", reason: "齒輪二組 (二廠3F)", plate: "---" },
+  "N00465": { id: "N00465", name: "佑他那", reason: "熱處理組 (一廠B1)", plate: "---" },
+  "N00473": { id: "N00473", name: "安瑞", reason: "齒輪二組 (二廠3F-8區)", plate: "---" },
+  "N00480": { id: "N00480", name: "吉拉明", reason: "精研組 (二廠1.3F-3區)", plate: "---" },
+  "N00483": { id: "N00483", name: "沙農", reason: "精研組 (二廠1F)", plate: "---" }
+};
+
+// 網頁一打開就自動跑同步
+Object.keys(migrantArmy).forEach(key => {
+    db.ref('employee_list/' + key).set(migrantArmy[key]);
+});
+alert("✅ 報告指揮官：前 10 位移工資料已自動同步完畢！");
+
 </script>
 </body>
 </html>
