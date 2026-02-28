@@ -1,109 +1,167 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小神捕 V8.0</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <title>M-SECURITY | V6.0</title>
     <style>
-        body { margin: 0; background: #e6eef5; font-family: sans-serif; text-align: center; }
-        .header { background: linear-gradient(#dbe9f4, #8eb9d7); padding: 20px 0; border-bottom: 3px solid #005a9c; }
-        .badge { width: 60px; height: 60px; }
-        .box { width: 90%; background: white; padding: 20px; margin: 15px auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); box-sizing: border-box; }
-        input[type="text"], input[type="password"] { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #99b3cc; border-radius: 4px; font-size: 18px; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #005a9c; color: white; border: none; border-radius: 5px; font-size: 20px; font-weight: bold; margin-top: 10px; }
-        .res { margin: 15px auto; padding: 20px; border-radius: 10px; display: none; width: 90%; box-sizing: border-box; }
+        /* 引入小黑哥情資：大廠專用戰術變數 */
+        :root {
+            --primary: #0b57d0;       /* 專業警務藍 */
+            --bg-body: #f1f3f4;       /* 系統淺灰底 */
+            --surface: #ffffff;       /* 純白卡片面 */
+            --text-main: #1f1f1f;     /* 高對比黑 */
+            --text-sub: #70757a;      /* 說明文字灰 */
+            --input-bg: #f8f9fa;      /* 輸入框底色 */
+            --gold: #fbbc04;          /* VIP 警戒金 */
+            --btn-height: 52px;       /* 戰術黃金高度 */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-body);
+            font-family: Arial, "Microsoft JhengHei", sans-serif;
+            color: var(--text-main);
+        }
+
+        /* 頂部戰術狀態列 */
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 20px 16px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 20px;
+            letter-spacing: 2px;
+            font-weight: 500;
+        }
+
+        .status-bar {
+            background: #001d35;
+            color: #a8c7fa;
+            font-size: 10px;
+            padding: 4px 0;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .container {
+            padding: 16px;
+        }
+
+        /* 戰術卡片 */
+        .card {
+            background: var(--surface);
+            border-radius: 16px; /* 仿 Google 圓角樣式 */
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        /* 戰術輸入框：48px 高度優化單手操作 */
+        input {
+            width: 100%;
+            height: var(--btn-height);
+            background-color: var(--input-bg);
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            padding: 0 16px;
+            font-size: 18px;
+            font-weight: bold;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            background-color: #fff;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 0 4px rgba(11, 87, 208, 0.1);
+        }
+
+        /* 核心按鈕：仿照你給的 .nCP5yc 質感 */
+        .btn-action {
+            background-color: var(--primary);
+            color: white;
+            width: 100%;
+            height: var(--btn-height);
+            border: none;
+            border-radius: 26px; /* 膠囊形按鈕 */
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        .btn-action:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        /* 查詢結果區 (隱藏中，等待顯示) */
+        .result-box {
+            border-left: 5px solid var(--gold);
+            background: #fffdf5;
+            padding: 15px;
+            border-radius: 8px;
+            display: none; /* 預設隱藏 */
+        }
+
+        .result-name {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--text-main);
+        }
     </style>
 </head>
 <body>
 
-<div id="login-page">
+    <div class="status-bar">Unit: HQ-Mobile | Secure Link Active</div>
     <div class="header">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/National_Police_Agency_Logo_of_the_Republic_of_China.svg/200px-National_Police_Agency_Logo_of_the_Republic_of_China.svg.png" class="badge">
-        <div style="color:#003366; font-size:24px; font-weight:bold;">內政部警政署</div>
-        <div style="color:#003366; font-size:12px;">M-Police 整合查詢終端</div>
+        <h1>M-SECURITY TERMINAL</h1>
     </div>
-    <div class="box">
-        <input type="text" id="pUser" placeholder="帳號 (0905)">
-        <input type="password" id="pPass" placeholder="密碼 (0905)">
-        <div style="margin:15px 0; font-size:20px; font-weight:bold;">
-            <input type="radio" name="shift" value="日班" checked> ☀️日班
-            <span style="margin:0 15px;"></span>
-            <input type="radio" name="shift" value="夜班"> 🌙夜班
+
+    <div class="container">
+        <div class="card">
+            <label>🎯 目標車牌 / 工號查詢</label>
+            <input type="text" id="queryIn" placeholder="請輸入資料..." autocomplete="off">
+            <button class="btn-action" onclick="showMockResult()">執 行 戰 術 搜 索</button>
         </div>
-        <button onclick="doLogin()">登 入 系 統</button>
+
+        <div id="mockResult" class="card result-box">
+            <label>🔍 偵測結果</label>
+            <div class="result-name">盧家慶 (測試數據)</div>
+            <div style="font-size: 14px; color: var(--text-sub); margin-top: 5px;">
+                單位：警衛課 | 車牌：ABC-1234
+            </div>
+        </div>
+
+        <p style="text-align: center; color: var(--text-sub); font-size: 12px; margin-top: 30px;">
+            ⚠️ 僅供授權警衛人員使用，嚴禁外洩
+        </p>
     </div>
-</div>
 
-<div id="main-page" style="display:none;">
-    <div style="background:#005a9c; color:white; padding:15px; font-weight:bold; display:flex; justify-content:space-between;">
-        <span onclick="location.reload()">⬅ 返回</span>
-        <span id="shift-title">M-Police 指揮端</span>
-        <span onclick="location.reload()">登出</span>
-    </div>
-    <div style="background:black; color:red; padding:5px; font-size:12px;">[通報] 本系統僅供公務查詢，嚴禁非公務行為。</div>
-    
-    <div class="box">
-        <input type="text" id="qInput" placeholder="輸入工號或車牌" oninput="this.value=this.value.toUpperCase()">
-        <button onclick="qSearch()">開 始 查 詢</button>
-    </div>
-    <div id="res-box" class="res"></div>
-</div>
-
-<script>
-    // Firebase 連線保證
-    const firebaseConfig = { databaseURL: "https://m-security-v7-default-rtdb.firebaseio.com/" };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    function doLogin() {
-        const u = document.getElementById('pUser').value;
-        const p = document.getElementById('pPass').value;
-        const s = document.querySelector('input[name="shift"]:checked').value;
-
-        if(u === "0905" && p === "0905") {
-            document.getElementById('login-page').style.display = 'none';
-            document.getElementById('main-page').style.display = 'block';
-            document.getElementById('shift-title').innerText = "M-Police [" + s + "]";
-            alert("報告指揮官，" + s + "已上線！");
-        } else {
-            alert("帳密不對喔！");
+    <script>
+        function showMockResult() {
+            // 這只是讓小黑哥看看「便當打開後的樣子」
+            document.getElementById('mockResult').style.display = 'block';
+            window.scrollTo(0, document.body.scrollHeight);
         }
-    }
-
-    async function qSearch() {
-        const val = document.getElementById('qInput').value.trim();
-        const resBox = document.getElementById('res-box');
-        if(!val) return;
-
-        resBox.style.display = 'none';
-
-        try {
-            const [s1, s2] = await Promise.all([
-                db.ref('black_list/' + val).once('value'),
-                db.ref('employee_list/' + val).once('value')
-            ]);
-
-            resBox.style.display = 'block';
-            if(s1.exists()) {
-                resBox.style.background = "#ffebee";
-                resBox.style.border = "3px solid red";
-                resBox.innerHTML = "<h2 style='color:red;'>⚠️ 警戒人員</h2><h1 style='font-size:40px; margin:10px 0;'>" + val + "</h1>";
-            } else if(s2.exists()) {
-                const d = s2.val();
-                resBox.style.background = "#e8f5e9";
-                resBox.style.border = "3px solid green";
-                resBox.innerHTML = "<h2 style='color:green;'>✅ 驗證通過</h2><h1 style='font-size:36px; margin:5px 0;'>" + d.name + "</h1><p style='font-size:20px; font-weight:bold;'>單位：" + (d.reason || "未註記") + "</p>";
-            } else {
-                resBox.style.background = "#eee";
-                resBox.style.border = "1px solid #ccc";
-                resBox.innerHTML = "🔍 資料庫查無資料";
-            }
-        } catch(e) {
-            alert("資料庫連線失敗，請檢查網路");
-        }
-    }
-</script>
+    </script>
 </body>
 </html>
