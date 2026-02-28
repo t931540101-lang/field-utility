@@ -7,70 +7,73 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --cyan: #00f2ff; --warn: #ff4d4f; --bg: #050505; --card: #111; --border: #333; }
+        :root { --cyan: #00f2ff; --warn: #ff4d4f; --bg: #050505; --card: #111; --border: #333; --accent: #27ae60; }
         body { background: var(--bg); color: white; font-family: "Microsoft JhengHei", sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
         
-        /* Header */
-        header { background: #000; border-bottom: 2px solid var(--cyan); padding: 12px; text-align: center; }
-        header h1 { margin: 0; font-size: 18px; font-style: italic; letter-spacing: 2px; color: var(--cyan); }
-        header small { color: #666; font-size: 10px; font-weight: bold; }
+        /* 頂部身份資訊 */
+        .user-info { background: #1e293b; color: white; padding: 8px 15px; font-size: 12px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--cyan); }
+        .user-info span { cursor: pointer; }
 
-        /* Nav Tabs */
+        header { background: #000; padding: 12px; text-align: center; border-bottom: 1px solid var(--border); }
+        header h1 { margin: 0; font-size: 18px; font-style: italic; color: var(--cyan); letter-spacing: 2px; }
+
         nav { display: flex; background: #111; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-        .tab-btn { flex: 1; padding: 12px 5px; text-align: center; color: #666; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .tab-btn { flex: 1; padding: 12px 5px; text-align: center; color: #666; font-size: 12px; font-weight: bold; cursor: pointer; }
         .tab-btn.active { color: var(--cyan); border-bottom: 2px solid var(--cyan); background: #1a1a1a; }
 
-        /* Container */
         .content { padding: 12px; display: none; }
         .content.active { display: block; }
 
-        /* Cards & UI */
-        .section { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 15px; }
-        h2 { font-size: 15px; color: #fff; border-left: 4px solid var(--cyan); padding-left: 8px; margin: 0 0 12px 0; }
+        .section { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        h2 { font-size: 15px; color: var(--cyan); border-left: 4px solid var(--cyan); padding-left: 8px; margin: 0 0 12px 0; }
         
-        input, textarea, select { width: 100%; padding: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 4px; font-size: 14px; box-sizing: border-box; margin-bottom: 8px; outline: none; }
-        input:focus { border-color: var(--cyan); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .full-width { grid-column: span 2; }
+        label { font-size: 11px; color: #aaa; font-weight: bold; display: block; margin-bottom: 2px; }
         
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 14px; }
+        input, textarea, select { width: 100%; padding: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 4px; font-size: 14px; box-sizing: border-box; margin-bottom: 8px; }
+        
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; }
         .btn-cyan { background: var(--cyan); color: #000; }
         .btn-red { background: var(--warn); color: #fff; }
-        .btn-gray { background: #444; color: #ccc; }
-        .btn:active { opacity: 0.7; }
+        .btn-green { background: var(--accent); color: #fff; }
 
-        /* List & Tables */
-        .scroll-box { max-height: 350px; overflow-y: auto; border: 1px solid #222; background: #000; border-radius: 4px; }
+        /* 訪客列表專用樣式 */
+        .log-item { background: #fff; border-left: 5px solid var(--accent); padding: 12px; margin-bottom: 10px; border-radius: 5px; color: #333; position: relative; }
+        .log-header { display: flex; justify-content: space-between; font-weight: bold; color: #2c3e50; margin-bottom: 5px; padding-right: 40px; }
+        .del-btn { position: absolute; top: 10px; right: 10px; color: var(--warn); font-size: 11px; cursor: pointer; padding: 2px 5px; border: 1px solid #ffeded; border-radius: 4px; }
+        .checkout-btn { margin-top: 8px; background: #fff; color: var(--accent); border: 1px solid var(--accent); padding: 6px; border-radius: 4px; width: 100%; font-weight: bold; font-size: 12px; }
+
+        .scroll-box { max-height: 400px; overflow-y: auto; border: 1px solid #222; background: #000; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { background: #1a1a1a; color: var(--cyan); padding: 8px; text-align: left; position: sticky; top: 0; }
+        th { background: #1a1a1a; color: var(--cyan); padding: 8px; text-align: left; }
         td { padding: 8px; border-bottom: 1px solid #222; color: #ccc; }
-
-        /* Duty Card ( 交接專用 ) */
-        .duty-card { background: #1a1a1a; border-left: 5px solid var(--cyan); padding: 12px; margin-bottom: 10px; border-radius: 4px; position: relative; }
-        .duty-card.urgent { border-left-color: var(--warn); }
-        .duty-card.confirmed { border-left-color: #10b981; opacity: 0.6; background: #061a14; }
-        .badge { font-size: 9px; padding: 2px 4px; border-radius: 3px; font-weight: bold; vertical-align: middle; margin-left: 5px; }
-        
-        .del-x { position: absolute; top: 10px; right: 10px; color: #444; cursor: pointer; font-size: 16px; }
     </style>
 </head>
 <body>
 
+<div class="user-info">
+    <span onclick="changeName()">姓名：<span id="userNameDisplay">未設定</span> ✎</span>
+    <span onclick="changeID()">工號：<span id="userIDDisplay">未設定</span> ✎</span>
+</div>
+
 <header>
-    <h1>M-SECURITY HQ V6.8</h1>
-    <small>STABLE CORE | ⚡ 極速穩定版</small>
+    <h1>M-SECURITY HQ</h1>
+    <small>INTEGRATED TERMINAL V6.8</small>
 </header>
 
 <nav>
     <div class="tab-btn active" onclick="switchTab('monitor')">監控日誌</div>
-    <div class="tab-btn" onclick="switchTab('visitor')">訪客紀錄</div>
+    <div class="tab-btn" onclick="switchTab('visitor')">訪客系統</div>
     <div class="tab-btn" onclick="switchTab('handover')">勤務交接</div>
     <div class="tab-btn" onclick="switchTab('manage')">部署管理</div>
 </nav>
 
 <div id="monitor" class="content active">
-    <h2>📡 手機端查詢動態</h2>
+    <h2>📡 手機查詢即時動態</h2>
     <div class="scroll-box">
         <table>
-            <thead><tr><th>時間</th><th>人員</th><th>查詢內容</th></tr></thead>
+            <thead><tr><th>時間</th><th>查詢員</th><th>對象</th></tr></thead>
             <tbody id="realtimeLogs"></tbody>
         </table>
     </div>
@@ -78,12 +81,20 @@
 
 <div id="visitor" class="content">
     <div class="section">
-        <h2>入廠登記</h2>
-        <input type="text" id="vName" placeholder="訪客姓名">
-        <input type="text" id="vComp" placeholder="公司行號">
-        <button class="btn btn-cyan" onclick="saveVisitor()">確認入廠</button>
+        <h2>訪客登記入廠</h2>
+        <div class="form-grid">
+            <div class="full-width"><label>訪客姓名</label><input type="text" id="vName"></div>
+            <div><label>來訪人數</label><input type="number" id="vCount" value="1"></div>
+            <div><label>電話</label><input type="tel" id="vPhone"></div>
+            <div class="full-width"><label>公司行號</label><input type="text" id="vComp"></div>
+            <div class="full-width"><label>受訪人員</label><input type="text" id="vTarget"></div>
+            <div class="full-width"><label>事由</label><textarea id="vReason" rows="1"></textarea></div>
+        </div>
+        <button class="btn btn-green" onclick="submitVisitor()">送出登記並同步雲端</button>
     </div>
-    <div id="visitorList"></div>
+    <div id="visitorLogList">
+        <h3 style="text-align:center; font-size: 13px; color: #666;">實時登記清單</h3>
+    </div>
 </div>
 
 <div id="handover" class="content">
@@ -101,8 +112,8 @@
         <input type="text" id="ePlate" placeholder="車牌">
         <input type="text" id="eReason" placeholder="單位/備註">
         <div style="display:flex; gap:8px;">
-            <button class="btn btn-cyan" onclick="deploy('employee_list')">部署員工</button>
-            <button class="btn btn-red" onclick="deploy('blacklist_data')">發布黑名單</button>
+            <button class="btn btn-cyan" onclick="deploy('employee_list')">存為員工</button>
+            <button class="btn btn-red" onclick="deploy('blacklist_data')">發布警戒</button>
         </div>
     </div>
     <div class="scroll-box">
@@ -124,6 +135,23 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // --- 身分記憶邏輯 ---
+    let userName = localStorage.getItem('guardName') || "";
+    let userID = localStorage.getItem('guardID') || "";
+    function updateUserInfo() {
+        document.getElementById('userNameDisplay').innerText = userName || "未設定";
+        document.getElementById('userIDDisplay').innerText = userID || "未設定";
+    }
+    function changeName() {
+        const n = prompt("請輸入您的姓名", userName);
+        if(n) { userName = n; localStorage.setItem('guardName', n); updateUserInfo(); }
+    }
+    function changeID() {
+        const id = prompt("請輸入您的工號", userID);
+        if(id) { userID = id; localStorage.setItem('guardID', id); updateUserInfo(); }
+    }
+    window.onload = updateUserInfo;
+
     // --- 分頁切換 ---
     function switchTab(id) {
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
@@ -132,111 +160,115 @@
         event.currentTarget.classList.add('active');
     }
 
-    // --- 1. 監聽手機查詢日誌 ---
-    db.ref('search_logs').limitToLast(20).on('value', snap => {
+    // --- 1. 監控日誌 ---
+    db.ref('search_logs').limitToLast(15).on('value', snap => {
         const tbody = document.getElementById('realtimeLogs');
         tbody.innerHTML = '';
         snap.forEach(c => {
             const l = c.val();
-            const time = l.time ? l.time.split(' ')[1] : '---';
-            tbody.innerHTML = `<tr><td>${time}</td><td style="color:var(--cyan)">${l.user}</td><td>${l.query}</td></tr>` + tbody.innerHTML;
+            tbody.innerHTML = `<tr><td>${l.time?l.time.split(' ')[1]:'--'}</td><td style="color:var(--cyan)">${l.user}</td><td>${l.query}</td></tr>` + tbody.innerHTML;
         });
     });
 
-    // --- 2. 訪客紀錄邏輯 ---
-    function saveVisitor() {
-        const name = document.getElementById('vName').value.trim();
-        if(!name) return;
-        db.ref('visitor_logs').push({
-            name, company: document.getElementById('vComp').value,
-            timeIn: new Date().toLocaleTimeString(), leaveTime: "",
+    // --- 2. 專業訪客系統邏輯 ---
+    function submitVisitor() {
+        if(!userName) return alert("請先設定上方「姓名」！");
+        const val = document.getElementById('vName').value;
+        if(!val) return alert("請輸入訪客姓名");
+        
+        const now = new Date();
+        const timeIn = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        
+        const logData = {
+            date: now.toISOString().split('T')[0],
+            name: val,
+            count: document.getElementById('vCount').value,
+            phone: document.getElementById('vPhone').value,
+            company: document.getElementById('vComp').value,
+            target: document.getElementById('vTarget').value,
+            timeIn: timeIn,
+            leaveTime: "",
+            recorder: userName,
+            reason: document.getElementById('vReason').value,
             timestamp: Date.now()
-        });
-        document.getElementById('vName').value = '';
-        document.getElementById('vComp').value = '';
-    }
-    db.ref('visitor_logs').limitToLast(15).on('value', snap => {
-        const list = document.getElementById('visitorList');
-        list.innerHTML = '<h2>目前在場訪客</h2>';
-        snap.forEach(c => {
-            const v = c.val();
-            if(v.leaveTime) return;
-            list.innerHTML += `<div class="duty-card">
-                <div style="font-weight:bold; font-size:16px;">${v.name}</div>
-                <div style="font-size:12px; color:#888;">${v.company} | 入廠: ${v.timeIn}</div>
-                <button class="btn btn-gray" style="padding:5px; margin-top:8px; font-size:11px;" onclick="db.ref('visitor_logs/${c.key}').update({leaveTime: new Date().toLocaleTimeString()})">簽退離開</button>
-            </div>`;
-        });
-    });
+        };
 
-    // --- 3. 交接簿邏輯 ( 整合 V3.1 ) ---
-    function addHandover() {
-        const note = prompt("請輸入交接事項：");
-        if(!note) return;
-        const urgent = confirm("標註為「重要」事項？");
-        db.ref('reactLogs').push({
-            note, urgent, confirmedBy: null,
-            time: new Date().toLocaleString('zh-TW', {hour12:false}),
-            timestamp: firebase.database.ServerValue.TIMESTAMP
+        db.ref('visitor_logs').push(logData).then(() => {
+            alert("登記成功！");
+            document.querySelectorAll('#visitor input, #visitor textarea').forEach(i => { if(i.id !== 'vCount') i.value = ""; });
         });
     }
-    db.ref('reactLogs').limitToLast(20).on('value', snap => {
-        const list = document.getElementById('handoverList');
-        list.innerHTML = '';
-        let items = [];
-        snap.forEach(c => { items.unshift({key: c.key, ...c.val()}); });
-        items.forEach(item => {
-            const isConf = item.confirmedBy != null;
-            list.innerHTML += `
-                <div class="duty-card ${item.urgent?'urgent':''} ${isConf?'confirmed':''}">
-                    <span class="del-x" onclick="if(confirm('刪除？')) db.ref('reactLogs/${item.key}').remove()">✕</span>
-                    <div style="font-size:10px; color:#666; margin-bottom:5px;">${item.time} 
-                        ${item.urgent?'<span class="badge" style="background:var(--warn); color:#fff;">重要</span>':''}
-                        ${isConf?'<span class="badge" style="background:#10b981; color:#fff;">已閱: '+item.confirmedBy+'</span>':''}
-                    </div>
-                    <div style="font-size:16px; font-weight:bold;">${item.note}</div>
-                    ${!isConf ? `<button class="btn btn-cyan" style="padding:5px; margin-top:10px; font-size:12px;" onclick="confirmDuty('${item.key}')">🖱️ 點擊簽署確認</button>` : ''}
-                </div>`;
+
+    db.ref('visitor_logs').limitToLast(10).on('value', (snapshot) => {
+        const listDiv = document.getElementById('visitorLogList');
+        listDiv.innerHTML = '<h3 style="text-align:center; font-size: 13px; color: #666;">實時登記清單</h3>';
+        const data = snapshot.val();
+        if (data) {
+            Object.keys(data).reverse().forEach(key => {
+                const item = data[key];
+                const isOut = item.leaveTime !== "";
+                listDiv.innerHTML += `
+                    <div class="log-item" style="${isOut ? 'opacity: 0.6; border-left-color: #ccc;' : ''}">
+                        <span class="del-btn" onclick="deleteVisitor('${key}')">刪除</span>
+                        <div class="log-header">
+                            <span>${item.name} (${item.count}人)</span>
+                            <span style="color: ${isOut ? '#999' : '#27ae60'}">${isOut ? '已出廠' : '在場中'}</span>
+                        </div>
+                        <div style="font-size:12px; color:#555; line-height: 1.4;">
+                            公司：${item.company}<br>
+                            拜訪：${item.target} | 入廠：${item.timeIn}<br>
+                            ${isOut ? '<b>出廠：' + item.leaveTime + '</b>' : ''}
+                        </div>
+                        ${!isOut ? `<button class="checkout-btn" onclick="checkoutVisitor('${key}')">簽退離開</button>` : ''}
+                    </div>`;
+            });
+        }
+    });
+    function checkoutVisitor(key) {
+        const leaveTime = prompt("確認出廠時間：", new Date().getHours().toString().padStart(2, '0') + ":" + new Date().getMinutes().toString().padStart(2, '0'));
+        if(leaveTime) db.ref('visitor_logs/' + key).update({ leaveTime: leaveTime });
+    }
+    function deleteVisitor(key) { if(confirm("確定刪除？")) db.ref('visitor_logs/' + key).remove(); }
+
+    // --- 3. 勤務交接 ---
+    function addHandover() {
+        const note = prompt("交接事項：");
+        if(note) db.ref('reactLogs').push({ note, time: new Date().toLocaleString('zh-TW',{hour12:false}), timestamp: Date.now(), confirmedBy: null });
+    }
+    db.ref('reactLogs').limitToLast(10).on('value', snap => {
+        const box = document.getElementById('handoverList'); box.innerHTML = '';
+        snap.forEach(c => {
+            const h = c.val();
+            box.innerHTML = `
+                <div class="section" style="border-left:5px solid ${h.confirmedBy?'#10b981':var(--cyan)}; opacity:${h.confirmedBy?0.6:1}">
+                    <div style="font-size:10px; color:#666;">${h.time}</div>
+                    <div style="font-weight:bold; font-size:16px; margin:5px 0;">${h.note}</div>
+                    ${!h.confirmedBy?`<button class="btn btn-cyan" style="padding:5px; font-size:12px;" onclick="confH('${c.key}')">簽署確認</button>`:`<small style="color:#10b981">✓ 已閱: ${h.confirmedBy}</small>`}
+                    <span style="float:right; cursor:pointer; color:#444;" onclick="db.ref('reactLogs/${c.key}').remove()">✕</span>
+                </div>` + box.innerHTML;
         });
     });
-    function confirmDuty(key) {
-        const name = prompt("輸入確認者姓名", "小黑哥");
-        if(name) db.ref('reactLogs/'+key).update({ confirmedBy: name });
-    }
+    function confH(key) { const n = prompt("姓名", "小黑哥"); if(n) db.ref('reactLogs/'+key).update({confirmedBy:n}); }
 
     // --- 4. 部署管理 ---
     function deploy(path) {
-        const name = document.getElementById('eName').value.trim();
-        if(!name) return alert("請輸入姓名");
-        const id = document.getElementById('eID').value || Date.now();
-        db.ref(path + '/' + id).set({
-            name, id, plate: document.getElementById('ePlate').value.toUpperCase(),
-            reason: document.getElementById('eReason').value,
-            timestamp: new Date().toLocaleString()
+        const name = document.getElementById('eName').value;
+        if(!name) return;
+        db.ref(path + '/' + (document.getElementById('eID').value || Date.now())).set({
+            name, id: document.getElementById('eID').value, plate: document.getElementById('ePlate').value.toUpperCase(), reason: document.getElementById('eReason').value
         }).then(() => { alert("部署成功"); });
     }
-    function updateMaster() {
-        const tbody = document.getElementById('masterTableBody');
-        tbody.innerHTML = '';
-        const fetch = (path, label, color) => {
-            db.ref(path).once('value', s => {
-                s.forEach(c => {
-                    const i = c.val();
-                    tbody.innerHTML += `<tr>
-                        <td><span style="color:${color}; font-weight:bold;">${label}</span></td>
-                        <td>${i.name}</td>
-                        <td>${i.reason || i.id || i.plate || '---'}</td>
-                        <td><button style="color:var(--warn); background:none; border:none; cursor:pointer;" onclick="if(confirm('刪除？')) db.ref('${path}/${c.key}').remove()">[刪除]</button></td>
-                    </tr>`;
-                });
-            });
+    function updateM() {
+        const tb = document.getElementById('masterTableBody'); tb.innerHTML = '';
+        const f = (p, l, c) => {
+            db.ref(p).once('value', s => { s.forEach(child => {
+                const i = child.val();
+                tb.innerHTML += `<tr><td><span style="color:${c}">${l}</span></td><td>${i.name}</td><td>${i.reason||i.id||'--'}</td><td><button style="color:red;background:none;border:none;" onclick="db.ref('${p}/${child.key}').remove()">[刪]</button></td></tr>`;
+            }); });
         };
-        fetch('employee_list', '員工', 'var(--cyan)');
-        fetch('blacklist_data', '警告', 'var(--warn)');
+        f('employee_list','員工','var(--cyan)'); f('blacklist_data','警戒','var(--warn)');
     }
-    db.ref('employee_list').on('value', updateMaster);
-    db.ref('blacklist_data').on('value', updateMaster);
-
+    db.ref('employee_list').on('value', updateM); db.ref('blacklist_data').on('value', updateM);
 </script>
 </body>
 </html>
