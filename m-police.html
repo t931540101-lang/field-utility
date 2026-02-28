@@ -91,6 +91,7 @@
     </div>
 
 <script>
+    // Firebase 配置 (與 HQ V6.0 保持一致)
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
@@ -125,7 +126,7 @@
                     if(s2.exists()){
                         const d = s2.val();
                         resBox.className = "res-box res-ok";
-                        // --- 升級：顯示姓名與單位 ---
+                        // 升級顯示：姓名與單位
                         resInfo.innerHTML = `
                             <div style="font-size:26px; margin-bottom:10px;">✅ 內部員工</div>
                             <div class="info-label">姓名</div>
