@@ -2,84 +2,53 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-SECURITY | HQ 監控中心 V7.1</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M-SECURITY | HQ 數據部署中心 V7.1</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --cyan: #00f2ff; --warn: #ff4d4f; --bg: #050505; --card: #111; --border: #333; --accent: #27ae60; }
+        :root { --cyan: #00f2ff; --warn: #ff4d4f; --bg: #050505; --card: #111; --border: #333; }
         body { background: var(--bg); color: white; font-family: "Microsoft JhengHei", sans-serif; margin: 0; padding: 0; }
         header { background: #000; padding: 12px; text-align: center; border-bottom: 2px solid var(--cyan); }
-        header h1 { margin: 0; font-size: 18px; font-style: italic; color: var(--cyan); letter-spacing: 2px; }
-        nav { display: flex; background: #111; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-        .tab-btn { flex: 1; padding: 12px 5px; text-align: center; color: #666; font-size: 11px; font-weight: bold; cursor: pointer; }
-        .tab-btn.active { color: var(--cyan); border-bottom: 2px solid var(--cyan); background: #1a1a1a; }
-        .content { padding: 12px; display: none; }
+        nav { display: flex; background: #111; border-bottom: 1px solid var(--border); }
+        .tab-btn { flex: 1; padding: 12px; text-align: center; color: #666; font-size: 11px; cursor: pointer; }
+        .tab-btn.active { color: var(--cyan); background: #1a1a1a; border-bottom: 2px solid var(--cyan); }
+        .content { padding: 15px; display: none; }
         .content.active { display: block; }
-        .section-title { font-size: 13px; color: var(--cyan); border-left: 4px solid var(--cyan); padding-left: 8px; margin: 0 0 10px 0; font-weight: bold; }
-        
-        /* 監控卡片樣式 */
-        .log-item { background: #111; border: 1px solid #333; border-left: 5px solid var(--accent); padding: 12px; margin-bottom: 8px; border-radius: 4px; }
-        .log-item.is-out { opacity: 0.5; border-left-color: #666; }
-        .log-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; margin-bottom: 4px; }
-        .log-body { font-size: 12px; color: #aaa; line-height: 1.4; }
-        .scroll-box { max-height: calc(100vh - 130px); overflow-y: auto; }
-
-        /* 後台部署專用輸入區 */
-        .input-group { background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px dashed var(--cyan); }
-        input { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 4px; margin-bottom: 10px; box-sizing: border-box; font-size: 16px; }
-        input:focus { border-color: var(--cyan); outline: none; }
-        .btn-row { display: flex; gap: 8px; }
-        .btn { flex: 1; padding: 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        /* 部署區強化設計 */
+        .deploy-box { background: #111; border: 1px dashed var(--cyan); padding: 20px; border-radius: 8px; }
+        input { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; margin-bottom: 10px; border-radius: 4px; font-size: 16px; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; }
         .btn-cyan { background: var(--cyan); color: #000; }
         .btn-red { background: var(--warn); color: #fff; }
-        .btn-gold { background: #f1c40f; color: #000; }
     </style>
 </head>
 <body>
 
-<header><h1>M-SECURITY HQ V7.1</h1></header>
+<header><h1 style="margin:0; font-style:italic; color:var(--cyan);">M-SECURITY HQ</h1></header>
 
 <nav>
-    <div class="tab-btn active" onclick="switchTab('visitor')">訪客監控</div>
-    <div class="tab-btn" onclick="switchTab('handover')">交接監控</div>
-    <div class="tab-btn" onclick="switchTab('k9')">K9戰犬</div>
-    <div class="tab-btn" onclick="switchTab('manage')">部署中心</div>
+    <div class="tab-btn active" onclick="switchTab('manage')">部署中心 (重要指標)</div>
+    <div class="tab-btn" onclick="switchTab('monitor')">監控日誌</div>
 </nav>
 
-<div id="visitor" class="content active">
-    <p class="section-title">即時訪客動態 (前線同步)</p>
-    <div class="scroll-box" id="visitorFeed"></div>
-</div>
-
-<div id="handover" class="content">
-    <p class="section-title">勤務事項同步 (前線公告)</p>
-    <div class="scroll-box" id="handoverFeed"></div>
-</div>
-
-<div id="k9" class="content">
-    <p class="section-title">K9 英雄臨床紀錄 (前線同步)</p>
-    <div class="scroll-box" id="k9Feed"></div>
-</div>
-
-<div id="manage" class="content">
-    <p class="section-title">戰略資料部署 (新增資料給前端)</p>
-    <div class="input-group">
-        <label style="font-size: 11px; color: var(--cyan);">[ 基本資料 ]</label>
-        <input type="text" id="eID" placeholder="工號 / 車位號">
+<div id="manage" class="content active">
+    <h2 style="font-size:16px; color:var(--cyan);">🛠️ 戰略資料部署 (更新給前端)</h2>
+    <div class="deploy-box">
+        <input type="text" id="eID" placeholder="工號 (例: N00571)">
         <input type="text" id="eName" placeholder="對象姓名">
-        <input type="text" id="ePlate" placeholder="車牌號碼 (例: ABC-1234)">
-        <input type="text" id="eReason" placeholder="單位名稱 / 備註資訊">
+        <input type="text" id="ePlate" placeholder="車牌號碼 (例: BGD-7527)">
+        <input type="text" id="eReason" placeholder="單位 / 備註資訊">
         
-        <div class="btn-row">
-            <button class="btn btn-cyan" onclick="deploy('employee_list')">更新員工/車輛</button>
-            <button class="btn btn-gold" onclick="deploy('vip_list')">部署 VIP</button>
-        </div>
-        <div class="btn-row" style="margin-top:8px;">
-            <button class="btn btn-red" onclick="deploy('blacklist_data')">發布黑名單/警戒</button>
-        </div>
+        <button class="btn btn-cyan" onclick="deploy('employee_list')">更新員工與車輛資料</button>
+        <button class="btn btn-red" onclick="deploy('blacklist_data')" style="margin-top:10px;">發布黑名單警戒</button>
     </div>
-    <p style="font-size:11px; color:#666; margin-top:10px; text-align:center;">※ 這裡輸入的資料，前端手機搜尋時會優先跳出顯示。</p>
+    <p style="color:#444; font-size:11px; text-align:center; margin-top:10px;">資料更新後，前線手機查詢時將即時同步顯示內容。</p>
+</div>
+
+<div id="monitor" class="content">
+    <h2 style="font-size:16px; color:var(--cyan);">📡 實時監控日誌 (純看紀錄)</h2>
+    <div id="feed" style="max-height:400px; overflow-y:auto; font-size:12px;"></div>
 </div>
 
 <script>
@@ -89,7 +58,7 @@
         projectId: "factor-security-d1965",
         appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
     };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     function switchTab(id) {
@@ -99,77 +68,33 @@
         event.currentTarget.classList.add('active');
     }
 
-    // 訪客監控
-    db.ref('visitor_logs').limitToLast(20).on('value', snap => {
-        const feed = document.getElementById('visitorFeed'); feed.innerHTML = '';
-        const data = snap.val();
-        if(data) {
-            Object.keys(data).reverse().forEach(key => {
-                const v = data[key];
-                const isOut = v.leaveTime !== "";
-                feed.innerHTML += `
-                    <div class="log-item ${isOut?'is-out':''}">
-                        <div class="log-header"><span>${v.name} (${v.count}人)</span><span style="color:${isOut?'#666':'#27ae60'}">${isOut?'已離廠':'在場'}</span></div>
-                        <div class="log-body">公司：${v.company}<br>入廠：${v.timeIn}${isOut?' | 出廠：'+v.leaveTime:''}</div>
-                    </div>`;
-            });
-        }
-    });
-
-    // 交接監控
-    db.ref('reactLogs').limitToLast(15).on('value', snap => {
-        const feed = document.getElementById('handoverFeed'); feed.innerHTML = '';
-        const data = snap.val();
-        if(data) {
-            Object.keys(data).reverse().forEach(key => {
-                const h = data[key];
-                const isC = h.confirmedBy != null;
-                feed.innerHTML += `
-                    <div class="log-item" style="border-left-color:${isC?'#27ae60':'var(--cyan)'}; opacity:${isC?0.6:1}">
-                        <div class="log-header" style="font-size:10px; color:#666;"><span>${h.time}</span>${isC?`<span style="color:#27ae60">✓ 已閱: ${h.confirmedBy}</span>`:''}</div>
-                        <div style="font-size:14px; font-weight:bold; margin-top:4px;">${h.note}</div>
-                    </div>`;
-            });
-        }
-    });
-
-    // K9 監控
-    db.ref('k9Logs').on('value', snap => {
-        const feed = document.getElementById('k9Feed'); feed.innerHTML = '';
-        const data = snap.val();
-        if(data) {
-            Object.keys(data).forEach(dogId => {
-                const logs = data[dogId];
-                Object.keys(logs).reverse().slice(0, 1).forEach(lKey => {
-                    const log = logs[lKey];
-                    feed.innerHTML += `
-                        <div class="log-item" style="border-left-color: #3273b5;">
-                            <div class="log-header"><span>🐕 ${dogId}</span><span style="font-size:10px; color:#666;">${log.time}</span></div>
-                            <div class="log-body" style="font-size:13px;">${log.note}</div>
-                        </div>`;
-                });
-            });
-        }
-    });
-
-    // 部署邏輯 (後台強大功能)
+    // 部署邏輯
     function deploy(path) {
         const name = document.getElementById('eName').value.trim();
-        const plate = document.getElementById('ePlate').value.trim().toUpperCase();
-        if(!name && !plate) return alert("請至少輸入姓名或車牌！");
+        const id = document.getElementById('eID').value.trim() || Date.now();
+        if(!name) return alert("請輸入姓名以利前端辨識！");
 
-        const id = document.getElementById('eID').value || Date.now();
         db.ref(path + '/' + id).set({
-            name,
-            plate,
-            id: document.getElementById('eID').value,
+            name: name,
+            id: id,
+            plate: document.getElementById('ePlate').value.toUpperCase(),
             reason: document.getElementById('eReason').value,
-            timestamp: Date.now()
+            timestamp: new Date().toLocaleString()
         }).then(() => {
-            alert("✅ 資料已同步至前端查核庫");
-            document.querySelectorAll('.input-group input').forEach(i => i.value = "");
+            alert("✅ 戰略資料已同步至前端！");
+            document.querySelectorAll('input').forEach(i => i.value = "");
         });
     }
+
+    // 監聽日誌 (純監控)
+    db.ref('search_logs').limitToLast(10).on('value', snap => {
+        const feed = document.getElementById('feed');
+        feed.innerHTML = '';
+        snap.forEach(c => {
+            const l = c.val();
+            feed.innerHTML = `<div style="padding:8px; border-bottom:1px solid #222;">[${l.time}] ${l.user} 查詢了：${l.query}</div>` + feed.innerHTML;
+        });
+    });
 </script>
 </body>
 </html>
