@@ -3,78 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-SECURITY | 小神捕終端</title>
+    <title>M-SECURITY | 警政署終端 V7.6</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --police-blue: #4a7ebb; --bg-dark: #333; }
-        body { margin: 0; background: #666; font-family: sans-serif; color: #fff; }
+        :root {
+            --police-blue: #005a9c;
+            --bg-gray: #e6eef5;
+            --input-border: #99b3cc;
+        }
 
-        /* --- 登入頁面保持警政署風格 --- */
+        body { margin: 0; background: var(--bg-gray); font-family: "Microsoft JhengHei", sans-serif; overflow-x: hidden; }
+
+        /* --- 登入頁面 --- */
         #login-page { height: 100vh; background: #fff; display: flex; flex-direction: column; align-items: center; }
-        .p-header { width: 100%; background: linear-gradient(#dbe9f4, #8eb9d7); padding: 15px 0; text-align: center; border-bottom: 2px solid #005a9c; }
-        .p-title { color: #003366; font-weight: bold; font-size: 24px; }
-        .form { width: 85%; margin-top: 20px; color: #000; }
-        .input-row { border: 1px solid #99b3cc; display: flex; margin-bottom: 10px; border-radius: 4px; overflow: hidden; }
-        .input-row span { background: #f0f4f7; width: 60px; padding: 10px; font-weight: bold; text-align: center; border-right: 1px solid #99b3cc; }
-        .input-row input { border: none; flex: 1; padding: 10px; font-size: 16px; outline: none; }
-        .shift-box { display: flex; justify-content: center; gap: 20px; margin: 15px 0; padding: 10px; background: #f0f4f7; border-radius: 5px; }
-        .btn-l { background: linear-gradient(#1e90ff, #005a9c); color: #fff; border: none; padding: 12px; width: 100%; border-radius: 5px; font-weight: bold; font-size: 18px; margin-top: 10px; }
-
-        /* --- 主查詢頁面：神還原小神捕 --- */
-        #main-terminal { display: none; }
-        .top-alert { background: #731211; color: #ff9a99; padding: 4px; font-size: 12px; text-align: center; font-weight: bold; }
-        .top-title { background: #222; padding: 8px; text-align: center; font-size: 14px; border-bottom: 1px solid #444; }
-        .tab-bar { display: grid; grid-template-columns: repeat(4, 1fr); background: #444; }
-        .tab { padding: 10px; text-align: center; font-size: 14px; border: 1px solid #333; color: #ccc; }
-        .tab.active { background: #6b93be; color: #fff; border: none; }
         
-        .search-area { background: #b8c2cc; padding: 15px; color: #333; }
-        .mode-row { display: flex; align-items: center; font-size: 14px; margin-bottom: 10px; }
-        .status-sq { width: 16px; height: 16px; background: #6b93be; border: 1px solid #333; margin: 0 5px 0 10px; }
-        .input-main { width: 100%; height: 45px; font-size: 20px; padding: 5px; border: 1px solid #999; margin-bottom: 15px; border-radius: 2px; }
-        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .btn-s { background: linear-gradient(#7bb9e8, #4a7ebb); color: #fff; border: 1px solid #335a8a; padding: 12px; font-size: 18px; font-weight: bold; border-radius: 3px; }
-        .btn-full { grid-column: span 2; background: #556677; margin-top: 8px; }
+        .header { width: 100%; background: linear-gradient(to bottom, #dbe9f4, #8eb9d7); padding: 20px 0; text-align: center; border-bottom: 3px solid var(--police-blue); position: relative; }
+        /* 這裡鑲嵌正版警徽 */
+        .police-badge-top { width: 60px; position: absolute; left: 15px; top: 15px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
+        .police-title { color: #003366; font-weight: 900; font-size: 26px; letter-spacing: 2px; text-shadow: 1px 1px 1px #fff; }
 
-        .res-display { background: #e0e6eb; margin-top: 10px; padding: 15px; min-height: 150px; border: 1px solid #44a144; border-radius: 5px; display: none; color: #000; text-align: center; }
-        .res-ok-tag { background: #fff; border: 1px solid #44a144; color: #1b5e20; display: inline-block; padding: 2px 10px; border-radius: 3px; font-weight: bold; margin-bottom: 10px; }
+        .form-area { width: 90%; max-width: 400px; margin-top: 20px; }
+        .row-group { background: #fff; border: 1px solid var(--input-border); display: flex; margin-bottom: 12px; border-radius: 4px; overflow: hidden; height: 45px; }
+        .label { background: #f0f4f7; width: 70px; display: flex; align-items: center; justify-content: center; color: #333; font-weight: bold; border-right: 1px solid var(--input-border); font-size: 15px; }
+        .row-group input, .row-group select { border: none; flex: 1; padding: 0 12px; font-size: 18px; outline: none; background: transparent; -webkit-appearance: none; }
+
+        /* 日夜班選擇器 */
+        .shift-group { display: flex; justify-content: center; gap: 30px; margin: 15px 0; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px dashed var(--input-border); }
+        .shift-label { font-size: 18px; font-weight: bold; color: #444; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .shift-label input { width: 20px; height: 20px; cursor: pointer; }
+
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+        .btn-blue { background: linear-gradient(to bottom, #1e90ff, #005a9c); color: #fff; border: 1px solid #004080; padding: 14px 0; font-size: 18px; font-weight: bold; border-radius: 5px; box-shadow: 0 3px 6px rgba(0,0,0,0.2); transition: 0.2s; }
+        .btn-blue:active { transform: translateY(2px); box-shadow: none; }
+        .btn-gray { background: #eeeeee; color: #333; border: 1px solid #ccc; }
+
+        /* --- 主查詢頁面 --- */
+        #main-terminal { display: none; padding: 0; }
+        .nav-bar { background: var(--police-blue); color: #fff; padding: 12px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+        .alert-bar { background: rgba(0,0,0,0.8); color: #ff3333; padding: 5px; text-align: center; font-size: 11px; font-weight: bold; border-bottom: 1px solid #ff3333; }
+
+        .content { padding: 15px; }
+        .search-box { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative; }
+        /* 查詢盒也加個半透明警徽背景 */
+        .watermark-badge { position: absolute; right: 10px; bottom: 10px; width: 80px; opacity: 0.1; pointer-events: none; }
+        .search-box input { width: 100%; padding: 12px; font-size: 20px; border: 2px solid var(--police-blue); border-radius: 4px; box-sizing: border-box; text-align: center; margin-bottom: 10px; }
+        
+        .res-box { margin-top: 15px; padding: 15px; border-radius: 8px; display: none; text-align: center; border: 2px solid transparent; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .res-ok { border-color: #4caf50; }
+        .res-warn { border-color: #f44336; animation: blink 0.5s infinite alternate; }
+        @keyframes blink { from { opacity: 1; } to { opacity: 0.8; } }
+
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); background: #f8f9fa; border-top: 1px solid #ddd; }
+        .nav-item { padding: 12px 0; text-align: center; font-size: 12px; color: #666; font-weight: bold; }
+        .nav-item.active { color: var(--police-blue); background: #eef; border-top: 3px solid var(--police-blue); }
     </style>
 </head>
 <body>
 
 <div id="login-page">
-    <div class="p-header"><div class="p-title">M-Police 整合查詢</div></div>
-    <div class="form">
-        <div class="input-row"><span>帳號</span><input type="text" id="pUser"></div>
-        <div class="input-row"><span>密碼</span><input type="password" id="pPass"></div>
-        <div class="shift-box">
-            <label><input type="radio" name="shift" value="日班" checked> ☀️日班</label>
-            <label><input type="radio" name="shift" value="夜班"> 🌙夜班</label>
+    <div class="header">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/National_Police_Agency_Logo_of_the_Republic_of_China.svg/200px-National_Police_Agency_Logo_of_the_Republic_of_China.svg.png" class="police-badge-top">
+        <div class="police-title">內政部警政署</div>
+        <div style="color:#003366; font-size:14px; margin-top:5px;">M-Police 整合查詢終端</div>
+    </div>
+
+    <div class="form-area">
+        <div class="row-group"><div class="label">帳號</div><input type="text" id="pUser" placeholder="員警證號"></div>
+        <div class="row-group"><div class="label">密碼</div><input type="password" id="pPass" placeholder="密碼"></div>
+        
+        <div class="shift-group">
+            <label class="shift-label"><input type="radio" name="shift" value="日班" checked> ☀️ 日班</label>
+            <label class="shift-label"><input type="radio" name="shift" value="夜班"> 🌙 夜班</label>
         </div>
-        <button class="btn-l" onclick="doLogin()">登 入</button>
+
+        <div class="btn-grid">
+            <button class="btn-blue" onclick="doLogin()">登 入</button>
+            <button class="btn-blue btn-gray" onclick="location.reload()">清 除</button>
+            <button class="btn-blue">資料同步</button>
+            <button class="btn-blue">指紋辨識</button>
+        </div>
     </div>
 </div>
 
 <div id="main-terminal">
-    <div class="top-alert">[通報] 哨口重生計畫完成，目前已恢復雲端同步狀態</div>
-    <div class="top-title">整合查詢</div>
-    <div class="tab-bar">
-        <div class="tab active">一般</div><div class="tab">進階</div><div class="tab">頻道</div><div class="tab">其他</div>
+    <div class="nav-bar">
+        <span onclick="location.reload()">⬅ 返回</span>
+        <span id="title-shift">M-Police 指揮端</span>
+        <span onclick="location.reload()" style="font-size: 12px;">登出</span>
     </div>
-    
-    <div class="search-area">
-        <div class="mode-row">查詢模式：<div class="status-sq"></div> 線上</div>
-        <input type="text" id="qInput" class="input-main" placeholder="車號/工號" oninput="this.value=this.value.toUpperCase()">
-        <div class="btn-row">
-            <button class="btn-s" onclick="qSearch()">查 詢</button>
-            <button class="btn-s">條碼掃描</button>
-            <button class="btn-s btn-full" onclick="location.reload()">清 除</button>
+    <div class="alert-bar">[通報] 本系統僅供公務查詢使用，嚴禁非公務行為查詢。</div>
+
+    <div class="content">
+        <div class="search-box">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/National_Police_Agency_Logo_of_the_Republic_of_China.svg/200px-National_Police_Agency_Logo_of_the_Republic_of_China.svg.png" class="watermark-badge">
+            
+            <input type="text" id="qInput" placeholder="工號或車牌" oninput="this.value = this.value.toUpperCase()">
+            <button class="btn-blue" style="width:100%;" onclick="qSearch()">開 始 查 詢</button>
         </div>
 
-        <div id="res-box" class="res-display">
+        <div id="res-box" class="res-box">
             <div id="res-info"></div>
         </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active">個人</div><div class="nav-item">車輛</div><div class="nav-item">記事</div><div class="nav-item">其他</div>
     </div>
 </div>
 
@@ -87,11 +121,15 @@
         const u = document.getElementById('pUser').value;
         const p = document.getElementById('pPass').value;
         const shift = document.querySelector('input[name="shift"]:checked').value;
+
         if(u === "0905" && p === "0905") {
             document.getElementById('login-page').style.display = 'none';
             document.getElementById('main-terminal').style.display = 'block';
-            document.querySelector('.top-title').innerText = `整合查詢 [${shift}執行中]`;
-        } else { alert("帳密錯誤"); }
+            document.getElementById('title-shift').innerText = `警政終端 [${shift}]`;
+            alert(`報告指揮官，${shift}部署完畢，系統已就位！`);
+        } else {
+            alert("登入失敗：員警證號或密碼錯誤");
+        }
     }
 
     async function qSearch() {
@@ -99,29 +137,34 @@
         const resBox = document.getElementById('res-box');
         const resInfo = document.getElementById('res-info');
         if(!val) return;
+
         resBox.style.display = 'none';
         const [s1, s2] = await Promise.all([
             db.ref('black_list/' + val).once('value'),
             db.ref('employee_list/' + val).once('value')
         ]);
         resBox.style.display = 'block';
-        if(s1.exists()){
-            resBox.style.borderColor = "red";
-            resInfo.innerHTML = `<div class="res-ok-tag" style="color:red; border-color:red;">⚠️ 警戒對象</div>
-                                 <div style="font-size:32px; font-weight:bold; color:red;">${val}</div>`;
-        } else if(s2.exists()){
+
+        if(s1.exists()) {
+            resBox.className = "res-box res-warn";
+            resInfo.innerHTML = `<div style="color:#b71c1c; font-weight:bold; font-size:16px;">⚠️ 警戒對象 (黑名單)</div>
+                                 <div style="font-size:32px; color:#ff0000; font-weight:bold; margin:10px 0;">${val}</div>
+                                 <div style="font-size:18px; color:#333;">列管狀態：<span style="color:red;">禁止進入</span></div>`;
+        } else if(s2.exists()) {
             const d = s2.val();
-            resBox.style.borderColor = "#44a144";
+            resBox.className = "res-box res-ok";
             resInfo.innerHTML = `
-                <div class="res-ok-tag">✅ 內部員工</div>
-                <div style="font-size:14px; color:#666;">姓名</div>
-                <div style="font-size:28px; font-weight:bold;">${d.name}</div>
-                <div style="font-size:14px; color:#666; margin-top:10px;">屬性 / 單位</div>
-                <div style="font-size:18px; color:#1b5e20; font-weight:bold;">${d.reason || '未註記'}</div>
+                <div style="color:#1b5e20; font-weight:bold; font-size:16px;">✅ 驗證通過 (內部員工)</div>
+                <div style="font-size:14px; color:#666; margin-top:10px;">員警/員工姓名</div>
+                <div style="font-size:32px; color:#000; font-weight:bold;">${d.name}</div>
+                <div style="font-size:14px; color:#666; margin-top:10px;">所屬屬性 / 單位</div>
+                <div style="font-size:20px; color:#005a9c; font-weight:bold;">${d.reason || '未註記'}</div>
+                <div style="font-size:12px; color:#999; margin-top:5px;">工號：${d.id}</div>
             `;
         } else {
-            resBox.style.borderColor = "#999";
-            resInfo.innerHTML = "🔍 資料庫查無資料";
+            resBox.className = "res-box";
+            resBox.style.background = "#f5f5f5";
+            resInfo.innerHTML = `<div style="color:#666; font-size:16px;">🔍 資料庫查無資料</div>`;
         }
     }
 </script>
