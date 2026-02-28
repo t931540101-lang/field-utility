@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M-SECURITY | HQ 旗艦終端 V6.7</title>
+    <title>M-SECURITY | HQ 旗艦終端 V6.6</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -14,15 +14,10 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         :root { --main-cyan: #00f2ff; --warn-red: #ff4d4f; --bg-dark: #050505; }
         body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--bg-dark); color: white; margin: 0; }
-        
-        /* K9 專用樣式 */
-        .medical-card { background: #111; border: 1px solid #333; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,242,255,0.05); }
-        .stamp-red { border: 2px solid #ef4444; color: #ef4444; transform: rotate(-5deg); font-weight: 900; padding: 2px 8px; border-radius: 4px; display: inline-block; font-size: 10px; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        
-        /* 基礎戰術樣式 */
         .duty-card { background: #1a1a1a; border-left: 6px solid var(--main-cyan); }
         .confirmed-card { background: #064e3b; border-left-color: #10b981; opacity: 0.8; }
+        /* 隱藏捲軸但保持功能 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
@@ -31,6 +26,7 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
+        // Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
             authDomain: "factor-security-d1965.firebaseapp.com",
@@ -46,42 +42,33 @@
 
         function App() {
             const [activeTab, setActiveTab] = useState('monitor');
-            const [logs, setLogs] = useState([]); // 交接紀錄
-            const [visitors, setVisitors] = useState([]); // 訪客紀錄
-            const [masterData, setMasterData] = useState([]); // 員工/黑名單
-            const [k9Logs, setK9Logs] = useState({}); // K9 病歷紀錄
-            
-            // K9 名冊
-            const [k9List] = useState([
-                { id: '布丁', name: '張布丁', weight: '43.5' },
-                { id: '小白', name: '蔡小白', weight: '23.5' },
-                { id: '小花', name: '蔡小花', weight: '23.3' },
-                { id: '來順', name: '來順', weight: '25.2' },
-                { id: '瓜瓜', name: '哈蜜瓜', weight: '24.5' },
-                { id: '貴貴', name: '蔡頭貴', weight: '25.1' },
-                { id: '蔡哺', name: '蔡哺', weight: '23.3' },
-                { id: '有錢', name: '有錢', weight: '25.6' }
-            ]);
+            const [logs, setLogs] = useState([]);
+            const [visitors, setVisitors] = useState([]);
+            const [masterData, setMasterData] = useState([]);
 
+            // 監聽所有數據源
             useEffect(() => {
-                // 監聽交接紀錄
-                db.ref('reactLogs').on('value', snap => {
+                // 1. 監聽交接紀錄 (reactLogs)
+                const logsRef = db.ref('reactLogs');
+                logsRef.on('value', snap => {
                     const data = snap.val();
-                    if (data) setLogs(Object.keys(data).map(k => ({ id: k, ...data[k] })).sort((a,b) => b.timestamp - a.timestamp));
+                    if (data) {
+                        const list = Object.keys(data).map(k => ({ id: k, ...data[k] }))
+                                     .sort((a, b) => b.timestamp - a.timestamp);
+                        setLogs(list);
+                    }
                 });
 
-                // 監聽 K9 紀錄
-                db.ref('k9Logs').on('value', snap => {
-                    setK9Logs(snap.val() || {});
-                });
-
-                // 監聽訪客紀錄
-                db.ref('visitor_logs').on('value', snap => {
+                // 2. 監聽訪客紀錄 (visitor_logs)
+                const visitorRef = db.ref('visitor_logs');
+                visitorRef.on('value', snap => {
                     const data = snap.val();
-                    if (data) setVisitors(Object.keys(data).map(k => ({ id: k, ...data[k] })).reverse());
+                    if (data) {
+                        setVisitors(Object.keys(data).map(k => ({ id: k, ...data[k] })).reverse());
+                    }
                 });
 
-                // 監聽名單
+                // 3. 監聽主名單 (員工+黑名單+VIP)
                 const refreshMaster = async () => {
                     const [emp, black, vip] = await Promise.all([
                         db.ref('employee_list').once('value'),
@@ -95,105 +82,157 @@
                     setMasterData(combined);
                 };
                 db.ref('employee_list').on('value', refreshMaster);
-                
-                return () => db.ref('reactLogs').off();
+                db.ref('blacklist_data').on('value', refreshMaster);
+                db.ref('vip_vehicles').on('value', refreshMaster);
+
+                return () => {
+                    logsRef.off();
+                    visitorRef.off();
+                    db.ref('employee_list').off();
+                };
             }, []);
 
-            // K9 功能：寫入病歷
-            const addK9Log = (dogId, dogName) => {
-                const note = prompt(`為 ${dogName} 輸入今日紀錄：`);
+            // 功能函數：新增交接
+            const addEntry = () => {
+                const note = prompt("請輸入交接事項：");
                 if (!note) return;
+                const isUrgent = confirm("這件事需要標註為「重要」嗎？");
                 const now = new Date();
                 const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${(now.getMinutes()<10?'0':'')+now.getMinutes()}`;
-                db.ref(`k9Logs/${dogId}`).push({
-                    time: timeStr, note, timestamp: firebase.database.ServerValue.TIMESTAMP
+                db.ref('reactLogs').push({
+                    time: timeStr, note, urgent: isUrgent, confirmedBy: null,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
             };
 
-            // 頁面切換
-            const TabBtn = ({id, label}) => (
-                <button onClick={() => setActiveTab(id)} 
-                    className={`flex-1 py-3 text-xs font-black uppercase tracking-tighter transition-all ${activeTab === id ? 'text-cyan-400 border-b-2 border-cyan-400 bg-neutral-800' : 'text-gray-500'}`}>
-                    {label}
-                </button>
-            );
+            // 功能函數：簽名確認
+            const confirmLog = (id) => {
+                const name = prompt("請輸入確認者姓名：", "小黑哥");
+                if(name) db.ref(`reactLogs/${id}`).update({ confirmedBy: name, confirmTime: new Date().toLocaleTimeString() });
+            };
+
+            // 功能函數：刪除資料 (通用)
+            const removeItem = (path, id) => {
+                if(confirm("⚠️ 確定要從雲端刪除這條紀錄嗎？")) db.ref(`${path}/${id}`).remove();
+            };
+
+            // 功能函數：部署人員/黑名單
+            const deployUser = (path) => {
+                const name = document.getElementById('eName').value;
+                if(!name) return alert("請輸入姓名");
+                const payload = {
+                    name,
+                    id: document.getElementById('eID').value,
+                    plate: document.getElementById('ePlate').value.toUpperCase(),
+                    reason: document.getElementById('eReason').value,
+                    timestamp: new Date().toLocaleString()
+                };
+                const finalPath = path === 'employee_list' ? `${path}/${payload.id || Date.now()}` : path;
+                db.ref(finalPath)[path === 'employee_list' ? 'set' : 'push'](payload).then(() => alert("部署成功"));
+            };
 
             return (
-                <div className="min-h-screen flex flex-col bg-black">
-                    <header className="bg-black border-b-2 border-cyan-400 p-4 flex justify-between items-center">
-                        <div>
-                            <h1 className="text-xl font-black italic tracking-widest text-cyan-400">M-SECURITY HQ</h1>
-                            <p className="text-[9px] text-gray-500 font-bold uppercase">Tactical Operations Hub V6.7</p>
-                        </div>
-                        <div className="stamp-red">發射成功</div>
+                <div className="min-h-screen flex flex-col">
+                    {/* Header */}
+                    <header className="bg-black border-b-2 border-cyan-400 p-4 text-center">
+                        <h1 className="text-xl font-black italic tracking-widest text-cyan-400">M-SECURITY HQ V6.6</h1>
+                        <p className="text-[10px] text-gray-500 font-bold">INTEGRATED COMMAND CENTER | REBORN</p>
                     </header>
 
+                    {/* Tabs */}
                     <nav className="flex bg-neutral-900 border-b border-neutral-800 sticky top-0 z-50">
-                        <TabBtn id="monitor" label="監控" />
-                        <TabBtn id="visitor" label="訪客" />
-                        <TabBtn id="handover" label="交接" />
-                        <TabBtn id="k9" label="K9戰犬" />
-                        <TabBtn id="manage" label="管理" />
+                        {['monitor', 'visitor', 'handover', 'manage'].map(tab => (
+                            <button key={tab} onClick={() => setActiveTab(tab)} 
+                                className={`flex-1 py-3 text-xs font-black uppercase tracking-tighter ${activeTab === tab ? 'text-cyan-400 border-b-2 border-cyan-400 bg-neutral-800' : 'text-gray-500'}`}>
+                                {tab === 'monitor' ? '監控日誌' : tab === 'visitor' ? '訪客' : tab === 'handover' ? '勤務交接' : '部署管理'}
+                            </button>
+                        ))}
                     </nav>
 
                     <main className="p-4 flex-1 no-scrollbar overflow-y-auto">
-                        {/* K9 戰犬分頁 */}
-                        {activeTab === 'k9' && (
-                            <div className="grid gap-6">
-                                {k9List.map(dog => {
-                                    const logs = k9Logs[dog.id] ? Object.keys(k9Logs[dog.id]).map(key => ({
-                                        key, ...k9Logs[dog.id][key]
-                                    })).sort((a,b) => b.timestamp - a.timestamp) : [];
-                                    
-                                    return (
-                                        <div key={dog.id} className="medical-card p-4">
-                                            <div className="flex justify-between items-end mb-3 border-b border-neutral-800 pb-2">
-                                                <span className="text-xl font-black text-cyan-400">{dog.name}</span>
-                                                <span className="text-[10px] font-bold text-gray-500 italic">體重: {dog.weight} KG</span>
-                                            </div>
-                                            <div className="space-y-3 mb-4">
-                                                {logs.slice(0, 2).map(log => (
-                                                    <div key={log.key} className="bg-neutral-800/50 p-3 rounded border-l-2 border-cyan-900 relative">
-                                                        <div className="text-[9px] font-bold text-gray-600 mb-1">{log.time}</div>
-                                                        <p className="text-sm font-bold text-gray-300">{log.note}</p>
-                                                        <button onClick={() => db.ref(`k9Logs/${dog.id}/${log.key}`).remove()} className="absolute top-2 right-2 text-gray-700 hover:text-red-500 text-[9px]">刪除</button>
-                                                    </div>
-                                                ))}
-                                                {logs.length === 0 && <p className="text-gray-700 text-xs italic">尚無醫療紀錄</p>}
-                                            </div>
-                                            <button onClick={() => addK9Log(dog.id, dog.name)} 
-                                                className="w-full bg-neutral-800 hover:bg-cyan-900 text-cyan-400 py-2 rounded font-black text-xs border border-cyan-900 transition-all">
-                                                🚀 寫入臨床紀錄
-                                            </button>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                        {/* 交接分頁 (維持原樣) */}
+                        {/* 1. 交接分頁 (整合 V3.1) */}
                         {activeTab === 'handover' && (
                             <div className="space-y-4 max-w-xl mx-auto">
-                                <button onClick={() => {
-                                    const note = prompt("交接事項：");
-                                    if(note) db.ref('reactLogs').push({ time: new Date().toLocaleString(), note, timestamp: Date.now() });
-                                }} className="w-full bg-cyan-500 text-black font-black py-3 rounded-lg">+ 新增交接</button>
+                                <button onClick={addEntry} className="w-full bg-cyan-500 text-black font-black py-3 rounded-lg shadow-lg mb-4">+ 新增交接事項</button>
                                 {logs.map(log => (
-                                    <div key={log.id} className={`p-4 rounded-lg duty-card ${log.confirmedBy ? 'confirmed-card' : ''}`}>
-                                        <div className="text-[10px] text-gray-500 mb-1">{log.time}</div>
-                                        <p className="font-bold">{log.note}</p>
-                                        {!log.confirmedBy && <button onClick={() => db.ref(`reactLogs/${log.id}`).update({confirmedBy:'小黑哥'})} className="mt-2 text-xs text-cyan-400">點擊確認</button>}
+                                    <div key={log.id} className={`p-4 rounded-lg duty-card relative transition-all ${log.confirmedBy ? 'confirmed-card' : ''}`}>
+                                        <button onClick={() => removeItem('reactLogs', log.id)} className="absolute top-2 right-2 text-gray-600 hover:text-red-500">✕</button>
+                                        <div className="flex gap-2 mb-2 items-center">
+                                            <span className="bg-neutral-800 text-[10px] px-2 py-1 rounded text-gray-400 font-mono">{log.time}</span>
+                                            {log.urgent && <span className="bg-red-600 text-white text-[10px] px-2 py-1 rounded animate-pulse font-black">⚠️ 重要</span>}
+                                            {log.confirmedBy && <span className="bg-emerald-600 text-white text-[10px] px-2 py-1 rounded font-black">✓ 已閱：{log.confirmedBy}</span>}
+                                        </div>
+                                        <p className={`text-lg font-bold ${log.confirmedBy ? 'text-gray-400 italic line-through' : 'text-white'}`}>{log.note}</p>
+                                        {!log.confirmedBy && (
+                                            <button onClick={() => confirmLog(log.id)} className="mt-3 w-full border border-dashed border-gray-600 py-2 text-xs text-gray-400 font-bold rounded">🖱️ 點擊簽署確認</button>
+                                        )}
                                     </div>
                                 ))}
                             </div>
                         )}
 
-                        {/* 監控、訪客、管理分頁邏輯同 V6.6... (為縮減長度略過重複 UI，功能皆保留) */}
-                        {activeTab === 'monitor' && <div className="text-gray-500 text-center text-xs mt-20">監控日誌即時連線中...</div>}
+                        {/* 2. 監控分頁 */}
+                        {activeTab === 'monitor' && (
+                            <div className="grid gap-4">
+                                <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-lg">
+                                    <h2 className="text-cyan-400 font-black mb-3 border-l-4 border-cyan-400 pl-2">📡 手機端查詢動態</h2>
+                                    <div className="max-h-60 overflow-y-auto text-xs">
+                                        <table className="w-full text-left">
+                                            <thead className="text-gray-500"><tr><th>時間</th><th>人員</th><th>查詢</th></tr></thead>
+                                            <tbody id="realtimeLogs"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 3. 訪客分頁 */}
+                        {activeTab === 'visitor' && (
+                            <div className="space-y-4">
+                                {visitors.map(v => (
+                                    <div key={v.id} className={`p-3 border-l-4 ${v.leaveTime ? 'border-gray-600 bg-neutral-900 opacity-60' : 'border-emerald-500 bg-neutral-900'} rounded`}>
+                                        <div className="flex justify-between font-black"><span>{v.name} ({v.count}人)</span><span className="text-xs text-gray-500">{v.timeIn} 入</span></div>
+                                        <div className="text-xs text-gray-400">{v.company} | 訪：{v.target}</div>
+                                        {v.leaveTime && <div className="text-xs text-emerald-500 font-bold">已出廠：{v.leaveTime}</div>}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* 4. 部署管理 */}
+                        {activeTab === 'manage' && (
+                            <div className="space-y-4">
+                                <div className="bg-neutral-900 p-4 rounded-lg space-y-2">
+                                    <input id="eID" className="w-full bg-black border border-neutral-700 p-2 rounded" placeholder="工號"/>
+                                    <input id="eName" className="w-full bg-black border border-neutral-700 p-2 rounded" placeholder="姓名"/>
+                                    <input id="ePlate" className="w-full bg-black border border-neutral-700 p-2 rounded" placeholder="車牌"/>
+                                    <input id="eReason" className="w-full bg-black border border-neutral-700 p-2 rounded" placeholder="單位/備註"/>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => deployUser('employee_list')} className="flex-1 bg-cyan-600 py-2 rounded font-black text-black">部署員工</button>
+                                        <button onClick={() => deployUser('blacklist_data')} className="flex-1 bg-red-600 py-2 rounded font-black">發布黑名單</button>
+                                    </div>
+                                </div>
+                                <div className="bg-neutral-900 rounded-lg overflow-hidden text-xs">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-neutral-800 text-cyan-400"><tr><th className="p-2">類型</th><th>對象</th><th>備註</th><th>操作</th></tr></thead>
+                                        <tbody>
+                                            {masterData.map(m => (
+                                                <tr key={m.id} className="border-b border-neutral-800">
+                                                    <td className="p-2"><span className={`px-1 rounded ${m.type==='BLACK'?'bg-red-900 text-red-200':'bg-cyan-900 text-cyan-200'}`}>{m.type}</span></td>
+                                                    <td className="font-bold">{m.name}</td>
+                                                    <td className="text-gray-500">{m.reason || m.id}</td>
+                                                    <td><button onClick={() => removeItem(m.type==='BLACK'?'blacklist_data':'employee_list', m.id)} className="text-red-500">✕</button></td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
                     </main>
 
-                    <footer className="p-4 text-center border-t border-neutral-900 bg-black">
-                        <p className="text-[9px] text-gray-700 tracking-widest uppercase font-black">Tactical Cloud - Internal Use Only</p>
+                    <footer className="p-4 text-center border-t border-neutral-800">
+                        <p className="text-[10px] text-gray-600 tracking-widest uppercase font-black">Security Cloud Internal Only</p>
                     </footer>
                 </div>
             );
@@ -201,6 +240,19 @@
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
+
+        // 獨立腳本處理即時查詢日誌
+        const dbRaw = firebase.database();
+        dbRaw.ref('search_logs').limitToLast(20).on('value', snap => {
+            const el = document.getElementById('realtimeLogs');
+            if(!el) return;
+            el.innerHTML = '';
+            const data = snap.val();
+            if(data) Object.keys(data).reverse().forEach(k => {
+                const l = data[k];
+                el.innerHTML += `<tr class="border-b border-neutral-800"><td class="py-1 text-gray-500">${l.time.split(' ')[1]}</td><td class="text-cyan-400 font-bold">${l.user}</td><td>${l.query}</td></tr>`;
+            });
+        });
     </script>
 </body>
 </html>
