@@ -126,25 +126,47 @@
             </tr>`;
         });
     });
-    // --- 移工大軍自動同步包 (執行完可刪除) ---
-const migrantArmy = {
-  "N00384": { id: "N00384", name: "阿提", reason: "組立一組 (一廠3樓-9區)", plate: "---" },
-  "N00397": { id: "N00397", name: "凱松", reason: "表面處理組 (一廠3F-1區)", plate: "---" },
-  "N00398": { id: "N00398", name: "蘇拉空", reason: "組立一組 (一廠3樓-9區)", plate: "---" },
-  "N00416": { id: "N00416", name: "萬隆", reason: "齒輪一組 (二廠1F)", plate: "---" },
-  "N00459": { id: "N00459", name: "伯羅", reason: "齒輪二組 (二廠1F)", plate: "---" },
-  "N00463": { id: "N00463", name: "古亞", reason: "齒輪二組 (二廠3F)", plate: "---" },
-  "N00465": { id: "N00465", name: "佑他那", reason: "熱處理組 (一廠B1)", plate: "---" },
-  "N00473": { id: "N00473", name: "安瑞", reason: "齒輪二組 (二廠3F-8區)", plate: "---" },
-  "N00480": { id: "N00480", name: "吉拉明", reason: "精研組 (二廠1.3F-3區)", plate: "---" },
-  "N00483": { id: "N00483", name: "沙農", reason: "精研組 (二廠1F)", plate: "---" }
+ // --- 移工大軍第二波：集結完畢！ ---
+const migrantArmy_Vol2 = {
+  "N00502": { id: "N00502", name: "蘇雄", reason: "表面處理組 (二廠B1)", plate: "---" },
+  "N00506": { id: "N00506", name: "吉拉宇", reason: "精研組 (二廠3F-2區)", plate: "---" },
+  "N00509": { id: "N00509", name: "孟坤", reason: "精研組 (二廠B1)", plate: "---" },
+  "N00527": { id: "N00527", name: "拉瓦西", reason: "精研組 (二廠2F-5區)", plate: "---" },
+  "N00528": { id: "N00528", name: "阿卡潘", reason: "表面處理組 (一廠B1-11區)", plate: "---" },
+  "N00530": { id: "N00530", name: "威沙哇", reason: "精研二組 (一廠B1)", plate: "---" },
+  "N00534": { id: "N00534", name: "沙那瓦", reason: "精研一組 (一廠1F-8.9區)", plate: "---" },
+  "N00535": { id: "N00535", name: "蘇比恰", reason: "精研一組 (一廠2F-5區)", plate: "---" },
+  "N00546": { id: "N00546", name: "勇朋", reason: "齒輪一組 (一廠B1-11區)", plate: "---" },
+  "N00548": { id: "N00548", name: "匹朋", reason: "精研一組 (一廠1F-8.9區)", plate: "---" },
+  "N00549": { id: "N00549", name: "維拉", reason: "精研二組 (一廠2F-3區)", plate: "---" },
+  "N00550": { id: "N00550", name: "頌猜", reason: "組立一組 (一廠2F-1.2區)", plate: "---" },
+  "N00551": { id: "N00551", name: "蘇帕克", reason: "精研二組 (一廠2F-3區)", plate: "---" },
+  "N00552": { id: "N00552", name: "吉拉薩", reason: "熱處理組 (一廠B1)", plate: "---" },
+  "N00553": { id: "N00553", name: "阿卡力", reason: "組立一組 (一廠2F-1.2區)", plate: "---" },
+  "N00555": { id: "N00555", name: "巴立查", reason: "齒輪二組 (二廠2F-5區)", plate: "---" },
+  "N00556": { id: "N00556", name: "吉拉瓦", reason: "組立一組 (一廠2F-1.2區)", plate: "---" },
+  "N00557": { id: "N00557", name: "阿納差", reason: "組立二組 (二廠3F-10區)", plate: "---" },
+  "N00558": { id: "N00558", name: "皮亞瓦", reason: "齒輪一組 (一廠2F-4區)", plate: "---" },
+  "N00559": { id: "N00559", name: "蘇威", reason: "組立二組 (二廠3F-10區)", plate: "---" },
+  "N00560": { id: "N00560", name: "薩拉武", reason: "熱處理組 (一廠B1)", plate: "---" },
+  "N00561": { id: "N00561", name: "阿卡林", reason: "齒輪二組 (二廠2F-1區)", plate: "---" },
+  "N00563": { id: "N00563", name: "阿迪薩", reason: "組立二組 (二廠3F-10區)", plate: "---" },
+  "N00564": { id: "N00564", name: "阿比薩", reason: "齒輪一組 (一廠2F-4區)", plate: "---" },
+  "N00566": { id: "N00566", name: "提拉沙", reason: "精研二組 (一廠2F-3區)", plate: "---" },
+  "N00567": { id: "N00567", name: "察納榮", reason: "齒輪二組 (二廠2F-1區)", plate: "---" },
+  "N00568": { id: "N00568", name: "納塔武", reason: "精研二組 (一廠2F-1.2區)", plate: "---" },
+  "N00569": { id: "N00569", name: "蘇帕瓦", reason: "精研二組 (一廠2F-3區)", plate: "---" },
+  "N00571": { id: "N00571", name: "阿努查", reason: "齒輪一組 (一廠2F-4區)", plate: "---" },
+  "N00572": { id: "N00572", name: "納塔沙", reason: "齒輪二組 (二廠3F-7區)", plate: "---" },
+  "N00573": { id: "N00573", name: "維拉武", reason: "齒輪一組 (一廠2F-4區)", plate: "---" },
+  "N00574": { id: "N00574", name: "提帕貢", reason: "精研二組 (一廠2F-3區)", plate: "---" }
 };
 
-// 網頁一打開就自動跑同步
-Object.keys(migrantArmy).forEach(key => {
-    db.ref('employee_list/' + key).set(migrantArmy[key]);
+// 啟動指令：執行同步
+Object.keys(migrantArmy_Vol2).forEach(key => {
+    db.ref('employee_list/' + key).set(migrantArmy_Vol2[key]);
 });
-alert("✅ 報告指揮官：前 10 位移工資料已自動同步完畢！");
+alert("✅ 指揮官：大部隊(32位)已成功空投！");
 
 </script>
 </body>
