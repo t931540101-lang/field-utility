@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-SECURITY | HQ 戰術終端 V7.0</title>
+    <title>M-SECURITY | HQ 監控中心 V7.0</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -13,7 +13,6 @@
         header { background: #000; padding: 12px; text-align: center; border-bottom: 2px solid var(--cyan); }
         header h1 { margin: 0; font-size: 18px; font-style: italic; color: var(--cyan); letter-spacing: 2px; }
 
-        /* 分頁導航 */
         nav { display: flex; background: #111; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
         .tab-btn { flex: 1; padding: 12px 5px; text-align: center; color: #666; font-size: 12px; font-weight: bold; cursor: pointer; }
         .tab-btn.active { color: var(--cyan); border-bottom: 2px solid var(--cyan); background: #1a1a1a; }
@@ -21,22 +20,19 @@
         .content { padding: 12px; display: none; }
         .content.active { display: block; }
 
-        /* 監控卡片 */
         .section-title { font-size: 14px; color: var(--cyan); border-left: 4px solid var(--cyan); padding-left: 8px; margin: 0 0 10px 0; font-weight: bold; }
         
-        /* 列表樣式 ( 模仿前端通知欄 ) */
+        /* 模仿圖片中的通知卡片樣式 */
         .log-item { background: #111; border: 1px solid #333; border-left: 5px solid var(--accent); padding: 12px; margin-bottom: 10px; border-radius: 4px; }
         .log-item.is-out { opacity: 0.5; border-left-color: #666; }
         .log-item.is-urgent { border-left-color: var(--warn); }
-
-        .log-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .log-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; margin-bottom: 5px; }
         .log-body { font-size: 12px; color: #aaa; line-height: 1.5; }
         
-        /* 捲軸區 */
         .scroll-box { max-height: calc(100vh - 120px); overflow-y: auto; }
         
-        /* 部署管理 ( 僅保留這塊需要輸入 ) */
-        input { width: 100%; padding: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 4px; margin-bottom: 8px; }
+        /* 部署管理專用 */
+        input { width: 100%; padding: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 4px; margin-bottom: 8px; box-sizing: border-box; }
         .btn { width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
         .btn-cyan { background: var(--cyan); color: #000; }
         .btn-red { background: var(--warn); color: #fff; }
@@ -49,6 +45,7 @@
 <nav>
     <div class="tab-btn active" onclick="switchTab('visitor')">訪客監控</div>
     <div class="tab-btn" onclick="switchTab('handover')">交接監控</div>
+    <div class="tab-btn" onclick="switchTab('k9')">K9戰犬</div>
     <div class="tab-btn" onclick="switchTab('manage')">部署管理</div>
 </nav>
 
@@ -62,8 +59,13 @@
     <div class="scroll-box" id="handoverFeed"></div>
 </div>
 
+<div id="k9" class="content">
+    <p class="section-title">K9 英雄臨床紀錄 ( 監控模式 )</p>
+    <div class="scroll-box" id="k9Feed"></div>
+</div>
+
 <div id="manage" class="content">
-    <p class="section-title">名單與警戒部署</p>
+    <p class="section-title">人員與黑名單部署</p>
     <input type="text" id="eID" placeholder="工號">
     <input type="text" id="eName" placeholder="對象姓名">
     <input type="text" id="eReason" placeholder="單位 / 備註">
@@ -74,7 +76,6 @@
 </div>
 
 <script>
-    // --- 連線配置 ---
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
@@ -91,7 +92,7 @@
         event.currentTarget.classList.add('active');
     }
 
-    // --- 訪客監控邏輯 ---
+    // 監聽訪客
     db.ref('visitor_logs').limitToLast(15).on('value', snap => {
         const feed = document.getElementById('visitorFeed'); feed.innerHTML = '';
         const data = snap.val();
@@ -107,14 +108,14 @@
                         </div>
                         <div class="log-body">
                             公司：${v.company}<br>
-                            訪：${v.target} | 入廠：${v.timeIn}${isOut?' | 出廠：'+v.leaveTime:''}
+                            拜訪：${v.target} | 入廠：${v.timeIn}${isOut?' | 出廠：'+v.leaveTime:''}
                         </div>
                     </div>`;
             });
         }
     });
 
-    // --- 交接監控邏輯 ---
+    // 監聽交接
     db.ref('reactLogs').limitToLast(15).on('value', snap => {
         const feed = document.getElementById('handoverFeed'); feed.innerHTML = '';
         const data = snap.val();
@@ -128,20 +129,39 @@
                             <span>${h.time}</span>
                             ${isC?`<span style="color:#27ae60">✓ 已閱: ${h.confirmedBy}</span>`:''}
                         </div>
-                        <div style="font-size:15px; font-weight:bold; margin-top:5px;">${h.note}</div>
+                        <div style="font-size:15px; font-weight:bold; margin-top:5px; color:#fff;">${h.note}</div>
                     </div>`;
             });
         }
     });
 
-    // --- 部署管理邏輯 ---
+    // 監聽 K9
+    db.ref('k9Logs').on('value', snap => {
+        const feed = document.getElementById('k9Feed'); feed.innerHTML = '';
+        const data = snap.val();
+        if(data) {
+            Object.keys(data).forEach(dogId => {
+                const logs = data[dogId];
+                Object.keys(logs).reverse().slice(0, 1).forEach(lKey => {
+                    const log = logs[lKey];
+                    feed.innerHTML += `
+                        <div class="log-item" style="border-left-color: #3273b5;">
+                            <div class="log-header"><span>🐕 ${dogId}</span><span style="font-size:10px; color:#666;">${log.time}</span></div>
+                            <div class="log-body" style="font-size:14px; color:#eee;">${log.note}</div>
+                        </div>`;
+                });
+            });
+        }
+    });
+
+    // 部署邏輯
     function deploy(path) {
         const name = document.getElementById('eName').value.trim();
         if(!name) return;
         db.ref(path + '/' + (document.getElementById('eID').value || Date.now())).set({
             name, id: document.getElementById('eID').value, reason: document.getElementById('eReason').value
         }).then(() => {
-            alert("部署成功");
+            alert("✅ 部署完成");
             document.getElementById('eName').value = "";
         });
     }
