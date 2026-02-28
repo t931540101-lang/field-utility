@@ -3,17 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-SECURITY | HQ 戰術終端 V6.9</title>
+    <title>M-SECURITY | HQ 戰術終端 V7.0</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root { --cyan: #00f2ff; --warn: #ff4d4f; --bg: #050505; --card: #111; --border: #333; --accent: #27ae60; }
         body { background: var(--bg); color: white; font-family: "Microsoft JhengHei", sans-serif; margin: 0; padding: 0; }
         
-        /* 頂部身分欄 */
-        .user-info { background: #1e293b; color: white; padding: 8px 15px; font-size: 12px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--cyan); }
-
-        header { background: #000; padding: 10px; text-align: center; border-bottom: 1px solid var(--border); }
+        header { background: #000; padding: 12px; text-align: center; border-bottom: 2px solid var(--cyan); }
         header h1 { margin: 0; font-size: 18px; font-style: italic; color: var(--cyan); letter-spacing: 2px; }
 
         /* 分頁導航 */
@@ -24,91 +21,60 @@
         .content { padding: 12px; display: none; }
         .content.active { display: block; }
 
-        /* 萬用卡片 */
-        .section { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 15px; }
-        h2 { font-size: 15px; color: var(--cyan); border-left: 4px solid var(--cyan); padding-left: 8px; margin: 0 0 10px 0; }
+        /* 監控卡片 */
+        .section-title { font-size: 14px; color: var(--cyan); border-left: 4px solid var(--cyan); padding-left: 8px; margin: 0 0 10px 0; font-weight: bold; }
         
-        input, textarea, select { width: 100%; padding: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 4px; font-size: 14px; box-sizing: border-box; margin-bottom: 8px; }
+        /* 列表樣式 ( 模仿前端通知欄 ) */
+        .log-item { background: #111; border: 1px solid #333; border-left: 5px solid var(--accent); padding: 12px; margin-bottom: 10px; border-radius: 4px; }
+        .log-item.is-out { opacity: 0.5; border-left-color: #666; }
+        .log-item.is-urgent { border-left-color: var(--warn); }
+
+        .log-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .log-body { font-size: 12px; color: #aaa; line-height: 1.5; }
         
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; }
-        .btn-cyan { background: var(--cyan); color: #000; }
-        .btn-green { background: var(--accent); color: #fff; }
-
-        /* 訪客列表清單 (白底黑字，確保清晰) */
-        .visitor-item { background: #fff; border-left: 5px solid var(--accent); padding: 10px; margin-bottom: 10px; border-radius: 5px; color: #333; position: relative; }
-        .v-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; margin-bottom: 4px; }
-        .v-body { font-size: 12px; color: #555; line-height: 1.5; }
-        .checkout-btn { margin-top: 8px; background: #fff; color: var(--accent); border: 1px solid var(--accent); padding: 5px; border-radius: 4px; width: 100%; font-weight: bold; }
-
         /* 捲軸區 */
-        .scroll-box { max-height: 300px; overflow-y: auto; background: #000; border: 1px solid #222; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        td { padding: 8px; border-bottom: 1px solid #222; color: #ccc; }
+        .scroll-box { max-height: calc(100vh - 120px); overflow-y: auto; }
+        
+        /* 部署管理 ( 僅保留這塊需要輸入 ) */
+        input { width: 100%; padding: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 4px; margin-bottom: 8px; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .btn-cyan { background: var(--cyan); color: #000; }
+        .btn-red { background: var(--warn); color: #fff; }
     </style>
 </head>
 <body>
 
-<div class="user-info">
-    <span onclick="changeName()">姓名：<span id="userNameDisplay">未設定</span> ✎</span>
-    <span onclick="changeID()">工號：<span id="userIDDisplay">未設定</span> ✎</span>
-</div>
-
-<header><h1>M-SECURITY HQ V6.9</h1></header>
+<header><h1>M-SECURITY HQ V7.0</h1></header>
 
 <nav>
-    <div class="tab-btn active" onclick="switchTab('monitor')">監控</div>
-    <div class="tab-btn" onclick="switchTab('visitor')">訪客</div>
-    <div class="tab-btn" onclick="switchTab('handover')">交接</div>
-    <div class="tab-btn" onclick="switchTab('manage')">部署</div>
+    <div class="tab-btn active" onclick="switchTab('visitor')">訪客監控</div>
+    <div class="tab-btn" onclick="switchTab('handover')">交接監控</div>
+    <div class="tab-btn" onclick="switchTab('manage')">部署管理</div>
 </nav>
 
-<div id="monitor" class="content active">
-    <h2>📡 手機查詢同步</h2>
-    <div class="scroll-box">
-        <table><tbody id="realtimeLogs"></tbody></table>
-    </div>
-</div>
-
-<div id="visitor" class="content">
-    <div class="section">
-        <h2>訪客登記入廠</h2>
-        <input type="text" id="vName" placeholder="訪客姓名">
-        <div style="display:flex; gap:5px;">
-            <input type="number" id="vCount" value="1" style="width:30%">
-            <input type="tel" id="vPhone" placeholder="電話" style="flex:1">
-        </div>
-        <input type="text" id="vComp" placeholder="公司行號">
-        <input type="text" id="vTarget" placeholder="受訪人員">
-        <textarea id="vReason" rows="1" placeholder="入廠事由"></textarea>
-        <button class="btn btn-green" onclick="submitVisitor()">確認登記</button>
-    </div>
-    <div id="visitorLogList"></div>
+<div id="visitor" class="content active">
+    <p class="section-title">即時訪客動態 ( 前端同步 )</p>
+    <div class="scroll-box" id="visitorFeed"></div>
 </div>
 
 <div id="handover" class="content">
-    <div class="section">
-        <h2>新增交接事項</h2>
-        <textarea id="hNote" rows="2" placeholder="請輸入重要事項..."></textarea>
-        <button class="btn btn-cyan" onclick="addHandover()">發布交接</button>
-    </div>
-    <div id="handoverList"></div>
+    <p class="section-title">交接事項公告 ( 前端同步 )</p>
+    <div class="scroll-box" id="handoverFeed"></div>
 </div>
 
 <div id="manage" class="content">
-    <div class="section">
-        <h2>名單部署</h2>
-        <input type="text" id="eID" placeholder="工號">
-        <input type="text" id="eName" placeholder="姓名">
-        <input type="text" id="eReason" placeholder="單位 / 備註">
-        <div style="display:flex; gap:10px;">
-            <button class="btn btn-cyan" onclick="deploy('employee_list')">員工</button>
-            <button class="btn-red btn" style="flex:1; border-radius:4px;" onclick="deploy('blacklist_data')">黑名單</button>
-        </div>
+    <p class="section-title">名單與警戒部署</p>
+    <input type="text" id="eID" placeholder="工號">
+    <input type="text" id="eName" placeholder="對象姓名">
+    <input type="text" id="eReason" placeholder="單位 / 備註">
+    <div style="display:flex; gap:10px;">
+        <button class="btn btn-cyan" onclick="deploy('employee_list')">員工部署</button>
+        <button class="btn btn-red" onclick="deploy('blacklist_data')">黑名單發布</button>
     </div>
 </div>
 
 <script>
-    // --- 核心配置 ---
+    // --- 連線配置 ---
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
@@ -118,18 +84,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // --- 身分記憶 ---
-    let userName = localStorage.getItem('guardName') || "";
-    let userID = localStorage.getItem('guardID') || "";
-    function updateUI() {
-        document.getElementById('userNameDisplay').innerText = userName || "未設定";
-        document.getElementById('userIDDisplay').innerText = userID || "未設定";
-    }
-    function changeName() { const n = prompt("姓名", userName); if(n) { userName=n; localStorage.setItem('guardName',n); updateUI(); } }
-    function changeID() { const id = prompt("工號", userID); if(id) { userID=id; localStorage.setItem('guardID',id); updateUI(); } }
-    window.onload = updateUI;
-
-    // --- 分頁切換 ---
     function switchTab(id) {
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -137,68 +91,59 @@
         event.currentTarget.classList.add('active');
     }
 
-    // --- 1. 監控日誌 ---
-    db.ref('search_logs').limitToLast(15).on('value', snap => {
-        const tb = document.getElementById('realtimeLogs'); tb.innerHTML = '';
-        snap.forEach(c => {
-            const l = c.val();
-            tb.innerHTML = `<tr><td style="color:#666">${l.time.split(' ')[1]}</td><td style="color:var(--cyan)">${l.user}</td><td>查：${l.query}</td></tr>` + tb.innerHTML;
-        });
+    // --- 訪客監控邏輯 ---
+    db.ref('visitor_logs').limitToLast(15).on('value', snap => {
+        const feed = document.getElementById('visitorFeed'); feed.innerHTML = '';
+        const data = snap.val();
+        if(data) {
+            Object.keys(data).reverse().forEach(key => {
+                const v = data[key];
+                const isOut = v.leaveTime !== "";
+                feed.innerHTML += `
+                    <div class="log-item ${isOut?'is-out':''}">
+                        <div class="log-header">
+                            <span>${v.name} (${v.count}人)</span>
+                            <span style="color:${isOut?'#666':'#27ae60'}">${isOut?'已離廠':'在場中'}</span>
+                        </div>
+                        <div class="log-body">
+                            公司：${v.company}<br>
+                            訪：${v.target} | 入廠：${v.timeIn}${isOut?' | 出廠：'+v.leaveTime:''}
+                        </div>
+                    </div>`;
+            });
+        }
     });
 
-    // --- 2. 訪客邏輯 ---
-    function submitVisitor() {
-        if(!userName) return alert("請先點擊上方設定姓名");
-        const val = document.getElementById('vName').value;
-        if(!val) return;
-        const now = new Date();
-        const timeIn = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-        db.ref('visitor_logs').push({
-            name: val, count: document.getElementById('vCount').value,
-            phone: document.getElementById('vPhone').value, company: document.getElementById('vComp').value,
-            target: document.getElementById('vTarget').value, reason: document.getElementById('vReason').value,
-            timeIn, leaveTime: "", recorder: userName, timestamp: Date.now()
-        }).then(() => { alert("登記成功"); document.getElementById('vName').value=""; });
-    }
-    db.ref('visitor_logs').limitToLast(10).on('value', snap => {
-        const box = document.getElementById('visitorLogList'); box.innerHTML = '';
-        snap.forEach(c => {
-            const v = c.val(); const isOut = v.leaveTime !== "";
-            box.innerHTML = `
-                <div class="visitor-item" style="${isOut?'opacity:0.6':''}">
-                    <div class="v-header"><span>${v.name} (${v.count}人)</span><span style="color:${isOut?'#999':'#27ae60'}">${isOut?'已離廠':'在場'}</span></div>
-                    <div class="v-body">公司：${v.company}<br>拜訪：${v.target} | 入：${v.timeIn}${isOut?' | 出：'+v.leaveTime:''}</div>
-                    ${!isOut ? `<button class="checkout-btn" onclick="checkout('${c.key}')">簽退</button>` : ''}
-                </div>` + box.innerHTML;
-        });
+    // --- 交接監控邏輯 ---
+    db.ref('reactLogs').limitToLast(15).on('value', snap => {
+        const feed = document.getElementById('handoverFeed'); feed.innerHTML = '';
+        const data = snap.val();
+        if(data) {
+            Object.keys(data).reverse().forEach(key => {
+                const h = data[key];
+                const isC = h.confirmedBy != null;
+                feed.innerHTML += `
+                    <div class="log-item ${h.urgent?'is-urgent':''}" style="border-left-color:${isC?'#27ae60':''}">
+                        <div class="log-header" style="font-size:11px; color:#666;">
+                            <span>${h.time}</span>
+                            ${isC?`<span style="color:#27ae60">✓ 已閱: ${h.confirmedBy}</span>`:''}
+                        </div>
+                        <div style="font-size:15px; font-weight:bold; margin-top:5px;">${h.note}</div>
+                    </div>`;
+            });
+        }
     });
-    function checkout(key) { const t = prompt("出廠時間", new Date().getHours()+":"+new Date().getMinutes()); if(t) db.ref('visitor_logs/'+key).update({leaveTime:t}); }
 
-    // --- 3. 交接邏輯 ---
-    function addHandover() {
-        const n = prompt("交接事項"); if(n) db.ref('reactLogs').push({ note:n, time:new Date().toLocaleString(), confirmedBy:null, timestamp:Date.now() });
-    }
-    db.ref('reactLogs').limitToLast(10).on('value', snap => {
-        const box = document.getElementById('handoverList'); box.innerHTML = '';
-        snap.forEach(c => {
-            const h = c.val(); const isC = h.confirmedBy != null;
-            box.innerHTML = `
-                <div class="section" style="border-left:5px solid ${isC?'#27ae60':'var(--cyan)'}; opacity:${isC?0.6:1}">
-                    <div style="font-size:10px; color:#666;">${h.time}</div>
-                    <div style="font-weight:bold; margin:5px 0;">${h.note}</div>
-                    ${!isC ? `<button class="btn btn-cyan" style="padding:5px; font-size:11px;" onclick="confH('${c.key}')">簽署確認</button>` : `<small style="color:#27ae60">✓ 已閱: ${h.confirmedBy}</small>`}
-                    <span style="float:right; cursor:pointer;" onclick="db.ref('reactLogs/${c.key}').remove()">✕</span>
-                </div>` + box.innerHTML;
-        });
-    });
-    function confH(key) { const n = prompt("姓名", userName); if(n) db.ref('reactLogs/'+key).update({confirmedBy:n}); }
-
-    // --- 4. 部署 ---
+    // --- 部署管理邏輯 ---
     function deploy(path) {
-        const n = document.getElementById('eName').value; if(!n) return;
+        const name = document.getElementById('eName').value.trim();
+        if(!name) return;
         db.ref(path + '/' + (document.getElementById('eID').value || Date.now())).set({
-            name: n, id: document.getElementById('eID').value, reason: document.getElementById('eReason').value
-        }).then(() => alert("成功"));
+            name, id: document.getElementById('eID').value, reason: document.getElementById('eReason').value
+        }).then(() => {
+            alert("部署成功");
+            document.getElementById('eName').value = "";
+        });
     }
 </script>
 </body>
