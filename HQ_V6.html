@@ -3,101 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M-SECURITY | HQ 旗艦終端 V6.2</title>
+    <title>M-SECURITY | HQ 旗艦終端 V6.5</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --main-cyan: #00f2ff; --warn-red: #ff4d4f; --bg-dark: #050505; --log-green: #2ecc71; }
-        body { background-color: var(--bg-dark); color: var(--main-cyan); font-family: "Microsoft JhengHei", sans-serif; padding: 15px; margin: 0; }
-        .header { border-bottom: 2px solid var(--main-cyan); padding: 15px; text-align: center; background: #000; margin-bottom: 20px; }
-        .section { background: #111; padding: 20px; border: 1px solid #333; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 0 15px rgba(0, 242, 255, 0.1); }
-        h2 { color: #fff; font-size: 18px; border-left: 5px solid var(--main-cyan); padding-left: 12px; margin: 0 0 20px 0; display: flex; justify-content: space-between; align-items: center; }
-        .grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 15px; }
+        :root { --main-cyan: #00f2ff; --warn-red: #ff4d4f; --bg-dark: #050505; --log-green: #2ecc71; --tab-gray: #222; }
+        body { background-color: var(--bg-dark); color: var(--main-cyan); font-family: "Microsoft JhengHei", sans-serif; padding: 0; margin: 0; overflow-x: hidden; }
+        
+        .header { border-bottom: 2px solid var(--main-cyan); padding: 15px; text-align: center; background: #000; }
+        
+        /* 頁籤系統 */
+        .tab-bar { display: flex; background: #111; border-bottom: 1px solid #333; sticky; top: 0; z-index: 100; }
+        .tab-btn { flex: 1; padding: 12px 5px; color: #888; text-align: center; cursor: pointer; font-size: 13px; font-weight: bold; border-right: 1px solid #222; }
+        .tab-btn.active { color: var(--main-cyan); background: #1a1a1a; border-bottom: 2px solid var(--main-cyan); }
+
+        .container { padding: 15px; }
+        .section { background: #111; padding: 15px; border: 1px solid #333; border-radius: 10px; margin-bottom: 20px; display: none; }
+        .section.active { display: block; }
+        
+        h2 { color: #fff; font-size: 16px; border-left: 5px solid var(--main-cyan); padding-left: 10px; margin-bottom: 15px; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 10px; }
         @media (min-width: 600px) { .grid { grid-template-columns: 1fr 1fr; } }
-        input { background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 5px; font-size: 16px; width: 100%; box-sizing: border-box; }
-        input:focus { border-color: var(--main-cyan); outline: none; box-shadow: 0 0 5px var(--main-cyan); }
-        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
-        .btn { flex: 1; padding: 15px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; font-size: 16px; }
+        
+        input, textarea, select { background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 5px; font-size: 14px; width: 100%; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; margin-top: 5px; font-size: 14px; }
         .btn-blue { background: var(--main-cyan); color: #000; }
         .btn-red { background: var(--warn-red); color: #fff; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #000; }
-        th { background: #1a1a1a; color: var(--main-cyan); padding: 12px; text-align: left; border-bottom: 2px solid #333; font-size: 14px; position: sticky; top: 0; }
-        td { padding: 12px; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; }
-        .scroll-box { max-height: 350px; overflow-y: auto; border: 1px solid #222; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th { background: #1a1a1a; color: var(--main-cyan); padding: 10px; text-align: left; border-bottom: 2px solid #333; }
+        td { padding: 10px; border-bottom: 1px solid #222; color: #ccc; }
+        .scroll-box { max-height: 300px; overflow-y: auto; border: 1px solid #222; background: #000; }
         
-        .badge-emp { color: var(--main-cyan); border: 1px solid var(--main-cyan); padding: 2px 5px; font-size: 11px; border-radius: 3px; }
-        .badge-black { color: var(--warn-red); border: 1px solid var(--warn-red); padding: 2px 5px; font-size: 11px; border-radius: 3px; }
-        .log-time { color: #888; font-size: 12px; }
+        .badge { padding: 2px 5px; border-radius: 3px; font-size: 10px; margin-right: 5px; }
+        .badge-emp { border: 1px solid var(--main-cyan); color: var(--main-cyan); }
+        .badge-black { border: 1px solid var(--warn-red); color: var(--warn-red); }
+        .badge-vip { border: 1px solid #f1c40f; color: #f1c40f; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1 style="margin:0; font-style: italic; letter-spacing: 2px;">M-SECURITY HQ TERMINAL</h1>
-        <div style="color: #666; font-size: 11px;">REBORN V6.2 | STATUS: MULTI-SYNC ENABLED</div>
+        <h1 style="margin:0; font-style: italic; font-size: 18px;">M-SECURITY HQ V6.5</h1>
+        <div style="color: #666; font-size: 10px;">MULTIFUNCTIONAL COMMAND CENTER</div>
     </div>
 
-    <div class="section" style="border-color: var(--log-green);">
-        <h2>📡 實時查詢日誌 <span style="font-size: 12px; color: var(--log-green);">LIVE FEED</span></h2>
-        <div class="scroll-box" style="max-height: 250px;">
-            <table>
-                <thead>
-                    <tr>
-                        <th width="20%">時間</th>
-                        <th width="20%">查詢員</th>
-                        <th width="20%">查詢內容</th>
-                        <th>勤務類型</th>
-                    </tr>
-                </thead>
-                <tbody id="logTable">
-                    <tr><td colspan="4" style="text-align:center; color:#444;">載入中...</td></tr>
-                </tbody>
-            </table>
-        </div>
+    <div class="tab-bar">
+        <div class="tab-btn active" onclick="showTab('tab-monitor')">監控</div>
+        <div class="tab-btn" onclick="showTab('tab-visitor')">訪客</div>
+        <div class="tab-btn" onclick="showTab('tab-handover')">交接</div>
+        <div class="tab-btn" onclick="showTab('tab-manage')">部署</div>
     </div>
 
-    <div class="section">
-        <h2>👥 人員部署總覽 (員工 / 黑名單)</h2>
-        <div class="grid">
-            <input type="text" id="eID" placeholder="工號 / 標記 (黑名單可不填)">
-            <input type="text" id="eName" placeholder="對象姓名">
-            <input type="text" id="ePlate" placeholder="車牌 (選填)">
-            <input type="text" id="eReason" placeholder="單位 / 註記原因">
-        </div>
-        <div class="btn-group">
-            <button class="btn btn-blue" onclick="saveData('employee_list')">同步為員工</button>
-            <button class="btn btn-red" onclick="saveData('blacklist_data')">發布黑名單</button>
+    <div class="container">
+        <div id="tab-monitor" class="section active">
+            <h2>📡 實時查詢與 VIP 監控</h2>
+            <div class="scroll-box">
+                <table>
+                    <thead><tr><th>時間</th><th>人員</th><th>查詢對象</th></tr></thead>
+                    <tbody id="logTable"></tbody>
+                </table>
+            </div>
+            
+            <h2 style="margin-top:20px;">🌟 VIP 車輛部署 (手機查車牌會自動警報)</h2>
+            <div class="grid">
+                <input type="text" id="vPlate" placeholder="VIP 車牌">
+                <input type="text" id="vOwner" placeholder="車主姓名/職位">
+            </div>
+            <button class="btn btn-blue" style="background:#f1c40f;" onclick="saveVIP()">註冊 VIP 車輛</button>
         </div>
 
-        <div class="scroll-box" style="margin-top: 15px;">
-            <table>
-                <thead>
-                    <tr>
-                        <th width="15%">類型</th>
-                        <th width="20%">對象</th>
-                        <th width="25%">工號/原因</th>
-                        <th width="20%">車牌</th>
-                        <th width="20%">操作</th>
-                    </tr>
-                </thead>
-                <tbody id="liveTable">
-                    <tr><td colspan="5" style="text-align:center; color:#444;">正在掃描數據庫...</td></tr>
-                </tbody>
-            </table>
+        <div id="tab-visitor" class="section">
+            <h2>📋 訪客登記記錄</h2>
+            <div class="grid">
+                <input type="text" id="vName" placeholder="訪客姓名">
+                <input type="number" id="vCount" placeholder="人數" value="1">
+                <input type="text" id="vComp" placeholder="公司行號">
+                <input type="text" id="vTarget" placeholder="受訪對象">
+            </div>
+            <button class="btn btn-blue" onclick="saveVisitor()">確認入廠登記</button>
+            <div class="scroll-box" style="margin-top:15px;">
+                <table>
+                    <thead><tr><th>姓名</th><th>入廠</th><th>出廠</th><th>狀態</th></tr></thead>
+                    <tbody id="visitorTable"></tbody>
+                </table>
+            </div>
         </div>
-    </div>
 
-    <div class="section">
-        <h2>🐕 K9 戰術犬 臨床紀錄</h2>
-        <div class="grid" style="grid-template-columns: 1fr 2fr;">
-            <input type="text" id="k9Name" placeholder="犬名">
-            <input type="text" id="k9Note" placeholder="輸入醫療或健康狀況">
+        <div id="tab-handover" class="section">
+            <h2>🤝 勤務交接日誌</h2>
+            <textarea id="hNote" rows="4" placeholder="請輸入交接重點、異常事項、代辦物品..."></textarea>
+            <div class="grid" style="margin-top:10px;">
+                <input type="text" id="hOut" placeholder="交班人">
+                <input type="text" id="hIn" placeholder="接班人">
+            </div>
+            <button class="btn btn-blue" onclick="saveHandover()">完成交接存檔</button>
+            <div class="scroll-box" style="margin-top:15px;">
+                <div id="handoverList" style="padding:10px; font-size:13px;"></div>
+            </div>
         </div>
-        <button class="btn btn-blue" style="width:100%" onclick="saveK9()">更新紀錄</button>
+
+        <div id="tab-manage" class="section">
+            <h2>👥 人員 / 黑名單 部署</h2>
+            <div class="grid">
+                <input type="text" id="eID" placeholder="工號">
+                <input type="text" id="eName" placeholder="姓名">
+                <input type="text" id="ePlate" placeholder="車牌">
+                <input type="text" id="eReason" placeholder="備註/原因">
+            </div>
+            <div class="btn-group" style="display:flex; gap:10px;">
+                <button class="btn btn-blue" onclick="saveData('employee_list')">員工</button>
+                <button class="btn btn-red" onclick="saveData('blacklist_data')">黑名單</button>
+            </div>
+            <div class="scroll-box" style="margin-top:15px;">
+                <tbody id="liveTable"></tbody> <table id="fullListTable">
+                    <thead><tr><th>類型</th><th>姓名</th><th>工號/備註</th><th>操作</th></tr></thead>
+                    <tbody id="masterTableBody"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
 <script>
+    // --- 基礎配置 ---
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
@@ -107,98 +135,140 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 監聽日誌
-    db.ref('search_logs').limitToLast(30).on('value', snap => {
-        const tbody = document.getElementById('logTable');
-        tbody.innerHTML = '';
-        let logs = [];
-        snap.forEach(child => { logs.unshift(child.val()); });
-        logs.forEach(log => {
-            tbody.innerHTML += `<tr><td class="log-time">${log.time || ''}</td><td style="color:#2ecc71">${log.user || ''}</td><td style="color:#f1c40f">${log.query || ''}</td><td>${log.duty || ''}</td></tr>`;
-        });
-    });
+    // 頁籤切換邏輯
+    function showTab(tabId) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
 
-    // 核心存檔功能
+    // --- 訪客系統邏輯 ---
+    function saveVisitor() {
+        const name = document.getElementById('vName').value.trim();
+        if(!name) return alert("請輸入姓名");
+        const data = {
+            name,
+            count: document.getElementById('vCount').value,
+            company: document.getElementById('vComp').value,
+            target: document.getElementById('vTarget').value,
+            timeIn: new Date().toLocaleTimeString(),
+            leaveTime: "",
+            date: new Date().toLocaleDateString()
+        };
+        db.ref('visitor_logs').push(data).then(() => {
+            alert("訪客登記成功");
+            document.querySelectorAll('#tab-visitor input').forEach(i => i.value = '');
+        });
+    }
+
+    // --- 交接系統邏輯 ---
+    function saveHandover() {
+        const note = document.getElementById('hNote').value.trim();
+        const hIn = document.getElementById('hIn').value.trim();
+        if(!note || !hIn) return alert("請填寫交接內容與接班人");
+        const data = {
+            note,
+            outUser: document.getElementById('hOut').value,
+            inUser: hIn,
+            time: new Date().toLocaleString()
+        };
+        db.ref('handover_logs').push(data).then(() => {
+            alert("交接紀錄已存檔");
+            document.getElementById('hNote').value = '';
+        });
+    }
+
+    // --- VIP 車輛邏輯 ---
+    function saveVIP() {
+        const plate = document.getElementById('vPlate').value.trim().toUpperCase();
+        const owner = document.getElementById('vOwner').value.trim();
+        if(!plate) return alert("請輸入車牌");
+        db.ref('vip_vehicles/' + plate).set({ name: owner, plate: plate }).then(() => {
+            alert("VIP 車輛已註冊");
+            document.getElementById('vPlate').value = '';
+            document.getElementById('vOwner').value = '';
+        });
+    }
+
+    // --- 舊有的資料儲存功能 ---
     function saveData(path) {
         const id = document.getElementById('eID').value.trim();
         const name = document.getElementById('eName').value.trim();
-        const plate = document.getElementById('ePlate').value.trim().toUpperCase();
-        const reason = document.getElementById('eReason').value.trim();
-        if(!name) return alert("❌ 請至少輸入姓名");
-
-        const data = { id, name, plate, reason, timestamp: new Date().toLocaleString() };
-        // 員工用工號當Key，黑名單用push產亂碼Key
-        const ref = (path === 'employee_list') ? db.ref(path + '/' + (id || 'TEMP_' + Date.now())) : db.ref(path).push();
-        
-        ref.set(data).then(() => {
-            alert("✅ 數據已部署至伺服器");
-            document.querySelectorAll('.section:nth-child(2) input').forEach(i => i.value = '');
-        }).catch(err => alert("🚨 錯誤：" + err.message));
+        if(!name) return alert("❌ 請輸入姓名");
+        const data = { id, name, plate: document.getElementById('ePlate').value.toUpperCase(), reason: document.getElementById('eReason').value, timestamp: new Date().toLocaleString() };
+        const ref = (path === 'employee_list') ? db.ref(path + '/' + (id || 'T' + Date.now())) : db.ref(path).push();
+        ref.set(data).then(() => alert("同步成功"));
     }
 
-    // --- 關鍵修正：同時監聽員工與黑名單 ---
-    function updateLiveTable() {
-        const tbody = document.getElementById('liveTable');
+    // --- 即時監聽與更新表格 ---
+    
+    // 監聽查詢日誌
+    db.ref('search_logs').limitToLast(20).on('value', snap => {
+        const tbody = document.getElementById('logTable');
+        tbody.innerHTML = '';
+        snap.forEach(c => {
+            const l = c.val();
+            tbody.innerHTML = `<tr><td>${l.time.split(' ')[1]}</td><td style="color:#2ecc71">${l.user}</td><td>${l.query}</td></tr>` + tbody.innerHTML;
+        });
+    });
+
+    // 監聽訪客
+    db.ref('visitor_logs').limitToLast(20).on('value', snap => {
+        const tbody = document.getElementById('visitorTable');
+        tbody.innerHTML = '';
+        snap.forEach(c => {
+            const v = c.val();
+            const isOut = v.leaveTime !== "";
+            tbody.innerHTML = `<tr><td>${v.name}</td><td>${v.timeIn}</td><td>${v.leaveTime || '---'}</td><td>${isOut?'已離':'在場'}</td></tr>` + tbody.innerHTML;
+        });
+    });
+
+    // 監聽交接
+    db.ref('handover_logs').limitToLast(5).on('value', snap => {
+        const list = document.getElementById('handoverList');
+        list.innerHTML = '';
+        snap.forEach(c => {
+            const h = c.val();
+            list.innerHTML = `<div style="border-bottom:1px solid #333; padding:10px 0;">
+                <div style="color:var(--main-cyan)">${h.time}</div>
+                <div style="margin:5px 0;">${h.note}</div>
+                <div style="color:#888; font-size:11px;">交班：${h.outUser} ➔ 接班：${h.inUser}</div>
+            </div>` + list.innerHTML;
+        });
+    });
+
+    // 監聽全名單 (員工+黑名單+VIP)
+    function refreshMasterTable() {
+        const tbody = document.getElementById('masterTableBody');
+        tbody.innerHTML = '';
         
-        // 同時抓取兩個路徑
-        Promise.all([
-            db.ref('employee_list').once('value'),
-            db.ref('blacklist_data').once('value')
-        ]).then(results => {
-            tbody.innerHTML = '';
-            const employees = results[0].val() || {};
-            const blacklists = results[1].val() || {};
-
-            // 處理員工
-            Object.keys(employees).forEach(key => {
-                const item = employees[key];
-                renderRow(tbody, 'EMP', item, `employee_list/${key}`);
+        // 抓員工
+        db.ref('employee_list').once('value', s => {
+            s.forEach(c => {
+                const i = c.val();
+                tbody.innerHTML += `<tr><td><span class="badge badge-emp">員工</span></td><td>${i.name}</td><td>${i.id}</td><td><button onclick="db.ref('employee_list/${c.key}').remove()">刪</button></td></tr>`;
             });
-
-            // 處理黑名單
-            Object.keys(blacklists).forEach(key => {
-                const item = blacklists[key];
-                renderRow(tbody, 'BLACK', item, `blacklist_data/${key}`);
+        });
+        // 抓黑名單
+        db.ref('blacklist_data').once('value', s => {
+            s.forEach(c => {
+                const i = c.val();
+                tbody.innerHTML += `<tr><td><span class="badge badge-black">黑名單</span></td><td>${i.name}</td><td>${i.reason}</td><td><button onclick="db.ref('blacklist_data/${c.key}').remove()">刪</button></td></tr>`;
+            });
+        });
+        // 抓 VIP
+        db.ref('vip_vehicles').once('value', s => {
+            s.forEach(c => {
+                const i = c.val();
+                tbody.innerHTML += `<tr><td><span class="badge badge-vip">VIP車</span></td><td>${i.name}</td><td>${i.plate}</td><td><button onclick="db.ref('vip_vehicles/${c.key}').remove()">刪</button></td></tr>`;
             });
         });
     }
+    db.ref('employee_list').on('value', refreshMasterTable);
+    db.ref('blacklist_data').on('value', refreshMasterTable);
+    db.ref('vip_vehicles').on('value', refreshMasterTable);
 
-    function renderRow(target, type, item, fullPath) {
-        const isBlack = type === 'BLACK';
-        const badge = isBlack ? '<span class="badge-badge-black">警示</span>' : '<span class="badge-emp">員工</span>';
-        const nameStyle = isBlack ? 'color:var(--warn-red); font-weight:bold;' : 'color:#fff;';
-        const typeLabel = isBlack ? '<span class="badge-black">黑名單</span>' : '<span class="badge-emp">員工</span>';
-
-        target.innerHTML += `
-            <tr>
-                <td>${typeLabel}</td>
-                <td style="${nameStyle}">${item.name}</td>
-                <td>${item.id || item.reason || '---'}</td>
-                <td>${item.plate || '---'}</td>
-                <td><button class="btn-red" style="padding:4px 8px; font-size:11px;" onclick="deleteData('${fullPath}')">刪除</button></td>
-            </tr>`;
-    }
-
-    function deleteData(path) {
-        if(confirm('確定要從雲端撤銷此紀錄？')) {
-            db.ref(path).remove().then(() => updateLiveTable());
-        }
-    }
-
-    // 啟動監聽 (當資料有變動時自動更新表格)
-    db.ref('employee_list').on('value', updateLiveTable);
-    db.ref('blacklist_data').on('value', updateLiveTable);
-
-    // K9
-    function saveK9() {
-        const name = document.getElementById('k9Name').value.trim();
-        const note = document.getElementById('k9Note').value.trim();
-        if(!name || !note) return alert("❌ 犬名與內容不可空白");
-        db.ref('k9Logs/' + name).push({ note, time: new Date().toLocaleString() }).then(() => {
-            alert("🐕 " + name + " 紀錄更新成功");
-            document.getElementById('k9Note').value = '';
-        });
-    }
 </script>
 </body>
 </html>
