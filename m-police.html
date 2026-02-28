@@ -3,99 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-Security 整合查詢系統</title>
+    <title>M-SECURITY | 整合查詢系統</title>
     <style>
         :root {
-            --mp-blue: #3273b5;       /* 實機頁籤藍 */
-            --mp-dark-gray: #333;
-            --mp-bg: #e1f5fe;
-            --btn-grad: linear-gradient(to bottom, #74b9ff, #0984e3);
+            --mp-bg-light: #e3f2fd;
+            --mp-blue: #3273b5;
+            --mp-btn-grad: linear-gradient(to bottom, #74b9ff, #0984e3);
+            --mp-alert: #ff0000;
         }
 
         body {
             margin: 0; background-color: #b0bec5;
-            font-family: "Microsoft JhengHei", sans-serif;
+            font-family: Arial, "Microsoft JhengHei", sans-serif;
+            overflow-x: hidden;
         }
 
-        /* 頂部重要警訊 */
-        .alert-bar {
-            background: #000; color: #ff3e3e; padding: 5px;
-            font-size: 13px; font-weight: bold; text-align: center;
+        /* --- 登入畫面樣式 (圖 141) --- */
+        #login-page {
+            display: flex; flex-direction: column; align-items: center;
+            height: 100vh; background-color: var(--mp-bg-light);
         }
+        .login-box {
+            width: 95%; max-width: 450px; background: white;
+            border: 1px solid #90caf9; border-radius: 4px; padding: 15px; margin-top: 10px;
+        }
+        .login-title { color: #0d47a1; font-style: italic; font-weight: bold; font-size: 24px; margin: 20px 0; }
 
-        /* 戰術頁籤 */
-        .tabs {
-            display: flex; background: #546e7a; color: white;
-        }
-        .tab {
-            flex: 1; text-align: center; padding: 12px 0;
-            border-right: 1px solid #455a64; font-weight: bold;
-        }
+        /* --- 主面板樣式 (圖 142) --- */
+        #main-terminal { display: none; } /* 預設隱藏，登入後顯示 */
+        .alert-bar { background: #000; color: var(--mp-alert); padding: 5px; text-align: center; font-size: 13px; font-weight: bold; }
+        .tabs { display: flex; background: #546e7a; }
+        .tab { flex: 1; text-align: center; padding: 15px 0; color: white; border-right: 1px solid #455a64; cursor: pointer; font-weight: bold; }
         .tab.active { background: var(--mp-blue); }
-
-        .main-content {
-            background: #cfd8dc; padding: 10px; min-height: 300px;
-        }
-
-        /* 線上狀態區 */
-        .status-area {
-            display: flex; align-items: center; gap: 10px;
-            padding: 10px; font-size: 14px;
-        }
-        .status-box {
-            width: 20px; height: 20px; background: var(--mp-blue);
-            border: 1px solid #fff;
-        }
-
-        /* 查詢輸入區 */
-        .search-box {
-            background: #fff; border: 1px solid #999; padding: 10px;
-        }
-        input {
-            width: 100%; height: 45px; border: 1px solid #ccc;
-            font-size: 20px; padding: 0 10px; box-sizing: border-box;
-        }
-
-        /* 雙排按鈕配置 */
-        .btn-group {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px;
-        }
-        .btn {
-            height: 55px; border: 1px solid #1565c0; color: white;
-            font-size: 18px; font-weight: bold; border-radius: 2px;
-            background: var(--btn-grad); cursor: pointer;
-        }
-        .btn-full { grid-column: span 2; background: #607d8b; border: 1px solid #455a64; }
+        
+        /* 查詢核心區 */
+        .content-area { background: #cfd8dc; padding: 10px; }
+        .status-light { display: inline-block; width: 15px; height: 15px; background: var(--mp-blue); border: 1px solid #fff; margin-right: 5px; }
+        .search-container { background: #fff; border: 1px solid #999; padding: 10px; }
+        
+        /* 通用組件 */
+        input, select { width: 100%; height: 48px; border: 1px solid #ccc; margin-bottom: 8px; padding: 0 10px; font-size: 18px; box-sizing: border-box; }
+        .btn-row { display: flex; gap: 5px; }
+        .btn-mp { flex: 1; height: 55px; border: 1px solid #1565c0; color: white; font-weight: bold; font-size: 20px; background: var(--mp-btn-grad); border-radius: 4px; cursor: pointer; }
+        .btn-gray { background: #607d8b; border-color: #455a64; width: 100%; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="alert-bar">[通報] 廠區周邊發現可疑車輛，請夥伴注意巡查</div>
-
-    <div class="tabs">
-        <div class="tab active">一般</div>
-        <div class="tab">進階</div>
-        <div class="tab">頻道</div>
-        <div class="tab">其他</div>
-    </div>
-
-    <div class="main-content">
-        <div class="status-area">
-            <span>查詢模式：</span>
-            <div class="status-box"></div>
-            <span>線上</span>
-        </div>
-
-        <div class="search-box">
-            <input type="text" placeholder="車號 / 證號">
-            
-            <div class="btn-group">
-                <button class="btn">查 詢</button>
-                <button class="btn">條碼掃描</button>
-                <button class="btn btn-full">清 除</button>
+    <div id="login-page">
+        <div class="login-title">M-Police 整合查詢</div>
+        <div class="login-box">
+            <input type="text" placeholder="登錄碼">
+            <input type="text" placeholder="帳號">
+            <select><option>請選擇勤務類別</option></select>
+            <select><option>請選擇勤務方式</option></select>
+            <div class="btn-row">
+                <button class="btn-mp" onclick="performLogin()">登入</button>
+                <button class="btn-mp" style="background: linear-gradient(to bottom, #4fc3f7, #0288d1);">清除</button>
             </div>
         </div>
     </div>
 
+    <div id="main-terminal">
+        <div class="alert-bar">[通報] 廠區周邊發現可疑車輛，請夥伴注意巡查</div>
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('basic')">一般</div>
+            <div class="tab" onclick="switchTab('adv')">進階</div>
+            <div class="tab">頻道</div>
+            <div class="tab">其他</div>
+        </div>
+        
+        <div class="content-area">
+            <div style="padding-bottom: 10px; font-size: 14px;">
+                查詢模式：<span class="status-light"></span> 線上
+            </div>
+            
+            <div id="basic-content" class="search-container">
+                <input type="text" placeholder="車號 / 證號">
+                <div class="btn-row">
+                    <button class="btn-mp">查 詢</button>
+                    <button class="btn-mp">條碼掃描</button>
+                </div>
+                <button class="btn-mp btn-gray">清 除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function performLogin() {
+            // 模擬登入動作，點擊後切換盒子
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('main-terminal').style.display = 'block';
+        }
+
+        function switchTab(mode) {
+            // 頁籤切換邏輯
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            alert('切換至 ' + (mode === 'basic' ? '一般查詢' : '進階模式'));
+        }
+    </script>
 </body>
 </html>
