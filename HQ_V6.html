@@ -2,95 +2,69 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-SECURITY | 戰術終端 V7.1</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M-SECURITY | HQ 旗艦終端 V6.0</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root {
-            --mp-blue: #3273b5;
-            --mp-grad: linear-gradient(to bottom, #74b9ff, #3273b5);
-            --btn-blue: linear-gradient(to bottom, #74b9ff, #0984e3);
-            --alert-red: #ff0000;
-        }
-
-        body { margin: 0; background: #b0bec5; font-family: "Microsoft JhengHei", sans-serif; overflow-x: hidden; }
-
-        /* --- 登入畫面 --- */
-        #login-page { display: flex; flex-direction: column; align-items: center; height: 100vh; background: #e3f2fd; }
-        .login-title { color: #0d47a1; font-style: italic; font-weight: bold; font-size: 28px; margin: 40px 0; }
-        .login-box { width: 90%; max-width: 400px; background: white; border: 1px solid #90caf9; padding: 15px; border-radius: 4px; }
-
-        /* --- 主面板 --- */
-        #main-terminal { display: none; }
-        .alert-bar { background: #000; color: var(--alert-red); padding: 8px; text-align: center; font-size: 13px; font-weight: bold; }
-        .header-banner { background: var(--mp-grad); padding: 25px 0; text-align: center; color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
-        .header-banner h1 { margin: 0; font-size: 32px; font-style: italic; font-weight: 900; letter-spacing: 2px; }
-        
-        .tabs { display: flex; background: #546e7a; }
-        .tab { flex: 1; text-align: center; padding: 15px 0; color: white; cursor: pointer; font-weight: bold; border-right: 1px solid #455a64; }
-        .tab.active { background: var(--mp-blue); }
-
-        .content { padding: 12px; background: #cfd8dc; }
-        .status-row { padding-bottom: 10px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
-        .status-box { width: 18px; height: 18px; background: var(--mp-blue); border: 1px solid #fff; }
-
-        .search-card { background: #fff; border: 1px solid #999; padding: 15px; }
-        input, select { width: 100%; height: 52px; border: 1px solid #ccc; margin-bottom: 10px; padding: 0 12px; font-size: 20px; box-sizing: border-box; }
-        .btn-mp { width: 100%; height: 60px; color: white; font-weight: bold; font-size: 22px; background: var(--btn-blue); border: 1px solid #1565c0; border-radius: 4px; cursor: pointer; }
-        .btn-row { display: flex; gap: 6px; margin-bottom: 8px; }
-
-        /* 結果顯示 */
-        .res-box { margin-top: 15px; padding: 15px; border-radius: 4px; display: none; }
-        .res-ok { background: #e8f5e9; border: 2px solid #2e7d32; color: #1b5e20; }
-        .res-warn { background: #ffebee; border: 2px solid #c62828; color: #b71c1c; animation: flash 0.5s infinite; }
-        @keyframes flash { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-        
-        /* 單位字體美化 */
-        .info-label { font-size: 16px; color: #666; margin-top: 5px; }
-        .info-value { font-size: 24px; color: #000; font-weight: bold; }
+        :root { --main-cyan: #00f2ff; --warn-red: #ff4d4f; --bg-dark: #050505; }
+        body { background-color: var(--bg-dark); color: var(--main-cyan); font-family: "Microsoft JhengHei", sans-serif; padding: 15px; margin: 0; }
+        .header { border-bottom: 2px solid var(--main-cyan); padding: 15px; text-align: center; background: #000; margin-bottom: 20px; }
+        .section { background: #111; padding: 20px; border: 1px solid #333; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 0 15px rgba(0, 242, 255, 0.1); }
+        h2 { color: #fff; font-size: 18px; border-left: 5px solid var(--main-cyan); padding-left: 12px; margin: 0 0 20px 0; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 15px; }
+        @media (min-width: 600px) { .grid { grid-template-columns: 1fr 1fr; } }
+        input { background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 5px; font-size: 16px; width: 100%; box-sizing: border-box; }
+        input:focus { border-color: var(--main-cyan); outline: none; box-shadow: 0 0 5px var(--main-cyan); }
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        .btn { flex: 1; padding: 15px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; font-size: 16px; }
+        .btn-blue { background: var(--main-cyan); color: #000; }
+        .btn-red { background: var(--warn-red); color: #fff; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #000; }
+        th { background: #1a1a1a; color: var(--main-cyan); padding: 12px; text-align: left; border-bottom: 2px solid #333; font-size: 14px; }
+        td { padding: 12px; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; }
+        .scroll-box { max-height: 350px; overflow-y: auto; border: 1px solid #222; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="login-page">
-        <div class="login-title">M-Police 整合查詢</div>
-        <div class="login-box">
-            <input type="text" placeholder="登錄碼">
-            <input type="text" placeholder="帳號">
-            <select><option>請選擇勤務類別</option><option>門崗勤務</option></select>
-            <div class="btn-row">
-                <button class="btn-mp" onclick="doLogin()">登入系統</button>
-            </div>
+    <div class="header">
+        <h1 style="margin:0; font-style: italic; letter-spacing: 2px;">M-SECURITY HQ TERMINAL</h1>
+        <div style="color: #666; font-size: 11px;">REBORN V6.0 | STATUS: INITIALIZED</div>
+    </div>
+
+    <div class="section">
+        <h2>👥 人員名單 / 戰術黑名單 部署</h2>
+        <div class="grid">
+            <input type="text" id="eID" placeholder="請輸入工號 (存檔標記)">
+            <input type="text" id="eName" placeholder="請輸入對象姓名">
+            <input type="text" id="ePlate" placeholder="請輸入車牌 (選填)">
+            <input type="text" id="eReason" placeholder="單位 / 黑名單原因">
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-blue" onclick="saveData('employee_list')">同步為員工</button>
+            <button class="btn btn-red" onclick="saveData('blacklist_data')">發布黑名單</button>
+        </div>
+
+        <div class="scroll-box">
+            <table>
+                <thead><tr><th>對象</th><th>工號/原因</th><th>車牌</th><th>操作</th></tr></thead>
+                <tbody id="liveTable"></tbody>
+            </table>
         </div>
     </div>
 
-    <div id="main-terminal">
-        <div class="alert-bar">[通報] 系統重生完成，目前已恢復雲端同步狀態</div>
-        <div class="header-banner"><h1>M-Security 整合查詢</h1></div>
-        <div class="tabs">
-            <div class="tab active">一般</div><div class="tab">進階</div><div class="tab">其他</div>
+    <div class="section">
+        <h2>🐕 K9 戰術犬 臨床紀錄</h2>
+        <div class="grid" style="grid-template-columns: 1fr 2fr;">
+            <input type="text" id="k9Name" placeholder="犬名">
+            <input type="text" id="k9Note" placeholder="輸入醫療或健康狀況">
         </div>
-        <div class="content">
-            <div class="status-row">
-                <span>查詢模式：</span><div class="status-box"></div><span>線上同步中</span>
-            </div>
-            <div class="search-card">
-                <input type="text" id="qInput" placeholder="請輸入 車號 或 工號">
-                <div class="btn-row">
-                    <button class="btn-mp" onclick="qSearch()">查 詢</button>
-                    <button class="btn-mp" style="background:#4fc3f7">掃 描</button>
-                </div>
-                <button class="btn-mp" style="background:#607d8b; border:1px solid #455a64;" onclick="location.reload()">清 除</button>
-            </div>
-
-            <div id="res" class="res-box">
-                <div id="res-info" style="text-align:center;"></div>
-            </div>
-        </div>
+        <button class="btn btn-blue" style="width:100%" onclick="saveK9()">更新紀錄</button>
     </div>
 
 <script>
+    // Firebase 配置
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
@@ -100,48 +74,58 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    function doLogin() {
-        document.getElementById('login-page').style.display = 'none';
-        document.getElementById('main-terminal').style.display = 'block';
+    // 核心儲存邏輯 (V6.0 版)
+    function saveData(path) {
+        const id = document.getElementById('eID').value.trim();
+        const name = document.getElementById('eName').value.trim();
+        const plate = document.getElementById('ePlate').value.trim().toUpperCase();
+        const reason = document.getElementById('eReason').value.trim();
+
+        if(!name) return alert("❌ 請至少輸入姓名");
+
+        const data = { id, name, plate, reason, timestamp: new Date().toLocaleString() };
+
+        // 決定存檔路徑：員工用工號當 Key，黑名單用 push
+        const ref = (path === 'employee_list') ? db.ref(path + '/' + (id || 'TEMP_' + Date.now())) : db.ref(path).push();
+        
+        ref.set(data).then(() => {
+            alert("✅ 已完成連動至：" + (path === 'employee_list' ? '員工名單' : '黑名單'));
+            // 清空所有輸入框
+            document.querySelectorAll('input').forEach(i => i.value = '');
+        }).catch(err => alert("🚨 失敗：" + err.message));
     }
 
-    function qSearch() {
-        const val = document.getElementById('qInput').value.trim().toUpperCase();
-        if(!val) return;
-        const resBox = document.getElementById('res');
-        const resInfo = document.getElementById('res-info');
-        
-        resBox.style.display = 'block';
-        resInfo.innerHTML = "正在檢索雲端...";
-
-        // 戰術邏輯：先查黑名單
-        db.ref('blacklist_data').orderByChild('name').equalTo(val).once('value', s1 => {
-            if(s1.exists()){
-                resBox.className = "res-box res-warn";
-                resInfo.innerHTML = `<div style="font-size:32px;">⚠️ 警戒對象</div><div class="info-value">${val}</div>`;
-            } else {
-                // 再查員工
-                db.ref('employee_list/' + val).once('value', s2 => {
-                    if(s2.exists()){
-                        const d = s2.val();
-                        resBox.className = "res-box res-ok";
-                        // --- 升級：顯示姓名與單位 ---
-                        resInfo.innerHTML = `
-                            <div style="font-size:26px; margin-bottom:10px;">✅ 內部員工</div>
-                            <div class="info-label">姓名</div>
-                            <div class="info-value">${d.name}</div>
-                            <div class="info-label" style="margin-top:10px;">屬性 / 單位</div>
-                            <div class="info-value" style="color:#1b5e20;">${d.reason || d.dept || '未註記'}</div>
-                        `;
-                    } else {
-                        resBox.className = "res-box";
-                        resBox.style.background = "#eee";
-                        resInfo.innerHTML = "查無此紀錄";
-                    }
-                });
-            }
+    // K9 紀錄
+    function saveK9() {
+        const name = document.getElementById('k9Name').value.trim();
+        const note = document.getElementById('k9Note').value.trim();
+        if(!name || !note) return alert("❌ 犬名與內容不可空白");
+        db.ref('k9Logs/' + name).push({ note, time: new Date().toLocaleString() }).then(() => {
+            alert("🐕 " + name + " 紀錄更新成功");
+            document.getElementById('k9Note').value = '';
         });
     }
+
+    // 全自動表格監聽：不再漏掉任何人
+    db.ref('employee_list').on('value', snap => {
+        const data = snap.val();
+        const tbody = document.getElementById('liveTable');
+        tbody.innerHTML = '';
+        if(!data) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#444;">( 暫無資料，等待部署 )</td></tr>';
+            return;
+        }
+
+        Object.keys(data).forEach(key => {
+            const item = data[key];
+            tbody.innerHTML += `<tr>
+                <td style="color:#fff">${item.name}</td>
+                <td>${item.id || item.reason || '---'}</td>
+                <td>${item.plate || '---'}</td>
+                <td><button class="btn-red" style="padding:5px 10px; font-size:12px; border-radius:3px;" onclick="if(confirm('確定刪除？')) db.ref('employee_list/${key}').remove()">刪</button></td>
+            </tr>`;
+        });
+    });
 </script>
 </body>
 </html>
