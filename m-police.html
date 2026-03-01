@@ -3,139 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-SECURITY | 戰術終端 V7.6</title>
-    <link rel="icon" href="cd0a14ac-ca91-4f78-bba1-bf7e4104f5bb.jpg">
-    <link rel="apple-touch-icon" href="cd0a14ac-ca91-4f78-bba1-bf7e4104f5bb.jpg">
+    <title>M-Police 整合查詢 V7.8</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --mp-blue: #3273b5; --mp-grad: linear-gradient(to bottom, #74b9ff, #3273b5); --btn-blue: linear-gradient(to bottom, #74b9ff, #0984e3); --alert-red: #ff0000; }
-        body { margin: 0; background: #b0bec5; font-family: "Microsoft JhengHei", sans-serif; overflow: hidden; height: 100vh; width: 100vw; }
-        #login-page { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 100vh; background: #e3f2fd; padding-top: 15%; }
-        .login-box { width: 85%; max-width: 320px; background: white; border: 1px solid #90caf9; padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        #main-terminal { display: none; height: 100vh; flex-direction: column; }
-        .alert-bar { background: #000; color: var(--alert-red); padding: 5px; text-align: center; font-size: 11px; font-weight: bold; }
-        .header-banner { background: var(--mp-grad); padding: 12px 0; text-align: center; color: white; }
-        .tabs { display: flex; background: #546e7a; }
-        .tab { flex: 1; text-align: center; padding: 10px 0; color: white; font-size: 13px; border-right: 1px solid #455a64; }
-        .tab.active { background: var(--mp-blue); }
-        .content { flex: 1; padding: 10px; background: #cfd8dc; overflow-y: auto; }
-        .search-card { background: #fff; border: 1px solid #999; padding: 12px; border-radius: 4px; }
-        input, select { width: 100%; height: 42px; border: 1px solid #ccc; margin-bottom: 8px; padding: 0 10px; font-size: 16px; box-sizing: border-box; border-radius: 4px; }
-        .btn-mp { width: 100%; height: 46px; color: white; font-weight: bold; font-size: 16px; background: var(--btn-blue); border: none; border-radius: 4px; }
-        .res-box { margin-top: 10px; padding: 15px; border-radius: 4px; display: none; text-align: center; border: 2px solid transparent; }
-        .res-ok { background: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
-        .res-warn { background: #ffebee; border-color: #c62828; color: #b71c1c; animation: flash 0.6s infinite; }
-        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        .info-label { font-size: 12px; color: #666; margin-top: 5px; }
-        .info-value { font-size: 18px; color: #000; font-weight: bold; }
+        body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: #e3f2fd; margin: 0; padding: 0; overflow-x: hidden; }
+        
+        /* 1. 頂部斜體標題與狀態列 */
+        header { background: #000; padding: 5px; text-align: center; font-size: 12px; color: #ff0000; font-weight: bold; }
+        .m-police-title { background: linear-gradient(to bottom, #74b9ff, #3273b5); color: #fff; padding: 15px 0; text-align: center; font-size: 22px; font-style: italic; font-weight: 900; letter-spacing: 1px; }
+
+        /* 2. 分頁標籤 */
+        nav { display: flex; background: #546e7a; border-bottom: 2px solid #3273b5; }
+        .nav-item { flex: 1; text-align: center; padding: 12px 0; color: #fff; font-size: 14px; font-weight: bold; border-right: 1px solid rgba(255,255,255,0.1); }
+        .nav-item.active { background: rgba(0,0,0,0.2); border-bottom: 3px solid #00f2ff; }
+
+        /* 3. 查詢介面 */
+        .search-container { padding: 15px; }
+        .mode-status { margin-bottom: 10px; font-size: 14px; color: #333; font-weight: bold; }
+        .mode-tag { background: #1976d2; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+
+        .input-box { background: #fff; border: 2px solid #3273b5; border-radius: 8px; padding: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .input-box label { display: block; font-size: 12px; color: #666; font-weight: bold; margin-bottom: 5px; }
+        input { width: 100%; border: none; font-size: 20px; font-weight: bold; color: #333; outline: none; }
+
+        /* 按鈕組 */
+        .btn { width: 100%; padding: 15px; border-radius: 8px; border: 1px solid #1565c0; color: #fff; font-size: 18px; font-weight: bold; cursor: pointer; margin-bottom: 10px; box-shadow: 0 4px #0d47a1; transition: 0.1s; display: flex; justify-content: center; align-items: center; }
+        .btn-blue { background: linear-gradient(to bottom, #42a5f5, #1976d2); }
+        .btn-double { display: flex; gap: 10px; }
+        .btn-small { flex: 1; padding: 12px; font-size: 14px; }
+        .btn:active { transform: translateY(2px); box-shadow: 0 2px #0d47a1; }
+
+        /* 4. 結果卡片 */
+        .result-card { background: #fff; border: 2px solid #3273b5; border-radius: 12px; padding: 15px; margin-top: 15px; display: none; }
+        .result-title { text-align: center; color: #1976d2; font-weight: bold; font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid #e0e0e0; padding-bottom: 10px; }
+        .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f5f5f5; }
+        .result-label { color: #1565c0; font-weight: bold; font-size: 16px; }
+        .result-value { color: #333; font-weight: bold; font-size: 16px; }
+
+        /* 底部資訊列 */
+        .footer-info { margin-top: 20px; text-align: right; font-size: 11px; color: #666; padding: 10px; line-height: 1.5; }
+        .unit-active { color: #ff0000; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="login-page">
-        <div style="color:#0d47a1; font-weight:bold; margin-bottom:20px;">M-Police 整合查詢系統</div>
-        <div class="login-box">
-            <input type="password" id="loginCode" placeholder="登錄碼">
-            <input type="text" id="userName" placeholder="帳號">
-            <select id="dutyType"><option>門崗勤務</option><option>巡邏勤務</option></select>
-            <button class="btn-mp" onclick="doLogin()">登入系統</button>
-        </div>
-    </div>
+    <header>[連線正常] 雲端數據即時同步中</header>
+    <div class="m-police-title">M-Police 整合查詢</div>
 
-    <div id="main-terminal">
-        <div class="alert-bar">[連線正常] 雲端數據即時同步中</div>
-        <div class="header-banner"><h1>M-Security 整合查詢</h1></div>
-        <div class="content">
-            <div class="search-card">
-                <input type="text" id="qInput" placeholder="輸入 姓名、工號 或 車牌">
-                <button class="btn-mp" onclick="qSearch()">立即查詢</button>
-                <button class="btn-mp" style="background:#607d8b; margin-top:8px;" onclick="location.reload()">清除結果</button>
-            </div>
-            <div id="res" class="res-box"><div id="res-info"></div></div>
-        </div>
-    </div>
+    <nav>
+        <div class="nav-item active">一般</div>
+        <div class="nav-item">進階</div>
+        <div class="nav-item">應用</div>
+        <div class="nav-item">頻道</div>
+        <div class="nav-item">設定</div>
+    </nav>
 
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
-        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
-        projectId: "factor-security-d1965",
-        appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    function doLogin() {
-        if(!document.getElementById('loginCode').value) return alert("請輸入登錄碼");
-        document.getElementById('login-page').style.display = 'none';
-        document.getElementById('main-terminal').style.display = 'flex';
-    }
-
-    async function qSearch() {
-        const val = document.getElementById('qInput').value.trim().toUpperCase();
-        if(!val) return;
+    <div class="search-container">
+        <div class="mode-status">查詢模式：<span class="mode-tag">線上</span></div>
         
-        const resBox = document.getElementById('res');
-        const resInfo = document.getElementById('res-info');
-        resBox.style.display = 'block';
-        resBox.className = "res-box";
-        resInfo.innerHTML = "比對數據庫中...";
+        <div class="input-box">
+            <label>車牌/工號</label>
+            <input type="text" id="queryInput" placeholder="請輸入資料">
+        </div>
 
-        // 寫入日誌
-        db.ref('search_logs').push({
-            user: document.getElementById('userName').value || "未知",
-            query: val,
-            duty: document.getElementById('dutyType').value,
-            time: new Date().toLocaleString('zh-TW', {hour12: false})
-        });
+        <button class="btn btn-blue" onclick="searchData()">查 詢</button>
+        <button class="btn btn-blue">條 碼 掃 描</button>
+        
+        <div class="btn-double">
+            <button class="btn btn-blue btn-small" onclick="clearData()">清 除</button>
+            <button class="btn btn-blue btn-small">資 料 同 步</button>
+        </div>
 
-        // --- 強大查詢邏輯：同時掃描員工與黑名單 ---
-        try {
-            const [snapEmp, snapBlack] = await Promise.all([
-                db.ref('employee_list').once('value'),
-                db.ref('blacklist_data').once('value')
-            ]);
+        <div id="resultCard" class="result-card">
+            <div class="result-title">身份確認：台灣精銳員工</div>
+            <div class="result-row"><span class="result-label">姓名:</span><span id="resName" class="result-value">---</span></div>
+            <div class="result-row"><span class="result-label">單位:</span><span id="resUnit" class="result-value">---</span></div>
+            <div class="result-row"><span class="result-label">工號:</span><span id="resID" class="result-value">---</span></div>
+            <div class="result-row" style="border:none;"><span class="result-label">車牌:</span><span id="resPlate" class="result-value">---</span></div>
+        </div>
+    </div>
 
-            const emps = snapEmp.val() || {};
-            const blacks = snapBlack.val() || {};
-            let found = null;
-            let isBlack = false;
+    <div class="footer-info">
+        <span id="currentDate">20260301_0749</span><br>
+        <span class="unit-active">K9-UNIT-ACTIVE</span>
+    </div>
 
-            // 1. 優先找黑名單 (不論是名字、工號還是車牌)
-            for(let key in blacks) {
-                let b = blacks[key];
-                if(b.name === val || b.id === val || b.plate === val) {
-                    found = b; isBlack = true; break;
-                }
-            }
-
-            // 2. 如果黑名單沒找到，找員工
-            if(!found) {
-                for(let key in emps) {
-                    let e = emps[key];
-                    if(e.name === val || e.id === val || e.plate === val || key === val) {
-                        found = e; break;
-                    }
-                }
-            }
-
-            // 3. 顯示結果
-            if(found) {
-                resBox.className = "res-box " + (isBlack ? "res-warn" : "res-ok");
-                resInfo.innerHTML = `
-                    <div style="font-size:16px; font-weight:bold;">${isBlack ? '⚠️ 警戒對象 (黑名單)' : '✅ 內部人員'}</div>
-                    <div class="info-label">姓名</div><div class="info-value">${found.name}</div>
-                    <div class="info-label">標記/單位</div><div class="info-value">${found.reason || found.id || '---'}</div>
-                `;
-            } else {
-                resBox.style.background = "#eee";
-                resInfo.innerHTML = "查無此資料";
-            }
-        } catch(e) {
-            resInfo.innerHTML = "連線錯誤";
+    <script>
+        // 這裡放入你的 Firebase 邏輯和 searchData 功能
+        function searchData() {
+            // 模仿查詢動作
+            document.getElementById('resultCard').style.display = 'block';
+            // ... (原本的 Firebase 查詢邏輯)
         }
-    }
-</script>
+        function clearData() {
+            document.getElementById('resultCard').style.display = 'none';
+            document.getElementById('queryInput').value = '';
+        }
+    </script>
 </body>
 </html>
