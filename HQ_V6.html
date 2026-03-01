@@ -1,24 +1,78 @@
-<div id="hq-header" style="background: #000; padding: 20px 0; text-align: center; border-bottom: 2px solid var(--cyan);">
-    
-    <div style="margin-bottom: 15px;">
-        <img src="HQ_logo.png" alt="HQ Logo" 
-             style="width: 150px; height: auto; filter: drop-shadow(0 0 10px rgba(0, 242, 255, 0.5));">
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>M-SECURITY HQ V7.6</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        :root { --cyan: #00f2ff; --warn: #ff4d4f; --bg: #050505; }
+        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; padding: 0; }
+        /* HQ 後台 Logo 區域 */
+        .hq-header { background: #000; padding: 25px; text-align: center; border-bottom: 2px solid var(--cyan); }
+        .hq-logo { width: 160px; height: auto; margin-bottom: 10px; filter: drop-shadow(0 0 5px rgba(0, 242, 255, 0.3)); }
+        nav { display: flex; background: #111; }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; color: #666; font-weight: bold; }
+        .tab.active { color: var(--cyan); background: #1a1a1a; border-bottom: 2px solid var(--cyan); }
+        .content { padding: 20px; display: none; }
+        .content.active { display: block; }
+        .input-group { background: #111; border: 1px dashed var(--cyan); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; margin-bottom: 10px; border-radius: 4px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .btn-cyan { background: var(--cyan); color: #000; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { background: #1a1a1a; color: var(--cyan); padding: 10px; text-align: left; }
+        td { padding: 12px 10px; border-bottom: 1px solid #222; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="hq-header">
+        <img src="IMG_1096.jpeg" class="hq-logo" alt="HQ Logo">
+        <div style="color:var(--cyan); font-weight:900; letter-spacing:3px; font-size: 20px;">M-SECURITY HQ TERMINAL</div>
     </div>
-
-    <h1 style="margin: 0; color: var(--cyan); font-style: italic; font-weight: 900; letter-spacing: 3px; font-size: 26px;">
-        M-SECURITY HQ TERMINAL
-    </h1>
-    <p style="color: #666; font-size: 12px; margin: 5px 0 0 0; letter-spacing: 1px;">STRATEGIC DATA COMMAND CENTER</p>
-</div>
-
-<style>
-    /* 讓 HQ 字樣帶有一點呼吸燈效果 */
-    @keyframes hq-glow {
-        0% { opacity: 0.8; }
-        50% { opacity: 1; filter: drop-shadow(0 0 15px rgba(0, 242, 255, 0.8)); }
-        100% { opacity: 0.8; }
+    <nav>
+        <div class="tab active" onclick="switchTab('manage')">數據部署</div>
+        <div class="tab" onclick="switchTab('logs')">系統日誌</div>
+    </nav>
+    <div id="manage" class="content active">
+        <div class="input-group">
+            <input type="text" id="eID" placeholder="工號 / 編號">
+            <input type="text" id="eName" placeholder="對象姓名">
+            <input type="text" id="ePlate" placeholder="車牌號碼">
+            <input type="text" id="eReason" placeholder="備註 / 單位">
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-cyan" onclick="save('employee_list')">員工</button>
+                <button class="btn btn-cyan" style="background:#f1c40f" onclick="save('vip_list')">VIP</button>
+                <button class="btn btn-cyan" style="background:#ff4d4f; color:white;" onclick="save('blacklist_data')">黑名單</button>
+            </div>
+        </div>
+        <button onclick="batchDel()" style="background:#ff4d4f; color:white; border:none; padding:10px; border-radius:4px; cursor:pointer; margin-bottom:10px;">撤銷選中資料</button>
+        <table>
+            <thead><tr><th><input type="checkbox" onclick="selectAll(this)"></th><th>類型</th><th>姓名/車牌</th><th>備註</th></tr></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+    <div id="logs" class="content">載入中...</div>
+<script>
+    const firebaseConfig = { apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48", databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com", projectId: "factor-security-d1965", appId: "1:864846943143:web:4cfa18cd20d2f712225c82" };
+    firebase.initializeApp(firebaseConfig); const db = firebase.database();
+    function switchTab(id) { document.querySelectorAll('.content').forEach(c => c.style.display='none'); document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.getElementById(id).style.display='block'; event.currentTarget.classList.add('active'); }
+    function save(path) {
+        const name = document.getElementById('eName').value; if(!name) return alert("必填姓名");
+        const id = document.getElementById('eID').value || Date.now().toString();
+        db.ref(path+'/'+id).set({ name, id, plate: document.getElementById('ePlate').value.toUpperCase(), reason: document.getElementById('eReason').value }).then(()=>{ alert("完成"); load(); });
     }
-    img[alt="HQ Logo"] {
-        animation: hq-glow 3s infinite ease-in-out;
+    function load() {
+        const tb = document.getElementById('tableBody'); tb.innerHTML = '';
+        const list = (p, t, c) => db.ref(p).once('value', s => s.forEach(i => { const d = i.val(); tb.innerHTML += `<tr><td><input type="checkbox" class="ck" data-p="${p}" data-i="${i.key}"></td><td style="color:${c}">${t}</td><td>${d.name}<br>${d.plate||''}</td><td>${d.reason||''}</td></tr>`; }));
+        list('employee_list','員工','var(--cyan)'); list('vip_list','VIP','#f1c40f'); list('blacklist_data','警戒','#ff4d4f');
     }
-</style>
+    function selectAll(s) { document.querySelectorAll('.ck').forEach(c => c.checked = s.checked); }
+    function batchDel() {
+        const cks = document.querySelectorAll('.ck:checked'); if(cks.length===0) return;
+        if(confirm("確定刪除？")) { cks.forEach(c => db.ref(c.dataset.p+'/'+c.dataset.i).remove()); alert("已刪除"); load(); }
+    }
+    load();
+</script>
+</body>
+</html>
