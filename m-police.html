@@ -3,52 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-Police 整合查詢 V7.8</title>
+    <title>M-Police 整合查詢 V7.8 (連線修復版)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: #e3f2fd; margin: 0; padding: 0; overflow-x: hidden; }
-        
-        /* 1. 頂部斜體標題與狀態列 */
+        body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: #e3f2fd; margin: 0; padding: 0; }
         header { background: #000; padding: 5px; text-align: center; font-size: 12px; color: #ff0000; font-weight: bold; }
         .m-police-title { background: linear-gradient(to bottom, #74b9ff, #3273b5); color: #fff; padding: 15px 0; text-align: center; font-size: 22px; font-style: italic; font-weight: 900; letter-spacing: 1px; }
-
-        /* 2. 分頁標籤 */
         nav { display: flex; background: #546e7a; border-bottom: 2px solid #3273b5; }
         .nav-item { flex: 1; text-align: center; padding: 12px 0; color: #fff; font-size: 14px; font-weight: bold; border-right: 1px solid rgba(255,255,255,0.1); }
         .nav-item.active { background: rgba(0,0,0,0.2); border-bottom: 3px solid #00f2ff; }
-
-        /* 3. 查詢介面 */
         .search-container { padding: 15px; }
         .mode-status { margin-bottom: 10px; font-size: 14px; color: #333; font-weight: bold; }
         .mode-tag { background: #1976d2; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-
         .input-box { background: #fff; border: 2px solid #3273b5; border-radius: 8px; padding: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .input-box label { display: block; font-size: 12px; color: #666; font-weight: bold; margin-bottom: 5px; }
         input { width: 100%; border: none; font-size: 20px; font-weight: bold; color: #333; outline: none; }
-
-        /* 按鈕組 */
-        .btn { width: 100%; padding: 15px; border-radius: 8px; border: 1px solid #1565c0; color: #fff; font-size: 18px; font-weight: bold; cursor: pointer; margin-bottom: 10px; box-shadow: 0 4px #0d47a1; transition: 0.1s; display: flex; justify-content: center; align-items: center; }
+        .btn { width: 100%; padding: 15px; border-radius: 8px; border: 1px solid #1565c0; color: #fff; font-size: 18px; font-weight: bold; cursor: pointer; margin-bottom: 10px; box-shadow: 0 4px #0d47a1; text-align: center; display: block; text-decoration: none; }
         .btn-blue { background: linear-gradient(to bottom, #42a5f5, #1976d2); }
         .btn-double { display: flex; gap: 10px; }
         .btn-small { flex: 1; padding: 12px; font-size: 14px; }
-        .btn:active { transform: translateY(2px); box-shadow: 0 2px #0d47a1; }
-
-        /* 4. 結果卡片 */
+        
+        /* 結果卡片 */
         .result-card { background: #fff; border: 2px solid #3273b5; border-radius: 12px; padding: 15px; margin-top: 15px; display: none; }
+        .alert-card { border-color: #ff4d4f; background: #fff1f0; } /* 黑名單警示 */
         .result-title { text-align: center; color: #1976d2; font-weight: bold; font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid #e0e0e0; padding-bottom: 10px; }
         .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f5f5f5; }
         .result-label { color: #1565c0; font-weight: bold; font-size: 16px; }
-        .result-value { color: #333; font-weight: bold; font-size: 16px; }
-
-        /* 底部資訊列 */
-        .footer-info { margin-top: 20px; text-align: right; font-size: 11px; color: #666; padding: 10px; line-height: 1.5; }
+        .result-value { color: #333; font-weight: bold; font-size: 16px; text-align: right; }
+        
+        .footer-info { margin-top: 20px; text-align: right; font-size: 11px; color: #666; padding: 10px; }
         .unit-active { color: #ff0000; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <header>[連線正常] 雲端數據即時同步中</header>
+    <header>[雲端同步] 連線正常</header>
     <div class="m-police-title">M-Police 整合查詢</div>
 
     <nav>
@@ -61,22 +51,18 @@
 
     <div class="search-container">
         <div class="mode-status">查詢模式：<span class="mode-tag">線上</span></div>
-        
         <div class="input-box">
-            <label>車牌/工號</label>
+            <label>姓名 / 工號 / 車牌</label>
             <input type="text" id="queryInput" placeholder="請輸入資料">
         </div>
-
         <button class="btn btn-blue" onclick="searchData()">查 詢</button>
-        <button class="btn btn-blue">條 碼 掃 描</button>
-        
         <div class="btn-double">
             <button class="btn btn-blue btn-small" onclick="clearData()">清 除</button>
-            <button class="btn btn-blue btn-small">資 料 同 步</button>
+            <button class="btn btn-blue btn-small" onclick="location.reload()">資料同步</button>
         </div>
 
         <div id="resultCard" class="result-card">
-            <div class="result-title">身份確認：台灣精銳員工</div>
+            <div id="resTitle" class="result-title">身份確認：台灣精銳員工</div>
             <div class="result-row"><span class="result-label">姓名:</span><span id="resName" class="result-value">---</span></div>
             <div class="result-row"><span class="result-label">單位:</span><span id="resUnit" class="result-value">---</span></div>
             <div class="result-row"><span class="result-label">工號:</span><span id="resID" class="result-value">---</span></div>
@@ -85,21 +71,87 @@
     </div>
 
     <div class="footer-info">
-        <span id="currentDate">20260301_0749</span><br>
+        <span id="currentTime">---</span><br>
         <span class="unit-active">K9-UNIT-ACTIVE</span>
     </div>
 
-    <script>
-        // 這裡放入你的 Firebase 邏輯和 searchData 功能
-        function searchData() {
-            // 模仿查詢動作
-            document.getElementById('resultCard').style.display = 'block';
-            // ... (原本的 Firebase 查詢邏輯)
-        }
-        function clearData() {
-            document.getElementById('resultCard').style.display = 'none';
-            document.getElementById('queryInput').value = '';
-        }
-    </script>
+<script>
+    // 2. Firebase 初始化 ( 必須與後台一致 )
+    const firebaseConfig = {
+        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+        projectId: "factor-security-d1965",
+        appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // 更新時間
+    setInterval(() => {
+        const now = new Date();
+        document.getElementById('currentTime').innerText = now.toLocaleString();
+    }, 1000);
+
+    // 3. 核心搜尋邏輯
+    function searchData() {
+        const q = document.getElementById('queryInput').value.trim().toUpperCase();
+        if(!q) return alert("請輸入搜尋內容");
+
+        const card = document.getElementById('resultCard');
+        const resTitle = document.getElementById('resTitle');
+        
+        // 紀錄查詢 log 到後台
+        db.ref('search_logs').push({
+            user: localStorage.getItem('guardName') || "未知人員",
+            query: q,
+            time: new Date().toLocaleString()
+        });
+
+        // 優先比對黑名單
+        db.ref('blacklist_data').once('value', snap => {
+            let found = false;
+            snap.forEach(child => {
+                const data = child.val();
+                if(data.name === q || data.id === q || data.plate === q) {
+                    showResult(data, "⚠️ 警戒對象 (黑名單)", true);
+                    found = true;
+                }
+            });
+
+            // 若黑名單沒查到，改查員工名單
+            if(!found) {
+                db.ref('employee_list').once('value', snapEmp => {
+                    let empFound = false;
+                    snapEmp.forEach(child => {
+                        const data = child.val();
+                        if(data.name === q || data.id === q || data.plate === q) {
+                            showResult(data, "✅ 身份確認：台灣精銳員工", false);
+                            empFound = true;
+                        }
+                    });
+                    if(!empFound) alert("查無資料，請重新確認！");
+                });
+            }
+        });
+    }
+
+    function showResult(data, title, isAlert) {
+        const card = document.getElementById('resultCard');
+        card.style.display = 'block';
+        card.className = isAlert ? "result-card alert-card" : "result-card";
+        document.getElementById('resTitle').innerText = title;
+        document.getElementById('resTitle').style.color = isAlert ? "#ff4d4f" : "#1976d2";
+        
+        document.getElementById('resName').innerText = data.name || "---";
+        document.getElementById('resUnit').innerText = data.reason || "---";
+        document.getElementById('resID').innerText = data.id || "---";
+        document.getElementById('resPlate').innerText = data.plate || "---";
+    }
+
+    function clearData() {
+        document.getElementById('resultCard').style.display = 'none';
+        document.getElementById('queryInput').value = '';
+    }
+</script>
 </body>
 </html>
