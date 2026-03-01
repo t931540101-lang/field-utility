@@ -2,67 +2,89 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>M-SECURITY HQ V7.7</title>
+    <title>M-SECURITY HQ V7.8 | STRATEGIC COMMAND</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --cyan: #00f2ff; --warn: #ff4d4f; --bg: #050505; }
-        body { background: var(--bg); color: white; font-family: "Microsoft JhengHei", sans-serif; margin: 0; padding: 0; }
-        .hq-header { background: #000; padding: 25px; text-align: center; border-bottom: 2px solid var(--cyan); }
-        .hq-logo { width: 160px; height: auto; margin-bottom: 10px; }
-        nav { display: flex; background: #111; border-bottom: 1px solid #333; }
-        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; color: #666; font-weight: bold; transition: 0.3s; }
+        :root { --cyan: #00f2ff; --warn: #ff4d4f; --bg: #050505; --gold: #f1c40f; }
+        body { background: var(--bg); color: white; font-family: "Microsoft JhengHei", sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
+        
+        /* 視覺強化：雷達掃描背景 */
+        body::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: -1; background-size: 100% 2px, 3px 100%; pointer-events: none;
+        }
+
+        .hq-header { background: #000; padding: 25px; text-align: center; border-bottom: 2px solid var(--cyan); position: relative; }
+        .hq-logo { width: 150px; height: auto; margin-bottom: 10px; filter: drop-shadow(0 0 10px var(--cyan)); }
+        
+        /* 1. 即時狀態看板 */
+        .status-bar { display: flex; justify-content: center; gap: 15px; padding: 10px; background: #111; border-bottom: 1px solid #333; }
+        .status-box { background: #000; border: 1px solid #222; padding: 5px 15px; border-radius: 4px; font-size: 11px; text-align: center; }
+        .status-val { display: block; font-size: 16px; font-weight: bold; color: var(--cyan); }
+        .blink { animation: blinker 1.5s linear infinite; color: #00ff00; }
+        @keyframes blinker { 50% { opacity: 0; } }
+
+        nav { display: flex; background: #111; }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; color: #666; font-weight: bold; }
         .tab.active { color: var(--cyan); background: #1a1a1a; border-bottom: 2px solid var(--cyan); }
+        
         .content { padding: 20px; display: none; }
         .content.active { display: block; }
-        /* 日誌專用樣式 */
-        #logFeed { background: #0a0a0a; border: 1px solid #222; padding: 15px; border-radius: 4px; height: 500px; overflow-y: auto; font-family: monospace; font-size: 13px; line-height: 1.6; }
-        .log-entry { padding: 8px; border-bottom: 1px solid #1a1a1a; color: #aaa; }
-        .log-time { color: var(--cyan); margin-right: 10px; }
-        .log-user { color: #f1c40f; margin-right: 10px; font-weight: bold; }
-        .log-query { color: #fff; font-weight: bold; border-bottom: 1px dashed #444; }
         
         .input-group { background: #111; border: 1px dashed var(--cyan); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
         input { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; margin-bottom: 10px; border-radius: 4px; box-sizing: border-box; }
         .btn { width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
         .btn-cyan { background: var(--cyan); color: #000; }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th { background: #1a1a1a; color: var(--cyan); padding: 10px; text-align: left; }
         td { padding: 12px 10px; border-bottom: 1px solid #222; }
+
+        #logFeed { background: #0a0a0a; border: 1px solid #222; padding: 15px; height: 400px; overflow-y: auto; font-family: monospace; font-size: 13px; }
+        .log-entry { padding: 5px; border-bottom: 1px solid #1a1a1a; }
     </style>
 </head>
 <body>
     <div class="hq-header">
         <img src="IMG_1096.jpeg" class="hq-logo" alt="HQ Logo">
-        <div style="color:var(--cyan); font-weight:900; letter-spacing:3px; font-size: 20px;">M-SECURITY HQ TERMINAL</div>
+        <div style="color:var(--cyan); font-weight:900; letter-spacing:3px;">M-SECURITY HQ TERMINAL</div>
     </div>
+
+    <div class="status-bar">
+        <div class="status-box">SYSTEM <span class="status-val blink">ONLINE</span></div>
+        <div class="status-box">EMPLOYEES <span id="count-emp" class="status-val">0</span></div>
+        <div class="status-box">VIP <span id="count-vip" class="status-val" style="color:var(--gold)">0</span></div>
+        <div class="status-box">ALERTS <span id="count-black" class="status-val" style="color:var(--warn)">0</span></div>
+    </div>
+
     <nav>
-        <div class="tab active" onclick="switchTab('manage')">數據部署系統</div>
-        <div class="tab" onclick="switchTab('logs')">系統監控日誌</div>
+        <div class="tab active" onclick="switchTab('manage')">部署系統</div>
+        <div class="tab" onclick="switchTab('logs')">監控日誌</div>
     </nav>
-    
+
     <div id="manage" class="content active">
         <div class="input-group">
             <input type="text" id="eID" placeholder="工號 / 編號">
-            <input type="text" id="eName" placeholder="對象姓名">
-            <input type="text" id="ePlate" placeholder="車牌號碼">
-            <input type="text" id="eReason" placeholder="備註 / 單位">
+            <input type="text" id="eName" placeholder="姓名">
+            <input type="text" id="ePlate" placeholder="車牌">
+            <input type="text" id="eReason" placeholder="單位 / 備註">
             <div style="display:flex; gap:10px;">
-                <button class="btn btn-cyan" onclick="save('employee_list')">存為員工</button>
-                <button class="btn btn-cyan" style="background:#f1c40f" onclick="save('vip_list')">存為 VIP</button>
-                <button class="btn btn-cyan" style="background:#ff4d4f; color:white;" onclick="save('blacklist_data')">發布警戒</button>
+                <button class="btn btn-cyan" onclick="save('employee_list')">部署員工</button>
+                <button class="btn btn-cyan" style="background:var(--gold)" onclick="save('vip_list')">部署 VIP</button>
+                <button class="btn btn-cyan" style="background:var(--warn); color:#fff" onclick="save('blacklist_data')">發布警戒</button>
             </div>
         </div>
-        <button onclick="batchDel()" style="background:#ff4d4f; color:white; border:none; padding:10px; border-radius:4px; cursor:pointer; margin-bottom:10px;">撤銷選中資料</button>
+        <button onclick="batchDel()" style="background:var(--warn); color:white; border:none; padding:10px; border-radius:4px; margin-bottom:10px; cursor:pointer;">⚠️ 批量撤銷資料</button>
         <table>
-            <thead><tr><th><input type="checkbox" onclick="selectAll(this)"></th><th>類型</th><th>姓名/車牌</th><th>備註</th></tr></thead>
+            <thead><tr><th><input type="checkbox" onclick="selectAll(this)"></th><th>類別</th><th>對象/車牌</th><th>單位備註</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
 
     <div id="logs" class="content">
-        <div style="color:var(--cyan); margin-bottom:15px; font-weight:bold;">📡 即時查詢監控中... (顯示最後 50 筆)</div>
-        <div id="logFeed">等待數據傳輸...</div>
+        <div id="logFeed">等待戰術數據傳輸...</div>
     </div>
 
 <script>
@@ -76,36 +98,40 @@
         event.currentTarget.classList.add('active');
     }
 
-    function save(path) {
-        const name = document.getElementById('eName').value; if(!name) return alert("必填姓名");
+    function save(p) {
+        const n = document.getElementById('eName').value; if(!n) return alert("姓名必填");
         const id = document.getElementById('eID').value || Date.now().toString();
-        db.ref(path+'/'+id).set({ name, id, plate: document.getElementById('ePlate').value.toUpperCase(), reason: document.getElementById('eReason').value }).then(()=>{ alert("完成"); load(); });
+        db.ref(p+'/'+id).set({ name: n, id, plate: document.getElementById('ePlate').value.toUpperCase(), reason: document.getElementById('eReason').value }).then(()=>{ alert("部署成功"); load(); });
     }
 
     function load() {
         const tb = document.getElementById('tableBody'); tb.innerHTML = '';
-        const list = (p, t, c) => db.ref(p).once('value', s => s.forEach(i => { const d = i.val(); tb.innerHTML += `<tr><td><input type="checkbox" class="ck" data-p="${p}" data-i="${i.key}"></td><td style="color:${c}">${t}</td><td>${d.name}<br>${d.plate||''}</td><td>${d.reason||''}</td></tr>`; }));
-        list('employee_list','員工','var(--cyan)'); list('vip_list','VIP','#f1c40f'); list('blacklist_data','警戒','#ff4d4f');
+        let cE = 0, cV = 0, cB = 0;
+        const list = (p, t, c, countVar) => db.ref(p).once('value', s => {
+            s.forEach(i => { 
+                const d = i.val();
+                if(p==='employee_list') cE++; if(p==='vip_list') cV++; if(p==='blacklist_data') cB++;
+                tb.innerHTML += `<tr><td><input type="checkbox" class="ck" data-p="${p}" data-i="${i.key}"></td><td style="color:${c}">${t}</td><td>${d.name}<br>${d.plate||''}</td><td>${d.reason||''}</td></tr>`; 
+            });
+            document.getElementById('count-emp').innerText = cE;
+            document.getElementById('count-vip').innerText = cV;
+            document.getElementById('count-black').innerText = cB;
+        });
+        list('employee_list','員工','var(--cyan)'); list('vip_list','VIP','var(--gold)'); list('blacklist_data','警報','var(--warn)');
     }
 
-    // 🚀 修復關鍵：日誌監聽邏輯
-    db.ref('search_logs').limitToLast(50).on('value', snap => {
-        const feed = document.getElementById('logFeed');
-        if(!snap.exists()) { feed.innerHTML = "目前尚無查詢日誌"; return; }
-        feed.innerHTML = '';
+    db.ref('search_logs').limitToLast(30).on('value', snap => {
+        const feed = document.getElementById('logFeed'); feed.innerHTML = '';
         snap.forEach(c => {
             const d = c.val();
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.innerHTML = `<span class="log-time">[${d.time}]</span><span class="log-user">${d.user}</span> 執行查詢: <span class="log-query">${d.query}</span>`;
-            feed.insertBefore(entry, feed.firstChild); // 讓最新的顯示在最上面
+            feed.innerHTML = `<div class="log-entry"><span style="color:var(--cyan)">[${d.time}]</span> <span style="color:var(--gold)">${d.user}</span> 查詢: <b>${d.query}</b></div>` + feed.innerHTML;
         });
     });
 
     function selectAll(s) { document.querySelectorAll('.ck').forEach(c => c.checked = s.checked); }
     function batchDel() {
         const cks = document.querySelectorAll('.ck:checked'); if(cks.length===0) return;
-        if(confirm("確定刪除選中資料？")) { cks.forEach(c => db.ref(c.dataset.p+'/'+c.dataset.i).remove()); alert("已清理"); load(); }
+        if(confirm("確定撤銷？")) { cks.forEach(c => db.ref(c.dataset.p+'/'+c.dataset.i).remove()); alert("清理完成"); load(); }
     }
     load();
 </script>
