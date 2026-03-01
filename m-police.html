@@ -1,36 +1,75 @@
-<div id="auth-screen" style="background: #cfd8dc; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: fixed; width: 100%; z-index: 999;">
-    
-    <div style="background: #000; color: #ff0000; padding: 5px; width:100%; text-align: center; position:absolute; top:0; font-weight:bold; font-size: 14px;">
-        [警戒] 非授權人員禁止進入
-    </div>
-
-    <div style="margin-bottom: 25px; text-align: center;">
-        <img src="image.png" alt="Security Logo" 
-             style="width: 110px; height: 110px; border-radius: 50%; border: 3px solid #3273b5; background: #fff; object-fit: contain; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-    </div>
-
-    <div style="background: #fff; border: 2px solid #3273b5; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 85%; max-width: 320px;">
-        <h2 style="text-align:center; color:#1976d2; margin: 0 0 20px 0; font-size: 22px; font-weight: 900; letter-spacing: 1px;">系統授權登入</h2>
-        
-        <div style="margin-bottom: 15px;">
-            <label style="font-size: 12px; color: #666; font-weight: bold; display: block; margin-bottom: 5px;">值勤人員姓名</label>
-            <input type="text" id="guardName" placeholder="請輸入姓名" 
-                   style="width:100%; padding:12px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; font-size:16px; background: #fafafa;">
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>M-Police V8.8</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #e3f2fd; margin: 0; padding: 0; }
+        #auth-screen { background: #cfd8dc; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: fixed; width: 100%; z-index: 999; }
+        .login-card { background: #fff; border: 2px solid #3273b5; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        #main-app { display: none; }
+        header { background: #000; color: red; text-align: center; padding: 5px; font-size: 12px; font-weight: bold; }
+        .m-header { background: linear-gradient(to bottom, #74b9ff, #3273b5); color: #fff; padding: 15px; text-align: center; font-style: italic; font-weight: 900; font-size: 22px; }
+        nav { display: flex; background: #546e7a; color: white; }
+        .nav-item { flex: 1; padding: 12px; text-align: center; font-size: 13px; font-weight: bold; }
+        .nav-item.active { background: rgba(0,0,0,0.3); border-bottom: 3px solid #00f2ff; }
+        .container { padding: 15px; }
+        .input-box { background: #fff; border: 2px solid #3273b5; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+        .btn { width: 100%; padding: 15px; background: linear-gradient(to bottom, #42a5f5, #1976d2); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 18px; box-shadow: 0 4px #0d47a1; margin-bottom: 10px; }
+        .result-card { background: #fff; border: 2px solid #3273b5; border-radius: 12px; padding: 15px; display: none; }
+        .item-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <div id="auth-screen">
+        <header style="position:absolute; top:0; width:100%;">[警戒] 非授權禁止進入</header>
+        <img src="IMG_1092.jpeg" style="width:110px; height:110px; border-radius:50%; border:3px solid #3273b5; background:#fff; margin-bottom:20px; padding:5px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+        <div class="login-card">
+            <h2 style="color:#1976d2; margin:0 0 15px 0;">系統授權登入</h2>
+            <input type="text" id="gName" placeholder="人員姓名" style="width:100%; padding:12px; margin-bottom:10px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;">
+            <input type="password" id="aCode" placeholder="安全授權碼" style="width:100%; padding:12px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;">
+            <button class="btn" style="margin-top:15px;" onclick="checkAuth()">驗 證 登 入</button>
         </div>
-
-        <div style="margin-bottom: 20px;">
-            <label style="font-size: 12px; color: #666; font-weight: bold; display: block; margin-bottom: 5px;">安全授權碼</label>
-            <input type="password" id="authCode" placeholder="請輸入密碼" 
-                   style="width:100%; padding:12px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; font-size:16px; background: #fafafa;">
-        </div>
-        
-        <button onclick="checkAuth()" 
-                style="width: 100%; padding: 15px; background: linear-gradient(to bottom, #42a5f5, #1976d2); color: white; border: none; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px #0d47a1;">
-            授 權 登 入
-        </button>
     </div>
-
-    <p style="color:#78909c; font-size:11px; margin-top:25px; font-weight:bold; letter-spacing: 1px;">
-        TERMINAL SECURITY SYSTEM V8.6
-    </p>
-</div>
+    <div id="main-app">
+        <header>[連線正常] 雲端同步中</header>
+        <div class="m-header">M-Police 整合查詢</div>
+        <nav><div class="nav-item active">一般</div><div class="nav-item">進階</div><div class="nav-item">應用</div><div class="nav-item">頻道</div></nav>
+        <div class="container">
+            <div class="input-box"><input type="text" id="qInput" placeholder="車牌 / 工號 / 姓名" style="width:100%; border:none; font-size:18px; outline:none;"></div>
+            <button class="btn" onclick="search()">查 詢</button>
+            <div id="resCard" class="result-card">
+                <div id="resTitle" style="text-align:center; font-weight:bold; color:#1976d2; margin-bottom:10px;">身份確認</div>
+                <div class="item-row"><span>姓名：</span><span id="rName"></span></div>
+                <div class="item-row"><span>單位：</span><span id="rUnit"></span></div>
+                <div class="item-row"><span>車牌：</span><span id="rPlate"></span></div>
+            </div>
+        </div>
+    </div>
+<script>
+    const firebaseConfig = { apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48", databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com", projectId: "factor-security-d1965", appId: "1:864846943143:web:4cfa18cd20d2f712225c82" };
+    firebase.initializeApp(firebaseConfig); const db = firebase.database();
+    function checkAuth() {
+        const n = document.getElementById('gName').value; const c = document.getElementById('aCode').value;
+        if(n && c === "8888") { localStorage.setItem('guard', n); document.getElementById('auth-screen').style.display='none'; document.getElementById('main-app').style.display='block'; }
+        else alert("授權碼錯誤");
+    }
+    function search() {
+        const q = document.getElementById('qInput').value.trim().toUpperCase(); if(!q) return;
+        const find = (path, title) => { db.ref(path).once('value', snap => {
+            snap.forEach(c => { const d = c.val(); if(d.name===q||d.id===q||d.plate===q) {
+                document.getElementById('resCard').style.display='block';
+                document.getElementById('resTitle').innerText = title;
+                document.getElementById('rName').innerText = d.name;
+                document.getElementById('rUnit').innerText = d.reason || '---';
+                document.getElementById('rPlate').innerText = d.plate || '---';
+            }});
+        }); };
+        find('employee_list', '✅ 員工確認'); find('vip_list', '🌟 VIP 董事'); find('blacklist_data', '⚠️ 黑名單警告');
+    }
+</script>
+</body>
+</html>
