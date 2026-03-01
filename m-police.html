@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-Police V8.9</title>
+    <title>M-Police V9.0</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -19,21 +19,19 @@
         .container { padding: 15px; }
         .content-section { display: none; }
         .content-section.active { display: block; }
-        .input-box { background: #fff; border: 2px solid #3273b5; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
-        .btn { width: 100%; padding: 15px; background: linear-gradient(to bottom, #42a5f5, #1976d2); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 18px; box-shadow: 0 4px #0d47a1; margin-bottom: 10px; }
         .card { background: #fff; border: 2px solid #3273b5; border-radius: 12px; padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .vip-card { border-color: #f1c40f; background: #fffdf0; }
         .item-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; }
+        .btn { width: 100%; padding: 15px; background: linear-gradient(to bottom, #42a5f5, #1976d2); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 18px; box-shadow: 0 4px #0d47a1; margin-bottom: 10px; }
     </style>
 </head>
 <body>
     <div id="auth-screen">
-        <header style="position:absolute; top:0; width:100%;">[警戒] 非授權禁止進入</header>
         <img src="IMG_1092.jpeg" style="width:100px; height:100px; border-radius:50%; border:3px solid #3273b5; background:#fff; margin-bottom:20px; padding:5px; object-fit:cover;">
         <div class="login-card">
-            <h2 style="color:#1976d2; margin:0 0 15px 0;">授權登入</h2>
-            <input type="text" id="gName" placeholder="值勤人員姓名" style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box;">
-            <input type="password" id="aCode" placeholder="安全授權碼" style="width:100%; padding:10px; box-sizing:border-box;">
+            <h2 style="color:#1976d2; margin-top:0;">系統授權登入</h2>
+            <input type="text" id="gName" placeholder="人員姓名" style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box;">
+            <input type="password" id="aCode" placeholder="授權碼" style="width:100%; padding:10px; box-sizing:border-box;">
             <button class="btn" style="margin-top:10px;" onclick="checkAuth()">驗證登入</button>
         </div>
     </div>
@@ -49,13 +47,24 @@
         </nav>
         <div class="container">
             <div id="general" class="content-section active">
-                <div class="input-box"><input type="text" id="qInput" placeholder="車牌 / 工號 / 姓名" style="width:100%; border:none; font-size:18px; outline:none;"></div>
+                <div style="background:#fff; border:2px solid #3273b5; border-radius:8px; padding:10px; margin-bottom:10px;">
+                    <input type="text" id="qInput" placeholder="車牌/工號/姓名" style="width:100%; border:none; font-size:18px; outline:none;">
+                </div>
                 <button class="btn" onclick="search()">查 詢</button>
                 <div id="resDiv"></div>
             </div>
-            <div id="vip" class="content-section"><div id="vipList">讀取中...</div></div>
-            <div id="visitor" class="content-section"><div id="visitorList">讀取中...</div></div>
-            <div id="handover" class="content-section"><div id="handoverList">讀取中...</div></div>
+            <div id="vip" class="content-section">
+                <div style="color:#f39c12; font-weight:bold; margin-bottom:10px;">🌟 董事及 VIP 車輛管制清單</div>
+                <div id="vipList">資料載入中...</div>
+            </div>
+            <div id="visitor" class="content-section">
+                <div style="color:#27ae60; font-weight:bold; margin-bottom:10px;">📋 目前廠內訪客動態</div>
+                <div id="visitorList">目前無廠內訪客</div>
+            </div>
+            <div id="handover" class="content-section">
+                <div style="color:#2980b9; font-weight:bold; margin-bottom:10px;">📢 勤務交接公告事項</div>
+                <div id="handoverList">無交接公告</div>
+            </div>
         </div>
     </div>
 
@@ -69,8 +78,8 @@
             localStorage.setItem('guard', n); 
             document.getElementById('auth-screen').style.display='none'; 
             document.getElementById('main-app').style.display='block';
-            startListening(); // 登入後啟動即時監聽
-        } else alert("驗證失敗");
+            fetchAllData(); // 登入瞬間立刻拉取所有資料
+        } else alert("登入失敗");
     }
 
     function switchTab(id, el) {
@@ -82,29 +91,34 @@
 
     function search() {
         const q = document.getElementById('qInput').value.trim().toUpperCase(); if(!q) return;
-        const res = document.getElementById('resDiv'); res.innerHTML = "搜尋中...";
-        db.ref('employee_list').once('value', snap => {
-            let f = false; snap.forEach(c => { const d = c.val(); if(d.name===q||d.id===q||d.plate===q) {
+        const res = document.getElementById('resDiv'); res.innerHTML = "查詢中...";
+        db.ref('employee_list').once('value', s => {
+            let f = false; s.forEach(c => { const d = c.val(); if(d.name===q||d.id===q||d.plate===q) {
                 res.innerHTML = `<div class="card"><div class="item-row"><b>姓名：</b><span>${d.name}</span></div><div class="item-row"><b>單位：</b><span>${d.reason||'---'}</span></div><div class="item-row"><b>車牌：</b><span>${d.plate||'---'}</span></div></div>`;
                 f = true;
             }});
-            if(!f) res.innerHTML = "查無資料";
+            if(!f) res.innerHTML = "查無員工資料";
         });
     }
 
-    // 🚀 修復關鍵：啟動即時監聽
-    function startListening() {
-        // 監聽 VIP
+    function fetchAllData() {
+        // 同步 VIP
         db.ref('vip_list').on('value', s => {
             const list = document.getElementById('vipList'); list.innerHTML = '';
-            s.forEach(c => { const d = c.val(); list.innerHTML += `<div class="card vip-card"><b>🌟 ${d.name}</b><br>車號：${d.plate}</div>`; });
+            if(!s.exists()) { list.innerHTML = "目前無 VIP 資料"; return; }
+            s.forEach(c => { const d = c.val(); list.innerHTML += `<div class="card vip-card"><b>🌟 ${d.name}</b><br>車牌號碼：<span style="font-size:18px; font-weight:bold;">${d.plate}</span></div>`; });
         });
-        // 監聽訪客 (只顯示在場)
-        db.ref('visitor_logs').limitToLast(10).on('value', s => {
+        // 同步訪客 (顯示未簽退者)
+        db.ref('visitor_logs').limitToLast(15).on('value', s => {
             const list = document.getElementById('visitorList'); list.innerHTML = '';
-            s.forEach(c => { const d = c.val(); if(!d.leaveTime) list.innerHTML += `<div class="card" style="border-left:5px solid #27ae60"><b>${d.name}</b><br>入：${d.timeIn} | 公司：${d.company}</div>`; });
+            let vFound = false;
+            s.forEach(c => { const d = c.val(); if(!d.leaveTime) {
+                list.innerHTML += `<div class="card" style="border-left:5px solid #27ae60"><b>${d.name}</b> (${d.count||1}人)<br><small>公司：${d.company}</small><br><small>時間：${d.timeIn}</small></div>`;
+                vFound = true;
+            }});
+            if(!vFound) list.innerHTML = "目前廠內無訪客";
         });
-        // 監聽交接
+        // 同步交接簿
         db.ref('reactLogs').limitToLast(5).on('value', s => {
             const list = document.getElementById('handoverList'); list.innerHTML = '';
             s.forEach(c => { const d = c.val(); list.innerHTML += `<div class="card" style="border-left:5px solid #2980b9"><small>${d.time}</small><br><b>${d.note}</b></div>`; });
