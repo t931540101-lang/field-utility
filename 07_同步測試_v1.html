@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title> 訪客登記系統 | 雲端同步 V1.1</title>
+    <title> 訪客登記系統 | 雲端同步 V1.2</title>
     <link rel="icon" href="IMG_0968.png">
-<link rel="apple-touch-icon" href="IMG_0968.png">
+    <link rel="apple-touch-icon" href="IMG_0968.png">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -48,10 +48,12 @@
     <div class="card">
         <h2>訪客登記入廠</h2>
         <div class="form-grid">
-            <div class="full-width"><label>訪客姓名</label><input type="text" id="vName"></div>
+            <div><label>入廠時間</label><input type="time" id="vTimeIn"></div>
             <div><label>來訪人數</label><input type="number" id="vCount" value="1"></div>
+            
+            <div class="full-width"><label>訪客姓名</label><input type="text" id="vName"></div>
             <div><label>電話</label><input type="tel" id="vPhone"></div>
-            <div class="full-width"><label>公司行號</label><input type="text" id="vComp"></div>
+            <div><label>公司行號</label><input type="text" id="vComp"></div>
             <div class="full-width"><label>受訪人員</label><input type="text" id="vTarget"></div>
             <div class="full-width"><label>事由</label><textarea id="vReason" rows="1"></textarea></div>
         </div>
@@ -77,13 +79,20 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 身分記憶邏輯
     let userName = localStorage.getItem('guardName') || "";
     let userID = localStorage.getItem('guardID') || "";
 
     function updateUserInfo() {
         document.getElementById('userNameDisplay').innerText = userName || "未設定";
         document.getElementById('userIDDisplay').innerText = userID || "未設定";
+    }
+
+    // 設定當前時間到時間欄位
+    function setCurrentTime() {
+        const now = new Date();
+        const hh = now.getHours().toString().padStart(2, '0');
+        const mm = now.getMinutes().toString().padStart(2, '0');
+        document.getElementById('vTimeIn').value = `${hh}:${mm}`;
     }
 
     function changeName() {
@@ -96,14 +105,22 @@
         if(id) { userID = id; localStorage.setItem('guardID', id); updateUserInfo(); }
     }
 
-    window.onload = updateUserInfo;
+    // 網頁載入時，同時更新使用者名稱與當前時間
+    window.onload = function() {
+        updateUserInfo();
+        setCurrentTime();
+    };
 
     function submitLog() {
         if(!userName) return alert("請先點擊上方設定「姓名」！");
         
         const now = new Date();
-        const timeIn = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        // 抓取表單上可以被修改的時間
+        const timeIn = document.getElementById('vTimeIn').value; 
         
+        if(!timeIn) return alert("請確認入廠時間！");
+        if(!document.getElementById('vName').value) return alert("請輸入訪客姓名！");
+
         const logData = {
             date: now.toISOString().split('T')[0],
             name: document.getElementById('vName').value,
@@ -111,22 +128,21 @@
             phone: document.getElementById('vPhone').value,
             company: document.getElementById('vComp').value,
             target: document.getElementById('vTarget').value,
-            timeIn: timeIn,
+            timeIn: timeIn, // 使用你輸入或微調過的時間
             leaveTime: "",
             recorder: userName,
             reason: document.getElementById('vReason').value,
             timestamp: Date.now()
         };
 
-        if(!logData.name) return alert("請輸入訪客姓名");
-
         db.ref('visitor_logs').push(logData).then(() => {
             alert("登記成功！");
+            // 送出後清空姓名，並把時間重置回最新的「現在時間」
             document.getElementById('vName').value = ""; 
+            setCurrentTime();
         });
     }
 
-    // 簽離邏輯：支援自由修改時間
     function checkout(key) {
         const now = new Date();
         const defaultTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
@@ -141,7 +157,6 @@
         if(confirm("確定要刪除這筆紀錄嗎？")) db.ref('visitor_logs/' + key).remove();
     }
 
-    // 即時監聽
     db.ref('visitor_logs').limitToLast(10).on('value', (snapshot) => {
         const listDiv = document.getElementById('logList');
         listDiv.innerHTML = '<h3 style="text-align:center; color:#666; font-size: 14px;">實時登記清單</h3>';
