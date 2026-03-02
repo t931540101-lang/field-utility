@@ -20,7 +20,7 @@
         .export-btn { padding: 10px 20px; border-radius: 30px; border: none; background: #0288d1; color: white; cursor: pointer; font-weight: bold; }
         
         .table-container { width: 100%; overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #eee; }
-        table { border-collapse: collapse; min-width: 1800px; width: 100%; table-layout: fixed; }
+        table { border-collapse: collapse; min-width: 1900px; width: 100%; table-layout: fixed; }
         th, td { border: 1px solid var(--border); padding: 8px 0; text-align: center; font-size: 13px; }
         th { background: #fdfcf9; color: #555; height: 40px; }
         
@@ -30,10 +30,14 @@
         input { width: 100%; border: none; text-align: center; font-size: 13px; background: transparent; pointer-events: none; font-weight: 700; outline: none; }
         .can-edit input { pointer-events: auto; background: #fffde7; }
         
+        /* 狀態顏色配置 */
         .val-日 { color: #0d47a1; background: #e3f2fd; }
         .val-夜 { color: #4a148c; background: #f3e5f5; }
         .val-休, .val-例, .val-❌ { color: #b71c1c; background: #ffebee; }
-        .val-特 { color: #f57f17; background: #fffde7; }
+        .val-特 { color: #f57f17; background: #fffde7; } /* 特休：深黃字 + 淺黃底 */
+        .val-假 { color: #2e7d32; background: #e8f5e9; } /* 請假：深綠字 + 淺綠底 */
+        
+        .summary-col { font-weight: bold; background: #f9fbe7; }
     </style>
 </head>
 <body>
@@ -58,7 +62,6 @@
 </div>
 
 <script>
-    // Firebase 配置 (沿用小黑哥的設定)
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
@@ -87,7 +90,7 @@
         document.getElementById('currentMonthDisplay').innerText = `${curYear}年 ${curMonth + 1}月`;
         const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
 
-        // 建立表頭
+        // 建立表頭 (加入特、假統計欄位)
         let h1 = `<tr id="dateHeader"><th class="sticky-left">組別</th><th class="sticky-left-2">姓名</th>`;
         let h2 = `<tr id="weekHeader"><th class="sticky-left">-</th><th class="sticky-left-2">-</th>`;
         
@@ -96,18 +99,23 @@
             const dayOfWeek = weekNames[new Date(curYear, curMonth, d).getDay()];
             h2 += `<th>${dayOfWeek}</th>`;
         }
-        h1 += `<th>日</th><th>夜</th><th>休</th></tr>`;
-        h2 += `<th>-</th><th>-</th><th>-</th></tr>`;
+        h1 += `<th class="summary-col">日</th><th class="summary-col">夜</th><th class="summary-col">休</th><th class="summary-col">特</th><th class="summary-col">假</th></tr>`;
+        h2 += `<th class="summary-col">-</th><th class="summary-col">-</th><th class="summary-col">-</th><th class="summary-col">-</th><th class="summary-col">-</th></tr>`;
         thead.innerHTML = h1 + h2;
 
-        // 建立行
+        // 建立資料行
         staffData.forEach(p => {
             const tr = document.createElement('tr');
             let rowHtml = `<td class="sticky-left">${p.group}</td><td class="sticky-left-2"><b>${p.name}</b></td>`;
             for (let d = 1; d <= daysInMonth; d++) {
                 rowHtml += `<td><input id="${curYear}_${curMonth+1}_${p.name}_${d}" onchange="saveShift('${p.name}', ${d}, this.value)"></td>`;
             }
-            rowHtml += `<td id="sd_${p.name}">0</td><td id="sn_${p.name}">0</td><td id="so_${p.name}">0</td>`;
+            // 新增統計欄位 ID
+            rowHtml += `<td id="sd_${p.name}" class="summary-col">0</td>
+                        <td id="sn_${p.name}" class="summary-col">0</td>
+                        <td id="so_${p.name}" class="summary-col">0</td>
+                        <td id="st_${p.name}" class="summary-col">0</td>
+                        <td id="sl_${p.name}" class="summary-col">0</td>`;
             tr.innerHTML = rowHtml;
             tbody.appendChild(tr);
         });
@@ -120,7 +128,9 @@
         db.ref('guardSchedules').on('value', (snapshot) => {
             const data = snapshot.val() || {};
             staffData.forEach(p => {
-                let dc=0, nc=0, oc=0;
+                // 初始化五種班別計數器
+                let dc=0, nc=0, oc=0, tc=0, lc=0;
+                
                 for (let d = 1; d <= days; d++) {
                     const id = `${curYear}_${curMonth+1}_${p.name}_${d}`;
                     const val = data[id] || "";
@@ -129,27 +139,33 @@
                         el.value = val;
                         el.className = "";
                         if(val) el.classList.add('val-' + val.substring(0,1));
+                        
+                        // 精準計算邏輯
                         if(val.includes("日")) dc++; 
                         else if(val.includes("夜")) nc++; 
-                        else if(val!=="") oc++;
+                        else if(val.includes("特")) tc++;
+                        else if(val.includes("假") || val.includes("病") || val.includes("事")) lc++;
+                        else if(val.includes("休") || val.includes("例") || val.includes("❌")) oc++;
                     }
                 }
+                // 寫入畫面
                 document.getElementById(`sd_${p.name}`).innerText = dc;
                 document.getElementById(`sn_${p.name}`).innerText = nc;
                 document.getElementById(`so_${p.name}`).innerText = oc;
+                document.getElementById(`st_${p.name}`).innerText = tc;
+                document.getElementById(`sl_${p.name}`).innerText = lc;
             });
         });
     }
 
     function saveShift(name, day, val) {
-        const id = `${curYear}_${curMonth+1}_name_${day}`; // 這裡建議統一格式
-        const dbId = `${curYear}_${curMonth+1}_${name}_${day}`;
-        db.ref('guardSchedules/' + dbId).set(val);
+        const id = `${curYear}_${curMonth+1}_${name}_${day}`;
+        db.ref('guardSchedules/' + id).set(val);
     }
 
     function exportToExcel() {
         const table = document.getElementById('rosterTable');
-        let csv = "\ufeff"; // BOM 確保 Excel 開啟不亂碼
+        let csv = "\ufeff"; 
         
         for (let i = 0; i < table.rows.length; i++) {
             let row = [];
