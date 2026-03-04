@@ -36,7 +36,7 @@
 
 <div id="login-page">
     <div class="header">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/National_Police_Agency_Logo_of_the_Republic_of_China.svg/200px-National_Police_Agency_Logo_of_the_Republic_of_China.svg.png" class="badge">
+        <img src="2020123001.png" class="badge" alt="系統徽章">
         <div style="color:#003366; font-size:24px; font-weight:bold;">內政部警政署</div>
     </div>
     <div class="box">
@@ -71,14 +71,17 @@
 </div>
 
 <script>
-    // 1. 修正：正確的 HQ 雲端資料庫配置
+    // 1. Firebase 雲端資料庫配置
     const firebaseConfig = { 
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48", 
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com", 
         projectId: "factor-security-d1965", 
         appId: "1:864846943143:web:4cfa18cd20d2f712225c82" 
     };
-    firebase.initializeApp(firebaseConfig);
+    // 避免重複初始化
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.database();
 
     function doLogin() {
@@ -92,7 +95,7 @@
         } else { alert("帳密錯誤"); }
     }
 
-    // 2. 修正：全面搜查邏輯與正確的資料夾名稱
+    // 2. 搜查邏輯
     async function qSearch() {
         const val = document.getElementById('qInput').value.trim();
         const resBox = document.getElementById('res-box');
@@ -105,7 +108,7 @@
         resInfo.innerHTML = "📡 連線比對中...";
 
         const [snapBlack, snapEmp] = await Promise.all([
-            db.ref('blacklist_data').once('value'), // 修正為正確的黑名單路徑
+            db.ref('blacklist_data').once('value'),
             db.ref('employee_list').once('value')
         ]);
 
