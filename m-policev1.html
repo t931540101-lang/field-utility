@@ -3,159 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小神捕 V8.1 | 瘦身版</title>
+    <title>戰情中心 V9.0 | 黑曜旗艦版</title>
     <link rel="icon" href="2020123001.png">
     <link rel="apple-touch-icon" href="2020123001.png">
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { margin: 0; background: #e6eef5; font-family: sans-serif; text-align: center; }
-        .header { background: linear-gradient(#dbe9f4, #8eb9d7); padding: 20px 0; border-bottom: 3px solid #005a9c; }
-        .badge { width: 60px; height: 60px; }
+        /* --- 系統全域變數 --- */
+        :root {
+            --bg-dark: #0a0f16;
+            --surface: #1e1e1e;
+            --primary: #4fc3f7; 
+            --primary-glow: rgba(79, 195, 247, 0.4);
+            --text: #ffffff;
+            --text-muted: #888888;
+            --border: rgba(255,255,255,0.1);
+            --danger: #ef5350;
+        }
         
-        /* --- 1. [通報] 瘦身樣式 --- */
-        .alert-bar {
-            background: rgba(0,0,0,0.8); color: #ff3333; padding: 4px 8px;
-            text-align: center; font-size: 11px; font-weight: bold; border-bottom: 1px solid #ff3333;
+        body { 
+            margin: 0; font-family: -apple-system, sans-serif; 
+            background: var(--bg-dark); color: var(--text); 
+            user-select: none; 
+            overflow: hidden; /* 防止登入頁滑動 */
         }
 
-        .box { width: 90%; background: white; padding: 15px; margin: 15px auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); box-sizing: border-box; }
-        input[type="text"], input[type="password"] { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #99b3cc; border-radius: 4px; font-size: 18px; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #005a9c; color: white; border: none; border-radius: 5px; font-size: 20px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        /* --- 1. 高科技登入頁面 UI --- */
+        #login-page {
+            position: relative;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; padding: 20px; box-sizing: border-box;
+            background-image: 
+                linear-gradient(rgba(10, 15, 22, 0.9), rgba(10, 15, 22, 0.9)),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 20px 20px, 20px 20px;
+        }
 
-        /* --- 2. 結果顯示框瘦身 --- */
-        .res-box { margin-top: 15px; padding: 10px; border-radius: 4px; display: none; text-align: center; border: 2px solid #ccc; }
-        .res-ok { border-color: #4caf50; background: #e8f5e9; }
-        .res-warn { border-color: #f44336; background: #ffebee; }
+        .login-glass-card {
+            width: 100%; max-width: 360px;
+            background: rgba(25, 30, 40, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 16px; padding: 30px 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+            text-align: center;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
 
-        /* --- 3. [重點] 縮小 ✅⚠️ 符號 --- */
-        .status-icon { font-size: 18px; margin-right: 5px; vertical-align: middle; }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-logo { width: 75px; height: 75px; margin-bottom: 15px; filter: drop-shadow(0 0 10px var(--primary-glow)); }
+        .login-title { font-size: 22px; font-weight: bold; letter-spacing: 2px; margin-bottom: 5px; }
+        .login-subtitle { font-size: 11px; color: var(--primary); letter-spacing: 3px; margin-bottom: 30px; opacity: 0.8; }
+        
+        /* 科技感輸入框 */
+        .input-group { position: relative; margin-bottom: 20px; }
+        .input-group input {
+            width: 100%; padding: 15px 15px 15px 45px; 
+            background: rgba(0,0,0,0.3); border: none; border-bottom: 2px solid var(--border);
+            color: var(--text); border-radius: 6px 6px 0 0; font-size: 16px; box-sizing: border-box;
+            transition: 0.3s;
+        }
+        .input-group input:focus { outline: none; border-bottom: 2px solid var(--primary); background: rgba(0,0,0,0.5); }
+        .input-group .icon { position: absolute; left: 15px; top: 15px; font-size: 18px; color: var(--text-muted); }
+        
+        /* 戰術模塊切換 (班別) */
+        .shift-toggle {
+            display: flex; background: rgba(0,0,0,0.5); border-radius: 8px; overflow: hidden; margin-bottom: 25px; border: 1px solid var(--border);
+        }
+        .shift-toggle input { display: none; }
+        .shift-toggle label {
+            flex: 1; text-align: center; padding: 12px; color: var(--text-muted); cursor: pointer; transition: 0.3s; font-size: 14px;
+        }
+        .shift-toggle input:checked + label {
+            background: rgba(79, 195, 247, 0.15); color: var(--primary); font-weight: bold; border-bottom: 2px solid var(--primary);
+        }
+
+        /* 啟動按鈕 */
+        .cyber-btn {
+            width: 100%; padding: 16px; background: linear-gradient(90deg, #005a9c, var(--primary)); 
+            color: #fff; font-weight: bold; letter-spacing: 2px; border: none; border-radius: 8px; 
+            font-size: 16px; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+        .cyber-btn:active { transform: scale(0.98); }
+        
+        .sys-footer { margin-top: 20px; font-size: 10px; color: var(--text-muted); letter-spacing: 1px; }
+
+        /* --- 2. 主系統框架 (保持原本的戰術底層) --- */
+        #main-app { display: none; overflow-y: auto; height: 100vh; } 
+        
+        .header { 
+            position: fixed; top: 0; width: 100%; height: 60px; 
+            background: var(--surface); display: flex; justify-content: space-between; align-items: center; 
+            padding: 0 15px; box-sizing: border-box; border-bottom: 1px solid #333; z-index: 100; 
+        }
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        .header img { height: 30px; width: 30px; }
+        .status-dot { width: 10px; height: 10px; background: #4caf50; border-radius: 50%; box-shadow: 0 0 8px #4caf50; }
+        
+        .content { margin-top: 60px; margin-bottom: 70px; padding: 15px; }
+        .page { display: none; animation: fadeIn 0.3s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .bottom-nav { 
+            position: fixed; bottom: 0; width: 100%; height: 65px; background: var(--surface); 
+            display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; 
+            z-index: 100; padding-bottom: env(safe-area-inset-bottom); 
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-muted); font-size: 12px; gap: 4px; cursor: pointer; padding: 10px; flex: 1; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 20px; }
+
+        .card { background: var(--surface); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid #333; }
+        .action-btn { width: 100%; padding: 14px; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 8px; font-size: 16px; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <div id="login-page">
-    <div class="header">
-        <img src="2020123001.png" class="badge" alt="系統徽章">
-        <div style="color:#003366; font-size:24px; font-weight:bold;">內政部警政署</div>
-    </div>
-    <div class="box">
-        <input type="text" id="pUser" placeholder="帳號 (0905)">
-        <input type="password" id="pPass" placeholder="密碼 (0905)">
-        <div style="margin:15px 0; font-size:18px;">
-            <input type="radio" name="shift" value="日班" checked> ☀️日班
-            <span style="margin:0 10px;"></span>
-            <input type="radio" name="shift" value="夜班"> 🌙夜班
+    <div class="login-glass-card">
+        <img src="2020123001.png" alt="LOGO" class="login-logo">
+        <div class="login-title">M-POLICE 指揮端</div>
+        <div class="login-subtitle">OBSIDIAN GUARD PROTOCOL</div>
+        
+        <div class="input-group">
+            <span class="icon">👤</span>
+            <input type="text" id="pUser" placeholder="特勤識別碼 (0905)">
         </div>
-        <button onclick="doLogin()">登 入 系 統</button>
+        
+        <div class="input-group">
+            <span class="icon">🔑</span>
+            <input type="password" id="pPass" placeholder="安保通行密碼 (0905)">
+        </div>
+        
+        <div class="shift-toggle">
+            <input type="radio" id="shift-day" name="shift" value="日班" checked>
+            <label for="shift-day">☀️ 日班</label>
+            
+            <input type="radio" id="shift-night" name="shift" value="夜班">
+            <label for="shift-night">🌙 夜班</label>
+        </div>
+        
+        <button class="cyber-btn" onclick="doLogin()">啟 動 防 禦 系 統</button>
+        
+        <div class="sys-footer">SECURE CONNECTION ESTABLISHED</div>
     </div>
 </div>
 
-<div id="main-page" style="display:none;">
-    <div style="background:#005a9c; color:white; padding:12px; font-weight:bold; display:flex; justify-content:space-between;">
-        <span onclick="location.reload()" style="cursor:pointer;">⬅ 返回</span>
-        <span id="shift-title">M-Police 指揮端</span>
-        <span onclick="location.reload()" style="cursor:pointer;">登出</span>
+<div id="main-app">
+    <div class="header">
+        <div class="header-left">
+            <img src="2020123001.png" alt="LOGO">
+            <div style="font-size: 18px; font-weight: bold;">戰情中心 V9.0</div>
+        </div>
+        <div><span class="status-dot"></span></div>
     </div>
-    
-    <div class="alert-bar">[通報] 本系統僅供公務查詢使用，嚴禁非公務行為。</div>
-    
-    <div class="box">
-        <input type="text" id="qInput" placeholder="輸入工號 / 姓名 / 車牌" oninput="this.value=this.value.toUpperCase()">
-        <button onclick="qSearch()">開 始 查 詢</button>
+
+    <div class="content">
+        <div id="page-home" class="page">
+            <div class="card">
+                <h3 style="margin-top:0; color:var(--primary);">🛡️ 勤務簡報</h3>
+                <p style="font-size: 14px; color: var(--text-muted);">
+                    登入人員：小黑哥 <br>
+                    值勤班別：<span id="display-shift">讀取中...</span><br>
+                    環境狀態：安全
+                </p>
+            </div>
+        </div>
+
+        <div id="page-search" class="page">
+            <div class="card">
+                <strong>🔍 綜合資料查核</strong>
+                <input type="text" placeholder="輸入身分證 / 車牌 / 姓名" style="width: 100%; padding: 12px; margin-top: 10px; background: var(--bg-dark); border: 1px solid #333; color: var(--text); border-radius: 6px; box-sizing: border-box;">
+                <button class="action-btn">執 行 查 詢</button>
+            </div>
+        </div>
+
+        <div id="page-scan" class="page">
+            <div class="card" style="text-align: center; padding: 40px 15px;">
+                <div style="font-size: 40px; margin-bottom: 15px;">📷</div>
+                <strong>光學辨識模組待命</strong>
+            </div>
+        </div>
+
+        <div id="page-settings" class="page">
+            <div class="card">
+                <strong>⚙️ 系統設定</strong>
+                <button class="action-btn" style="background: var(--danger); color: white;" onclick="doLogout()">安 全 登 出</button>
+            </div>
+        </div>
     </div>
-    
-    <div id="res-box" class="res-box">
-        <div id="res-info"></div>
+
+    <div class="bottom-nav">
+        <div class="nav-item" onclick="switchPage('home', this)"><div class="nav-icon">🏠</div><span>首頁</span></div>
+        <div class="nav-item" onclick="switchPage('search', this)"><div class="nav-icon">🔍</div><span>查核</span></div>
+        <div class="nav-item" onclick="switchPage('scan', this)"><div class="nav-icon">📷</div><span>掃描</span></div>
+        <div class="nav-item" onclick="switchPage('settings', this)"><div class="nav-icon">⚙️</div><span>設定</span></div>
     </div>
 </div>
 
 <script>
-    // 1. Firebase 雲端資料庫配置
-    const firebaseConfig = { 
-        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48", 
-        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com", 
-        projectId: "factor-security-d1965", 
-        appId: "1:864846943143:web:4cfa18cd20d2f712225c82" 
-    };
-    // 避免重複初始化
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-    const db = firebase.database();
-
     function doLogin() {
         const u = document.getElementById('pUser').value;
         const p = document.getElementById('pPass').value;
         const s = document.querySelector('input[name="shift"]:checked').value;
+
         if(u === "0905" && p === "0905") {
-            document.getElementById('login-page').style.display = 'none';
-            document.getElementById('main-page').style.display = 'block';
-            document.getElementById('shift-title').innerText = "M-Police [" + s + "]";
-        } else { alert("帳密錯誤"); }
-    }
-
-    // 2. 搜查邏輯
-    async function qSearch() {
-        const val = document.getElementById('qInput').value.trim();
-        const resBox = document.getElementById('res-box');
-        const resInfo = document.getElementById('res-info');
-        if(!val) return;
-
-        resBox.style.display = 'block';
-        resBox.className = "res-box";
-        resBox.style.background = "#fff";
-        resInfo.innerHTML = "📡 連線比對中...";
-
-        const [snapBlack, snapEmp] = await Promise.all([
-            db.ref('blacklist_data').once('value'),
-            db.ref('employee_list').once('value')
-        ]);
-
-        let found = false;
-
-        // 優先比對黑名單
-        snapBlack.forEach(c => {
-            const d = c.val();
-            if(d.name === val || d.id === val || d.plate === val) {
-                resBox.className = "res-box res-warn";
-                resInfo.innerHTML = `
-                    <div style="font-size:16px; color:#b71c1c; margin-bottom:5px;">
-                        <span class="status-icon">⚠️</span> 警戒對象
-                    </div>
-                    <div style="font-size:32px; color:red; font-weight:bold;">${d.name || val}</div>
-                    <div style="font-size:18px; color:#444; margin-top:5px;">備註：${d.reason || '無'}</div>
-                `;
-                found = true;
-            }
-        });
-
-        // 若無黑名單，比對員工
-        if(!found) {
-            snapEmp.forEach(c => {
-                const d = c.val();
-                if(d.name === val || d.id === val || d.plate === val) {
-                    resBox.className = "res-box res-ok";
-                    resInfo.innerHTML = `
-                        <div style="font-size:16px; color:#1b5e20; margin-bottom:5px;">
-                            <span class="status-icon">✅</span> 內部員工
-                        </div>
-                        <div style="font-size:24px; color:#000; font-weight:bold;">姓名：${d.name}</div>
-                        <div style="font-size:18px; color:#444; margin-top:5px;">單位：${d.reason || '未註記'}</div>
-                    `;
-                    found = true;
-                }
-            });
-        }
-
-        // 都查不到
-        if(!found) {
-            resBox.className = "res-box";
-            resBox.style.background = "#eee";
-            resBox.style.borderColor = "#ccc";
-            resInfo.innerHTML = "🔍 查無資料";
+            localStorage.setItem('v9_logged_in', 'true');
+            localStorage.setItem('v9_shift', s);
+            
+            // 登入特效：按鈕文字改變，延遲一點點進入系統更有FU
+            const btn = document.querySelector('.cyber-btn');
+            btn.innerText = "驗證成功，連線中...";
+            btn.style.background = "#4caf50";
+            
+            setTimeout(() => {
+                enterSystem(s);
+                btn.innerText = "啟 動 防 禦 系 統"; // 恢復按鈕文字
+                btn.style.background = ""; // 恢復原本漸層
+            }, 600);
+        } else { 
+            alert("識別碼或密碼錯誤。"); 
         }
     }
+
+    function doLogout() {
+        localStorage.removeItem('v9_logged_in');
+        localStorage.removeItem('v9_shift');
+        localStorage.removeItem('v9_last_page');
+        
+        document.getElementById('main-app').style.display = 'none';
+        document.getElementById('login-page').style.display = 'flex';
+        document.getElementById('pPass').value = ''; 
+    }
+
+    function enterSystem(shift) {
+        document.getElementById('login-page').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+        document.getElementById('display-shift').innerText = shift;
+        
+        const lastPage = localStorage.getItem('v9_last_page') || 'home';
+        switchPage(lastPage, null);
+    }
+
+    function switchPage(pageId, navElement) {
+        document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById('page-' + pageId).classList.add('active');
+        
+        if (navElement) {
+            navElement.classList.add('active');
+        } else {
+            const defaultNav = document.querySelector(`.nav-item[onclick*="${pageId}"]`);
+            if(defaultNav) defaultNav.classList.add('active');
+        }
+        localStorage.setItem('v9_last_page', pageId);
+    }
+
+    window.onload = () => {
+        if(localStorage.getItem('v9_logged_in') === 'true') {
+            const savedShift = localStorage.getItem('v9_shift') || '未知';
+            enterSystem(savedShift);
+        }
+    };
 </script>
 </body>
 </html>
