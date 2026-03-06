@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小黑哥的測試基地</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background: #f4f4f4; color: #333; }
+        .container { max-width: 100%; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        textarea { width: 100%; height: 100px; margin-top: 10px; box-sizing: border-box; }
+        button { background: #2ea44f; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin-top: 10px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h3>黑曜石計畫：行動筆記</h3>
+        <p>這是一個具備自動存檔功能的測試檔。</p>
+        <textarea id="noteBox" placeholder="在這裡輸入點子..."></textarea>
+        <button onclick="saveData()">暫存到手機</button>
+        <p id="msg" style="color: blue; font-size: 0.8em;"></p>
+    </div>
+
+    <script>
+        // 讀取舊資料
+        document.getElementById('noteBox').value = localStorage.getItem('myNote') || '';
+
+        function saveData() {
+            const val = document.getElementById('noteBox').value;
+            localStorage.setItem('myNote', val);
+            document.getElementById('msg').innerText = "已儲存至 Local Storage！";
+        }
+    </script>
+</body>
+</html>
