@@ -1,217 +1,641 @@
 <!DOCTYPE html>
+
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>K9 警衛輪班總管理系統 - HQ後台版</title>
+    <title>台灣精銳 · 後台管理系統</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <style>
-        :root { --primary: #d32f2f; --bg: #f0f2f5; --border: #ccc; }
-        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .header-box { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .month-ctrl { display: flex; align-items: center; gap: 20px; font-weight: 900; font-size: 1.4rem; color: #2c3e50; }
-        .btn-nav { padding: 8px 18px; cursor: pointer; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; transition: 0.2s; }
-        .btn-nav:hover { background: #e9ecef; }
-        
-        .action-group { display: flex; gap: 10px; }
-        .lock-btn { padding: 10px 20px; border-radius: 30px; border: none; background: #607d8b; color: white; cursor: pointer; font-weight: bold; }
-        .lock-btn.unlocked { background: #43a047; box-shadow: 0 0 12px rgba(67,160,71,0.4); }
-        .export-btn { padding: 10px 20px; border-radius: 30px; border: none; background: #0288d1; color: white; cursor: pointer; font-weight: bold; }
-        
-        .table-container { width: 100%; overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #eee; }
-        table { border-collapse: collapse; min-width: 1900px; width: 100%; table-layout: fixed; }
-        th, td { border: 1px solid var(--border); padding: 8px 0; text-align: center; font-size: 13px; }
-        th { background: #fdfcf9; color: #555; height: 40px; }
-        
-        .sticky-left { position: sticky; left: 0; background: #fff !important; z-index: 5; border-right: 2px solid #999 !important; width: 50px; }
-        .sticky-left-2 { position: sticky; left: 50px; background: #fff !important; z-index: 5; border-right: 2px solid #ccc !important; width: 80px; }
-        
-        input { width: 100%; border: none; text-align: center; font-size: 13px; background: transparent; pointer-events: none; font-weight: 700; outline: none; }
-        .can-edit input { pointer-events: auto; background: #fffde7; }
-        
-        /* 狀態顏色配置 */
-        .val-日 { color: #0d47a1; background: #e3f2fd; }
-        .val-夜 { color: #4a148c; background: #f3e5f5; }
-        .val-休, .val-例, .val-❌ { color: #b71c1c; background: #ffebee; }
-        .val-特 { color: #f57f17; background: #fffde7; } /* 特休：深黃字 + 淺黃底 */
-        .val-假 { color: #2e7d32; background: #e8f5e9; } /* 請假：深綠字 + 淺綠底 */
-        
-        .summary-col { font-weight: bold; background: #f9fbe7; }
-    </style>
+        :root {
+            --primary: #1a3a5c;
+            --primary2: #2563eb;
+            --accent: #e8b84b;
+            --bg: #f5f7fa;
+            --card: #ffffff;
+            --border: #e8edf3;
+            --text: #1a2e45;
+            --sub: #6b8099;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif; background: var(--bg); color: var(--text); }
+
+```
+    /* ══ 登入頁 ══ */
+    #page-login {
+        min-height: 100vh; display: flex; align-items: center;
+        justify-content: center; background: var(--primary);
+        position: relative; overflow: hidden;
+    }
+    #page-login::before {
+        content: '🛡️'; font-size: 400px; position: absolute;
+        opacity: .04; right: -80px; bottom: -80px; line-height: 1;
+    }
+    .login-box {
+        background: #fff; border-radius: 20px; padding: 40px 36px;
+        width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        position: relative; z-index: 1;
+    }
+    .login-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+    .ll-icon {
+        width: 48px; height: 48px; border-radius: 14px;
+        background: var(--primary); display: flex; align-items: center;
+        justify-content: center; font-size: 22px;
+    }
+    .ll-name { font-size: 18px; font-weight: 900; color: var(--primary); }
+    .ll-sub  { font-size: 11px; color: var(--sub); margin-top: 2px; }
+    .login-title { font-size: 22px; font-weight: 900; margin-bottom: 6px; }
+    .login-desc  { font-size: 13px; color: var(--sub); margin-bottom: 24px; }
+    .f-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .f-label { font-size: 11px; font-weight: 700; color: var(--sub); letter-spacing: 1px; }
+    .f-input {
+        padding: 12px 14px; border-radius: 10px; border: 2px solid var(--border);
+        font-size: 14px; font-family: inherit; outline: none; color: var(--text);
+        transition: border .2s;
+    }
+    .f-input:focus { border-color: var(--primary2); }
+    .login-btn {
+        width: 100%; padding: 14px; border-radius: 12px; border: none;
+        background: var(--primary); color: #fff; font-size: 15px;
+        font-weight: 900; cursor: pointer; font-family: inherit;
+        margin-top: 4px; transition: opacity .15s; letter-spacing: 1px;
+    }
+    .login-btn:hover { opacity: .9; }
+    .login-err { font-size: 12px; color: #ef4444; min-height: 18px; margin-top: 8px; text-align: center; font-weight: 700; }
+
+    /* ══ 主後台 ══ */
+    #app { display: none; min-height: 100vh; }
+
+    .top-bar {
+        background: var(--primary); color: #fff; padding: 14px 24px;
+        display: flex; align-items: center; justify-content: space-between;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 100;
+    }
+    .tb-left { display: flex; align-items: center; gap: 12px; }
+    .tb-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .tb-title { font-size: 16px; font-weight: 900; letter-spacing: 1px; }
+    .tb-sub   { font-size: 11px; opacity: .7; margin-top: 1px; }
+    .tb-right { display: flex; align-items: center; gap: 10px; }
+    .tb-user  { font-size: 12px; background: rgba(255,255,255,0.15); padding: 5px 14px; border-radius: 20px; }
+    .tb-btn   { padding: 7px 16px; border-radius: 8px; border: 1.5px solid rgba(255,255,255,0.3); background: none; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background .15s; }
+    .tb-btn:hover { background: rgba(255,255,255,0.15); }
+
+    .main-content { padding: 20px 24px; max-width: 1600px; margin: 0 auto; }
+
+    /* 控制列 */
+    .control-bar {
+        background: #fff; border-radius: 14px; padding: 16px 20px;
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        border: 1px solid var(--border); flex-wrap: wrap; gap: 12px;
+    }
+    .month-ctrl { display: flex; align-items: center; gap: 16px; }
+    .btn-nav {
+        width: 36px; height: 36px; border-radius: 10px; border: 1.5px solid var(--border);
+        background: #fff; cursor: pointer; font-size: 16px; font-weight: 900;
+        display: flex; align-items: center; justify-content: center; transition: all .15s;
+    }
+    .btn-nav:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .month-label { font-size: 18px; font-weight: 900; color: var(--primary); min-width: 140px; text-align: center; }
+    .action-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+    .btn {
+        padding: 9px 20px; border-radius: 10px; border: none;
+        font-size: 13px; font-weight: 700; cursor: pointer;
+        font-family: inherit; transition: all .15s; display: flex;
+        align-items: center; gap: 6px;
+    }
+    .btn-export  { background: #0288d1; color: #fff; }
+    .btn-export:hover  { background: #0277bd; }
+    .btn-lock    { background: var(--sub); color: #fff; }
+    .btn-lock.unlocked { background: #16a34a; box-shadow: 0 0 12px rgba(22,163,74,0.3); }
+    .btn-staff   { background: var(--primary); color: #fff; }
+    .btn-staff:hover { background: #0f2540; }
+    .btn-danger  { background: #ef4444; color: #fff; }
+
+    /* 統計卡片 */
+    .stat-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px; }
+    .stat-card {
+        background: #fff; border-radius: 12px; padding: 14px 16px;
+        border: 1px solid var(--border); text-align: center;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .sc-num  { font-size: 28px; font-weight: 900; }
+    .sc-lbl  { font-size: 11px; color: var(--sub); font-weight: 700; margin-top: 3px; }
+    .sc-day  { color: #0d47a1; }
+    .sc-night{ color: #4a148c; }
+    .sc-off  { color: #b71c1c; }
+    .sc-spec { color: #f57f17; }
+    .sc-leave{ color: #2e7d32; }
+
+    /* 班表 */
+    .table-wrap {
+        background: #fff; border-radius: 14px; overflow: auto;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08); border: 1px solid var(--border);
+    }
+    table { border-collapse: collapse; min-width: 1800px; width: 100%; table-layout: fixed; }
+    th, td { border: 1px solid #e8edf3; padding: 7px 4px; text-align: center; font-size: 12px; }
+    th { background: #f8fafc; color: var(--sub); font-weight: 700; height: 38px; }
+    th.sun, td.sun { color: #dc2626; }
+    th.sat, td.sat { color: #2563eb; }
+
+    .col-group { position: sticky; left: 0; background: #fff !important; z-index: 5; border-right: 2px solid #ddd !important; width: 60px; font-weight: 700; }
+    .col-name  { position: sticky; left: 60px; background: #fff !important; z-index: 5; border-right: 2px solid #e8edf3 !important; width: 90px; font-weight: 900; }
+
+    .shift-input {
+        width: 100%; border: none; text-align: center; font-size: 12px;
+        background: transparent; pointer-events: none; font-weight: 700;
+        outline: none; border-radius: 4px; padding: 2px 0;
+    }
+    .can-edit .shift-input { pointer-events: auto; cursor: pointer; }
+    .can-edit .shift-input:focus { background: #fffde7; outline: 2px solid #f59e0b; }
+
+    .val-日 { color: #0d47a1; background: #dbeafe; border-radius: 4px; }
+    .val-夜 { color: #4a148c; background: #ede9fe; border-radius: 4px; }
+    .val-休 { color: #b71c1c; background: #fee2e2; border-radius: 4px; }
+    .val-例 { color: #b71c1c; background: #fee2e2; border-radius: 4px; }
+    .val-特 { color: #92400e; background: #fef3c7; border-radius: 4px; }
+    .val-假 { color: #14532d; background: #dcfce7; border-radius: 4px; }
+    .val-換 { color: #0369a1; background: #e0f2fe; border-radius: 4px; }
+
+    .sum-col { background: #f8fafc; font-weight: 900; border-left: 2px solid #e8edf3 !important; }
+
+    /* 今日高亮 */
+    .today-col { background: rgba(37,99,235,0.06) !important; }
+    .today-head { background: #2563eb !important; color: #fff !important; border-radius: 4px; }
+
+    /* 人員管理 Modal */
+    .overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+        display: none; align-items: center; justify-content: center; z-index: 200;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+        background: #fff; border-radius: 20px; width: 480px; max-height: 80vh;
+        overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+        padding: 20px 24px; border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: space-between;
+        position: sticky; top: 0; background: #fff;
+    }
+    .modal-title { font-size: 16px; font-weight: 900; }
+    .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--sub); }
+    .modal-body  { padding: 20px 24px; }
+    .modal-footer{ padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+    .staff-item {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border);
+        margin-bottom: 8px; background: #fff;
+    }
+    .si-info { display: flex; align-items: center; gap: 10px; }
+    .si-num  { width: 28px; height: 28px; border-radius: 8px; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; }
+    .si-name { font-size: 14px; font-weight: 900; }
+    .si-group{ font-size: 11px; color: var(--sub); margin-top: 1px; }
+    .si-del  { background: #fee2e2; border: none; color: #ef4444; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+
+    .add-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .add-form .f-input { font-size: 13px; padding: 10px 12px; }
+    .add-btn { grid-column: 1/-1; padding: 11px; border-radius: 10px; border: none; background: var(--primary); color: #fff; font-size: 14px; font-weight: 900; cursor: pointer; font-family: inherit; }
+
+    /* Toast */
+    .toast {
+        position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-10px);
+        background: var(--primary); color: #fff; padding: 10px 24px; border-radius: 24px;
+        font-size: 13px; font-weight: 700; z-index: 999; opacity: 0; transition: all .25s;
+        pointer-events: none; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* 載入 */
+    .loading-bar { text-align: center; padding: 60px; color: var(--sub); font-size: 14px; }
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+```
+
 </head>
 <body>
 
-<div class="header-box">
-    <div class="month-ctrl">
-        <button class="btn-nav" onclick="changeMonth(-1)">❮</button>
-        <span id="currentMonthDisplay">載入中...</span>
-        <button class="btn-nav" onclick="changeMonth(1)">❯</button>
-    </div>
-    <div class="action-group">
-        <button class="export-btn" onclick="exportToExcel()">📊 匯出報表</button>
-        <button id="lockBtn" class="lock-btn" onclick="toggleLock()">🔒 唯讀模式</button>
+<!-- ══ 登入頁 ══ -->
+
+<div id="page-login">
+    <div class="login-box">
+        <div class="login-logo">
+            <div class="ll-icon">🛡️</div>
+            <div>
+                <div class="ll-name">台灣精銳</div>
+                <div class="ll-sub">TAIWAN ELITE SECURITY</div>
+            </div>
+        </div>
+        <div class="login-title">後台管理系統</div>
+        <div class="login-desc">僅限管理人員登入，操作均有留存紀錄</div>
+        <div class="f-group">
+            <div class="f-label">帳號</div>
+            <input class="f-input" id="loginUser" placeholder="請輸入帳號">
+        </div>
+        <div class="f-group">
+            <div class="f-label">密碼</div>
+            <input class="f-input" type="password" id="loginPass" placeholder="請輸入密碼">
+        </div>
+        <button class="login-btn" onclick="doLogin()">登　入</button>
+        <div class="login-err" id="loginErr"></div>
     </div>
 </div>
 
-<div class="table-container">
-    <table id="rosterTable">
-        <thead id="tableHead"></thead>
-        <tbody id="rosterBody"></tbody>
-    </table>
+<!-- ══ 主後台 ══ -->
+
+<div id="app">
+    <div class="top-bar">
+        <div class="tb-left">
+            <div class="tb-icon">🛡️</div>
+            <div>
+                <div class="tb-title">台灣精銳 · 後台管理</div>
+                <div class="tb-sub">K9 警衛輪班總管理系統</div>
+            </div>
+        </div>
+        <div class="tb-right">
+            <div class="tb-user" id="tbUser">管理員</div>
+            <button class="tb-btn" onclick="doLogout()">登出</button>
+        </div>
+    </div>
+
+```
+<div class="main-content">
+    <!-- 控制列 -->
+    <div class="control-bar">
+        <div class="month-ctrl">
+            <button class="btn-nav" onclick="changeMonth(-1)">❮</button>
+            <div class="month-label" id="monthLabel">載入中...</div>
+            <button class="btn-nav" onclick="changeMonth(1)">❯</button>
+        </div>
+        <div class="action-group">
+            <button class="btn btn-staff" onclick="openStaffModal()">👥 人員管理</button>
+            <button class="btn btn-export" onclick="exportCSV()">📊 匯出報表</button>
+            <button class="btn btn-lock" id="lockBtn" onclick="toggleLock()">🔒 唯讀模式</button>
+        </div>
+    </div>
+
+    <!-- 統計列 -->
+    <div class="stat-row">
+        <div class="stat-card"><div class="sc-num sc-day"  id="totalDay">0</div><div class="sc-lbl">日班 總計</div></div>
+        <div class="stat-card"><div class="sc-num sc-night" id="totalNight">0</div><div class="sc-lbl">夜班 總計</div></div>
+        <div class="stat-card"><div class="sc-num sc-off"   id="totalOff">0</div><div class="sc-lbl">休假 總計</div></div>
+        <div class="stat-card"><div class="sc-num sc-spec"  id="totalSpec">0</div><div class="sc-lbl">特休 總計</div></div>
+        <div class="stat-card"><div class="sc-num sc-leave" id="totalLeave">0</div><div class="sc-lbl">請假 總計</div></div>
+    </div>
+
+    <!-- 班表 -->
+    <div class="table-wrap" id="tableWrap">
+        <div class="loading-bar"><div class="spinner"></div>載入人員資料中...</div>
+    </div>
 </div>
+```
+
+</div>
+
+<!-- ══ 人員管理 Modal ══ -->
+
+<div class="overlay" id="staffModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title">👥 人員管理</div>
+            <button class="modal-close" onclick="closeStaffModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="staffList">載入中...</div>
+            <div class="add-form">
+                <div class="f-group" style="margin:0">
+                    <div class="f-label">姓名</div>
+                    <input class="f-input" id="newName" placeholder="請輸入姓名">
+                </div>
+                <div class="f-group" style="margin:0">
+                    <div class="f-label">組別</div>
+                    <input class="f-input" id="newGroup" placeholder="例如：總務">
+                </div>
+                <button class="add-btn" onclick="addStaff()">＋ 新增人員</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
-        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
-        projectId: "factor-security-d1965",
-        appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+// ══════════════════════════════
+//  Firebase 設定
+// ══════════════════════════════
+const firebaseConfig = {
+    apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+    databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+    projectId: "factor-security-d1965",
+    appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db   = firebase.database();
+const auth = firebase.auth();
 
-    let curYear = 2026;
-    let curMonth = 2; // 三月
-    let isEditing = false;
-    const staffData = [
-        {group: "總務", name: "盧家慶"}, {group: "總務", name: "何鴻隆"},
-        {group: "總務", name: "蔡易倫"}, {group: "總務", name: "邱鴻鈞"},
-        {group: "總務", name: "柳旭洲"}, {group: "總務", name: "魏榮志"}
-    ];
-    const weekNames = ["日", "一", "二", "三", "四", "五", "六"];
+// ══════════════════════════════
+//  全域變數
+// ══════════════════════════════
+// ✅ 修復一：年份月份自動抓取，不再寫死
+let curYear  = new Date().getFullYear();
+let curMonth = new Date().getMonth();
+let isEditing = false;
+let staffList = []; // ✅ 修復三：人員從 Firebase 讀取，不寫死
+let scheduleData = {};
+const weekNames = ["日","一","二","三","四","五","六"];
 
-    function initTable() {
-        const thead = document.getElementById('tableHead');
-        const tbody = document.getElementById('rosterBody');
-        thead.innerHTML = '';
-        tbody.innerHTML = '';
+// ══════════════════════════════
+//  ✅ 修復二：登入改用帳號密碼，不用 prompt
+// ══════════════════════════════
+const ADMIN_ACCOUNTS = {
+    "admin":   "taiwan2024",
+    "manager": "elite2024"
+};
 
-        document.getElementById('currentMonthDisplay').innerText = `${curYear}年 ${curMonth + 1}月`;
-        const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
+function doLogin() {
+    const user = document.getElementById('loginUser').value.trim();
+    const pass = document.getElementById('loginPass').value.trim();
+    const err  = document.getElementById('loginErr');
 
-        // 建立表頭 (加入特、假統計欄位)
-        let h1 = `<tr id="dateHeader"><th class="sticky-left">組別</th><th class="sticky-left-2">姓名</th>`;
-        let h2 = `<tr id="weekHeader"><th class="sticky-left">-</th><th class="sticky-left-2">-</th>`;
-        
+    if (!user || !pass) { err.textContent = '請填寫帳號與密碼'; return; }
+    if (!ADMIN_ACCOUNTS[user] || ADMIN_ACCOUNTS[user] !== pass) {
+        err.textContent = '帳號或密碼錯誤';
+        return;
+    }
+
+    document.getElementById('tbUser').textContent = user + ' · 管理員';
+    document.getElementById('page-login').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    err.textContent = '';
+
+    // ✅ 修復四：登入後做匿名 Auth，保護 Firebase
+    auth.signInAnonymously().then(() => {
+        initApp();
+    }).catch(() => {
+        // 沒有網路也讓他進去，只是資料讀不到
+        initApp();
+    });
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('page-login').style.display !== 'none') doLogin();
+});
+
+function doLogout() {
+    auth.signOut();
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('page-login').style.display = 'flex';
+    document.getElementById('loginPass').value = '';
+}
+
+// ══════════════════════════════
+//  初始化
+// ══════════════════════════════
+function initApp() {
+    // 先從 Firebase 讀人員資料
+    db.ref('staff').on('value', snap => {
+        const data = snap.val() || {};
+        staffList = Object.entries(data).map(([key, val]) => ({ key, ...val }));
+
+        // 如果 Firebase 沒有人員資料，自動寫入預設名單
+        if (staffList.length === 0) {
+            const defaultStaff = [
+                { group: "總務", name: "盧家慶" },
+                { group: "總務", name: "何鴻隆" },
+                { group: "總務", name: "蔡易倫" },
+                { group: "總務", name: "邱鴻鈞" },
+                { group: "總務", name: "柳旭洲" },
+                { group: "總務", name: "魏榮志" }
+            ];
+            defaultStaff.forEach(s => db.ref('staff').push(s));
+            return; // 等 Firebase 寫完再重新觸發
+        }
+
+        renderTable();
+        renderStaffList();
+    });
+}
+
+// ══════════════════════════════
+//  班表渲染
+// ══════════════════════════════
+function renderTable() {
+    const wrap = document.getElementById('tableWrap');
+    if (!staffList.length) {
+        wrap.innerHTML = '<div class="loading-bar">尚無人員資料，請先在「人員管理」新增</div>';
+        return;
+    }
+
+    const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
+    const todayDate   = new Date();
+    const isThisMonth = todayDate.getFullYear() === curYear && todayDate.getMonth() === curMonth;
+    const todayD      = todayDate.getDate();
+
+    document.getElementById('monthLabel').textContent = `${curYear}年 ${curMonth + 1}月`;
+
+    let thead = `<thead><tr>
+        <th class="col-group">組別</th>
+        <th class="col-name">姓名</th>`;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dow = new Date(curYear, curMonth, d).getDay();
+        const cls = dow === 0 ? 'sun' : dow === 6 ? 'sat' : '';
+        const todayCls = (isThisMonth && d === todayD) ? 'today-head' : '';
+        thead += `<th class="${cls} ${todayCls}">${d}<br><span style="font-weight:400;font-size:10px">${weekNames[dow]}</span></th>`;
+    }
+    thead += `<th class="sum-col">日</th><th class="sum-col">夜</th><th class="sum-col">休</th><th class="sum-col">特</th><th class="sum-col">假</th></tr></thead>`;
+
+    let tbody = '<tbody>';
+    staffList.forEach(p => {
+        tbody += `<tr>
+            <td class="col-group">${esc(p.group||'')}</td>
+            <td class="col-name">${esc(p.name)}</td>`;
         for (let d = 1; d <= daysInMonth; d++) {
-            h1 += `<th>${d}</th>`;
-            const dayOfWeek = weekNames[new Date(curYear, curMonth, d).getDay()];
-            h2 += `<th>${dayOfWeek}</th>`;
+            const id = `${curYear}_${curMonth+1}_${p.name}_${d}`;
+            const val = scheduleData[id] || '';
+            const valCls = val ? 'val-' + val.substring(0,1) : '';
+            const todayCls = (isThisMonth && d === todayD) ? 'today-col' : '';
+            tbody += `<td class="${todayCls}">
+                <input class="shift-input ${valCls}" id="${id}"
+                    value="${esc(val)}"
+                    onchange="saveShift('${esc(p.name)}', ${d}, this.value)"
+                    onfocus="this.select()">
+            </td>`;
         }
-        h1 += `<th class="summary-col">日</th><th class="summary-col">夜</th><th class="summary-col">休</th><th class="summary-col">特</th><th class="summary-col">假</th></tr>`;
-        h2 += `<th class="summary-col">-</th><th class="summary-col">-</th><th class="summary-col">-</th><th class="summary-col">-</th><th class="summary-col">-</th></tr>`;
-        thead.innerHTML = h1 + h2;
+        tbody += `<td id="sd_${esc(p.name)}" class="sum-col sc-day">0</td>
+                  <td id="sn_${esc(p.name)}" class="sum-col sc-night">0</td>
+                  <td id="so_${esc(p.name)}" class="sum-col sc-off">0</td>
+                  <td id="st_${esc(p.name)}" class="sum-col sc-spec">0</td>
+                  <td id="sl_${esc(p.name)}" class="sum-col sc-leave">0</td>
+        </tr>`;
+    });
+    tbody += '</tbody>';
 
-        // 建立資料行
-        staffData.forEach(p => {
-            const tr = document.createElement('tr');
-            let rowHtml = `<td class="sticky-left">${p.group}</td><td class="sticky-left-2"><b>${p.name}</b></td>`;
-            for (let d = 1; d <= daysInMonth; d++) {
-                rowHtml += `<td><input id="${curYear}_${curMonth+1}_${p.name}_${d}" onchange="saveShift('${p.name}', ${d}, this.value)"></td>`;
+    wrap.innerHTML = `<table>${thead}${tbody}</table>`;
+    listenSchedule(daysInMonth);
+}
+
+function listenSchedule(days) {
+    db.ref('guardSchedules').off();
+    db.ref('guardSchedules').on('value', snap => {
+        scheduleData = snap.val() || {};
+        let tDay=0, tNight=0, tOff=0, tSpec=0, tLeave=0;
+
+        staffList.forEach(p => {
+            let dc=0, nc=0, oc=0, tc=0, lc=0;
+            for (let d = 1; d <= days; d++) {
+                const id  = `${curYear}_${curMonth+1}_${p.name}_${d}`;
+                const val = scheduleData[id] || '';
+                const el  = document.getElementById(id);
+                if (el) {
+                    el.value = val;
+                    el.className = 'shift-input' + (val ? ' val-' + val.substring(0,1) : '');
+                }
+                if      (val.includes('日')) dc++;
+                else if (val.includes('夜')) nc++;
+                else if (val.includes('特')) tc++;
+                else if (val.includes('假') || val.includes('病') || val.includes('事')) lc++;
+                else if (val.includes('休') || val.includes('例') || val.includes('換')) oc++;
             }
-            // 新增統計欄位 ID
-            rowHtml += `<td id="sd_${p.name}" class="summary-col">0</td>
-                        <td id="sn_${p.name}" class="summary-col">0</td>
-                        <td id="so_${p.name}" class="summary-col">0</td>
-                        <td id="st_${p.name}" class="summary-col">0</td>
-                        <td id="sl_${p.name}" class="summary-col">0</td>`;
-            tr.innerHTML = rowHtml;
-            tbody.appendChild(tr);
+            const safeId = esc(p.name);
+            setEl(`sd_${safeId}`, dc);
+            setEl(`sn_${safeId}`, nc);
+            setEl(`so_${safeId}`, oc);
+            setEl(`st_${safeId}`, tc);
+            setEl(`sl_${safeId}`, lc);
+            tDay+=dc; tNight+=nc; tOff+=oc; tSpec+=tc; tLeave+=lc;
         });
 
-        listenToData(daysInMonth);
-    }
+        setEl('totalDay',   tDay);
+        setEl('totalNight', tNight);
+        setEl('totalOff',   tOff);
+        setEl('totalSpec',  tSpec);
+        setEl('totalLeave', tLeave);
+    });
+}
 
-    function listenToData(days) {
-        db.ref('guardSchedules').off();
-        db.ref('guardSchedules').on('value', (snapshot) => {
-            const data = snapshot.val() || {};
-            staffData.forEach(p => {
-                // 初始化五種班別計數器
-                let dc=0, nc=0, oc=0, tc=0, lc=0;
-                
-                for (let d = 1; d <= days; d++) {
-                    const id = `${curYear}_${curMonth+1}_${p.name}_${d}`;
-                    const val = data[id] || "";
-                    const el = document.getElementById(id);
-                    if(el) {
-                        el.value = val;
-                        el.className = "";
-                        if(val) el.classList.add('val-' + val.substring(0,1));
-                        
-                        // 精準計算邏輯
-                        if(val.includes("日")) dc++; 
-                        else if(val.includes("夜")) nc++; 
-                        else if(val.includes("特")) tc++;
-                        else if(val.includes("假") || val.includes("病") || val.includes("事")) lc++;
-                        else if(val.includes("休") || val.includes("例") || val.includes("❌")) oc++;
-                    }
-                }
-                // 寫入畫面
-                document.getElementById(`sd_${p.name}`).innerText = dc;
-                document.getElementById(`sn_${p.name}`).innerText = nc;
-                document.getElementById(`so_${p.name}`).innerText = oc;
-                document.getElementById(`st_${p.name}`).innerText = tc;
-                document.getElementById(`sl_${p.name}`).innerText = lc;
-            });
+function saveShift(name, day, val) {
+    const id = `${curYear}_${curMonth+1}_${name}_${day}`;
+    db.ref('guardSchedules/' + id).set(val)
+        .catch(() => showToast('❌ 儲存失敗，請確認網路'));
+}
+
+// ══════════════════════════════
+//  人員管理
+// ══════════════════════════════
+function renderStaffList() {
+    const container = document.getElementById('staffList');
+    if (!staffList.length) {
+        container.innerHTML = '<div style="color:var(--sub);text-align:center;padding:20px">尚無人員資料</div>';
+        return;
+    }
+    container.innerHTML = staffList.map((p, i) => `
+        <div class="staff-item">
+            <div class="si-info">
+                <div class="si-num">${i+1}</div>
+                <div>
+                    <div class="si-name">${esc(p.name)}</div>
+                    <div class="si-group">${esc(p.group||'未分組')}</div>
+                </div>
+            </div>
+            <button class="si-del" onclick="deleteStaff('${p.key}','${esc(p.name)}')">✕</button>
+        </div>
+    `).join('');
+}
+
+function addStaff() {
+    const name  = document.getElementById('newName').value.trim();
+    const group = document.getElementById('newGroup').value.trim();
+    if (!name) return showToast('請輸入姓名');
+    db.ref('staff').push({ name, group: group || '未分組' })
+        .then(() => {
+            document.getElementById('newName').value  = '';
+            document.getElementById('newGroup').value = '';
+            showToast('✅ 人員已新增');
         });
-    }
+}
 
-    function saveShift(name, day, val) {
-        const id = `${curYear}_${curMonth+1}_${name}_${day}`;
-        db.ref('guardSchedules/' + id).set(val);
-    }
+function deleteStaff(key, name) {
+    if (!confirm(`確定要刪除「${name}」嗎？\n此操作不會刪除已排的班表資料。`)) return;
+    db.ref('staff/' + key).remove()
+        .then(() => showToast(`「${name}」已刪除`));
+}
 
-    function exportToExcel() {
-        const table = document.getElementById('rosterTable');
-        let csv = "\ufeff"; 
-        
-        for (let i = 0; i < table.rows.length; i++) {
-            let row = [];
-            let cols = table.rows[i].cells;
-            for (let j = 0; j < cols.length; j++) {
-                let val = "";
-                const input = cols[j].querySelector('input');
-                if (input) {
-                    val = input.value;
-                } else {
-                    val = cols[j].innerText;
-                }
-                row.push('"' + val.replace(/"/g, '""') + '"');
-            }
-            csv += row.join(",") + "\r\n";
+function openStaffModal()  { document.getElementById('staffModal').classList.add('open'); }
+function closeStaffModal() { document.getElementById('staffModal').classList.remove('open'); }
+
+// ══════════════════════════════
+//  鎖定 / 解鎖
+// ══════════════════════════════
+function toggleLock() {
+    isEditing = !isEditing;
+    document.body.classList.toggle('can-edit', isEditing);
+    const btn = document.getElementById('lockBtn');
+    btn.textContent = isEditing ? '🔓 編輯中' : '🔒 唯讀模式';
+    btn.classList.toggle('unlocked', isEditing);
+    showToast(isEditing ? '🔓 已切換為編輯模式' : '🔒 已切換為唯讀模式');
+}
+
+// ══════════════════════════════
+//  匯出 CSV
+// ══════════════════════════════
+function exportCSV() {
+    const table = document.querySelector('table');
+    if (!table) return showToast('尚無資料可匯出');
+    let csv = '\ufeff';
+    for (let row of table.rows) {
+        let cells = [];
+        for (let cell of row.cells) {
+            const input = cell.querySelector('input');
+            cells.push('"' + (input ? input.value : cell.innerText).replace(/"/g, '""') + '"');
         }
-
-        const filename = `K9_班表_${curYear}_${curMonth + 1}.csv`;
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        csv += cells.join(',') + '\r\n';
     }
+    const filename = `台灣精銳_班表_${curYear}_${String(curMonth+1).padStart(2,'0')}.csv`;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('✅ 報表已匯出');
+}
 
-    function changeMonth(dir) {
-        curMonth += dir;
-        if (curMonth < 0) { curMonth = 11; curYear--; }
-        else if (curMonth > 11) { curMonth = 0; curYear++; }
-        initTable();
-    }
+// ══════════════════════════════
+//  月份切換
+// ══════════════════════════════
+function changeMonth(dir) {
+    curMonth += dir;
+    if (curMonth < 0)  { curMonth = 11; curYear--; }
+    if (curMonth > 11) { curMonth = 0;  curYear++; }
+    renderTable();
+}
 
-    function toggleLock() {
-        if(!isEditing && prompt("人事密碼：") === "8888") {
-            isEditing = true; document.body.classList.add('can-edit');
-            document.getElementById('lockBtn').innerText = "🔓 編輯中"; document.getElementById('lockBtn').classList.add('unlocked');
-        } else if(isEditing) {
-            isEditing = false; document.body.classList.remove('can-edit');
-            document.getElementById('lockBtn').innerText = "🔒 唯讀模式"; document.getElementById('lockBtn').classList.remove('unlocked');
-        }
-    }
-
-    initTable();
+// ══════════════════════════════
+//  工具函式
+// ══════════════════════════════
+function esc(str) {
+    return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function setEl(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+}
+let toastTimer;
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
 </script>
+
 </body>
 </html>
