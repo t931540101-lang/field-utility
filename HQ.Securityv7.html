@@ -2,9 +2,10 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>M-SECURITY HQ V8.2 | COMMAND CENTER</title>
+    <title>M-SECURITY HQ V8.3 | COMMAND CENTER</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --cyan: #00f2ff; --warn: #ff4d4f; --bg: #050505; --gold: #f1c40f; --green: #2ecc71; --purple: #a855f7; }
         body { background: var(--bg); color: white; font-family: -apple-system, "Microsoft JhengHei", sans-serif; margin: 0; padding: 0; }
@@ -72,7 +73,7 @@
 <body>
     <div class="hq-header">
         <img src="IMG_1096.jpeg" class="hq-logo" alt="HQ Logo">
-        <div style="color:var(--cyan); font-weight:900; letter-spacing:2px; font-size:20px;">M-SECURITY HQ COMMAND</div>
+        <div style="color:var(--cyan); font-weight:900; letter-spacing:2px; font-size:20px;">M-SECURITY HQ COMMAND <span style="font-size:11px;color:#555">V8.3</span></div>
     </div>
     <div class="status-bar">
         <div class="status-box">NETWORK <span class="status-val blink" style="color:var(--green)">ONLINE</span></div>
@@ -139,8 +140,8 @@
     ══════════════════════════════════════ -->
     <div id="import" class="content">
         <div class="import-section">
-            <div class="import-title">📥 CSV 批次匯入系統
-                <span style="font-size:11px;color:#666;font-weight:normal;">— 支援 Excel 另存 CSV 直接上傳</span>
+            <div class="import-title">📥 批次匯入系統
+                <span style="font-size:11px;color:#666;font-weight:normal;">— 支援 .xlsx / .xls / .csv 直接上傳，無需轉檔</span>
             </div>
 
             <div class="import-grid">
@@ -159,7 +160,7 @@
                         <div class="file-drop-icon">📂</div>
                         <div class="file-drop-text">點擊或拖曳 CSV 檔案</div>
                         <div class="file-drop-name" id="name-employee">尚未選擇檔案</div>
-                        <input type="file" accept=".csv" onchange="handleFile(this,'employee')">
+                        <input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'employee')">
                     </div>
                     <div class="progress-bar" id="pb-employee"><div class="progress-fill" id="pf-employee"></div></div>
                     <button class="import-btn" id="btn-employee" onclick="importData('employee')" disabled>🚀 一鍵匯入 Firebase</button>
@@ -179,7 +180,7 @@
                         <div class="file-drop-icon">📂</div>
                         <div class="file-drop-text">點擊或拖曳 CSV 檔案</div>
                         <div class="file-drop-name" id="name-vip">尚未選擇檔案</div>
-                        <input type="file" accept=".csv" onchange="handleFile(this,'vip')">
+                        <input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'vip')">
                     </div>
                     <div class="progress-bar" id="pb-vip"><div class="progress-fill" id="pf-vip"></div></div>
                     <button class="import-btn" id="btn-vip" onclick="importData('vip')" disabled>🚀 一鍵匯入 Firebase</button>
@@ -199,7 +200,7 @@
                         <div class="file-drop-icon">📂</div>
                         <div class="file-drop-text">點擊或拖曳 CSV 檔案</div>
                         <div class="file-drop-name" id="name-guard">尚未選擇檔案</div>
-                        <input type="file" accept=".csv" onchange="handleFile(this,'guard')">
+                        <input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'guard')">
                     </div>
                     <div class="progress-bar" id="pb-guard"><div class="progress-fill" id="pf-guard"></div></div>
                     <button class="import-btn" id="btn-guard" onclick="importData('guard')" disabled>🚀 一鍵匯入 Firebase</button>
@@ -219,7 +220,7 @@
                         <div class="file-drop-icon">📂</div>
                         <div class="file-drop-text">點擊或拖曳 CSV 檔案</div>
                         <div class="file-drop-name" id="name-visitor">尚未選擇檔案</div>
-                        <input type="file" accept=".csv" onchange="handleFile(this,'visitor')">
+                        <input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'visitor')">
                     </div>
                     <div class="progress-bar" id="pb-visitor"><div class="progress-fill" id="pf-visitor"></div></div>
                     <button class="import-btn" id="btn-visitor" onclick="importData('visitor')" disabled>🚀 一鍵匯入 Firebase</button>
@@ -299,25 +300,52 @@
     // ══════════════════════════════════════
     //  📥 批次匯入核心邏輯
     // ══════════════════════════════════════
-    const csvData = {}; // 暫存各類型解析後的資料
+    // ══════════════════════════════════════
+    //  📥 批次匯入核心邏輯 (V8.3 - SheetJS)
+    //  支援 .xlsx / .xls / .csv 直接解析
+    // ══════════════════════════════════════
+    const csvData = {};
 
     function handleFile(input, type) {
         const file = input.files[0]; if(!file) return;
         document.getElementById('name-'+type).innerText = '📄 ' + file.name;
         const reader = new FileReader();
+        const isCSV = file.name.toLowerCase().endsWith('.csv');
+
         reader.onload = e => {
-            const rows = parseCSV(e.target.result);
-            csvData[type] = rows;
-            document.getElementById('btn-'+type).disabled = (rows.length === 0);
-            addLog(`✅ 已讀取 ${file.name}，共 ${rows.length} 筆資料`, 'ok');
+            try {
+                let rows;
+                if(isCSV) {
+                    // CSV 用純文字解析
+                    rows = parseCSVText(e.target.result);
+                } else {
+                    // xlsx / xls 用 SheetJS 解析
+                    const data = new Uint8Array(e.target.result);
+                    const wb = XLSX.read(data, { type: 'array', codepage: 65001 });
+                    const ws = wb.Sheets[wb.SheetNames[0]];
+                    const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+                    // 跳過標題列
+                    const start = isHeaderRow(String(raw[0]?.[0]||'')) ? 1 : 0;
+                    rows = raw.slice(start).filter(r => r.some(c => String(c).trim()));
+                }
+                csvData[type] = rows;
+                document.getElementById('btn-'+type).disabled = (rows.length === 0);
+                addLog(`✅ 已讀取 ${file.name}，共解析 ${rows.length} 筆資料`, 'ok');
+            } catch(err) {
+                addLog(`❌ 檔案解析失敗：${err.message}`, 'err');
+            }
         };
-        reader.readAsText(file, 'UTF-8');
+
+        if(isCSV) {
+            reader.readAsText(file, 'UTF-8');
+        } else {
+            reader.readAsArrayBuffer(file); // xlsx 需要 ArrayBuffer
+        }
     }
 
-    function parseCSV(text) {
+    function parseCSVText(text) {
         const lines = text.trim().split('\n').filter(l => l.trim());
-        // 自動跳過標題行（若第一欄不像資料）
-        const start = isHeaderRow(lines[0]) ? 1 : 0;
+        const start = isHeaderRow(lines[0]?.split(',')[0]||'') ? 1 : 0;
         return lines.slice(start).map(l => l.split(',').map(c => c.trim().replace(/^"|"$/g,'')));
     }
 
