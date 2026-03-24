@@ -153,8 +153,8 @@
                         <button class="template-btn" onclick="downloadTemplate('employee')">⬇ 範本</button>
                     </div>
                     <div class="csv-format">
-                        欄位：<b>工號, 姓名, 車牌, 單位備註</b><br>
-                        範例：D01762,王小明,ABC-1234,資訊部
+                        欄位：<b>員編, 姓名, 部門, 車牌號碼</b><br>
+                        範例：D01762,王小明,資訊部,ABC-1234
                     </div>
                     <div class="file-drop" id="drop-employee">
                         <div class="file-drop-icon">📂</div>
@@ -173,8 +173,8 @@
                         <button class="template-btn" onclick="downloadTemplate('vip')">⬇ 範本</button>
                     </div>
                     <div class="csv-format">
-                        欄位：<b>工號, 姓名, 車牌, 單位備註</b><br>
-                        範例：V001,陳董事長,XYZ-9999,董事會
+                        欄位：<b>員編, 姓名, 部門, 車牌號碼</b><br>
+                        範例：V001,陳董事長,董事會,XYZ-9999
                     </div>
                     <div class="file-drop" id="drop-vip">
                         <div class="file-drop-icon">📂</div>
@@ -373,7 +373,10 @@
                 let key, data;
                 if(type==='employee'||type==='vip') {
                     key = r[0]||Date.now().toString()+i;
-                    data = { id:r[0]||'', name:r[1]||'', plate:(r[2]||'').toUpperCase(), reason:r[3]||'' };
+                    // Excel欄位：員編(0),姓名(1),部門(2),車牌(3) 
+                    const rawPlate = String(r[3]||''); 
+                    const firstPlate = rawPlate.split('\u3001')[0].trim().toUpperCase(); 
+                    data = { id:String(r[0]||''), name:String(r[1]||''), reason:String(r[2]||''), plate:firstPlate };
                 } else if(type==='guard') {
                     key = r[0];
                     if(!key||!r[1]) { addLog(`⚠ 第${i+1}列：姓名或密碼空白，跳過`, 'warn'); fail++; continue; }
