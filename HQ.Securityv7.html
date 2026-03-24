@@ -3,94 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M-SECURITY HQ V8.2 | 黑曜石計畫</title>
+    <title>M-SECURITY HQ V8.3 | COMMAND CENTER</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root { --cyan: #00f2ff; --warn: #ff4d4f; --bg: #050505; --gold: #f1c40f; --green: #2ecc71; }
-        body { background: var(--bg); color: white; font-family: -apple-system, "Microsoft JhengHei", sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
-        /* 掃描線特效 */
-        body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)); z-index: 1000; background-size: 100% 2px, 3px 100%; pointer-events: none; }
-        
+        body { background: var(--bg); color: white; font-family: -apple-system, "Microsoft JhengHei", sans-serif; margin: 0; padding: 0; }
+        body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)); z-index: 100; background-size: 100% 2px, 3px 100%; pointer-events: none; }
         .hq-header { background: #000; padding: 15px; text-align: center; border-bottom: 2px solid var(--cyan); }
-        .status-bar { display: flex; justify-content: center; gap: 8px; padding: 10px; background: #111; border-bottom: 1px solid #333; flex-wrap: wrap; }
-        .status-box { background: #000; border: 1px solid #222; padding: 5px 8px; border-radius: 4px; font-size: 10px; text-align: center; min-width: 70px; flex: 1; }
+        .status-bar { display: flex; justify-content: center; gap: 8px; padding: 10px; background: #111; border-bottom: 1px solid #333; }
+        .status-box { background: #000; border: 1px solid #222; padding: 5px 8px; border-radius: 4px; font-size: 10px; text-align: center; flex: 1; }
         .status-val { display: block; font-size: 14px; font-weight: bold; color: var(--cyan); }
-        .blink { animation: blinker 1.5s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0.3; } }
-
-        nav { display: flex; background: #111; sticky: top; z-index: 100; }
-        .tab { flex: 1; padding: 12px 5px; text-align: center; cursor: pointer; color: #666; font-size: 13px; font-weight: bold; border-bottom: 2px solid transparent; }
+        nav { display: flex; background: #111; }
+        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: #666; font-size: 13px; font-weight: bold; }
         .tab.active { color: var(--cyan); background: #1a1a1a; border-bottom: 2px solid var(--cyan); }
-        
-        .content { padding: 15px; display: none; box-sizing: border-box; }
+        .content { padding: 15px; display: none; }
         .content.active { display: block; }
-        
-        .monitor-card { background: #111; border: 1px solid #333; border-radius: 8px; padding: 12px; height: 350px; display: flex; flex-direction: column; margin-bottom: 15px; }
-        .card-header { border-bottom: 1px solid #333; padding-bottom: 8px; margin-bottom: 8px; font-weight: bold; color: var(--cyan); display: flex; justify-content: space-between; font-size: 14px; }
-        .scroll-list { flex: 1; overflow-y: auto; font-size: 12px; }
-        
-        .input-group { background: #111; border: 1px dashed var(--cyan); padding: 12px; border-radius: 8px; margin-bottom: 15px; }
-        input { width: 100%; padding: 10px; background: #000; border: 1px solid #444; color: #fff; margin-bottom: 8px; border-radius: 4px; box-sizing: border-box; }
-        
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 14px; }
+        .input-group { background: #111; border: 1px dashed var(--cyan); padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 14px; }
         .btn-cyan { background: var(--cyan); color: #000; }
-        .btn-outline { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); font-size: 12px; }
-        
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
         th { background: #1a1a1a; color: var(--cyan); padding: 8px; text-align: left; }
         td { padding: 10px 8px; border-bottom: 1px solid #222; }
-        
-        .entry { padding: 8px; border-bottom: 1px solid #222; border-left: 4px solid transparent; }
-        .visitor-active { border-left-color: var(--green); background: rgba(46, 204, 113, 0.05); }
+        .blink { animation: blinker 1.5s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0.3; } }
     </style>
 </head>
 <body>
 
     <div class="hq-header">
-        <div style="color:var(--cyan); font-weight:900; letter-spacing:2px; font-size: 18px;">M-SECURITY HQ V8.2</div>
-        <div style="font-size: 10px; color: #666;">系統環境: Win10 22H2 | i5-9400F</div>
+        <div style="color:var(--cyan); font-weight:900; letter-spacing:2px; font-size: 18px;">M-SECURITY HQ V8.3</div>
     </div>
 
     <div class="status-bar">
-        <div class="status-box">NETWORK <span class="status-val blink" style="color:var(--green)">ONLINE</span></div>
-        <div class="status-box">訪客 <span id="count-visitor" class="status-val">0</span></div>
-        <div class="status-box">VIP <span id="count-vip" class="status-val" style="color:var(--gold)">0</span></div>
+        <div class="status-box">SYSTEM <span class="status-val blink" style="color:var(--green)">ONLINE</span></div>
+        <div class="status-box">停車位數據 <span id="count-emp" class="status-val">0</span></div>
     </div>
 
     <nav>
-        <div class="tab active" onclick="switchTab('dashboard', this)">戰術監控</div>
-        <div class="tab" onclick="switchTab('manage', this)">數據部署</div>
+        <div class="tab active" onclick="switchTab('manage', this)">數據部署</div>
+        <div class="tab" onclick="switchTab('monitor', this)">即時監控</div>
     </nav>
 
-    <div id="dashboard" class="content active">
-        <div class="monitor-card">
-            <div class="card-header">📋 即時訪客監控 <span style="font-size:10px; color:var(--green)">LIVE</span></div>
-            <div id="visitor-monitor" class="scroll-list">連線中...</div>
+    <div id="manage" class="content active">
+        <div class="input-group">
+            <div style="color:var(--cyan); margin-bottom:10px; font-weight:bold;">🚀 批量導入停車位資料</div>
+            <button class="btn btn-cyan" onclick="importParkingCSV()">選取「第一區、第二區.csv」</button>
+            <p style="font-size: 11px; color: #888; margin-top: 10px;">
+                * 柔提醒：會自動合併雙車牌、對應員編與車位號碼。
+            </p>
         </div>
-        <div class="monitor-card">
-            <div class="card-header">📢 勤務日誌 <span style="font-size:10px; color:var(--gold)">LOGS</span></div>
-            <div id="handover-monitor" class="scroll-list">等待傳輸...</div>
-        </div>
+
+        <table>
+            <thead><tr><th>姓名</th><th>車牌</th><th>車位 / 部門</th><th>操作</th></tr></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
     </div>
 
-    <div id="manage" class="content">
-        <div class="input-group">
-            <div style="color:var(--cyan); margin-bottom:10px; font-weight:bold;">📥 停車位資料批量部署</div>
-            <button class="btn btn-cyan" onclick="importParkingCSV('employee_list')">選取「第一區、第二區.csv」匯入</button>
-            <p style="font-size: 10px; color: #888; margin-top: 8px;">* 自動對應：員編、姓名、車牌、車位號碼</p>
-        </div>
-
-        <div style="overflow-x:auto;">
-            <table>
-                <thead><tr><th>類型</th><th>姓名/車牌</th><th>車位/部門</th><th>操作</th></tr></thead>
-                <tbody id="tableBody"></tbody>
-            </table>
-        </div>
+    <div id="monitor" class="content">
+        <p style="text-align:center; color:#666;">即時監控數據加載中...</p>
     </div>
 
 <script>
-    // --- Firebase 配置 ---
     const firebaseConfig = { 
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48", 
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com", 
@@ -100,7 +74,6 @@
     firebase.initializeApp(firebaseConfig); 
     const db = firebase.database();
 
-    // --- 介面切換 ---
     function switchTab(id, el) {
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -108,8 +81,8 @@
         el.classList.add('active');
     }
 
-    // --- 核心匯入邏輯：針對停車位 CSV 最佳化 ---
-    function importParkingCSV(type) {
+    // --- 終極修正版：精準對齊 CSV 欄位 ---
+    function importParkingCSV() {
         const input = document.createElement('input');
         input.type = 'file'; input.accept = '.csv';
         input.onchange = e => {
@@ -122,73 +95,69 @@
                 const rows = content.split('\n');
                 let successCount = 0;
 
-                for(let i = 1; i < rows.length; i++) { // 跳過標題列
+                // 為了重新部署，先詢問是否清空舊資料
+                if(confirm("小黑哥，要清空舊的員工資料再匯入嗎？")) {
+                    await db.ref('employee_list').remove();
+                }
+
+                for(let i = 1; i < rows.length; i++) {
                     const row = rows[i].trim();
                     if(!row) continue;
 
-                    // 拆分欄位：0員編, 1姓名, 2部門, 3車牌1, 4車牌2, 5車位號碼
                     const cols = row.split(',').map(s => s.trim());
+                    
+                    // 根據你的 CSV 結構：
+                    // 0:員編, 1:姓名, 2:部門, 3:車牌1, 4:車牌2, 5:車位號碼
                     const eID = cols[0];
                     const eName = cols[1];
                     const eDept = cols[2];
-                    const ePlate = cols[3] + (cols[4] ? '、'+cols[4] : ''); // 合併多個車牌
-                    const eSpot = cols[5];
+                    const p1 = cols[3] || "";
+                    const p2 = cols[4] || "";
+                    const eSpot = cols[5] || "無";
 
-                    // 過濾無效資料與空位
-                    if(eName && eName !== "空" && eName !== "NaN") { 
-                        await db.ref(type + '/' + eID).set({
+                    // 合併車牌
+                    let ePlate = [p1, p2].filter(p => p && p !== "NaN").join("、");
+
+                    // 邏輯判斷：必須有員編且姓名不是"空"
+                    if(eID && eID !== "空" && eName && eName !== "空" && eName !== "NaN") { 
+                        await db.ref('employee_list/' + eID).set({
                             id: eID,
                             name: eName,
                             plate: ePlate.toUpperCase(),
-                            reason: `${eDept} | 車位:${eSpot}`,
-                            lastUpdate: new Date().toLocaleString()
+                            reason: `車位:${eSpot} | ${eDept}`
                         });
                         successCount++;
                     }
                 }
-                alert(`✅ 任務完成！已將 ${successCount} 筆停車位資料部署至資料庫。`);
+                alert(`✅ 部署成功！已匯入 ${successCount} 筆資料。`);
                 loadTable();
-                localStorage.setItem('last_import_time', new Date().toISOString());
             };
         };
         input.click();
     }
 
-    // --- 數據加載與監控 ---
-    function initSystem() {
-        // 監控訪客
-        db.ref('visitor_logs').on('value', snap => {
-            const list = document.getElementById('visitor-monitor');
-            let count = 0; list.innerHTML = '';
-            snap.forEach(c => {
-                const d = c.val();
-                if(!d.leaveTime) {
-                    count++;
-                    list.innerHTML += `<div class="entry visitor-active"><b>${d.name}</b><br><small>${d.company} | 車位對應中</small></div>`;
-                }
-            });
-            document.getElementById('count-visitor').innerText = count;
-        });
-
-        // 監控 VIP 數量
-        db.ref('vip_list').on('value', s => { document.getElementById('count-vip').innerText = s.numChildren(); });
-
-        loadTable();
-    }
-
     function loadTable() {
         const tb = document.getElementById('tableBody'); tb.innerHTML = '';
-        db.ref('employee_list').once('value', snap => {
+        db.ref('employee_list').on('value', snap => {
+            tb.innerHTML = '';
+            let count = 0;
             snap.forEach(i => {
                 const d = i.val();
-                tb.innerHTML += `<tr><td style="color:var(--cyan)">員工</td><td><b>${d.name}</b><br>${d.plate}</td><td>${d.reason}</td><td><button onclick="delItem('${i.key}')" style="background:red; color:white; border:none; padding:4px; border-radius:4px; font-size:10px;">刪除</button></td></tr>`;
+                count++;
+                tb.innerHTML += `<tr>
+                    <td><b>${d.name}</b></td>
+                    <td style="color:var(--cyan)">${d.plate || '無'}</td>
+                    <td>${d.reason}</td>
+                    <td><button onclick="delItem('${i.key}')" style="background:red; color:white; border:none; padding:4px 8px; border-radius:4px;">刪</button></td>
+                </tr>`;
             });
+            document.getElementById('count-emp').innerText = count;
         });
     }
 
-    function delItem(key) { if(confirm("確定撤銷此筆資料？")) db.ref('employee_list/'+key).remove().then(()=>loadTable()); }
+    function delItem(key) { if(confirm("確定刪除？")) db.ref('employee_list/'+key).remove(); }
 
-    window.onload = initSystem;
+    window.onload = loadTable;
 </script>
 </body>
 </html>
