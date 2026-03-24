@@ -29,14 +29,14 @@
         .btn-nav { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 15px; border-radius: 6px; font-weight: bold; }
 
         .action-bar { display: flex; gap: 10px; margin-top: 10px; }
-        .btn-sm { flex: 1; padding: 10px; border-radius: 6px; border: none; font-weight: bold; font-size: 13px; color: white; }
+        .btn-sm { flex: 1; padding: 10px; border-radius: 6px; border: none; font-weight: bold; font-size: 13px; color: white; cursor: pointer; }
         .btn-lock { background: #607d8b; }
         .btn-lock.unlocked { background: #43a047; box-shadow: 0 0 10px rgba(67,160,71,0.5); }
         .btn-export { background: #0288d1; }
 
         /* === 弟兄卡片清單 === */
         .container { padding: 15px; }
-        .staff-card { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 6px solid var(--primary); }
+        .staff-card { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 6px solid var(--primary); cursor: pointer; }
         .staff-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .staff-name { font-size: 18px; font-weight: 900; color: var(--primary); }
         .staff-group { font-size: 12px; background: #eee; padding: 2px 8px; border-radius: 4px; color: #666; }
@@ -64,7 +64,7 @@
         .val-特 { background: #fffde7; color: var(--special-yellow); }
         .val-假 { background: #e8f5e9; color: var(--leave-green); }
 
-        .close-btn { position: absolute; top: 15px; right: 15px; font-size: 24px; font-weight: bold; color: #999; }
+        .close-btn { position: absolute; top: 15px; right: 15px; font-size: 24px; font-weight: bold; color: #999; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -81,16 +81,14 @@
     </div>
 </div>
 
-<div class="container" id="staffList">
-    </div>
+<div class="container" id="staffList"></div>
 
 <div class="modal" id="calModal">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">×</span>
-        <h2 id="modalName" style="margin:0; color:var(--primary);">盧家慶</h2>
-        <div id="modalMonth" style="font-size:14px; color:#666;">2026年 3月</div>
-        <div class="calendar-grid" id="calendarGrid">
-            </div>
+        <h2 id="modalName" style="margin:0; color:var(--primary);">姓名</h2>
+        <div id="modalMonth" style="font-size:14px; color:#666;">月份</div>
+        <div class="calendar-grid" id="calendarGrid"></div>
         <p style="font-size:11px; color:#999; margin-top:15px; text-align:center;">
             提示：日/夜/休/特/假
         </p>
@@ -98,6 +96,7 @@
 </div>
 
 <script>
+    // Firebase 設定
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
         databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
@@ -108,7 +107,7 @@
     const db = firebase.database();
 
     let curYear = 2026;
-    let curMonth = 2; 
+    let curMonth = 2; // 0 表示 1月，2 表示 3月
     let isEditing = false;
     let activeStaff = "";
     const staffData = [
@@ -117,6 +116,7 @@
         {group: "總務", name: "柳旭洲"}, {group: "總務", name: "魏榮志"}
     ];
 
+    // 初始化頁面
     function initStaffList() {
         const list = document.getElementById('staffList');
         list.innerHTML = '';
@@ -144,6 +144,7 @@
         listenToData();
     }
 
+    // 開啟個人月曆視窗
     function openModal(name) {
         activeStaff = name;
         document.getElementById('modalName').innerText = name;
@@ -152,12 +153,12 @@
         document.getElementById('calModal').style.display = 'flex';
     }
 
+    // 渲染單人月曆
     function renderCalendar() {
         const grid = document.getElementById('calendarGrid');
         grid.innerHTML = '';
         const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
         
-        // 讀取目前的 Firebase 數據
         db.ref('guardSchedules').once('value', (snapshot) => {
             const data = snapshot.val() || {};
             for (let d = 1; d <= daysInMonth; d++) {
@@ -178,12 +179,14 @@
         });
     }
 
+    // 儲存班次到 Firebase
     function saveShift(name, day, val) {
         const id = `${curYear}_${curMonth+1}_${name}_${day}`;
         db.ref('guardSchedules/' + id).set(val);
-        renderCalendar(); // 刷新顏色
+        renderCalendar(); 
     }
 
+    // 即時更新統計數據
     function listenToData() {
         const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
         db.ref('guardSchedules').on('value', (snapshot) => {
@@ -208,6 +211,7 @@
         });
     }
 
+    // 切換編輯權限
     function toggleLock() {
         if(!isEditing && prompt("人事密碼：") === "8888") {
             isEditing = true; document.body.classList.add('can-edit');
@@ -221,11 +225,57 @@
         if(document.getElementById('calModal').style.display === 'flex') renderCalendar();
     }
 
+    // 切換月份
     function changeMonth(dir) {
         curMonth += dir;
         if (curMonth < 0) { curMonth = 11; curYear--; }
         else if (curMonth > 11) { curMonth = 0; curYear++; }
         initStaffList();
+    }
+
+    // 匯出報表功能 (CSV)
+    function exportToExcel() {
+        const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
+        const monthStr = `${curYear}年${curMonth + 1}月`;
+        
+        db.ref('guardSchedules').once('value', (snapshot) => {
+            const data = snapshot.val() || {};
+            
+            // 建立 CSV 標頭
+            let csvContent = "姓名,";
+            for (let d = 1; d <= daysInMonth; d++) {
+                csvContent += d + "日,";
+            }
+            csvContent += "\n";
+
+            // 抓取名單中的數據
+            staffData.forEach(p => {
+                let row = p.name + ",";
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const id = `${curYear}_${curMonth+1}_${p.name}_${d}`;
+                    const val = data[id] || "";
+                    row += val + ",";
+                }
+                csvContent += row + "\n";
+            });
+
+            downloadCSV(csvContent, `K9班表_${monthStr}.csv`);
+        });
+    }
+
+    // 觸發下載
+    function downloadCSV(content, filename) {
+        // \ufeff 是 BOM，用於解決 Excel 開啟 UTF-8 CSV 的亂碼問題
+        const blob = new Blob(["\ufeff" + content], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     function closeModal() { document.getElementById('calModal').style.display = 'none'; }
