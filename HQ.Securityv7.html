@@ -2,78 +2,248 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M-SECURITY HQ V8.3 | COMMAND CENTER</title>
+    <title>M-SECURITY HQ V8.2 | COMMAND CENTER</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --cyan: #00f2ff; --warn: #ff4d4f; --bg: #050505; --gold: #f1c40f; --green: #2ecc71; }
+        :root { --cyan: #00f2ff; --warn: #ff4d4f; --bg: #050505; --gold: #f1c40f; --green: #2ecc71; --purple: #a855f7; }
         body { background: var(--bg); color: white; font-family: -apple-system, "Microsoft JhengHei", sans-serif; margin: 0; padding: 0; }
-        body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)); z-index: 100; background-size: 100% 2px, 3px 100%; pointer-events: none; }
-        .hq-header { background: #000; padding: 15px; text-align: center; border-bottom: 2px solid var(--cyan); }
-        .status-bar { display: flex; justify-content: center; gap: 8px; padding: 10px; background: #111; border-bottom: 1px solid #333; }
-        .status-box { background: #000; border: 1px solid #222; padding: 5px 8px; border-radius: 4px; font-size: 10px; text-align: center; flex: 1; }
-        .status-val { display: block; font-size: 14px; font-weight: bold; color: var(--cyan); }
-        nav { display: flex; background: #111; }
-        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: #666; font-size: 13px; font-weight: bold; }
-        .tab.active { color: var(--cyan); background: #1a1a1a; border-bottom: 2px solid var(--cyan); }
-        .content { padding: 15px; display: none; }
-        .content.active { display: block; }
-        .input-group { background: #111; border: 1px dashed var(--cyan); padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 14px; }
-        .btn-cyan { background: var(--cyan); color: #000; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { background: #1a1a1a; color: var(--cyan); padding: 8px; text-align: left; }
-        td { padding: 10px 8px; border-bottom: 1px solid #222; }
+        body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%), linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,255,0.03)); z-index: -1; background-size: 100% 2px, 3px 100%; pointer-events: none; }
+        .hq-header { background: #000; padding: 20px; text-align: center; border-bottom: 2px solid var(--cyan); }
+        .hq-logo { width: 140px; height: auto; filter: drop-shadow(0 0 8px var(--cyan)); }
+        .status-bar { display: flex; justify-content: center; gap: 10px; padding: 10px; background: #111; border-bottom: 1px solid #333; flex-wrap: wrap; }
+        .status-box { background: #000; border: 1px solid #222; padding: 5px 12px; border-radius: 4px; font-size: 11px; text-align: center; min-width: 80px; }
+        .status-val { display: block; font-size: 16px; font-weight: bold; color: var(--cyan); }
         .blink { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.3; } }
+        nav { display: flex; background: #111; overflow-x: auto; }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; color: #666; font-weight: bold; white-space: nowrap; font-size: 13px; }
+        .tab.active { color: var(--cyan); background: #1a1a1a; border-bottom: 2px solid var(--cyan); }
+        .content { padding: 20px; display: none; }
+        .content.active { display: block; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .monitor-card { background: #111; border: 1px solid #333; border-radius: 8px; padding: 15px; height: 500px; display: flex; flex-direction: column; }
+        .card-header { border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px; font-weight: bold; color: var(--cyan); display: flex; justify-content: space-between; }
+        .scroll-list { flex: 1; overflow-y: auto; font-size: 13px; }
+        .input-group { background: #111; border: 1px dashed var(--cyan); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        input[type=text], input[type=password] { width: 100%; padding: 10px; background: #000; border: 1px solid #444; color: #fff; margin-bottom: 8px; border-radius: 4px; box-sizing: border-box; }
+        .btn { padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .btn-cyan { background: var(--cyan); color: #000; }
+        .btn-full { width: 100%; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: #1a1a1a; color: var(--cyan); padding: 8px; text-align: left; }
+        td { padding: 10px 8px; border-bottom: 1px solid #222; }
+        .entry { padding: 8px; border-bottom: 1px solid #222; }
+        .time { color: var(--cyan); font-size: 11px; }
+        .visitor-active { border-left: 4px solid var(--green); margin-bottom: 5px; background: rgba(46,204,113,0.05); }
+        .handover-item { border-left: 4px solid var(--gold); margin-bottom: 5px; background: rgba(241,196,15,0.05); }
+
+        /* ── 匯入功能區專屬樣式 ── */
+        .import-section { background: #0a0a0a; border: 1px solid #333; border-radius: 8px; padding: 20px; margin-bottom: 25px; }
+        .import-title { color: var(--purple); font-weight: bold; font-size: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        .import-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+        .import-card { background: #111; border: 1px dashed #444; border-radius: 6px; padding: 15px; transition: border-color 0.3s; }
+        .import-card:hover { border-color: var(--purple); }
+        .import-card-title { font-size: 12px; color: #aaa; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .import-card-title span { color: var(--purple); font-weight: bold; font-size: 13px; }
+        .csv-format { background: #000; border: 1px solid #222; border-radius: 4px; padding: 8px; font-size: 11px; color: #888; font-family: monospace; margin-bottom: 10px; line-height: 1.6; }
+        .csv-format b { color: var(--gold); }
+        .file-drop { border: 2px dashed #333; border-radius: 6px; padding: 20px; text-align: center; cursor: pointer; transition: 0.3s; position: relative; }
+        .file-drop:hover, .file-drop.dragover { border-color: var(--purple); background: rgba(168,85,247,0.05); }
+        .file-drop input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+        .file-drop-icon { font-size: 24px; margin-bottom: 6px; }
+        .file-drop-text { font-size: 12px; color: #666; }
+        .file-drop-name { font-size: 12px; color: var(--cyan); margin-top: 5px; min-height: 16px; }
+        .import-btn { width: 100%; padding: 10px; background: var(--purple); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 13px; transition: 0.2s; }
+        .import-btn:hover { background: #9333ea; }
+        .import-btn:disabled { background: #444; cursor: not-allowed; }
+        .progress-bar { height: 4px; background: #222; border-radius: 2px; margin-top: 8px; overflow: hidden; display: none; }
+        .progress-fill { height: 100%; background: var(--purple); border-radius: 2px; transition: width 0.3s; width: 0%; }
+        .import-log { margin-top: 15px; background: #000; border: 1px solid #222; border-radius: 4px; padding: 10px; font-size: 11px; font-family: monospace; max-height: 150px; overflow-y: auto; display: none; }
+        .log-ok { color: var(--green); }
+        .log-warn { color: var(--gold); }
+        .log-err { color: var(--warn); }
+        .template-btn { font-size: 11px; color: var(--cyan); background: none; border: 1px solid #333; border-radius: 3px; padding: 3px 8px; cursor: pointer; float: right; }
+        .template-btn:hover { border-color: var(--cyan); }
+        .summary-bar { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+        .summary-tag { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: #111; border: 1px solid #333; }
     </style>
 </head>
 <body>
-
     <div class="hq-header">
-        <div style="color:var(--cyan); font-weight:900; letter-spacing:2px; font-size: 18px;">M-SECURITY HQ V8.3</div>
+        <img src="IMG_1096.jpeg" class="hq-logo" alt="HQ Logo">
+        <div style="color:var(--cyan); font-weight:900; letter-spacing:2px; font-size:20px;">M-SECURITY HQ COMMAND</div>
     </div>
-
     <div class="status-bar">
-        <div class="status-box">SYSTEM <span class="status-val blink" style="color:var(--green)">ONLINE</span></div>
-        <div class="status-box">停車位數據 <span id="count-emp" class="status-val">0</span></div>
+        <div class="status-box">NETWORK <span class="status-val blink" style="color:var(--green)">ONLINE</span></div>
+        <div class="status-box">ON-SITE <span id="count-visitor" class="status-val" style="color:var(--green)">0</span></div>
+        <div class="status-box">VIP <span id="count-vip" class="status-val" style="color:var(--gold)">0</span></div>
+        <div class="status-box">GUARDS <span id="count-guards" class="status-val">0</span></div>
     </div>
-
     <nav>
-        <div class="tab active" onclick="switchTab('manage', this)">數據部署</div>
-        <div class="tab" onclick="switchTab('monitor', this)">即時監控</div>
+        <div class="tab active" onclick="switchTab('dashboard',this)">戰術監控</div>
+        <div class="tab" onclick="switchTab('manage',this)">數據部署</div>
+        <div class="tab" onclick="switchTab('auth',this)">人員授權</div>
+        <div class="tab" onclick="switchTab('import',this)">📥 批次匯入</div>
+        <div class="tab" onclick="switchTab('search-logs',this)">查詢日誌</div>
     </nav>
 
-    <div id="manage" class="content active">
-        <div class="input-group">
-            <div style="color:var(--cyan); margin-bottom:10px; font-weight:bold;">🚀 批量導入停車位資料</div>
-            <button class="btn btn-cyan" onclick="importParkingCSV()">選取「第一區、第二區.csv」</button>
-            <p style="font-size: 11px; color: #888; margin-top: 10px;">
-                * 柔提醒：會自動合併雙車牌、對應員編與車位號碼。
-            </p>
+    <!-- 戰術監控 -->
+    <div id="dashboard" class="content active">
+        <div class="dashboard-grid">
+            <div class="monitor-card">
+                <div class="card-header">📋 即時訪客登記監控 <span style="font-size:10px;color:var(--green)">LIVE</span></div>
+                <div id="visitor-monitor" class="scroll-list">讀取數據中...</div>
+            </div>
+            <div class="monitor-card">
+                <div class="card-header">📢 勤務交接日誌 <span style="font-size:10px;color:var(--gold)">UPDATE</span></div>
+                <div id="handover-monitor" class="scroll-list">讀取數據中...</div>
+            </div>
         </div>
+    </div>
 
+    <!-- 數據部署 -->
+    <div id="manage" class="content">
+        <div class="input-group">
+            <input type="text" id="eID" placeholder="工號 / 編號">
+            <input type="text" id="eName" placeholder="姓名">
+            <input type="text" id="ePlate" placeholder="車牌">
+            <input type="text" id="eReason" placeholder="單位 / 備註">
+            <div style="display:flex;gap:10px;">
+                <button class="btn btn-cyan btn-full" onclick="save('employee_list')">部署員工</button>
+                <button class="btn btn-full" style="background:var(--gold);color:#000;font-weight:bold;" onclick="save('vip_list')">部署 VIP</button>
+            </div>
+        </div>
         <table>
-            <thead><tr><th>姓名</th><th>車牌</th><th>車位 / 部門</th><th>操作</th></tr></thead>
+            <thead><tr><th>類型</th><th>姓名/車牌</th><th>單位備註</th><th>操作</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
 
-    <div id="monitor" class="content">
-        <p style="text-align:center; color:#666;">即時監控數據加載中...</p>
+    <!-- 人員授權 -->
+    <div id="auth" class="content">
+        <div class="input-group">
+            <div style="color:var(--cyan);margin-bottom:10px;font-weight:bold;">🛡️ 新增值勤人員授權</div>
+            <input type="text" id="gName" placeholder="弟兄姓名 (將作為登入帳號)">
+            <input type="text" id="gPwd" placeholder="設定登入密碼">
+            <button class="btn btn-cyan btn-full" onclick="addGuard()">核發通行權限</button>
+        </div>
+        <table>
+            <thead><tr><th>授權人員</th><th>設定密碼</th><th>操作</th></tr></thead>
+            <tbody id="authTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         📥 批次匯入頁面
+    ══════════════════════════════════════ -->
+    <div id="import" class="content">
+        <div class="import-section">
+            <div class="import-title">📥 CSV 批次匯入系統
+                <span style="font-size:11px;color:#666;font-weight:normal;">— 支援 Excel 另存 CSV 直接上傳</span>
+            </div>
+
+            <div class="import-grid">
+
+                <!-- 員工名單 -->
+                <div class="import-card">
+                    <div class="import-card-title">
+                        <span>👤 員工名單</span> employee_list
+                        <button class="template-btn" onclick="downloadTemplate('employee')">⬇ 範本</button>
+                    </div>
+                    <div class="csv-format">
+                        欄位：<b>工號, 姓名, 車牌, 單位備註</b><br>
+                        範例：D01762,王小明,ABC-1234,資訊部
+                    </div>
+                    <div class="file-drop" id="drop-employee">
+                        <div class="file-drop-icon">📂</div>
+                        <div class="file-drop-text">點擊或拖曳 CSV 檔案</div>
+                        <div class="file-drop-name" id="name-employee">尚未選擇檔案</div>
+                        <input type="file" accept=".csv" onchange="handleFile(this,'employee')">
+                    </div>
+                    <div class="progress-bar" id="pb-employee"><div class="progress-fill" id="pf-employee"></div></div>
+                    <button class="import-btn" id="btn-employee" onclick="importData('employee')" disabled>🚀 一鍵匯入 Firebase</button>
+                </div>
+
+                <!-- VIP 名單 -->
+                <div class="import-card">
+                    <div class="import-card-title">
+                        <span style="color:var(--gold)">⭐ VIP 名單</span> vip_list
+                        <button class="template-btn" onclick="downloadTemplate('vip')">⬇ 範本</button>
+                    </div>
+                    <div class="csv-format">
+                        欄位：<b>工號, 姓名, 車牌, 單位備註</b><br>
+                        範例：V001,陳董事長,XYZ-9999,董事會
+                    </div>
+                    <div class="file-drop" id="drop-vip">
+                        <div class="file-drop-icon">📂</div>
+                        <div class="file-drop-text">點擊或拖曳 CSV 檔案</div>
+                        <div class="file-drop-name" id="name-vip">尚未選擇檔案</div>
+                        <input type="file" accept=".csv" onchange="handleFile(this,'vip')">
+                    </div>
+                    <div class="progress-bar" id="pb-vip"><div class="progress-fill" id="pf-vip"></div></div>
+                    <button class="import-btn" id="btn-vip" onclick="importData('vip')" disabled>🚀 一鍵匯入 Firebase</button>
+                </div>
+
+                <!-- 值勤人員帳號 -->
+                <div class="import-card">
+                    <div class="import-card-title">
+                        <span style="color:var(--cyan)">🛡️ 值勤帳號</span> guard_accounts
+                        <button class="template-btn" onclick="downloadTemplate('guard')">⬇ 範本</button>
+                    </div>
+                    <div class="csv-format">
+                        欄位：<b>姓名, 密碼</b><br>
+                        範例：張大雄,pass1234
+                    </div>
+                    <div class="file-drop" id="drop-guard">
+                        <div class="file-drop-icon">📂</div>
+                        <div class="file-drop-text">點擊或拖曳 CSV 檔案</div>
+                        <div class="file-drop-name" id="name-guard">尚未選擇檔案</div>
+                        <input type="file" accept=".csv" onchange="handleFile(this,'guard')">
+                    </div>
+                    <div class="progress-bar" id="pb-guard"><div class="progress-fill" id="pf-guard"></div></div>
+                    <button class="import-btn" id="btn-guard" onclick="importData('guard')" disabled>🚀 一鍵匯入 Firebase</button>
+                </div>
+
+                <!-- 訪客日誌 -->
+                <div class="import-card">
+                    <div class="import-card-title">
+                        <span style="color:var(--green)">📋 訪客日誌</span> visitor_logs
+                        <button class="template-btn" onclick="downloadTemplate('visitor')">⬇ 範本</button>
+                    </div>
+                    <div class="csv-format">
+                        欄位：<b>姓名, 人數, 公司, 事由, 進場時間</b><br>
+                        範例：李訪客,2,ABC公司,洽公,2026/03/24 09:00
+                    </div>
+                    <div class="file-drop" id="drop-visitor">
+                        <div class="file-drop-icon">📂</div>
+                        <div class="file-drop-text">點擊或拖曳 CSV 檔案</div>
+                        <div class="file-drop-name" id="name-visitor">尚未選擇檔案</div>
+                        <input type="file" accept=".csv" onchange="handleFile(this,'visitor')">
+                    </div>
+                    <div class="progress-bar" id="pb-visitor"><div class="progress-fill" id="pf-visitor"></div></div>
+                    <button class="import-btn" id="btn-visitor" onclick="importData('visitor')" disabled>🚀 一鍵匯入 Firebase</button>
+                </div>
+
+            </div>
+
+            <!-- 匯入日誌 -->
+            <div id="import-log" class="import-log"></div>
+            <div id="import-summary" class="summary-bar"></div>
+        </div>
+    </div>
+
+    <!-- 查詢日誌 -->
+    <div id="search-logs" class="content">
+        <div id="logFeed" class="scroll-list">等待日誌傳輸...</div>
     </div>
 
 <script>
-    const firebaseConfig = { 
-        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48", 
-        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com", 
-        projectId: "factor-security-d1965", 
-        appId: "1:864846943143:web:4cfa18cd20d2f712225c82" 
-    };
-    firebase.initializeApp(firebaseConfig); 
+    const firebaseConfig = { apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48", databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com", projectId: "factor-security-d1965", appId: "1:864846943143:web:4cfa18cd20d2f712225c82" };
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // ── 分頁切換 ──
     function switchTab(id, el) {
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -81,83 +251,171 @@
         el.classList.add('active');
     }
 
-    // --- 終極修正版：精準對齊 CSV 欄位 ---
-    function importParkingCSV() {
-        const input = document.createElement('input');
-        input.type = 'file'; input.accept = '.csv';
-        input.onchange = e => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.readAsText(file, 'UTF-8'); 
-            
-            reader.onload = async (readerEvent) => {
-                const content = readerEvent.target.result;
-                const rows = content.split('\n');
-                let successCount = 0;
-
-                // 為了重新部署，先詢問是否清空舊資料
-                if(confirm("小黑哥，要清空舊的員工資料再匯入嗎？")) {
-                    await db.ref('employee_list').remove();
-                }
-
-                for(let i = 1; i < rows.length; i++) {
-                    const row = rows[i].trim();
-                    if(!row) continue;
-
-                    const cols = row.split(',').map(s => s.trim());
-                    
-                    // 根據你的 CSV 結構：
-                    // 0:員編, 1:姓名, 2:部門, 3:車牌1, 4:車牌2, 5:車位號碼
-                    const eID = cols[0];
-                    const eName = cols[1];
-                    const eDept = cols[2];
-                    const p1 = cols[3] || "";
-                    const p2 = cols[4] || "";
-                    const eSpot = cols[5] || "無";
-
-                    // 合併車牌
-                    let ePlate = [p1, p2].filter(p => p && p !== "NaN").join("、");
-
-                    // 邏輯判斷：必須有員編且姓名不是"空"
-                    if(eID && eID !== "空" && eName && eName !== "空" && eName !== "NaN") { 
-                        await db.ref('employee_list/' + eID).set({
-                            id: eID,
-                            name: eName,
-                            plate: ePlate.toUpperCase(),
-                            reason: `車位:${eSpot} | ${eDept}`
-                        });
-                        successCount++;
-                    }
-                }
-                alert(`✅ 部署成功！已匯入 ${successCount} 筆資料。`);
-                loadTable();
-            };
-        };
-        input.click();
+    // ── 監控 ──
+    function startHQMonitor() {
+        db.ref('visitor_logs').on('value', snap => {
+            const list = document.getElementById('visitor-monitor'); let count = 0; list.innerHTML = '';
+            snap.forEach(c => { const d = c.val(); if(!d.leaveTime) { count++; list.innerHTML += `<div class="entry visitor-active"><span class="time">${d.timeIn}</span><br><b>${d.name}</b> (${d.count}人) - ${d.company}<br><small>事由：${d.reason}</small></div>`; } });
+            document.getElementById('count-visitor').innerText = count; if(count===0) list.innerHTML = "目前場內無訪客";
+        });
+        db.ref('reactLogs').limitToLast(10).on('value', snap => {
+            const list = document.getElementById('handover-monitor'); list.innerHTML = '';
+            snap.forEach(c => { const d = c.val(); list.innerHTML = `<div class="entry handover-item"><span class="time">${d.time}</span><br><b>${d.user||'值勤員'}</b>: ${d.note}</div>` + list.innerHTML; });
+        });
+        db.ref('search_logs').limitToLast(30).on('value', snap => {
+            const feed = document.getElementById('logFeed'); feed.innerHTML = '';
+            snap.forEach(c => { const d = c.val(); feed.innerHTML = `<div class="entry"><span class="time">[${d.time}]</span> <b>${d.user}</b> 查詢了 <b>${d.query}</b></div>` + feed.innerHTML; });
+        });
+        db.ref('vip_list').on('value', s => { document.getElementById('count-vip').innerText = s.numChildren(); });
     }
 
-    function loadTable() {
-        const tb = document.getElementById('tableBody'); tb.innerHTML = '';
-        db.ref('employee_list').on('value', snap => {
-            tb.innerHTML = '';
-            let count = 0;
-            snap.forEach(i => {
-                const d = i.val();
-                count++;
-                tb.innerHTML += `<tr>
-                    <td><b>${d.name}</b></td>
-                    <td style="color:var(--cyan)">${d.plate || '無'}</td>
-                    <td>${d.reason}</td>
-                    <td><button onclick="delItem('${i.key}')" style="background:red; color:white; border:none; padding:4px 8px; border-radius:4px;">刪</button></td>
-                </tr>`;
-            });
-            document.getElementById('count-emp').innerText = count;
+    // ── 員工/VIP 管理 ──
+    function addGuard() {
+        const name = document.getElementById('gName').value.trim();
+        const pwd = document.getElementById('gPwd').value.trim();
+        if(!name||!pwd) return alert("姓名與密碼均為必填！");
+        db.ref('guard_accounts/'+name).set({ password: pwd, addedAt: new Date().toLocaleString() }).then(()=>{ alert("人員授權已核發！"); document.getElementById('gName').value=''; document.getElementById('gPwd').value=''; loadAuth(); });
+    }
+    function loadAuth() {
+        const tb = document.getElementById('authTableBody'); tb.innerHTML='';
+        db.ref('guard_accounts').on('value', snap => {
+            tb.innerHTML=''; document.getElementById('count-guards').innerText=snap.numChildren();
+            snap.forEach(c => { tb.innerHTML+=`<tr><td><b>${c.key}</b></td><td style="color:var(--gold)">${c.val().password}</td><td><button onclick="delGuard('${c.key}')" style="background:red;color:white;border:none;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">撤銷權限</button></td></tr>`; });
         });
     }
+    function delGuard(name) { if(confirm(`確定要撤銷 [${name}] 的登入權限嗎？`)) db.ref('guard_accounts/'+name).remove(); }
+    function save(p) {
+        const n = document.getElementById('eName').value; if(!n) return alert("姓名必填");
+        const id = document.getElementById('eID').value||Date.now().toString();
+        db.ref(p+'/'+id).set({ name:n, id, plate:document.getElementById('ePlate').value.toUpperCase(), reason:document.getElementById('eReason').value }).then(()=>{ alert("部署成功"); loadTable(); });
+    }
+    function loadTable() {
+        const tb = document.getElementById('tableBody'); tb.innerHTML='';
+        const fetchList = (p,t,c) => db.ref(p).once('value', s => s.forEach(i => { const d=i.val(); tb.innerHTML+=`<tr><td style="color:${c}">${t}</td><td>${d.name}<br>${d.plate||''}</td><td>${d.reason||''}</td><td><button onclick="del('${p}','${i.key}')" style="background:red;color:white;border:none;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">刪除</button></td></tr>`; }));
+        fetchList('employee_list','員工','var(--cyan)'); fetchList('vip_list','VIP','var(--gold)');
+    }
+    function del(p,i) { if(confirm("確定撤銷？")) db.ref(p+'/'+i).remove().then(()=>loadTable()); }
 
-    function delItem(key) { if(confirm("確定刪除？")) db.ref('employee_list/'+key).remove(); }
+    // ══════════════════════════════════════
+    //  📥 批次匯入核心邏輯
+    // ══════════════════════════════════════
+    const csvData = {}; // 暫存各類型解析後的資料
 
-    window.onload = loadTable;
+    function handleFile(input, type) {
+        const file = input.files[0]; if(!file) return;
+        document.getElementById('name-'+type).innerText = '📄 ' + file.name;
+        const reader = new FileReader();
+        reader.onload = e => {
+            const rows = parseCSV(e.target.result);
+            csvData[type] = rows;
+            document.getElementById('btn-'+type).disabled = (rows.length === 0);
+            addLog(`✅ 已讀取 ${file.name}，共 ${rows.length} 筆資料`, 'ok');
+        };
+        reader.readAsText(file, 'UTF-8');
+    }
+
+    function parseCSV(text) {
+        const lines = text.trim().split('\n').filter(l => l.trim());
+        // 自動跳過標題行（若第一欄不像資料）
+        const start = isHeaderRow(lines[0]) ? 1 : 0;
+        return lines.slice(start).map(l => l.split(',').map(c => c.trim().replace(/^"|"$/g,'')));
+    }
+
+    function isHeaderRow(line) {
+        if(!line) return false;
+        const first = line.split(',')[0].toLowerCase();
+        return ['工號','姓名','id','name','no'].some(k => first.includes(k));
+    }
+
+    async function importData(type) {
+        const rows = csvData[type];
+        if(!rows||rows.length===0) return alert("請先選擇 CSV 檔案");
+        const btn = document.getElementById('btn-'+type);
+        btn.disabled = true; btn.innerText = '匯入中...';
+        showProgress(type);
+        const logEl = document.getElementById('import-log');
+        logEl.style.display = 'block';
+
+        let ok=0, fail=0;
+        const fbPath = { employee:'employee_list', vip:'vip_list', guard:'guard_accounts', visitor:'visitor_logs' }[type];
+
+        for(let i=0; i<rows.length; i++) {
+            const r = rows[i];
+            try {
+                let key, data;
+                if(type==='employee'||type==='vip') {
+                    key = r[0]||Date.now().toString()+i;
+                    data = { id:r[0]||'', name:r[1]||'', plate:(r[2]||'').toUpperCase(), reason:r[3]||'' };
+                } else if(type==='guard') {
+                    key = r[0];
+                    if(!key||!r[1]) { addLog(`⚠ 第${i+1}列：姓名或密碼空白，跳過`, 'warn'); fail++; continue; }
+                    data = { password:r[1], addedAt: new Date().toLocaleString() };
+                } else if(type==='visitor') {
+                    key = Date.now().toString()+i;
+                    data = { name:r[0]||'', count:r[1]||'1', company:r[2]||'', reason:r[3]||'', timeIn:r[4]||new Date().toLocaleString() };
+                }
+                await db.ref(fbPath+'/'+key).set(data);
+                ok++;
+                addLog(`✅ [${i+1}] ${r[0]||r[1]} 寫入成功`, 'ok');
+            } catch(e) {
+                fail++;
+                addLog(`❌ [${i+1}] 寫入失敗：${e.message}`, 'err');
+            }
+            // 更新進度條
+            setProgress(type, Math.round(((i+1)/rows.length)*100));
+        }
+
+        btn.innerText = `✅ 完成 (${ok}筆)`;
+        addLog(`── 匯入完畢：成功 ${ok} 筆 / 失敗 ${fail} 筆 ──`, ok>0?'ok':'err');
+        showSummary(type, ok, fail);
+        loadTable(); loadAuth();
+    }
+
+    function showProgress(type) {
+        const pb = document.getElementById('pb-'+type);
+        pb.style.display='block';
+        document.getElementById('pf-'+type).style.width='0%';
+    }
+    function setProgress(type, pct) {
+        document.getElementById('pf-'+type).style.width = pct+'%';
+    }
+    function addLog(msg, cls) {
+        const el = document.getElementById('import-log');
+        el.style.display='block';
+        el.innerHTML += `<div class="log-${cls}">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+        el.scrollTop = el.scrollHeight;
+    }
+    function showSummary(type, ok, fail) {
+        const bar = document.getElementById('import-summary');
+        const labels = { employee:'員工名單', vip:'VIP名單', guard:'值勤帳號', visitor:'訪客日誌' };
+        bar.innerHTML += `<div class="summary-tag" style="border-color:var(--${ok>0?'green':'warn'})">
+            ${labels[type]}：✅ ${ok} 筆 ${fail>0?`/ ❌ ${fail} 筆`:''}
+        </div>`;
+    }
+
+    // ── 下載 CSV 範本 ──
+    function downloadTemplate(type) {
+        const templates = {
+            employee: '工號,姓名,車牌,單位備註\nD01762,王小明,ABC-1234,資訊部\nD01763,李大華,XYZ-5678,業務部',
+            vip:      '工號,姓名,車牌,單位備註\nV001,陳董事長,XYZ-9999,董事會\nV002,林總經理,GHI-8888,總管理處',
+            guard:    '姓名,密碼\n張大雄,pass1234\n李小虎,guard5678',
+            visitor:  '姓名,人數,公司,事由,進場時間\n李訪客,2,ABC公司,洽公,2026/03/24 09:00\n王工程師,1,XYZ科技,維修,2026/03/24 10:30'
+        };
+        const blob = new Blob(['\uFEFF'+templates[type]], { type:'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `template_${type}.csv`;
+        a.click();
+    }
+
+    // ── 拖曳上傳效果 ──
+    document.querySelectorAll('.file-drop').forEach(zone => {
+        zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+        zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('dragover'); });
+    });
+
+    loadTable(); startHQMonitor(); loadAuth();
 </script>
 </body>
 </html>
