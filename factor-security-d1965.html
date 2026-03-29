@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>排班日曆 - 手機優化版</title>
+    <title>排班日曆 - 自動生成版</title>
     <style>
-        /* 1. 基礎設定：確保全螢幕不留白 */
         :root {
             --bg-color: #ffffff;
-            --border-color: #f0f0f0; /* 稍微深一點的灰色，防止看不見 */
+            --border-color: #f0f0f0;
             --sunday-color: #d9534f;
             --saturday-color: #428bca;
             --label-blue: #d1e9ff;
@@ -21,23 +20,16 @@
         html, body {
             height: 100%;
             margin: 0;
-            padding: 0;
             display: flex;
-            flex-direction: column; /* 讓內容由上而下排列 */
+            flex-direction: column;
             background-color: var(--bg-color);
-            font-family: -apple-system, "Noto Sans TC", sans-serif;
+            font-family: -apple-system, sans-serif;
         }
 
-        /* 2. Header：月份顯示 */
-        header {
-            padding: 15px 0 10px;
-            text-align: center;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .month-num { font-size: 32px; font-weight: bold; line-height: 1; }
-        .month-year { font-size: 14px; color: #333; font-weight: 600; }
+        header { padding: 15px 0 10px; text-align: center; border-bottom: 1px solid var(--border-color); }
+        .month-num { font-size: 32px; font-weight: bold; }
+        .month-year { font-size: 14px; font-weight: 600; }
 
-        /* 3. 星期列：固定高度 */
         .weekdays {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -49,12 +41,11 @@
         .weekdays div:first-child { color: var(--sunday-color); }
         .weekdays div:last-child { color: var(--saturday-color); }
 
-        /* 4. 日曆網格：這是撐開空間的核心 */
         .calendar-grid {
-            flex: 1; /* 重要：自動撐開佔滿中間剩餘的所有空間 */
+            flex: 1;
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            grid-template-rows: repeat(5, 1fr); /* 假設顯示5週，平均分配高度 */
+            grid-auto-rows: 1fr; /* 自動根據週數平均分配高度 */
             width: 100%;
         }
 
@@ -64,84 +55,110 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
             padding-top: 5px;
         }
         .day-cell:nth-child(7n) { border-right: none; }
+        
+        /* 週末顏色 */
+        .day-cell.sun { color: var(--sunday-color); }
+        .day-cell.sat { color: var(--saturday-color); }
 
         .date-num { font-size: 20px; margin-bottom: 2px; }
 
-        /* 5. 班別標籤：讓顏色更明顯 */
         .shift-label {
             font-size: 11px;
             width: 85%;
             padding: 4px 0;
             border-radius: 6px;
             text-align: center;
-            color: #444;
             font-weight: 500;
         }
         .shift-rest { background-color: var(--label-red); }
         .shift-b { background-color: var(--label-blue); }
         .shift-special { background-color: var(--label-orange); }
 
-        /* 6. 底部導航 */
         .bottom-nav {
             height: 85px;
             display: flex;
             justify-content: space-around;
             align-items: center;
             border-top: 1px solid var(--border-color);
-            background: #fff;
-            padding-bottom: 20px; /* 預留手機底部的安全區域 */
+            padding-bottom: 20px;
         }
-        .nav-item { text-align: center; font-size: 11px; color: #555; }
-        .nav-icon { font-size: 22px; margin-bottom: 4px; }
-        
-        .add-btn {
-            width: 55px;
-            height: 55px;
-            background: #666;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 32px;
-            margin-top: -30px; /* 讓加號按鈕往上飄 */
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
+        .add-btn { width: 55px; height: 55px; background: #666; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 32px; margin-top: -30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="month-num">3</div>
-        <div class="month-year">3月 2026</div>
+        <div class="month-num" id="monthDisplay">3</div>
+        <div class="month-year" id="yearDisplay">3月 2026</div>
     </header>
 
     <div class="weekdays">
         <div>週日</div><div>週一</div><div>週二</div><div>週三</div><div>週四</div><div>週五</div><div>週六</div>
     </div>
 
-    <div class="calendar-grid">
-        <div class="day-cell" style="color: var(--sunday-color);"><div class="date-num">1</div><div class="shift-label shift-rest">例假</div></div>
-        <div class="day-cell"><div class="date-num">2</div><div class="shift-label shift-b">日B班</div></div>
-        <div class="day-cell"><div class="date-num">3</div><div class="shift-label shift-b">日B班</div></div>
-        <div class="day-cell"><div class="date-num">4</div><div class="shift-label shift-rest">休假</div></div>
-        <div class="day-cell"><div class="date-num">5</div><div class="shift-label shift-b">日B班</div></div>
-        <div class="day-cell"><div class="date-num">6</div><div class="shift-label shift-b">日B班</div></div>
-        <div class="day-cell" style="color: var(--saturday-color);"><div class="date-num">7</div><div class="shift-label shift-b">日B班</div></div>
-        
+    <div class="calendar-grid" id="calendarGrid">
         </div>
 
     <nav class="bottom-nav">
-        <div class="nav-item"><div class="nav-icon">ℹ️</div>資訊</div>
-        <div class="nav-item"><div class="nav-icon">📅</div>今日</div>
+        <div style="text-align:center; font-size:11px;">ℹ️<br>資訊</div>
+        <div style="text-align:center; font-size:11px;">📅<br>今日</div>
         <div class="add-btn">+</div>
-        <div class="nav-item"><div class="nav-icon">💰</div>薪水</div>
-        <div class="nav-item"><div class="nav-icon">⋯</div>其它</div>
+        <div style="text-align:center; font-size:11px;">💰<br>薪水</div>
+        <div style="text-align:center; font-size:11px;">⋯<br>其它</div>
     </nav>
 
+    <script>
+        // 1. 設定要顯示的年月與排班資料
+        const year = 2026;
+        const month = 3; // 3月
+        
+        // 班表資料 (日期: 班別名稱)
+        const shiftData = {
+            1: { name: '例假', type: 'shift-rest' },
+            2: { name: '日B班', type: 'shift-b' },
+            3: { name: '日B班', type: 'shift-b' },
+            4: { name: '休假', type: 'shift-rest' },
+            5: { name: '日B班', type: 'shift-b' },
+            6: { name: '日B班', type: 'shift-b' },
+            7: { name: '日B班', type: 'shift-b' },
+            // ... 你可以在這裡繼續加入更多天的排班
+        };
+
+        const grid = document.getElementById('calendarGrid');
+
+        // 2. 計算這個月的第一天是星期幾，以及總天數
+        const firstDay = new Date(year, month - 1, 1).getDay(); // 0 是週日
+        const daysInMonth = new Date(year, month, 0).getDate();
+
+        // 3. 生成日期格子
+        for (let i = 0; i < firstDay + daysInMonth; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'day-cell';
+
+            if (i >= firstDay) {
+                const date = i - firstDay + 1;
+                const weekDay = i % 7;
+                
+                // 判斷週末顏色
+                if (weekDay === 0) cell.classList.add('sun');
+                if (weekDay === 6) cell.classList.add('sat');
+
+                // 填入日期
+                cell.innerHTML = `<div class="date-num">${date}</div>`;
+
+                // 如果有排班資料，填入標籤
+                if (shiftData[date]) {
+                    const label = document.createElement('div');
+                    label.className = `shift-label ${shiftData[date].type}`;
+                    label.innerText = shiftData[date].name;
+                    cell.appendChild(label);
+                }
+            }
+            grid.appendChild(cell);
+        }
+    </script>
 </body>
 </html>
