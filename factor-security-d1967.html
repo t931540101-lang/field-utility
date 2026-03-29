@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>黑曜石排班助理</title>
+    <style>
+        :root {
+            --primary-bg: #fdfcf9;
+            --main-color: #606060;
+            --accent-color: #e56399;
+            --text-dark: #444;
+        }
+        body {
+            font-family: sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-dark);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            background-color: var(--main-color);
+            color: white;
+            width: 100%;
+            padding: 15px 0;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .container {
+            width: 90%;
+            max-width: 400px;
+            margin-top: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .shift-list {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .shift-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+
+<header>OB計畫：排班助理</header>
+
+<div class="container">
+    <div class="card">
+        <h3>新增班次</h3>
+        <input type="date" id="shiftDate">
+        <select id="shiftType">
+            <option value="早班 (07:00-19:00)">早班 (07:00-19:00)</option>
+            <option value="休假">休假</option>
+        </select>
+        <button onclick="saveShift()">記錄到 Local Storage</button>
+    </div>
+
+    <div class="card">
+        <h3>最近班表</h3>
+        <div id="shiftDisplay" class="shift-list">
+            </div>
+        <button style="background:#606060; margin-top:10px;" onclick="clearShifts()">清空紀錄</button>
+    </div>
+</div>
+
+<script>
+    // 初始化顯示
+    window.onload = displayShifts;
+
+    function saveShift() {
+        const date = document.getElementById('shiftDate').value;
+        const type = document.getElementById('shiftType').value;
+        
+        if(!date) { alert('請選擇日期'); return; }
+
+        let shifts = JSON.parse(localStorage.getItem('ob_shifts')) || [];
+        shifts.push({ date, type });
+        localStorage.setItem('ob_shifts', JSON.stringify(shifts));
+        
+        displayShifts();
+    }
+
+    function displayShifts() {
+        const display = document.getElementById('shiftDisplay');
+        let shifts = JSON.parse(localStorage.getItem('ob_shifts')) || [];
+        
+        display.innerHTML = shifts.length ? '' : '目前沒有紀錄';
+        
+        shifts.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
+            display.innerHTML += `<div class="shift-item"><span>${item.date}</span><span>${item.type}</span></div>`;
+        });
+    }
+
+    function clearShifts() {
+        if(confirm('確定要清空嗎？')) {
+            localStorage.removeItem('ob_shifts');
+            displayShifts();
+        }
+    }
+</script>
+
+</body>
+</html>
