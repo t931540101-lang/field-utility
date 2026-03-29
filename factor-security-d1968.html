@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>シフター - 輪班給料計算</title>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+    <style>
+        body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#f8f9fa; color:#333; }
+        #header { background:#4a6ea9; color:white; padding:12px; text-align:center; font-size:18px; position:sticky; top:0; z-index:100; }
+        #toolbar { padding:10px; background:white; border-bottom:1px solid #ddd; display:flex; flex-wrap:wrap; gap:8px; }
+        .shift-btn { padding:10px 14px; border:none; border-radius:8px; color:white; font-size:15px; cursor:pointer; }
+        #calendar { max-width:100%; margin:10px auto; }
+        .fc-daygrid-day { cursor:pointer; }
+        #salary-info { background:white; padding:15px; margin:10px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:200; }
+        .modal-content { background:white; margin:10% auto; width:90%; max-width:380px; border-radius:16px; padding:20px; }
+        button { padding:10px 16px; margin:5px; border-radius:8px; }
+        .dark-mode { background:#1c1c1e; color:#f0f0f0; }
+        .dark-mode #header { background:#2c3e6e; }
+    </style>
+</head>
+<body>
+    <div id="header">シフター - 輪班給料計算</div>
+    
+    <div id="toolbar">
+        <button class="shift-btn" style="background:#5cb85c" onclick="quickAddShift('早番', 8, '#5cb85c')">早番</button>
+        <button class="shift-btn" style="background:#f0ad4e" onclick="quickAddShift('遅番', 8, '#f0ad4e')">遅番</button>
+        <button class="shift-btn" style="background:#337ab7" onclick="quickAddShift('日勤', 8, '#337ab7')">日勤</button>
+        <button class="shift-btn" style="background:#d9534f" onclick="quickAddShift('夜勤', 10, '#d9534f')">夜勤</button>
+        <button class="shift-btn" style="background:#777" onclick="quickAddShift('休み', 0, '#777')">休み</button>
+        <button onclick="showCustomModal()" style="background:#777;color:white;border:none;padding:10px 14px;border-radius:8px;">自訂班別</button>
+        <button onclick="toggleDarkMode()" style="background:#333;color:white;border:none;padding:10px 14px;border-radius:8px;">🌙</button>
+    </div>
+
+    <div id="calendar"></div>
+
+    <div id="salary-info">
+        <strong>今日已賺：¥<span id="today-earn">0</span></strong><br>
+        本月預估：¥<span id="month-estimate">0</span>　｜　已工作：<span id="month-hours">0</span> 小時
+    </div>
+
+    <!-- 自訂班別彈窗 -->
+    <div id="customModal" class="modal">
+        <div class="modal-content">
+            <h3>新增自訂班別</h3>
+            <input id="shiftName" placeholder="班別名稱（如 早班A）" style="width:100%;padding:10px;margin:8px 0;">
+            <input id="shiftHours" type="number" placeholder="工作小時" style="width:100%;padding:10px;margin:8px 0;">
+            <input id="shiftRate" type="number" placeholder="時給（預設使用全域時給）" style="width:100%;padding:10px;margin:8px 0;">
+            <input id="shiftColor" type="color" value="#4a6ea9" style="width:100%;height:40px;">
+            <div style="text-align:center;margin-top:15px;">
+                <button onclick="addCustomShift()">加入並套用</button>
+                <button onclick="hideCustomModal()" style="background:#aaa;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let calendar;
+        let events = JSON.parse(localStorage.getItem('shiftar_events') || '[]');
+        let hourlyRate = 1200; // 預設時給（可改）
+        let customShifts = [];
+
+        function saveEvents() {
+            localStorage.setItem('shiftar_events', JSON.stringify(events));
+            updateSalary();
+        }
+
+        function quickAddShift(title, hours, color) {
+            const selectedDates = calendar.getOption('selectedDates') || [];
+            if (selectedDates.length === 0) {
+                alert('請先在月曆上點選日期（可多選）');
+                return;
+            }
+            selectedDates.forEach(dateStr => {
+                const start = new Date(dateStr);
+                events.push({
+                    id: Date.now() + Math.random(),
+                    title: title,
+                    start: start.toISOString().split('T')[0],
+                    allDay: true,
+                    extendedProps: { hours: hours, rate: hourlyRate, color: color }
+                });
+            });
+            calendar.refetchEvents();
+            saveEvents();
+        }
+
+        function showCustomModal() {
+            document.getElementById('customModal').style.display = 'block';
+        }
+
+        function hideCustomModal() {
+            document.getElementById('customModal').style.display = 'none';
+        }
+
+        function addCustomShift() {
+            const name = document.getElementById('shiftName').value || '自訂班';
+            const hours = parseFloat(document.getElementById('shiftHours').value) || 8;
+            const rate = parseFloat(document.getElementById('shiftRate').value) || hourlyRate;
+            const color = document.getElementById('shiftColor').value;
+
+            hideCustomModal();
+
+            // 直接套用剛建立的班別
+            const selectedDates = calendar.getOption('selectedDates') || [];
+            if (selectedDates.length === 0) {
+                alert('請先點選日期，再新增自訂班別');
+                return;
+            }
+            selectedDates.forEach(dateStr => {
+                events.push({
+                    id: Date.now() + Math.random(),
+                    title: name,
+                    start: dateStr,
+                    allDay: true,
+                    extendedProps: { hours: hours, rate: rate, color: color }
+                });
+            });
+            calendar.refetchEvents();
+            saveEvents();
+        }
+
+        function updateSalary() {
+            const now = new Date();
+            const thisMonth = now.getMonth();
+            let totalHours = 0;
+            let totalEarn = 0;
+            let todayEarn = 0;
+
+            events.forEach(ev => {
+                const d = new Date(ev.start);
+                if (d.getMonth() === thisMonth) {
+                    const h = ev.extendedProps?.hours || 0;
+                    const r = ev.extendedProps?.rate || hourlyRate;
+                    totalHours += h;
+                    totalEarn += h * r;
+                    if (d.toDateString() === now.toDateString()) {
+                        todayEarn = h * r;
+                    }
+                }
+            });
+
+            document.getElementById('today-earn').textContent = Math.round(todayEarn).toLocaleString('zh-TW');
+            document.getElementById('month-estimate').textContent = Math.round(totalEarn).toLocaleString('zh-TW');
+            document.getElementById('month-hours').textContent = totalHours.toFixed(1);
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+        }
+
+        // 初始化 FullCalendar
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.createElement('div');
+            document.getElementById('calendar').appendChild(calendarEl);
+
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'zh-tw',
+                events: events,
+                selectable: true,
+                select: function(info) {
+                    // 這裡可以擴充點選後彈出編輯，但為了簡單先用快速按鈕
+                    alert('已選取 ' + info.startStr + ' ~ ' + info.endStr + '\n請使用上方快捷按鈕輸入班別');
+                },
+                eventClick: function(info) {
+                    if (confirm('刪除這個班別？\n' + info.event.title)) {
+                        events = events.filter(e => e.id !== info.event.id);
+                        calendar.refetchEvents();
+                        saveEvents();
+                    }
+                },
+                eventDidMount: function(info) {
+                    if (info.event.extendedProps.color) {
+                        info.el.style.backgroundColor = info.event.extendedProps.color;
+                        info.el.style.borderColor = info.event.extendedProps.color;
+                    }
+                },
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth'
+                }
+            });
+
+            calendar.render();
+            updateSalary();
+
+            // 讓 iPhone 感覺更像 App
+            if ('standalone' in window.navigator && window.navigator.standalone) {
+                console.log('Running as PWA');
+            }
+        });
+
+        // 每 5 秒更新一次薪資（預防資料變動）
+        setInterval(updateSalary, 5000);
+    </script>
+</body>
+</html>
