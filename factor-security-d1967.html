@@ -3,126 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>黑曜石排班助理</title>
+    <title>黑曜石：排班與薪資助理</title>
     <style>
         :root {
             --primary-bg: #fdfcf9;
             --main-color: #606060;
             --accent-color: #e56399;
-            --text-dark: #444;
+            --card-bg: #ffffff;
         }
         body {
-            font-family: sans-serif;
+            font-family: -apple-system, sans-serif;
             background-color: var(--primary-bg);
-            color: var(--text-dark);
+            color: #333;
             margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding-bottom: 30px;
         }
         header {
             background-color: var(--main-color);
             color: white;
-            width: 100%;
-            padding: 15px 0;
+            padding: 15px;
             text-align: center;
             font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         .container {
-            width: 90%;
-            max-width: 400px;
-            margin-top: 20px;
+            padding: 15px;
+            max-width: 480px;
+            margin: auto;
         }
         .card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
         }
+        h3 { margin-top: 0; color: var(--main-color); font-size: 1.1rem; }
+        label { font-size: 0.9rem; display: block; margin-bottom: 5px; }
         input, select, button {
             width: 100%;
             padding: 12px;
-            margin: 8px 0;
+            margin-bottom: 12px;
             border-radius: 8px;
             border: 1px solid #ddd;
             box-sizing: border-box;
+            font-size: 1rem;
         }
         button {
             background-color: var(--accent-color);
             color: white;
             border: none;
             font-weight: bold;
-            cursor: pointer;
+            margin-top: 5px;
         }
-        .shift-list {
-            margin-top: 15px;
-            font-size: 14px;
+        .salary-info {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            color: #d81b60;
         }
         .shift-item {
-            border-bottom: 1px solid #eee;
-            padding: 10px 0;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
         }
+        .shift-date { font-weight: bold; }
+        .shift-type { color: #666; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
-<header>OB計畫：排班助理</header>
+<header>黑曜石排班助理</header>
 
 <div class="container">
     <div class="card">
-        <h3>新增班次</h3>
-        <input type="date" id="shiftDate">
-        <select id="shiftType">
-            <option value="早班 (07:00-19:00)">早班 (07:00-19:00)</option>
-            <option value="休假">休假</option>
-        </select>
-        <button onclick="saveShift()">記錄到 Local Storage</button>
+        <h3>時薪設定</h3>
+        <input type="number" id="hourlyRate" placeholder="請輸入時薪 (例如: 200)" onchange="calculateSalary()">
+        <div class="salary-info">本月預估薪資: $<span id="totalSalary">0</span></div>
     </div>
 
     <div class="card">
-        <h3>最近班表</h3>
-        <div id="shiftDisplay" class="shift-list">
+        <h3>新增班次</h3>
+        <label>選擇日期</label>
+        <input type="date" id="shiftDate">
+        <label>選擇班別 (預設 12 小時)</label>
+        <select id="shiftType">
+            <option value="早班" data-hours="12">早班 (12hr)</option>
+            <option value="晚班" data-hours="12">晚班 (12hr)</option>
+            <option value="休假" data-hours="0">休假</option>
+        </select>
+        <button onclick="addShift()">記錄班次</button>
+    </div>
+
+    <div class="card">
+        <h3>本月班表紀錄</h3>
+        <div id="shiftList">
             </div>
-        <button style="background:#606060; margin-top:10px;" onclick="clearShifts()">清空紀錄</button>
+        <button style="background: #999; margin-top: 15px;" onclick="clearAll()">清空所有紀錄</button>
     </div>
 </div>
 
 <script>
-    // 初始化顯示
-    window.onload = displayShifts;
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedRate = localStorage.getItem('ob_rate');
+        if(savedRate) document.getElementById('hourlyRate').value = savedRate;
+        renderShifts();
+    });
 
-    function saveShift() {
+    function addShift() {
         const date = document.getElementById('shiftDate').value;
-        const type = document.getElementById('shiftType').value;
-        
-        if(!date) { alert('請選擇日期'); return; }
+        const select = document.getElementById('shiftType');
+        const type = select.value;
+        const hours = select.options[select.selectedIndex].dataset.hours;
+
+        if(!date) return alert('請選擇日期');
 
         let shifts = JSON.parse(localStorage.getItem('ob_shifts')) || [];
-        shifts.push({ date, type });
+        shifts.push({ date, type, hours: parseInt(hours) });
         localStorage.setItem('ob_shifts', JSON.stringify(shifts));
         
-        displayShifts();
+        renderShifts();
     }
 
-    function displayShifts() {
-        const display = document.getElementById('shiftDisplay');
+    function renderShifts() {
+        const listContainer = document.getElementById('shiftList');
         let shifts = JSON.parse(localStorage.getItem('ob_shifts')) || [];
         
-        display.innerHTML = shifts.length ? '' : '目前沒有紀錄';
+        // 排序：日期由新到舊
+        shifts.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        listContainer.innerHTML = shifts.length ? '' : '<p style="color:#999; text-align:center;">尚無紀錄</p>';
         
-        shifts.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
-            display.innerHTML += `<div class="shift-item"><span>${item.date}</span><span>${item.type}</span></div>`;
+        shifts.forEach(s => {
+            listContainer.innerHTML += `
+                <div class="shift-item">
+                    <span class="shift-date">${s.date}</span>
+                    <span class="shift-type">${s.type} (${s.hours}hr)</span>
+                </div>
+            `;
         });
+
+        calculateSalary();
     }
 
-    function clearShifts() {
-        if(confirm('確定要清空嗎？')) {
+    function calculateSalary() {
+        const rate = document.getElementById('hourlyRate').value || 0;
+        localStorage.setItem('ob_rate', rate);
+        
+        let shifts = JSON.parse(localStorage.getItem('ob_shifts')) || [];
+        const totalHours = shifts.reduce((sum, s) => sum + s.hours, 0);
+        
+        document.getElementById('totalSalary').innerText = (totalHours * rate).toLocaleString();
+    }
+
+    function clearAll() {
+        if(confirm('確定要刪除所有排班紀錄嗎？')) {
             localStorage.removeItem('ob_shifts');
-            displayShifts();
+            renderShifts();
         }
     }
 </script>
