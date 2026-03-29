@@ -3,67 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>排班日曆 - 選班互動版</title>
+    <title>排班日曆 Pro - 整合版</title>
     <style>
+        /* 1. 變數與基礎設定 */
         :root {
             --bg-color: #ffffff;
-            --border-color: #f0f0f0;
+            --border-color: #f2f2f2;
             --sunday-color: #d9534f;
             --saturday-color: #428bca;
-            --primary-teal: #2d8a8a; /* 仿圖中的深青色 */
+            --primary-teal: #2d8a8a;
+            /* 標籤顏色 */
+            --color-rest-bg: #ffd9d9; --color-rest-text: #8a3a3a;
+            --color-b-bg: #d1eaff;    --color-b-text: #3a5a8a;
+            --color-special-bg: #ffead1; --color-special-text: #8a6a3a;
+            --color-affair-bg: #fff5ba; --color-affair-text: #8a8a3a;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html, body { height: 100%; margin: 0; display: flex; flex-direction: column; background: var(--bg-color); font-family: sans-serif; overflow: hidden; }
+        
+        html, body {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-color);
+            font-family: -apple-system, "Noto Sans TC", sans-serif;
+            overflow: hidden;
+        }
 
-        /* Header & Weekdays */
+        /* 2. Header & 星期列 */
         header { padding: 15px 0 5px; text-align: center; border-bottom: 1px solid var(--border-color); }
-        .month-num { font-size: 32px; font-weight: bold; }
-        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; padding: 10px 0; font-size: 13px; border-bottom: 1px solid var(--border-color); }
+        .month-num { font-size: 36px; font-weight: bold; line-height: 1; margin-bottom: 5px; }
+        .month-year { font-size: 14px; font-weight: 600; color: #333; }
+
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            padding: 12px 0;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border-color);
+        }
         .weekdays div:first-child { color: var(--sunday-color); }
         .weekdays div:last-child { color: var(--saturday-color); }
 
-        /* Calendar Grid */
-        .calendar-grid { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: 1fr; width: 100%; }
-        .day-cell { border-right: 0.5px solid var(--border-color); border-bottom: 0.5px solid var(--border-color); display: flex; flex-direction: column; align-items: center; padding-top: 5px; cursor: pointer; }
-        .day-cell:active { background-color: #f9f9f9; }
+        /* 3. 日曆網格 (重點：撐開高度) */
+        .calendar-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-auto-rows: 1fr; /* 讓每一列平分剩餘高度 */
+            width: 100%;
+        }
+
+        .day-cell {
+            border-right: 0.5px solid var(--border-color);
+            border-bottom: 0.5px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 8px;
+            cursor: pointer;
+            position: relative;
+        }
+        .day-cell:nth-child(7n) { border-right: none; }
+        .day-cell:active { background-color: #f0f0f0; }
         .day-cell.selected { outline: 3px solid var(--primary-teal); outline-offset: -3px; z-index: 5; }
-        .date-num { font-size: 20px; }
 
-        /* Shift Labels */
-        .shift-label { font-size: 11px; width: 85%; padding: 4px 0; border-radius: 6px; text-align: center; margin-top: 2px; }
-        .shift-rest { background-color: #ffd9d9; }
-        .shift-b { background-color: #d1e9ff; }
-        .shift-special { background-color: #ffebd1; }
-        .shift-affair { background-color: #fff9c4; }
+        .date-num { font-size: 22px; font-weight: 400; margin-bottom: 4px; }
 
-        /* Bottom Sheet (選班選單) */
+        /* 4. 寬版膠囊標籤 (還原原圖視覺) */
+        .shift-label {
+            font-size: 12px;
+            width: 92%;           /* 寬度增加 */
+            padding: 5px 0;       /* 高度增加 */
+            border-radius: 20px;  /* 圓角更圓 */
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .shift-rest { background-color: var(--color-rest-bg); color: var(--color-rest-text); }
+        .shift-b { background-color: var(--color-b-bg); color: var(--color-b-text); }
+        .shift-special { background-color: var(--color-special-bg); color: var(--color-special-text); }
+        .shift-affair { background-color: var(--color-affair-bg); color: var(--color-affair-text); }
+
+        /* 5. 底部選單 Bottom Sheet */
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; z-index: 90; }
+        #overlay.active { display: block; }
+
         #shiftSheet {
-            position: fixed; bottom: -100%; left: 0; width: 100%; background: white;
-            transition: bottom 0.3s ease; z-index: 100; box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
-            border-radius: 20px 20px 0 0; display: flex; flex-direction: column;
+            position: fixed; bottom: -100%; left: 0; width: 100%; 
+            background: #f8f9f9; transition: bottom 0.3s cubic-bezier(0.25, 0.1, 0.25, 1); 
+            z-index: 100; border-radius: 20px 20px 0 0; display: flex; flex-direction: column;
         }
         #shiftSheet.active { bottom: 0; }
-        .sheet-header { background: var(--primary-teal); color: white; padding: 12px; text-align: center; font-size: 14px; border-radius: 20px 20px 0 0; }
+        .sheet-header { background: var(--primary-teal); color: white; padding: 15px; text-align: center; font-size: 15px; border-radius: 20px 20px 0 0; }
         
-        .shift-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 20px; background: #fdfdfd; }
-        .opt-btn { border: 1px solid #ddd; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; align-items: center; cursor: pointer; background: white; }
-        .opt-btn .title { font-weight: bold; margin-bottom: 4px; }
-        .opt-btn .sub { font-size: 10px; color: #999; }
+        .shift-options { 
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; 
+            padding: 20px; max-height: 350px; overflow-y: auto;
+        }
+        .opt-btn { 
+            border: 1px solid #e0e0e0; border-radius: 12px; padding: 12px; 
+            display: flex; flex-direction: column; align-items: center; 
+            background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .opt-btn:active { transform: scale(0.98); background: #f0f0f0; }
+        .opt-btn .title { font-weight: bold; font-size: 16px; margin-bottom: 2px; }
+        .opt-btn .sub { font-size: 11px; color: #999; }
 
-        .sheet-footer { display: flex; justify-content: space-around; padding: 15px; border-top: 1px solid #eee; }
-        .close-btn { color: var(--primary-teal); font-weight: bold; cursor: pointer; }
+        .sheet-footer { 
+            display: flex; justify-content: space-around; align-items: center;
+            padding: 15px 0 30px; border-top: 1px solid #eee; background: white;
+        }
+        .footer-item { color: var(--primary-teal); font-weight: bold; cursor: pointer; font-size: 14px; }
 
-        /* Overlay */
-        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); display: none; z-index: 90; }
-        #overlay.active { display: block; }
+        /* 6. 底部導覽列 (僅外觀) */
+        .bottom-nav { height: 80px; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border-color); background: #fff; padding-bottom: 10px; }
+        .nav-item { text-align: center; font-size: 11px; color: #666; }
+        .add-btn-main { width: 55px; height: 55px; background: #555; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 30px; margin-top: -35px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
     <header>
         <div class="month-num">4</div>
-        <div style="font-size: 14px; font-weight: 600;">4月 2026</div>
+        <div class="month-year">4月 2026</div>
     </header>
 
     <div class="weekdays">
@@ -72,30 +138,40 @@
 
     <div class="calendar-grid" id="calendarGrid"></div>
 
+    <nav class="bottom-nav">
+        <div class="nav-item">ℹ️<br>資訊</div>
+        <div class="nav-item">📅<br>今日</div>
+        <div class="add-btn-main">+</div>
+        <div class="nav-item">💰<br>薪水</div>
+        <div class="nav-item">⋯<br>其它</div>
+    </nav>
+
     <div id="overlay"></div>
     <div id="shiftSheet">
         <div class="sheet-header">點擊你想要輸入資訊的輪班</div>
         <div class="shift-options">
             <div class="opt-btn" onclick="setShift('休假', 'shift-rest')">
-                <span class="title" style="color:#d9534f">休假</span>
-                <span class="sub">台灣精銳</span>
+                <span class="title" style="color:var(--sunday-color)">休假</span><span class="sub">台灣精銳</span>
             </div>
             <div class="opt-btn" onclick="setShift('事假', 'shift-affair')">
-                <span class="title" style="color:#fbc02d">事假</span>
-                <span class="sub">07:00 - 19:00</span>
+                <span class="title" style="color:#fbc02d">事假</span><span class="sub">07:00 - 19:00</span>
             </div>
             <div class="opt-btn" onclick="setShift('日B班', 'shift-b')">
-                <span class="title" style="color:#428bca">日B班</span>
-                <span class="sub">07:00 - 19:00</span>
+                <span class="title" style="color:var(--saturday-color)">日B班</span><span class="sub">07:00 - 19:00</span>
             </div>
             <div class="opt-btn" onclick="setShift('例假', 'shift-rest')">
-                <span class="title" style="color:#d9534f">例假</span>
-                <span class="sub">台灣精銳</span>
+                <span class="title" style="color:var(--sunday-color)">例假</span><span class="sub">台灣精銳</span>
+            </div>
+            <div class="opt-btn" onclick="setShift('特休', 'shift-special')">
+                <span class="title" style="color:#f0ad4e">特休</span><span class="sub">台灣精銳</span>
+            </div>
+            <div class="opt-btn" onclick="setShift('', '')">
+                <span class="title" style="color:#999">清除</span><span class="sub">空白之輪班</span>
             </div>
         </div>
         <div class="sheet-footer">
-            <div class="close-btn" onclick="closeSheet()">✖ 關閉</div>
-            <div class="close-btn" onclick="closeSheet()">⚙️ 設定</div>
+            <div class="footer-item" onclick="closeSheet()">✖ 關閉</div>
+            <div class="footer-item" onclick="closeSheet()">⚙️ 設定</div>
         </div>
     </div>
 
@@ -105,24 +181,34 @@
         const overlay = document.getElementById('overlay');
         let selectedCell = null;
 
-        // 生成 4 月份日期 (2026/4/1 是週三)
-        const firstDay = 3; 
-        const daysInMonth = 30;
+        // 1. 初始化日曆 (2026/4/1 是週三)
+        const year = 2026;
+        const month = 4;
+        const firstDay = new Date(year, month - 1, 1).getDay(); // 週三 = 3
+        const daysInMonth = new Date(year, month, 0).getDate(); // 30天
 
-        for (let i = 0; i < firstDay + daysInMonth; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'day-cell';
-            if (i >= firstDay) {
-                const date = i - firstDay + 1;
-                cell.innerHTML = `<div class="date-num">${date}</div><div class="label-container"></div>`;
-                cell.onclick = () => openSheet(cell);
-                // 週末顏色
-                if (i % 7 === 0) cell.style.color = 'var(--sunday-color)';
-                if (i % 7 === 6) cell.style.color = 'var(--saturday-color)';
+        function initCalendar() {
+            grid.innerHTML = '';
+            // 生成格子 (包含月初空白)
+            for (let i = 0; i < 35; i++) { // 固定顯示 5 週共 35 格
+                const cell = document.createElement('div');
+                cell.className = 'day-cell';
+                
+                if (i >= firstDay && i < firstDay + daysInMonth) {
+                    const date = i - firstDay + 1;
+                    cell.innerHTML = `<div class="date-num">${date}</div><div class="label-container" style="width:100%; display:flex; justify-content:center;"></div>`;
+                    
+                    // 週末文字顏色
+                    if (i % 7 === 0) cell.style.color = 'var(--sunday-color)';
+                    if (i % 7 === 6) cell.style.color = 'var(--saturday-color)';
+                    
+                    cell.onclick = () => openSheet(cell);
+                }
+                grid.appendChild(cell);
             }
-            grid.appendChild(cell);
         }
 
+        // 2. 互動邏輯
         function openSheet(cell) {
             if (selectedCell) selectedCell.classList.remove('selected');
             selectedCell = cell;
@@ -137,13 +223,20 @@
             if (selectedCell) selectedCell.classList.remove('selected');
         }
 
-        function setShift(name, type) {
+        function setShift(name, typeClass) {
             const container = selectedCell.querySelector('.label-container');
-            container.innerHTML = `<div class="shift-label ${type}">${name}</div>`;
+            if (name === '') {
+                container.innerHTML = '';
+            } else {
+                container.innerHTML = `<div class="shift-label ${typeClass}">${name}</div>`;
+            }
             closeSheet();
         }
 
         overlay.onclick = closeSheet;
+
+        // 啟動！
+        initCalendar();
     </script>
 </body>
 </html>
