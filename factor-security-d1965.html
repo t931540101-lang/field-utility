@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>班務通 ShiftHQ</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, get, push, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyExample_REPLACE_WITH_YOUR_KEY",
+    authDomain: "factor-security-d1965.firebaseapp.com",
+    databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+    projectId: "factor-security-d1965",
+    storageBucket: "factor-security-d1965.appspot.com",
+    messagingSenderId: "000000000000",
+    appId: "1:000000000000:web:0000000000000000"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  window._db = db;
+  window._dbRef = ref;
+  window._dbSet = set;
+  window._dbGet = get;
+  window._dbPush = push;
+  window._dbRemove = remove;
+  window._dbOnValue = onValue;
+  window._firebaseReady = true;
+  document.dispatchEvent(new Event('firebaseReady'));
+</script>
+
+<style>
+  :root {
+    --bg: #0d0e11;
+    --surface: #14161b;
+    --surface2: #1c1f27;
+    --surface3: #252933;
+    --border: #2a2d38;
+    --accent: #e8a020;
+    --accent2: #f0c060;
+    --text: #e8eaf0;
+    --text2: #8890a4;
+    --text3: #50566a;
+    --danger: #e05050;
+    --success: #40b870;
+    --info: #4090e0;
+
+    --shift-a: #e8a020;
+    --shift-b: #4090e0;
+    --shift-c: #40b870;
+    --shift-d: #9060d0;
+    --shift-off: #3a3f50;
+
+    --radius: 12px;
+    --radius-sm: 8px;
+    --font-display: 'Rajdhani', sans-serif;
+    --font-body: 'Noto Sans TC', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100dvh;
+    max-width: 430px;
+    margin: 0 auto;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* ─── TOP BAR ─── */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-logo {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--accent);
+  }
+  .topbar-logo span { color: var(--text2); font-weight: 500; font-size: 13px; letter-spacing: 1px; display: block; line-height: 1; }
+  .mode-toggle {
+    display: flex;
+    gap: 6px;
+    background: var(--surface2);
+    border-radius: 20px;
+    padding: 4px;
+  }
+  .mode-btn {
+    background: none;
+    border: none;
+    color: var(--text3);
+    font-size: 11px;
+    font-family: var(--font-body);
+    padding: 5px 12px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all .2s;
+    font-weight: 500;
+  }
+  .mode-btn.active { background: var(--accent); color: #000; }
+
+  /* ─── NAV BAR ─── */
+  .navbar {
+    position: fixed;
+    bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+    z-index: 100;
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    padding: 6px 0;
+    transition: all .2s;
+  }
+  .nav-icon { font-size: 22px; line-height: 1; }
+  .nav-label { font-size: 10px; color: var(--text3); font-weight: 500; }
+  .nav-item.active .nav-label { color: var(--accent); }
+  .nav-item.active .nav-icon { filter: drop-shadow(0 0 6px var(--accent)); }
+
+  /* ─── MAIN ─── */
+  main { padding: 0 0 90px; }
+
+  /* ─── PAGE ─── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ─── SECTION HEADER ─── */
+  .sec-header {
+    padding: 20px 20px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .sec-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text);
+  }
+  .sec-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  /* ─── CALENDAR PAGE ─── */
+  .cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px 16px;
+  }
+  .cal-month {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+  .cal-arrow {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all .2s;
+  }
+  .cal-arrow:active { background: var(--accent); color: #000; }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    padding: 0 14px;
+  }
+  .cal-dow {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text3);
+    padding: 4px 0 8px;
+    font-weight: 500;
+  }
+  .cal-dow:first-child { color: #e05050; }
+  .cal-dow:last-child { color: #4090e0; }
+
+  .cal-cell {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all .15s;
+    position: relative;
+    gap: 2px;
+  }
+  .cal-cell:active { transform: scale(.92); }
+  .cal-cell.empty { cursor: default; }
+  .cal-cell.today .cal-day-num {
+    background: var(--accent);
+    color: #000;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+  .cal-day-num {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 28px;
+    width: 28px;
+    text-align: center;
+  }
+  .cal-cell.sunday .cal-day-num { color: #e05050; }
+  .cal-cell.saturday .cal-day-num { color: #4090e0; }
+
+  .cal-dot {
+    width: 24px;
+    height: 16px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    letter-spacing: .5px;
+  }
+
+  /* ─── SHIFT SUMMARY BELOW CALENDAR ─── */
+  .shift-summary {
+    padding: 16px 20px 0;
+  }
+  .shift-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .shift-row:active { border-color: var(--accent); }
+  .shift-color-bar {
+    width: 4px;
+    height: 40px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .shift-info { flex: 1; }
+  .shift-date-label { font-size: 11px; color: var(--text3); margin-bottom: 2px; }
+  .shift-name { font-family: var(--font-display); font-size: 18px; font-weight: 600; letter-spacing: 1px; }
+  .shift-time { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .shift-wage { font-size: 13px; color: var(--success); font-weight: 500; }
+
+  /* ─── STATS CARDS ─── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 0 20px 16px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+  .stat-unit { font-size: 12px; color: var(--text2); }
+
+  /* ─── ADD SHIFT MODAL ─── */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.7);
+    z-index: 200;
+    display: none;
+    align-items: flex-end;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius) var(--radius) 0 0;
+    border-top: 1px solid var(--border);
+    width: 100%;
+    max-height: 90dvh;
+    overflow-y: auto;
+    padding: 20px 20px max(20px, env(safe-area-inset-bottom));
+    animation: slideUp .25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+  .modal-handle {
+    width: 40px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+  .modal-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+  }
+
+  /* ─── FORM ELEMENTS ─── */
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; color: var(--text3); margin-bottom: 6px; display: block; font-weight: 500; letter-spacing: .5px; }
+  .form-input, .form-select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    padding: 12px 14px;
+    font-size: 15px;
+    font-family: var(--font-body);
+    outline: none;
+    transition: border-color .2s;
+    -webkit-appearance: none;
+  }
+  .form-input:focus, .form-select:focus { border-color: var(--accent); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* ─── COLOR PICKER ─── */
+  .color-picker { display: flex; gap: 10px; }
+  .color-opt {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all .2s;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .color-opt.selected { border-color: var(--text); }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-family: var(--font-body);
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all .2s;
+    letter-spacing: .5px;
+  }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:active { transform: scale(.97); background: var(--accent2); }
+  .btn-danger { background: var(--danger); color: #fff; margin-top: 8px; }
+  .btn-ghost {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    margin-top: 8px;
+  }
+
+  /* ─── FAB ─── */
+  .fab {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 56px; height: 56px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    color: #000;
+    cursor: pointer;
+    z-index: 90;
+    box-shadow: 0 4px 20px rgba(232,160,32,.4);
+    transition: all .2s;
+    border: none;
+  }
+  .fab:active { transform: scale(.9); }
+
+  /* ─── WAGE PAGE ─── */
+  .wage-hero {
+    background: linear-gradient(135deg, var(--surface) 0%, #1a1c24 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 0 20px 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .wage-hero::before {
+    content: '¥';
+    position: absolute;
+    right: -10px; top: -20px;
+    font-family: var(--font-display);
+    font-size: 120px;
+    color: rgba(232,160,32,.06);
+    line-height: 1;
+    pointer-events: none;
+  }
+  .wage-label { font-size: 12px; color: var(--text3); margin-bottom: 8px; }
+  .wage-amount {
+    font-family: var(--font-display);
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+  .wage-unit { font-size: 14px; color: var(--text2); margin-left: 4px; }
+
+  .wage-breakdown {
+    padding: 0 20px;
+  }
+  .wage-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .wage-row:last-child { border-bottom: none; }
+  .wage-row-label { font-size: 14px; color: var(--text2); }
+  .wage-row-value { font-size: 14px; font-weight: 600; color: var(--text); }
+
+  /* ─── SETTINGS PAGE ─── */
+  .settings-section { padding: 0 20px 20px; }
+  .settings-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .settings-item {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .settings-item:last-child { border-bottom: none; }
+  .settings-item-left { display: flex; align-items: center; gap: 12px; }
+  .settings-icon { font-size: 20px; width: 36px; text-align: center; }
+  .settings-item-label { font-size: 15px; font-weight: 500; }
+  .settings-item-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .settings-arrow { color: var(--text3); font-size: 16px; }
+
+  /* ─── TOGGLE SWITCH ─── */
+  .toggle {
+    width: 44px; height: 26px;
+    background: var(--surface3);
+    border-radius: 13px;
+    position: relative;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .toggle.on { background: var(--accent); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 20px; height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform .2s;
+  }
+  .toggle.on::after { transform: translateX(18px); }
+
+  /* ─── ADMIN VIEW ─── */
+  .admin-banner {
+    background: linear-gradient(90deg, #1a0f00, #251500);
+    border-bottom: 2px solid var(--accent);
+    padding: 8px 20px;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .staff-grid {
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .staff-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: border-color .2s;
+  }
+  .staff-card:active { border-color: var(--accent); }
+  .staff-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--surface3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    border: 2px solid var(--border);
+  }
+  .staff-name { font-size: 15px; font-weight: 600; }
+  .staff-id { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .staff-shifts { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .staff-badge {
+    margin-left: auto;
+    background: var(--surface3);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--text3);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed;
+    bottom: 100px; left: 50%; transform: translateX(-50%);
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 500;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity .3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ─── EXPORT SHEET ─── */
+  .export-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 0 20px 10px;
+    overflow: hidden;
+  }
+  .export-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .export-row:last-child { border-bottom: none; }
+  .export-row:active { background: var(--surface2); }
+  .export-icon { font-size: 24px; }
+  .export-label { flex: 1; }
+  .export-name { font-size: 15px; font-weight: 500; }
+  .export-desc { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">SHIFT<span>班務通 HQ</span></div>
+  <div class="mode-toggle">
+    <button class="mode-btn active" onclick="setMode('personal')">個人</button>
+    <button class="mode-btn" onclick="setMode('admin')">管理</button>
+  </div>
+</div>
+
+<!-- ADMIN BANNER -->
+<div class="admin-banner" id="adminBanner" style="display:none">
+  ⚡ 管理者模式 — 全員班表總覽
+</div>
+
+<!-- MAIN -->
+<main>
+
+  <!-- ══ PAGE: CALENDAR ══ -->
+  <div class="page active" id="page-cal">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title" id="calPageTitle">我的班表</div>
+        <div class="sec-sub" id="calPageSub">點擊日期查看或新增班次</div>
+      </div>
+    </div>
+
+    <!-- 月份導航 -->
+    <div class="cal-nav">
+      <button class="cal-arrow" onclick="changeMonth(-1)">‹</button>
+      <div class="cal-month" id="calMonthLabel">2025年4月</div>
+      <button class="cal-arrow" onclick="changeMonth(1)">›</button>
+    </div>
+
+    <!-- 星期列 -->
+    <div class="cal-grid">
+      <div class="cal-dow">日</div>
+      <div class="cal-dow">一</div>
+      <div class="cal-dow">二</div>
+      <div class="cal-dow">三</div>
+      <div class="cal-dow">四</div>
+      <div class="cal-dow">五</div>
+      <div class="cal-dow">六</div>
+    </div>
+
+    <!-- 日曆格 -->
+    <div class="cal-grid" id="calGrid"></div>
+
+    <!-- 本月統計 -->
+    <div class="sec-header" style="padding-top:20px">
+      <div class="sec-title">本月概況</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">出勤天數</div>
+        <div class="stat-value" id="statDays">0<span class="stat-unit">天</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">總工時</div>
+        <div class="stat-value" id="statHours">0<span class="stat-unit">小時</span></div>
+      </div>
+    </div>
+
+    <!-- 本月班次列表 -->
+    <div class="shift-summary" id="shiftSummary"></div>
+  </div>
+
+  <!-- ══ PAGE: WAGE ══ -->
+  <div class="page" id="page-wage">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title">薪資試算</div>
+        <div class="sec-sub" id="wagePeriodLabel">本月預估</div>
+      </div>
+    </div>
+
+    <div class="wage-hero">
+      <div class="wage-label">預估月薪</div>
+      <div><span class="wage-amount" id="wageTotal">0</span><span class="wage-unit">元</span></div>
+    </div>
+
+    <div style="padding:0 20px 16px">
+      <div class="form-group">
+        <label class="form-label">時薪設定（元/小時）</label>
+        <input class="form-input" type="number" id="hourlyRate" value="176" min="0" step="1" oninput="recalcWage()">
+      </div>
+    </div>
+
+    <div class="wage-breakdown" id="wageBreakdown"></div>
+  </div>
+
+  <!-- ══ PAGE: EXPORT ══ -->
+  <div class="page" id="page-export">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title">匯出分享</div>
+        <div class="sec-sub">班表資料輸出</div>
+      </div>
+    </div>
+
+    <div class="export-card">
+      <div class="export-row" onclick="exportCSV()">
+        <div class="export-icon">📊</div>
+        <div class="export-label">
+          <div class="export-name">CSV 匯出</div>
+          <div class="export-desc">可匯入 Excel / Google 試算表</div>
+        </div>
+        <div style="color:var(--text3)">›</div>
+      </div>
+      <div class="export-row" onclick="exportText()">
+        <div class="export-icon">📋</div>
+        <div class="export-label">
+          <div class="export-name">純文字版</div>
+          <div class="export-desc">複製後貼到 LINE / 通訊軟體</div>
+        </div>
+        <div style="color:var(--text3)">›</div>
+      </div>
+      <div class="export-row" onclick="printCalendar()">
+        <div class="export-icon">🖨️</div>
+        <div class="export-label">
+          <div class="export-name">列印 / 存成 PDF</div>
+          <div class="export-desc">月曆格式輸出</div>
+        </div>
+        <div style="color:var(--text3)">›</div>
+      </div>
+    </div>
+
+    <!-- 管理模式才顯示 -->
+    <div id="adminExportSection" style="display:none">
+      <div class="sec-header">
+        <div class="sec-title">全員班表</div>
+      </div>
+      <div class="export-card">
+        <div class="export-row" onclick="exportAllStaffCSV()">
+          <div class="export-icon">👥</div>
+          <div class="export-label">
+            <div class="export-name">全員 CSV 匯出</div>
+            <div class="export-desc">所有保全員本月班表彙整</div>
+          </div>
+          <div style="color:var(--text3)">›</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: SETTINGS ══ -->
+  <div class="page" id="page-settings">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title">設定</div>
+        <div class="sec-sub">個人化與偏好設定</div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-card">
+        <div class="settings-item" onclick="openNameModal()">
+          <div class="settings-item-left">
+            <div class="settings-icon">👤</div>
+            <div>
+              <div class="settings-item-label">我的姓名</div>
+              <div class="settings-item-sub" id="settingName">（未設定）</div>
+            </div>
+          </div>
+          <div class="settings-arrow">›</div>
+        </div>
+        <div class="settings-item" onclick="openStaffIdModal()">
+          <div class="settings-item-left">
+            <div class="settings-icon">🪪</div>
+            <div>
+              <div class="settings-item-label">員工編號</div>
+              <div class="settings-item-sub" id="settingId">（未設定）</div>
+            </div>
+          </div>
+          <div class="settings-arrow">›</div>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-left">
+            <div class="settings-icon">🔔</div>
+            <div>
+              <div class="settings-item-label">班次提醒</div>
+              <div class="settings-item-sub">上班前 1 小時通知</div>
+            </div>
+          </div>
+          <div class="toggle on" id="notifToggle" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px;letter-spacing:.5px">班次類型設定</div>
+      <div class="settings-card" id="shiftTypeList"></div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-card">
+        <div class="settings-item" onclick="clearAllData()">
+          <div class="settings-item-left">
+            <div class="settings-icon">🗑️</div>
+            <div>
+              <div class="settings-item-label" style="color:var(--danger)">清除所有資料</div>
+              <div class="settings-item-sub">重置本機班表紀錄</div>
+            </div>
+          </div>
+          <div class="settings-arrow">›</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:20px;font-size:11px;color:var(--text3)">
+      班務通 ShiftHQ v1.0<br>台灣精銳 × 自製系統
+    </div>
+  </div>
+
+</main>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-item active" onclick="showPage('cal', this)">
+    <div class="nav-icon">📅</div>
+    <div class="nav-label">班表</div>
+  </div>
+  <div class="nav-item" onclick="showPage('wage', this)">
+    <div class="nav-icon">💰</div>
+    <div class="nav-label">薪資</div>
+  </div>
+  <div class="nav-item" onclick="showPage('export', this)">
+    <div class="nav-icon">📤</div>
+    <div class="nav-label">匯出</div>
+  </div>
+  <div class="nav-item" onclick="showPage('settings', this)">
+    <div class="nav-icon">⚙️</div>
+    <div class="nav-label">設定</div>
+  </div>
+</nav>
+
+<!-- FAB -->
+<button class="fab" id="fab" onclick="openAddShift(null)">＋</button>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ══ MODAL: 新增/編輯班次 ══ -->
+<div class="modal-backdrop" id="shiftModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">新增班次</div>
+
+    <div class="form-group">
+      <label class="form-label">日期</label>
+      <input class="form-input" type="date" id="shiftDate">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">班次名稱</label>
+      <input class="form-input" type="text" id="shiftName" placeholder="例：白班、夜班、特勤...">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">開始時間</label>
+        <input class="form-input" type="time" id="shiftStart" value="08:00">
+      </div>
+      <div class="form-group">
+        <label class="form-label">結束時間</label>
+        <input class="form-input" type="time" id="shiftEnd" value="16:00">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">顏色標記</label>
+      <div class="color-picker" id="colorPicker">
+        <div class="color-opt selected" data-color="#e8a020" style="background:#e8a020" onclick="selectColor(this)">✓</div>
+        <div class="color-opt" data-color="#4090e0" style="background:#4090e0" onclick="selectColor(this)"></div>
+        <div class="color-opt" data-color="#40b870" style="background:#40b870" onclick="selectColor(this)"></div>
+        <div class="color-opt" data-color="#9060d0" style="background:#9060d0" onclick="selectColor(this)"></div>
+        <div class="color-opt" data-color="#e05050" style="background:#e05050" onclick="selectColor(this)"></div>
+        <div class="color-opt" data-color="#3a3f50" style="background:#3a3f50" onclick="selectColor(this)"></div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">備註（選填）</label>
+      <input class="form-input" type="text" id="shiftNote" placeholder="工作地點、特殊說明...">
+    </div>
+
+    <button class="btn btn-primary" onclick="saveShift()">儲存班次</button>
+    <button class="btn btn-danger" id="deleteShiftBtn" onclick="deleteShift()" style="display:none">刪除此班次</button>
+    <button class="btn btn-ghost" onclick="closeModal('shiftModal')">取消</button>
+  </div>
+</div>
+
+<!-- ══ MODAL: 姓名設定 ══ -->
+<div class="modal-backdrop" id="nameModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">設定姓名</div>
+    <div class="form-group">
+      <label class="form-label">您的姓名</label>
+      <input class="form-input" type="text" id="nameInput" placeholder="請輸入姓名">
+    </div>
+    <button class="btn btn-primary" onclick="saveName()">儲存</button>
+    <button class="btn btn-ghost" onclick="closeModal('nameModal')">取消</button>
+  </div>
+</div>
+
+<!-- ══ MODAL: 員工編號 ══ -->
+<div class="modal-backdrop" id="staffIdModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">員工編號</div>
+    <div class="form-group">
+      <label class="form-label">員工編號（D- 本地 / N- 外籍）</label>
+      <input class="form-input" type="text" id="staffIdInput" placeholder="例：D001">
+    </div>
+    <button class="btn btn-primary" onclick="saveStaffId()">儲存</button>
+    <button class="btn btn-ghost" onclick="closeModal('staffIdModal')">取消</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════
+// STATE
+// ═══════════════════════════════
+let currentMode = 'personal';
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth(); // 0-based
+let selectedColor = '#e8a020';
+let editingShiftId = null;
+let editingDate = null;
+
+// 本機存儲 (Firebase 整合時改為 Firebase)
+let shifts = JSON.parse(localStorage.getItem('shifts') || '{}');
+let userName = localStorage.getItem('userName') || '';
+let staffId = localStorage.getItem('staffId') || '';
+let hourlyRate = parseInt(localStorage.getItem('hourlyRate') || '176');
+
+// 預設班次類型
+const shiftTypes = [
+  { name: '白班', start: '08:00', end: '16:00', color: '#e8a020' },
+  { name: '夜班', start: '16:00', end: '00:00', color: '#4090e0' },
+  { name: '大夜', start: '00:00', end: '08:00', color: '#9060d0' },
+  { name: '假日特勤', start: '08:00', end: '20:00', color: '#40b870' },
+  { name: '休假', start: '00:00', end: '00:00', color: '#3a3f50' },
+];
+
+// ═══════════════════════════════
+// NAV
+// ═══════════════════════════════
+function showPage(pageId, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+  navEl.classList.add('active');
+
+  const fab = document.getElementById('fab');
+  fab.style.display = pageId === 'cal' ? 'flex' : 'none';
+
+  if (pageId === 'wage') recalcWage();
+}
+
+// ═══════════════════════════════
+// MODE
+// ═══════════════════════════════
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.mode-btn[onclick="setMode('${mode}')"]`).classList.add('active');
+  document.getElementById('adminBanner').style.display = mode === 'admin' ? 'flex' : 'none';
+  document.getElementById('adminExportSection').style.display = mode === 'admin' ? 'block' : 'none';
+  document.getElementById('calPageTitle').textContent = mode === 'admin' ? '全員班表' : '我的班表';
+  document.getElementById('calPageSub').textContent = mode === 'admin' ? '管理者總覽模式' : '點擊日期查看或新增班次';
+  renderCalendar();
+}
+
+// ═══════════════════════════════
+// CALENDAR
+// ═══════════════════════════════
+const MONTHS_ZH = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+function changeMonth(dir) {
+  currentMonth += dir;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  if (currentMonth < 0)  { currentMonth = 11; currentYear--; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  document.getElementById('calMonthLabel').textContent = `${currentYear}年${MONTHS_ZH[currentMonth]}`;
+
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const today = new Date();
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  // 空格
+  for (let i = 0; i < firstDay; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'cal-cell empty';
+    grid.appendChild(empty);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const cell = document.createElement('div');
+    const dow = (firstDay + d - 1) % 7;
+    cell.className = 'cal-cell';
+    if (dow === 0) cell.classList.add('sunday');
+    if (dow === 6) cell.classList.add('saturday');
+
+    const isToday = d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+    if (isToday) cell.classList.add('today');
+
+    const dateKey = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayShifts = shifts[dateKey] || [];
+
+    const numEl = document.createElement('div');
+    numEl.className = 'cal-day-num';
+    numEl.textContent = d;
+    cell.appendChild(numEl);
+
+    if (dayShifts.length > 0) {
+      const shift = dayShifts[0];
+      const dot = document.createElement('div');
+      dot.className = 'cal-dot';
+      dot.style.background = shift.color || '#e8a020';
+      dot.style.color = '#000';
+      const abbr = shift.name ? shift.name.slice(0,2) : '班';
+      dot.textContent = abbr;
+      cell.appendChild(dot);
+    }
+
+    cell.onclick = () => openAddShift(dateKey);
+    grid.appendChild(cell);
+  }
+
+  renderShiftSummary();
+  renderStats();
+}
+
+function renderStats() {
+  let days = 0, hours = 0;
+  const prefix = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-`;
+  Object.keys(shifts).forEach(k => {
+    if (k.startsWith(prefix)) {
+      shifts[k].forEach(s => {
+        if (s.color !== '#3a3f50') {
+          days++;
+          hours += calcHours(s.start, s.end);
+        }
+      });
+    }
+  });
+  document.getElementById('statDays').innerHTML = `${days}<span class="stat-unit">天</span>`;
+  document.getElementById('statHours').innerHTML = `${Math.round(hours)}<span class="stat-unit">小時</span>`;
+}
+
+function renderShiftSummary() {
+  const container = document.getElementById('shiftSummary');
+  container.innerHTML = '';
+  const prefix = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-`;
+  const keys = Object.keys(shifts).filter(k => k.startsWith(prefix)).sort();
+
+  keys.forEach(k => {
+    shifts[k].forEach((s, i) => {
+      const row = document.createElement('div');
+      row.className = 'shift-row';
+      const hours = calcHours(s.start, s.end);
+      const wage = Math.round(hours * parseInt(document.getElementById('hourlyRate')?.value || hourlyRate));
+      const d = k.split('-')[2];
+      row.innerHTML = `
+        <div class="shift-color-bar" style="background:${s.color||'#e8a020'}"></div>
+        <div class="shift-info">
+          <div class="shift-date-label">${parseInt(d)}日（${getDowLabel(new Date(k).getDay())}）</div>
+          <div class="shift-name" style="color:${s.color||'#e8a020'}">${s.name||'班次'}</div>
+          <div class="shift-time">${s.start} – ${s.end}　${hours > 0 ? hours.toFixed(1)+'h' : ''}</div>
+          ${s.note ? `<div class="shift-time">${s.note}</div>` : ''}
+        </div>
+        <div class="shift-wage">${wage > 0 ? '$'+wage.toLocaleString() : ''}</div>
+      `;
+      row.onclick = () => editShift(k, i);
+      container.appendChild(row);
+    });
+  });
+
+  if (keys.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3);font-size:13px">本月尚無班次<br>點「＋」新增</div>`;
+  }
+}
+
+function getDowLabel(dow) {
+  return ['日','一','二','三','四','五','六'][dow];
+}
+
+// ═══════════════════════════════
+// SHIFT MODAL
+// ═══════════════════════════════
+function openAddShift(dateKey) {
+  editingShiftId = null;
+  editingDate = dateKey;
+  document.getElementById('modalTitle').textContent = '新增班次';
+  document.getElementById('shiftDate').value = dateKey || getTodayStr();
+  document.getElementById('shiftName').value = '';
+  document.getElementById('shiftStart').value = '08:00';
+  document.getElementById('shiftEnd').value = '16:00';
+  document.getElementById('shiftNote').value = '';
+  document.getElementById('deleteShiftBtn').style.display = 'none';
+  selectColorByValue('#e8a020');
+  document.getElementById('shiftModal').classList.add('open');
+}
+
+function editShift(dateKey, idx) {
+  const s = shifts[dateKey][idx];
+  editingShiftId = idx;
+  editingDate = dateKey;
+  document.getElementById('modalTitle').textContent = '編輯班次';
+  document.getElementById('shiftDate').value = dateKey;
+  document.getElementById('shiftName').value = s.name || '';
+  document.getElementById('shiftStart').value = s.start || '08:00';
+  document.getElementById('shiftEnd').value = s.end || '16:00';
+  document.getElementById('shiftNote').value = s.note || '';
+  document.getElementById('deleteShiftBtn').style.display = 'block';
+  selectColorByValue(s.color || '#e8a020');
+  document.getElementById('shiftModal').classList.add('open');
+}
+
+function saveShift() {
+  const date = document.getElementById('shiftDate').value;
+  const name = document.getElementById('shiftName').value.trim() || '班次';
+  const start = document.getElementById('shiftStart').value;
+  const end = document.getElementById('shiftEnd').value;
+  const note = document.getElementById('shiftNote').value.trim();
+
+  if (!date) { showToast('請選擇日期'); return; }
+
+  if (!shifts[date]) shifts[date] = [];
+
+  const shiftObj = { name, start, end, color: selectedColor, note };
+
+  if (editingShiftId !== null && editingDate === date) {
+    shifts[date][editingShiftId] = shiftObj;
+  } else {
+    if (editingShiftId !== null) {
+      shifts[editingDate].splice(editingShiftId, 1);
+      if (shifts[editingDate].length === 0) delete shifts[editingDate];
+    }
+    shifts[date].push(shiftObj);
+  }
+
+  saveToStorage();
+  closeModal('shiftModal');
+  renderCalendar();
+  showToast('✓ 班次已儲存');
+}
+
+function deleteShift() {
+  if (editingShiftId === null) return;
+  if (!confirm('確定刪除此班次？')) return;
+  shifts[editingDate].splice(editingShiftId, 1);
+  if (shifts[editingDate].length === 0) delete shifts[editingDate];
+  saveToStorage();
+  closeModal('shiftModal');
+  renderCalendar();
+  showToast('班次已刪除');
+}
+
+function selectColor(el) {
+  document.querySelectorAll('.color-opt').forEach(o => { o.classList.remove('selected'); o.textContent = ''; });
+  el.classList.add('selected');
+  el.textContent = '✓';
+  selectedColor = el.dataset.color;
+}
+
+function selectColorByValue(val) {
+  document.querySelectorAll('.color-opt').forEach(o => {
+    o.classList.remove('selected'); o.textContent = '';
+    if (o.dataset.color === val) { o.classList.add('selected'); o.textContent = '✓'; }
+  });
+  selectedColor = val;
+}
+
+// ═══════════════════════════════
+// WAGE
+// ═══════════════════════════════
+function calcHours(start, end) {
+  if (!start || !end || start === end) return 0;
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  let mins = (eh * 60 + em) - (sh * 60 + sm);
+  if (mins < 0) mins += 24 * 60;
+  return mins / 60;
+}
+
+function recalcWage() {
+  const rate = parseInt(document.getElementById('hourlyRate').value || 176);
+  localStorage.setItem('hourlyRate', rate);
+  hourlyRate = rate;
+
+  const prefix = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-`;
+  let totalHours = 0;
+  let shiftBreakdown = [];
+
+  Object.keys(shifts).filter(k => k.startsWith(prefix)).sort().forEach(k => {
+    shifts[k].forEach(s => {
+      const h = calcHours(s.start, s.end);
+      totalHours += h;
+      if (h > 0) {
+        shiftBreakdown.push({ date: k, name: s.name, hours: h, wage: Math.round(h * rate), color: s.color });
+      }
+    });
+  });
+
+  const total = Math.round(totalHours * rate);
+  document.getElementById('wageTotal').textContent = total.toLocaleString();
+  document.getElementById('wagePeriodLabel').textContent = `${currentYear}年${MONTHS_ZH[currentMonth]} 預估`;
+
+  const breakdown = document.getElementById('wageBreakdown');
+  if (shiftBreakdown.length === 0) {
+    breakdown.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3);font-size:13px">本月尚無班次資料</div>`;
+    return;
+  }
+  breakdown.innerHTML = shiftBreakdown.map(s => `
+    <div class="wage-row">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:10px;height:10px;border-radius:50%;background:${s.color||'#e8a020'};flex-shrink:0"></div>
+        <div class="wage-row-label">${s.date.slice(5)} ${s.name}</div>
+      </div>
+      <div class="wage-row-value">${s.hours.toFixed(1)}h × ${rate} = $${s.wage.toLocaleString()}</div>
+    </div>
+  `).join('') + `
+    <div class="wage-row" style="border-top:2px solid var(--accent)">
+      <div class="wage-row-label" style="font-weight:700;color:var(--text)">合計</div>
+      <div class="wage-row-value" style="color:var(--accent);font-size:18px">$${total.toLocaleString()}</div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════
+// EXPORT
+// ═══════════════════════════════
+function exportCSV() {
+  const prefix = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-`;
+  let csv = '日期,星期,班次名稱,開始,結束,工時,備註\n';
+  Object.keys(shifts).filter(k => k.startsWith(prefix)).sort().forEach(k => {
+    shifts[k].forEach(s => {
+      const dow = getDowLabel(new Date(k).getDay());
+      const hours = calcHours(s.start, s.end).toFixed(1);
+      csv += `${k},${dow},${s.name||''},${s.start||''},${s.end||''},${hours},${s.note||''}\n`;
+    });
+  });
+  downloadFile(csv, `班表_${currentYear}${String(currentMonth+1).padStart(2,'0')}.csv`, 'text/csv;charset=utf-8;');
+  showToast('✓ CSV 已下載');
+}
+
+function exportText() {
+  const prefix = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-`;
+  let text = `【${currentYear}年${MONTHS_ZH[currentMonth]}班表】\n\n`;
+  Object.keys(shifts).filter(k => k.startsWith(prefix)).sort().forEach(k => {
+    shifts[k].forEach(s => {
+      const dow = getDowLabel(new Date(k).getDay());
+      const d = parseInt(k.split('-')[2]);
+      text += `${d}日(${dow}) ${s.name} ${s.start}~${s.end}${s.note ? ' ・'+s.note : ''}\n`;
+    });
+  });
+  navigator.clipboard?.writeText(text).then(() => showToast('✓ 已複製到剪貼簿'));
+}
+
+function printCalendar() {
+  window.print();
+}
+
+function exportAllStaffCSV() {
+  showToast('🔄 功能開發中（需連接 Firebase）');
+}
+
+function downloadFile(content, filename, type) {
+  const BOM = '\uFEFF';
+  const blob = new Blob([BOM + content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════
+// SETTINGS
+// ═══════════════════════════════
+function renderSettings() {
+  document.getElementById('settingName').textContent = userName || '（未設定）';
+  document.getElementById('settingId').textContent = staffId || '（未設定）';
+
+  const list = document.getElementById('shiftTypeList');
+  list.innerHTML = shiftTypes.map(t => `
+    <div class="settings-item" style="cursor:default">
+      <div class="settings-item-left">
+        <div style="width:12px;height:12px;border-radius:3px;background:${t.color};flex-shrink:0"></div>
+        <div>
+          <div class="settings-item-label">${t.name}</div>
+          <div class="settings-item-sub">${t.start} – ${t.end}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openNameModal() {
+  document.getElementById('nameInput').value = userName;
+  document.getElementById('nameModal').classList.add('open');
+}
+
+function saveName() {
+  userName = document.getElementById('nameInput').value.trim();
+  localStorage.setItem('userName', userName);
+  renderSettings();
+  closeModal('nameModal');
+  showToast('✓ 姓名已儲存');
+}
+
+function openStaffIdModal() {
+  document.getElementById('staffIdInput').value = staffId;
+  document.getElementById('staffIdModal').classList.add('open');
+}
+
+function saveStaffId() {
+  staffId = document.getElementById('staffIdInput').value.trim();
+  localStorage.setItem('staffId', staffId);
+  renderSettings();
+  closeModal('staffIdModal');
+  showToast('✓ 員工編號已儲存');
+}
+
+function clearAllData() {
+  if (confirm('確定清除所有班表資料？此動作無法復原。')) {
+    shifts = {};
+    saveToStorage();
+    renderCalendar();
+    showToast('已清除所有資料');
+  }
+}
+
+// ═══════════════════════════════
+// UTILS
+// ═══════════════════════════════
+function saveToStorage() {
+  localStorage.setItem('shifts', JSON.stringify(shifts));
+  // TODO: 同步至 Firebase
+  // if (window._firebaseReady && staffId) { ... }
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function getTodayStr() {
+  const t = new Date();
+  return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// 點背景關閉 modal
+document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+  backdrop.addEventListener('click', e => { if (e.target === backdrop) backdrop.classList.remove('open'); });
+});
+
+// ═══════════════════════════════
+// INIT
+// ═══════════════════════════════
+renderCalendar();
+renderSettings();
+
+// Demo 資料（首次使用）
+if (Object.keys(shifts).length === 0) {
+  const y = currentYear, m = currentMonth + 1;
+  const pad = n => String(n).padStart(2,'0');
+  [
+    { d: 3,  name: '白班',   start: '08:00', end: '16:00', color: '#e8a020' },
+    { d: 4,  name: '白班',   start: '08:00', end: '16:00', color: '#e8a020' },
+    { d: 5,  name: '白班',   start: '08:00', end: '16:00', color: '#e8a020' },
+    { d: 8,  name: '夜班',   start: '16:00', end: '00:00', color: '#4090e0' },
+    { d: 9,  name: '夜班',   start: '16:00', end: '00:00', color: '#4090e0' },
+    { d: 11, name: '休假',   start: '00:00', end: '00:00', color: '#3a3f50' },
+    { d: 15, name: '特勤',   start: '08:00', end: '20:00', color: '#40b870' },
+    { d: 18, name: '大夜',   start: '00:00', end: '08:00', color: '#9060d0' },
+    { d: 22, name: '白班',   start: '08:00', end: '16:00', color: '#e8a020' },
+    { d: 25, name: '白班',   start: '08:00', end: '16:00', color: '#e8a020' },
+  ].forEach(s => {
+    const key = `${y}-${pad(m)}-${pad(s.d)}`;
+    shifts[key] = [{ name: s.name, start: s.start, end: s.end, color: s.color, note: '' }];
+  });
+  saveToStorage();
+  renderCalendar();
+}
+</script>
+</body>
+</html>
