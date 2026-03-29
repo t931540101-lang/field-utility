@@ -3,184 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>黑曜石排班助理 - 手機版</title>
+    <title>黑曜石計畫 - 智能排班系統</title>
     <style>
         :root {
-            --primary-color: #b08d57; /* 仿 Shiftar 金棕色 */
-            --bg-color: #f8f9fa;
-            --text-color: #333;
-            --white: #ffffff;
+            --shiftar-gold: #b08d57;
+            --shiftar-light: #fdfaf5;
+            --work-color: #4A90E2; /* 工作藍 */
+            --off-color: #E94E77;  /* 休假紅 */
+            --private-color: #50E3C2; /* 私人綠 */
         }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: #eee;
             margin: 0;
             display: flex;
             justify-content: center;
         }
-
-        /* 手機窄螢幕容器 */
-        .mobile-container {
+        .app-container {
             width: 100%;
             max-width: 400px;
-            background: var(--white);
+            background: white;
             min-height: 100vh;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
         }
-
         header {
-            background-color: var(--primary-color);
-            color: var(--white);
+            background: var(--shiftar-gold);
+            color: white;
             padding: 15px;
             text-align: center;
             font-weight: bold;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
         }
-
-        .calendar-header {
+        .stats-card {
+            background: var(--shiftar-light);
+            margin: 10px;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e0d0b0;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            border-bottom: 1px solid #eee;
+            justify-content: space-around;
+            text-align: center;
         }
-
-        .shift-input-area {
-            padding: 20px;
-            border-bottom: 2px solid var(--bg-color);
+        .input-group {
+            padding: 15px;
+            background: #fff;
+            border-bottom: 5px solid #eee;
         }
-
-        input, select, button {
+        select, input, button {
             width: 100%;
             padding: 12px;
-            margin: 8px 0;
+            margin: 5px 0;
             border-radius: 8px;
-            border: 1px solid #ddd;
-            box-sizing: border-box;
+            border: 1px solid #ccc;
             font-size: 1rem;
         }
-
         button {
-            background-color: var(--primary-color);
+            background: var(--shiftar-gold);
             color: white;
             border: none;
-            font-weight: bold;
             cursor: pointer;
-            transition: 0.3s;
+            font-weight: bold;
         }
-
-        button:active {
-            opacity: 0.8;
-        }
-
-        .shift-list {
-            flex-grow: 1;
-            padding: 15px;
-        }
-
-        .shift-item {
-            background: #fff;
-            border-left: 5px solid var(--primary-color);
+        .list-container {
+            flex: 1;
             padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            overflow-y: auto;
         }
-
-        .delete-btn {
-            width: auto;
-            background: #ff5252;
+        .item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            color: white;
+        }
+        .btn-del {
+            background: rgba(255,255,255,0.3);
+            border: none;
+            color: white;
             padding: 5px 10px;
-            font-size: 0.8rem;
+            border-radius: 4px;
+            margin-left: auto;
         }
     </style>
 </head>
 <body>
 
-<div class="mobile-container">
-    <header>黑曜石計畫：排班助手</header>
-    
-    <div class="calendar-header">
-        <span id="currentDate">2026年3月</span>
-        <span>小黑哥 專屬</span>
+<div class="app-container">
+    <header>黑曜石計畫：智能班表管理</header>
+
+    <div class="stats-card">
+        <div><small>本月工時</small><div id="totalHours">0</div></div>
+        <div><small>上班天數</small><div id="workDays">0</div></div>
     </div>
 
-    <div class="shift-input-area">
-        <input type="date" id="dateInput">
-        <select id="typeInput">
-            <option value="早班 (07:00-19:00)">早班 (07:00-19:00)</option>
-            <option value="休假">休假</option>
-            <option value="其他">其他</option>
+    <div class="input-group">
+        <input type="date" id="date">
+        <select id="type">
+            <option value="work" data-color="var(--work-color)">早班 (07:00-19:00)</option>
+            <option value="off" data-color="var(--off-color)">休假 (休息是為了變強)</option>
+            <option value="private" data-color="var(--private-color)">私人計畫 (黑曜石進度)</option>
         </select>
-        <button onclick="saveShift()">新增排班資料</button>
+        <button onclick="addEntry()">＋ 新增至班表</button>
     </div>
 
-    <div class="shift-list" id="shiftList">
-        </div>
+    <div class="list-container" id="list"></div>
 </div>
 
 <script>
-    // 載入資料
-    document.addEventListener('DOMContentLoaded', () => {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('dateInput').value = today;
-        displayShifts();
-    });
+    let data = JSON.parse(localStorage.getItem('obsidian_data')) || [];
 
-    // 存檔到 Local Storage
-    function saveShift() {
-        const date = document.getElementById('dateInput').value;
-        const type = document.getElementById('typeInput').value;
-
-        if (!date) return alert('請選擇日期');
-
-        const shiftData = { date, type };
-        let shifts = JSON.parse(localStorage.getItem('obsidian_shifts')) || [];
+    function addEntry() {
+        const date = document.getElementById('date').value;
+        const type = document.getElementById('type');
+        const color = type.options[type.selectedIndex].getAttribute('data-color');
         
-        // 檢查是否重複，重複則更新
-        shifts = shifts.filter(s => s.date !== date);
-        shifts.push(shiftData);
-        shifts.sort((a, b) => new Date(a.date) - new Date(b.date));
+        if(!date) return alert('小黑哥，日期還沒選喔！');
 
-        localStorage.setItem('obsidian_shifts', JSON.stringify(shifts));
-        displayShifts();
+        data.push({ date, type: type.options[type.selectedIndex].text, rawType: type.value, color });
+        data.sort((a,b) => new Date(b.date) - new Date(a.date));
+        save();
     }
 
-    // 顯示存檔內容
-    function displayShifts() {
-        const list = document.getElementById('shiftList');
-        const shifts = JSON.parse(localStorage.getItem('obsidian_shifts')) || [];
-        
-        list.innerHTML = '<h3>近期班表</h3>';
-        
-        shifts.forEach((s, index) => {
-            const item = document.createElement('div');
-            item.className = 'shift-item';
-            item.innerHTML = `
-                <div>
-                    <strong>${s.date}</strong><br>
-                    <span>${s.type}</span>
-                </div>
-                <button class="delete-btn" onclick="deleteShift(${index})">刪除</button>
-            `;
-            list.appendChild(item);
+    function save() {
+        localStorage.setItem('obsidian_data', JSON.stringify(data));
+        render();
+    }
+
+    function render() {
+        const list = document.getElementById('list');
+        list.innerHTML = '';
+        let hours = 0;
+        let days = 0;
+
+        data.forEach((item, index) => {
+            if(item.rawType === 'work') {
+                hours += 12; // 07:00-19:00
+                days += 1;
+            }
+            list.innerHTML += `
+                <div class="item" style="background:${item.color}">
+                    <div><strong>${item.date}</strong><br><small>${item.type}</small></div>
+                    <button class="btn-del" onclick="del(${index})">刪除</button>
+                </div>`;
         });
+        document.getElementById('totalHours').innerText = hours + ' HR';
+        document.getElementById('workDays').innerText = days + ' 天';
     }
 
-    // 刪除功能
-    function deleteShift(index) {
-        let shifts = JSON.parse(localStorage.getItem('obsidian_shifts')) || [];
-        shifts.splice(index, 1);
-        localStorage.setItem('obsidian_shifts', JSON.stringify(shifts));
-        displayShifts();
+    function del(i) {
+        data.splice(i, 1);
+        save();
     }
+
+    render();
 </script>
 
 </body>
