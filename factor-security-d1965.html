@@ -1,1408 +1,687 @@
 <!DOCTYPE html>
+
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>班務通 ShiftHQ</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
-
-<!-- Firebase -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set, get, push, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyExample_REPLACE_WITH_YOUR_KEY",
-    authDomain: "factor-security-d1965.firebaseapp.com",
-    databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
-    projectId: "factor-security-d1965",
-    storageBucket: "factor-security-d1965.appspot.com",
-    messagingSenderId: "000000000000",
-    appId: "1:000000000000:web:0000000000000000"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  window._db = db;
-  window._dbRef = ref;
-  window._dbSet = set;
-  window._dbGet = get;
-  window._dbPush = push;
-  window._dbRemove = remove;
-  window._dbOnValue = onValue;
-  window._firebaseReady = true;
-  document.dispatchEvent(new Event('firebaseReady'));
-</script>
-
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0d0e11;
-    --surface: #14161b;
-    --surface2: #1c1f27;
-    --surface3: #252933;
-    --border: #2a2d38;
+    --bg: #f5f6f8;
+    --white: #ffffff;
+    --border: #e8eaee;
+    --text: #1a1c22;
+    --text2: #6b7080;
+    --text3: #b0b5c0;
+    --sunday: #e05050;
+    --saturday: #4a7eda;
+    --today-bg: #2a6be8;
     --accent: #e8a020;
-    --accent2: #f0c060;
-    --text: #e8eaf0;
-    --text2: #8890a4;
-    --text3: #50566a;
-    --danger: #e05050;
-    --success: #40b870;
-    --info: #4090e0;
+    --tag-blue: #cce0f8;
+    --tag-blue-text: #2a6be8;
+    --tag-pink: #fce4e4;
+    --tag-pink-text: #d04040;
+    --tag-orange: #fde8c0;
+    --tag-orange-text: #c07010;
+    --tag-green: #d4f0e0;
+    --tag-green-text: #1a9050;
+    --tag-purple: #e8d8f8;
+    --tag-purple-text: #6030b0;
+    --tag-gray: #e8eaee;
+    --tag-gray-text: #7080a0;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Noto Sans TC',-apple-system,sans-serif; max-width:430px; margin:0 auto; overflow-x:hidden; }
 
-    --shift-a: #e8a020;
-    --shift-b: #4090e0;
-    --shift-c: #40b870;
-    --shift-d: #9060d0;
-    --shift-off: #3a3f50;
+/* TOP BAR */
+.topbar { background:var(–white); display:flex; align-items:center; justify-content:space-between; padding:12px 16px 10px; position:sticky; top:0; z-index:100; border-bottom:1px solid var(–border); }
+.topbar-share { width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:20px; cursor:pointer; color:var(–text2); }
+.topbar-month { font-size:36px; font-weight:300; color:var(–text); line-height:1; }
+.topbar-right { text-align:right; cursor:pointer; }
+.topbar-year,.topbar-ym { font-size:13px; color:var(–text2); }
+.month-nav { background:var(–white); display:flex; align-items:center; justify-content:space-between; padding:6px 12px; border-bottom:1px solid var(–border); }
+.month-nav-label { font-size:15px; font-weight:500; }
+.month-nav-btn { background:none; border:none; font-size:20px; color:var(–text2); cursor:pointer; padding:4px 10px; border-radius:8px; }
+.month-nav-btn:active { background:var(–border); }
 
-    --radius: 12px;
-    --radius-sm: 8px;
-    --font-display: 'Rajdhani', sans-serif;
-    --font-body: 'Noto Sans TC', sans-serif;
-  }
+/* DOW */
+.dow-row { display:grid; grid-template-columns:repeat(7,1fr); background:var(–white); border-bottom:1px solid var(–border); padding:6px 0 4px; }
+.dow-cell { text-align:center; font-size:12px; font-weight:500; color:var(–text2); }
+.dow-cell:first-child { color:var(–sunday); }
+.dow-cell:last-child  { color:var(–saturday); }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+/* CALENDAR */
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); background:var(–border); gap:1px; }
+.cal-cell { background:var(–white); min-height:72px; padding:6px 3px; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; transition:background .1s; }
+.cal-cell:active { background:#f0f2f8; }
+.cal-cell.other-month { background:#fafbfc; }
+.cal-cell.other-month .cal-day-num { color:var(–text3); }
+.cal-cell.other-month .shift-tag { opacity:.5; }
+.cal-day-num { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:400; color:var(–text); flex-shrink:0; }
+.cal-cell.sunday .cal-day-num  { color:var(–sunday); }
+.cal-cell.saturday .cal-day-num { color:var(–saturday); }
+.cal-cell.today .cal-day-num   { background:var(–today-bg); color:#fff; font-weight:700; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-body);
-    min-height: 100dvh;
-    max-width: 430px;
-    margin: 0 auto;
-    overflow-x: hidden;
-    position: relative;
-  }
+/* SHIFT TAG */
+.shift-tag { width:100%; border-radius:20px; padding:2px 0; text-align:center; font-size:10px; font-weight:500; line-height:1.6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tag-blue   { background:var(–tag-blue);   color:var(–tag-blue-text); }
+.tag-pink   { background:var(–tag-pink);   color:var(–tag-pink-text); }
+.tag-orange { background:var(–tag-orange); color:var(–tag-orange-text); }
+.tag-green  { background:var(–tag-green);  color:var(–tag-green-text); }
+.tag-purple { background:var(–tag-purple); color:var(–tag-purple-text); }
+.tag-gray   { background:var(–tag-gray);   color:var(–tag-gray-text); }
 
-  /* ─── TOP BAR ─── */
-  .topbar {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 20px 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .topbar-logo {
-    font-family: var(--font-display);
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: var(--accent);
-  }
-  .topbar-logo span { color: var(--text2); font-weight: 500; font-size: 13px; letter-spacing: 1px; display: block; line-height: 1; }
-  .mode-toggle {
-    display: flex;
-    gap: 6px;
-    background: var(--surface2);
-    border-radius: 20px;
-    padding: 4px;
-  }
-  .mode-btn {
-    background: none;
-    border: none;
-    color: var(--text3);
-    font-size: 11px;
-    font-family: var(--font-body);
-    padding: 5px 12px;
-    border-radius: 16px;
-    cursor: pointer;
-    transition: all .2s;
-    font-weight: 500;
-  }
-  .mode-btn.active { background: var(--accent); color: #000; }
+/* STATS BAR */
+.stats-bar { background:var(–white); display:flex; border-top:1px solid var(–border); border-bottom:1px solid var(–border); }
+.stat-item { flex:1; padding:12px 0; text-align:center; border-right:1px solid var(–border); }
+.stat-item:last-child { border-right:none; }
+.stat-val { font-size:18px; font-weight:600; color:var(–text); }
+.stat-lbl { font-size:11px; color:var(–text3); margin-top:2px; }
 
-  /* ─── NAV BAR ─── */
-  .navbar {
-    position: fixed;
-    bottom: 0; left: 50%; transform: translateX(-50%);
-    width: 100%; max-width: 430px;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    display: flex;
-    padding: 8px 0 max(8px, env(safe-area-inset-bottom));
-    z-index: 100;
-  }
-  .nav-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-    cursor: pointer;
-    padding: 6px 0;
-    transition: all .2s;
-  }
-  .nav-icon { font-size: 22px; line-height: 1; }
-  .nav-label { font-size: 10px; color: var(--text3); font-weight: 500; }
-  .nav-item.active .nav-label { color: var(--accent); }
-  .nav-item.active .nav-icon { filter: drop-shadow(0 0 6px var(--accent)); }
+/* NAVBAR */
+.navbar { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; background:var(–white); border-top:1px solid var(–border); display:flex; padding:8px 0 max(8px,env(safe-area-inset-bottom)); z-index:100; }
+.nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; padding:4px 0; }
+.nav-icon  { font-size:22px; line-height:1.2; }
+.nav-label { font-size:10px; color:var(–text3); }
+.nav-item.active .nav-label { color:var(–today-bg); }
+.nav-fab { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; }
+.nav-fab-btn { width:48px; height:48px; background:var(–text); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:26px; color:#fff; margin-top:-10px; box-shadow:0 4px 16px rgba(0,0,0,.2); transition:transform .15s; }
+.nav-fab-btn:active { transform:scale(.9); }
 
-  /* ─── MAIN ─── */
-  main { padding: 0 0 90px; }
+/* PAGES */
+.page { display:none; padding-bottom:80px; }
+.page.active { display:block; }
 
-  /* ─── PAGE ─── */
-  .page { display: none; }
-  .page.active { display: block; }
+/* WAGE */
+.wage-header { background:var(–white); padding:20px; border-bottom:1px solid var(–border); text-align:center; }
+.wage-month-label { font-size:13px; color:var(–text2); margin-bottom:6px; }
+.wage-amount { font-size:42px; font-weight:300; }
+.wage-unit   { font-size:16px; color:var(–text2); }
+.wage-rate-row { background:var(–white); padding:16px 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(–border); margin-top:10px; }
+.wage-rate-label { font-size:14px; color:var(–text2); }
+.wage-rate-input { background:var(–bg); border:1px solid var(–border); border-radius:8px; padding:6px 12px; font-size:16px; font-family:inherit; width:100px; text-align:right; color:var(–text); outline:none; }
+.wage-list { background:var(–white); margin-top:10px; }
+.wage-list-header { padding:10px 20px 6px; font-size:12px; color:var(–text3); font-weight:500; border-bottom:1px solid var(–border); }
+.wage-row { display:flex; align-items:center; padding:14px 20px; border-bottom:1px solid var(–border); gap:12px; }
+.wage-row:last-child { border-bottom:none; }
+.wage-row-dot  { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.wage-row-info { flex:1; }
+.wage-row-date { font-size:13px; color:var(–text2); }
+.wage-row-name { font-size:15px; font-weight:500; }
+.wage-row-right { text-align:right; }
+.wage-row-hours { font-size:12px; color:var(–text3); }
+.wage-row-pay   { font-size:15px; font-weight:600; color:var(–today-bg); }
+.wage-total-row { background:var(–bg); padding:16px 20px; display:flex; justify-content:space-between; align-items:center; margin-top:2px; }
+.wage-total-label { font-size:14px; color:var(–text2); }
+.wage-total-value { font-size:22px; font-weight:700; color:var(–today-bg); }
 
-  /* ─── SECTION HEADER ─── */
-  .sec-header {
-    padding: 20px 20px 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .sec-title {
-    font-family: var(--font-display);
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    color: var(--text);
-  }
-  .sec-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+/* MODAL */
+.modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:200; display:none; align-items:flex-end; }
+.modal-backdrop.open { display:flex; }
+.modal { background:var(–white); border-radius:20px 20px 0 0; width:100%; max-height:90dvh; overflow-y:auto; padding:0 0 max(20px,env(safe-area-inset-bottom)); animation:slideUp .22s ease; }
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.modal-handle-row { display:flex; justify-content:center; padding:12px 0 4px; }
+.modal-handle { width:36px; height:4px; background:var(–border); border-radius:2px; }
+.modal-header { display:flex; align-items:center; justify-content:space-between; padding:8px 20px 16px; border-bottom:1px solid var(–border); }
+.modal-title { font-size:17px; font-weight:600; }
+.modal-close  { font-size:22px; color:var(–text3); cursor:pointer; padding:4px; background:none; border:none; }
+.modal-body   { padding:16px 20px; }
+.form-group   { margin-bottom:14px; }
+.form-label   { font-size:12px; color:var(–text2); margin-bottom:6px; display:block; font-weight:500; }
+.form-input,.form-select { width:100%; background:var(–bg); border:1.5px solid var(–border); border-radius:10px; color:var(–text); padding:11px 14px; font-size:16px; font-family:inherit; outline:none; transition:border-color .2s; -webkit-appearance:none; }
+.form-input:focus,.form-select:focus { border-color:var(–today-bg); }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.color-picker { display:flex; gap:10px; flex-wrap:wrap; padding:4px 0; }
+.color-opt { width:38px; height:38px; border-radius:50%; cursor:pointer; border:3px solid transparent; display:flex; align-items:center; justify-content:center; font-size:16px; transition:all .15s; }
+.color-opt.selected { border-color:var(–text); }
+.btn { width:100%; padding:14px; border-radius:12px; font-size:16px; font-family:inherit; font-weight:600; border:none; cursor:pointer; transition:all .15s; margin-top:6px; }
+.btn:active { transform:scale(.97); }
+.btn-primary { background:var(–today-bg); color:#fff; }
+.btn-danger  { background:#fff; color:var(–sunday); border:1.5px solid #eee; }
+.btn-ghost   { background:var(–bg); color:var(–text2); }
+.quick-types { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+.quick-type-btn { border-radius:20px; padding:6px 14px; font-size:13px; font-weight:500; cursor:pointer; border:none; font-family:inherit; }
 
-  /* ─── CALENDAR PAGE ─── */
-  .cal-nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px 16px;
-  }
-  .cal-month {
-    font-family: var(--font-display);
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: 1px;
-  }
-  .cal-arrow {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    font-size: 16px;
-    transition: all .2s;
-  }
-  .cal-arrow:active { background: var(--accent); color: #000; }
+/* LIST */
+.list-section { background:var(–white); margin:10px 0 0; }
+.list-header  { padding:12px 20px 8px; font-size:12px; color:var(–text3); font-weight:500; border-bottom:1px solid var(–border); }
+.list-item    { display:flex; align-items:center; gap:14px; padding:14px 20px; border-bottom:1px solid var(–border); cursor:pointer; }
+.list-item:last-child { border-bottom:none; }
+.list-item:active { background:var(–bg); }
+.list-item-icon  { font-size:22px; }
+.list-item-label { flex:1; }
+.list-item-name  { font-size:15px; font-weight:500; }
+.list-item-sub   { font-size:12px; color:var(–text3); margin-top:2px; }
+.list-item-arrow { color:var(–text3); font-size:16px; }
 
-  .cal-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
-    padding: 0 14px;
-  }
-  .cal-dow {
-    text-align: center;
-    font-size: 11px;
-    color: var(--text3);
-    padding: 4px 0 8px;
-    font-weight: 500;
-  }
-  .cal-dow:first-child { color: #e05050; }
-  .cal-dow:last-child { color: #4090e0; }
+/* TODAY */
+.today-card { background:var(–white); margin:12px 16px 0; border-radius:16px; padding:20px; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+.today-date-label { font-size:13px; color:var(–text2); margin-bottom:8px; }
+.today-shift-name { font-size:28px; font-weight:600; margin-bottom:4px; }
+.today-shift-time { font-size:15px; color:var(–text2); }
 
-  .cal-cell {
-    aspect-ratio: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: all .15s;
-    position: relative;
-    gap: 2px;
-  }
-  .cal-cell:active { transform: scale(.92); }
-  .cal-cell.empty { cursor: default; }
-  .cal-cell.today .cal-day-num {
-    background: var(--accent);
-    color: #000;
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700;
-  }
-  .cal-day-num {
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 28px;
-    width: 28px;
-    text-align: center;
-  }
-  .cal-cell.sunday .cal-day-num { color: #e05050; }
-  .cal-cell.saturday .cal-day-num { color: #4090e0; }
-
-  .cal-dot {
-    width: 24px;
-    height: 16px;
-    border-radius: 4px;
-    font-size: 9px;
-    font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-    letter-spacing: .5px;
-  }
-
-  /* ─── SHIFT SUMMARY BELOW CALENDAR ─── */
-  .shift-summary {
-    padding: 16px 20px 0;
-  }
-  .shift-row {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    transition: all .2s;
-  }
-  .shift-row:active { border-color: var(--accent); }
-  .shift-color-bar {
-    width: 4px;
-    height: 40px;
-    border-radius: 2px;
-    flex-shrink: 0;
-  }
-  .shift-info { flex: 1; }
-  .shift-date-label { font-size: 11px; color: var(--text3); margin-bottom: 2px; }
-  .shift-name { font-family: var(--font-display); font-size: 18px; font-weight: 600; letter-spacing: 1px; }
-  .shift-time { font-size: 13px; color: var(--text2); margin-top: 2px; }
-  .shift-wage { font-size: 13px; color: var(--success); font-weight: 500; }
-
-  /* ─── STATS CARDS ─── */
-  .stats-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    padding: 0 20px 16px;
-  }
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-  }
-  .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
-  .stat-value {
-    font-family: var(--font-display);
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: 1px;
-  }
-  .stat-unit { font-size: 12px; color: var(--text2); }
-
-  /* ─── ADD SHIFT MODAL ─── */
-  .modal-backdrop {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.7);
-    z-index: 200;
-    display: none;
-    align-items: flex-end;
-  }
-  .modal-backdrop.open { display: flex; }
-  .modal {
-    background: var(--surface);
-    border-radius: var(--radius) var(--radius) 0 0;
-    border-top: 1px solid var(--border);
-    width: 100%;
-    max-height: 90dvh;
-    overflow-y: auto;
-    padding: 20px 20px max(20px, env(safe-area-inset-bottom));
-    animation: slideUp .25s ease;
-  }
-  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-  .modal-handle {
-    width: 40px; height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    margin: 0 auto 20px;
-  }
-  .modal-title {
-    font-family: var(--font-display);
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    margin-bottom: 20px;
-  }
-
-  /* ─── FORM ELEMENTS ─── */
-  .form-group { margin-bottom: 16px; }
-  .form-label { font-size: 12px; color: var(--text3); margin-bottom: 6px; display: block; font-weight: 500; letter-spacing: .5px; }
-  .form-input, .form-select {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    padding: 12px 14px;
-    font-size: 15px;
-    font-family: var(--font-body);
-    outline: none;
-    transition: border-color .2s;
-    -webkit-appearance: none;
-  }
-  .form-input:focus, .form-select:focus { border-color: var(--accent); }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-  /* ─── COLOR PICKER ─── */
-  .color-picker { display: flex; gap: 10px; }
-  .color-opt {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 3px solid transparent;
-    transition: all .2s;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
-  }
-  .color-opt.selected { border-color: var(--text); }
-
-  /* ─── BUTTONS ─── */
-  .btn {
-    width: 100%;
-    padding: 14px;
-    border-radius: var(--radius);
-    font-size: 15px;
-    font-family: var(--font-body);
-    font-weight: 700;
-    border: none;
-    cursor: pointer;
-    transition: all .2s;
-    letter-spacing: .5px;
-  }
-  .btn-primary { background: var(--accent); color: #000; }
-  .btn-primary:active { transform: scale(.97); background: var(--accent2); }
-  .btn-danger { background: var(--danger); color: #fff; margin-top: 8px; }
-  .btn-ghost {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text2);
-    margin-top: 8px;
-  }
-
-  /* ─── FAB ─── */
-  .fab {
-    position: fixed;
-    bottom: 80px;
-    right: 20px;
-    width: 56px; height: 56px;
-    background: var(--accent);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 26px;
-    color: #000;
-    cursor: pointer;
-    z-index: 90;
-    box-shadow: 0 4px 20px rgba(232,160,32,.4);
-    transition: all .2s;
-    border: none;
-  }
-  .fab:active { transform: scale(.9); }
-
-  /* ─── WAGE PAGE ─── */
-  .wage-hero {
-    background: linear-gradient(135deg, var(--surface) 0%, #1a1c24 100%);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    margin: 0 20px 16px;
-    padding: 24px;
-    position: relative;
-    overflow: hidden;
-  }
-  .wage-hero::before {
-    content: '¥';
-    position: absolute;
-    right: -10px; top: -20px;
-    font-family: var(--font-display);
-    font-size: 120px;
-    color: rgba(232,160,32,.06);
-    line-height: 1;
-    pointer-events: none;
-  }
-  .wage-label { font-size: 12px; color: var(--text3); margin-bottom: 8px; }
-  .wage-amount {
-    font-family: var(--font-display);
-    font-size: 42px;
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: 2px;
-  }
-  .wage-unit { font-size: 14px; color: var(--text2); margin-left: 4px; }
-
-  .wage-breakdown {
-    padding: 0 20px;
-  }
-  .wage-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .wage-row:last-child { border-bottom: none; }
-  .wage-row-label { font-size: 14px; color: var(--text2); }
-  .wage-row-value { font-size: 14px; font-weight: 600; color: var(--text); }
-
-  /* ─── SETTINGS PAGE ─── */
-  .settings-section { padding: 0 20px 20px; }
-  .settings-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-  .settings-item {
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-  }
-  .settings-item:last-child { border-bottom: none; }
-  .settings-item-left { display: flex; align-items: center; gap: 12px; }
-  .settings-icon { font-size: 20px; width: 36px; text-align: center; }
-  .settings-item-label { font-size: 15px; font-weight: 500; }
-  .settings-item-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
-  .settings-arrow { color: var(--text3); font-size: 16px; }
-
-  /* ─── TOGGLE SWITCH ─── */
-  .toggle {
-    width: 44px; height: 26px;
-    background: var(--surface3);
-    border-radius: 13px;
-    position: relative;
-    cursor: pointer;
-    transition: background .2s;
-  }
-  .toggle.on { background: var(--accent); }
-  .toggle::after {
-    content: '';
-    position: absolute;
-    top: 3px; left: 3px;
-    width: 20px; height: 20px;
-    background: #fff;
-    border-radius: 50%;
-    transition: transform .2s;
-  }
-  .toggle.on::after { transform: translateX(18px); }
-
-  /* ─── ADMIN VIEW ─── */
-  .admin-banner {
-    background: linear-gradient(90deg, #1a0f00, #251500);
-    border-bottom: 2px solid var(--accent);
-    padding: 8px 20px;
-    font-size: 11px;
-    color: var(--accent);
-    font-weight: 600;
-    letter-spacing: 2px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .staff-grid {
-    padding: 0 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .staff-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    transition: border-color .2s;
-  }
-  .staff-card:active { border-color: var(--accent); }
-  .staff-avatar {
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    background: var(--surface3);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-    border: 2px solid var(--border);
-  }
-  .staff-name { font-size: 15px; font-weight: 600; }
-  .staff-id { font-size: 11px; color: var(--text3); margin-top: 2px; }
-  .staff-shifts { font-size: 12px; color: var(--text2); margin-top: 4px; }
-  .staff-badge {
-    margin-left: auto;
-    background: var(--surface3);
-    border-radius: 20px;
-    padding: 4px 10px;
-    font-size: 11px;
-    color: var(--text3);
-    font-weight: 500;
-    white-space: nowrap;
-  }
-
-  /* ─── TOAST ─── */
-  .toast {
-    position: fixed;
-    bottom: 100px; left: 50%; transform: translateX(-50%);
-    background: var(--surface3);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 10px 20px;
-    font-size: 13px;
-    font-weight: 500;
-    z-index: 500;
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity .3s;
-    pointer-events: none;
-  }
-  .toast.show { opacity: 1; }
-
-  /* ─── EXPORT SHEET ─── */
-  .export-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    margin: 0 20px 10px;
-    overflow: hidden;
-  }
-  .export-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 16px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background .15s;
-  }
-  .export-row:last-child { border-bottom: none; }
-  .export-row:active { background: var(--surface2); }
-  .export-icon { font-size: 24px; }
-  .export-label { flex: 1; }
-  .export-name { font-size: 15px; font-weight: 500; }
-  .export-desc { font-size: 12px; color: var(--text3); margin-top: 2px; }
-
-  /* ─── SCROLLBAR ─── */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+/* TOAST */
+.toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:rgba(30,32,40,.88); color:#fff; border-radius:20px; padding:10px 22px; font-size:14px; font-weight:500; z-index:500; white-space:nowrap; opacity:0; transition:opacity .3s; pointer-events:none; }
+.toast.show { opacity:1; }
 </style>
+
 </head>
 <body>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <div class="topbar-logo">SHIFT<span>班務通 HQ</span></div>
-  <div class="mode-toggle">
-    <button class="mode-btn active" onclick="setMode('personal')">個人</button>
-    <button class="mode-btn" onclick="setMode('admin')">管理</button>
+<!-- TOP (月曆專用) -->
+
+<div id="calTopbar">
+  <div class="topbar">
+    <div class="topbar-share" onclick="exportText()">⎋</div>
+    <div class="topbar-month" id="topbarMonthNum">3</div>
+    <div class="topbar-right">
+      <div class="topbar-year" id="topbarYear">2026</div>
+      <div class="topbar-ym"   id="topbarYM">3月</div>
+    </div>
+  </div>
+  <div class="month-nav">
+    <button class="month-nav-btn" onclick="changeMonth(-1)">‹</button>
+    <div class="month-nav-label" id="monthNavLabel">2026年3月</div>
+    <button class="month-nav-btn" onclick="changeMonth(1)">›</button>
+  </div>
+  <div class="dow-row">
+    <div class="dow-cell">週日</div><div class="dow-cell">週一</div>
+    <div class="dow-cell">週二</div><div class="dow-cell">週三</div>
+    <div class="dow-cell">週四</div><div class="dow-cell">週五</div>
+    <div class="dow-cell">週六</div>
   </div>
 </div>
 
-<!-- ADMIN BANNER -->
-<div class="admin-banner" id="adminBanner" style="display:none">
-  ⚡ 管理者模式 — 全員班表總覽
+<!-- PAGES -->
+
+<div class="page active" id="page-cal">
+  <div class="cal-grid" id="calGrid"></div>
+  <div class="stats-bar" id="statsBar"></div>
 </div>
 
-<!-- MAIN -->
-<main>
-
-  <!-- ══ PAGE: CALENDAR ══ -->
-  <div class="page active" id="page-cal">
-    <div class="sec-header">
-      <div>
-        <div class="sec-title" id="calPageTitle">我的班表</div>
-        <div class="sec-sub" id="calPageSub">點擊日期查看或新增班次</div>
-      </div>
-    </div>
-
-    <!-- 月份導航 -->
-    <div class="cal-nav">
-      <button class="cal-arrow" onclick="changeMonth(-1)">‹</button>
-      <div class="cal-month" id="calMonthLabel">2025年4月</div>
-      <button class="cal-arrow" onclick="changeMonth(1)">›</button>
-    </div>
-
-    <!-- 星期列 -->
-    <div class="cal-grid">
-      <div class="cal-dow">日</div>
-      <div class="cal-dow">一</div>
-      <div class="cal-dow">二</div>
-      <div class="cal-dow">三</div>
-      <div class="cal-dow">四</div>
-      <div class="cal-dow">五</div>
-      <div class="cal-dow">六</div>
-    </div>
-
-    <!-- 日曆格 -->
-    <div class="cal-grid" id="calGrid"></div>
-
-    <!-- 本月統計 -->
-    <div class="sec-header" style="padding-top:20px">
-      <div class="sec-title">本月概況</div>
-    </div>
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-label">出勤天數</div>
-        <div class="stat-value" id="statDays">0<span class="stat-unit">天</span></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">總工時</div>
-        <div class="stat-value" id="statHours">0<span class="stat-unit">小時</span></div>
-      </div>
-    </div>
-
-    <!-- 本月班次列表 -->
-    <div class="shift-summary" id="shiftSummary"></div>
+<div class="page" id="page-today">
+  <div style="padding:16px 0 0">
+    <div class="today-card" id="todayCard"></div>
   </div>
-
-  <!-- ══ PAGE: WAGE ══ -->
-  <div class="page" id="page-wage">
-    <div class="sec-header">
-      <div>
-        <div class="sec-title">薪資試算</div>
-        <div class="sec-sub" id="wagePeriodLabel">本月預估</div>
-      </div>
-    </div>
-
-    <div class="wage-hero">
-      <div class="wage-label">預估月薪</div>
-      <div><span class="wage-amount" id="wageTotal">0</span><span class="wage-unit">元</span></div>
-    </div>
-
-    <div style="padding:0 20px 16px">
-      <div class="form-group">
-        <label class="form-label">時薪設定（元/小時）</label>
-        <input class="form-input" type="number" id="hourlyRate" value="176" min="0" step="1" oninput="recalcWage()">
-      </div>
-    </div>
-
-    <div class="wage-breakdown" id="wageBreakdown"></div>
+  <div class="list-section" style="margin-top:16px">
+    <div class="list-header">本週班次</div>
+    <div id="weekList"></div>
   </div>
+</div>
 
-  <!-- ══ PAGE: EXPORT ══ -->
-  <div class="page" id="page-export">
-    <div class="sec-header">
-      <div>
-        <div class="sec-title">匯出分享</div>
-        <div class="sec-sub">班表資料輸出</div>
-      </div>
+<div class="page" id="page-wage">
+  <div class="wage-header">
+    <div class="wage-month-label" id="wagePeriodLabel">預估薪資</div>
+    <div><span class="wage-amount" id="wageTotal">0</span><span class="wage-unit"> 元</span></div>
+  </div>
+  <div class="wage-rate-row">
+    <div class="wage-rate-label">時薪（元/小時）</div>
+    <input class="wage-rate-input" type="number" id="hourlyRate" value="176" min="0" oninput="recalcWage()">
+  </div>
+  <div class="wage-list">
+    <div class="wage-list-header">班次明細</div>
+    <div id="wageBreakdown"></div>
+  </div>
+  <div class="wage-total-row">
+    <div class="wage-total-label">月薪合計</div>
+    <div class="wage-total-value" id="wageTotalBottom">$0</div>
+  </div>
+</div>
+
+<div class="page" id="page-other">
+  <div class="list-section" style="margin-top:10px">
+    <div class="list-header">匯出</div>
+    <div class="list-item" onclick="exportCSV()">
+      <div class="list-item-icon">📊</div>
+      <div class="list-item-label"><div class="list-item-name">匯出 CSV</div><div class="list-item-sub">可匯入 Excel / Google 試算表</div></div>
+      <div class="list-item-arrow">›</div>
     </div>
-
-    <div class="export-card">
-      <div class="export-row" onclick="exportCSV()">
-        <div class="export-icon">📊</div>
-        <div class="export-label">
-          <div class="export-name">CSV 匯出</div>
-          <div class="export-desc">可匯入 Excel / Google 試算表</div>
-        </div>
-        <div style="color:var(--text3)">›</div>
-      </div>
-      <div class="export-row" onclick="exportText()">
-        <div class="export-icon">📋</div>
-        <div class="export-label">
-          <div class="export-name">純文字版</div>
-          <div class="export-desc">複製後貼到 LINE / 通訊軟體</div>
-        </div>
-        <div style="color:var(--text3)">›</div>
-      </div>
-      <div class="export-row" onclick="printCalendar()">
-        <div class="export-icon">🖨️</div>
-        <div class="export-label">
-          <div class="export-name">列印 / 存成 PDF</div>
-          <div class="export-desc">月曆格式輸出</div>
-        </div>
-        <div style="color:var(--text3)">›</div>
-      </div>
-    </div>
-
-    <!-- 管理模式才顯示 -->
-    <div id="adminExportSection" style="display:none">
-      <div class="sec-header">
-        <div class="sec-title">全員班表</div>
-      </div>
-      <div class="export-card">
-        <div class="export-row" onclick="exportAllStaffCSV()">
-          <div class="export-icon">👥</div>
-          <div class="export-label">
-            <div class="export-name">全員 CSV 匯出</div>
-            <div class="export-desc">所有保全員本月班表彙整</div>
-          </div>
-          <div style="color:var(--text3)">›</div>
-        </div>
-      </div>
+    <div class="list-item" onclick="exportText()">
+      <div class="list-item-icon">📋</div>
+      <div class="list-item-label"><div class="list-item-name">複製純文字</div><div class="list-item-sub">貼到 LINE 或通訊軟體</div></div>
+      <div class="list-item-arrow">›</div>
     </div>
   </div>
-
-  <!-- ══ PAGE: SETTINGS ══ -->
-  <div class="page" id="page-settings">
-    <div class="sec-header">
-      <div>
-        <div class="sec-title">設定</div>
-        <div class="sec-sub">個人化與偏好設定</div>
-      </div>
+  <div class="list-section">
+    <div class="list-header">個人設定</div>
+    <div class="list-item" onclick="openNameModal()">
+      <div class="list-item-icon">👤</div>
+      <div class="list-item-label"><div class="list-item-name">我的姓名</div><div class="list-item-sub" id="settingName">（未設定）</div></div>
+      <div class="list-item-arrow">›</div>
     </div>
-
-    <div class="settings-section">
-      <div class="settings-card">
-        <div class="settings-item" onclick="openNameModal()">
-          <div class="settings-item-left">
-            <div class="settings-icon">👤</div>
-            <div>
-              <div class="settings-item-label">我的姓名</div>
-              <div class="settings-item-sub" id="settingName">（未設定）</div>
-            </div>
-          </div>
-          <div class="settings-arrow">›</div>
-        </div>
-        <div class="settings-item" onclick="openStaffIdModal()">
-          <div class="settings-item-left">
-            <div class="settings-icon">🪪</div>
-            <div>
-              <div class="settings-item-label">員工編號</div>
-              <div class="settings-item-sub" id="settingId">（未設定）</div>
-            </div>
-          </div>
-          <div class="settings-arrow">›</div>
-        </div>
-        <div class="settings-item">
-          <div class="settings-item-left">
-            <div class="settings-icon">🔔</div>
-            <div>
-              <div class="settings-item-label">班次提醒</div>
-              <div class="settings-item-sub">上班前 1 小時通知</div>
-            </div>
-          </div>
-          <div class="toggle on" id="notifToggle" onclick="this.classList.toggle('on')"></div>
-        </div>
-      </div>
+    <div class="list-item" onclick="openStaffIdModal()">
+      <div class="list-item-icon">🪪</div>
+      <div class="list-item-label"><div class="list-item-name">員工編號</div><div class="list-item-sub" id="settingId">（未設定）</div></div>
+      <div class="list-item-arrow">›</div>
     </div>
-
-    <div class="settings-section">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:10px;letter-spacing:.5px">班次類型設定</div>
-      <div class="settings-card" id="shiftTypeList"></div>
-    </div>
-
-    <div class="settings-section">
-      <div class="settings-card">
-        <div class="settings-item" onclick="clearAllData()">
-          <div class="settings-item-left">
-            <div class="settings-icon">🗑️</div>
-            <div>
-              <div class="settings-item-label" style="color:var(--danger)">清除所有資料</div>
-              <div class="settings-item-sub">重置本機班表紀錄</div>
-            </div>
-          </div>
-          <div class="settings-arrow">›</div>
-        </div>
-      </div>
-    </div>
-
-    <div style="text-align:center;padding:20px;font-size:11px;color:var(--text3)">
-      班務通 ShiftHQ v1.0<br>台灣精銳 × 自製系統
+    <div class="list-item" onclick="clearAllData()">
+      <div class="list-item-icon">🗑️</div>
+      <div class="list-item-label"><div class="list-item-name" style="color:#e05050">清除所有班表</div><div class="list-item-sub">重置所有紀錄</div></div>
+      <div class="list-item-arrow">›</div>
     </div>
   </div>
-
-</main>
+  <div style="text-align:center;padding:24px;font-size:12px;color:var(--text3)">班務通 ShiftHQ v1.0 · 台灣精銳</div>
+</div>
 
 <!-- NAVBAR -->
+
 <nav class="navbar">
-  <div class="nav-item active" onclick="showPage('cal', this)">
-    <div class="nav-icon">📅</div>
-    <div class="nav-label">班表</div>
+  <div class="nav-item" id="nav-today" onclick="showPage('today',this)">
+    <div class="nav-icon">✅</div><div class="nav-label">今日</div>
   </div>
-  <div class="nav-item" onclick="showPage('wage', this)">
-    <div class="nav-icon">💰</div>
-    <div class="nav-label">薪資</div>
+  <div class="nav-item active" id="nav-cal" onclick="showPage('cal',this)">
+    <div class="nav-icon">📅</div><div class="nav-label">輪班</div>
   </div>
-  <div class="nav-item" onclick="showPage('export', this)">
-    <div class="nav-icon">📤</div>
-    <div class="nav-label">匯出</div>
+  <div class="nav-fab" onclick="openAddShift(null)">
+    <div class="nav-fab-btn">＋</div>
   </div>
-  <div class="nav-item" onclick="showPage('settings', this)">
-    <div class="nav-icon">⚙️</div>
-    <div class="nav-label">設定</div>
+  <div class="nav-item" id="nav-wage" onclick="showPage('wage',this)">
+    <div class="nav-icon">💴</div><div class="nav-label">薪水</div>
+  </div>
+  <div class="nav-item" id="nav-other" onclick="showPage('other',this)">
+    <div class="nav-icon">⋯</div><div class="nav-label">其它</div>
   </div>
 </nav>
 
-<!-- FAB -->
-<button class="fab" id="fab" onclick="openAddShift(null)">＋</button>
-
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- ══ MODAL: 新增/編輯班次 ══ -->
+<!-- MODAL: 班次 -->
+
 <div class="modal-backdrop" id="shiftModal">
   <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="modalTitle">新增班次</div>
-
-    <div class="form-group">
-      <label class="form-label">日期</label>
-      <input class="form-input" type="date" id="shiftDate">
+    <div class="modal-handle-row"><div class="modal-handle"></div></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">新增班次</div>
+      <button class="modal-close" onclick="closeModal('shiftModal')">×</button>
     </div>
-
-    <div class="form-group">
-      <label class="form-label">班次名稱</label>
-      <input class="form-input" type="text" id="shiftName" placeholder="例：白班、夜班、特勤...">
-    </div>
-
-    <div class="form-row">
+    <div class="modal-body">
+      <div class="form-label">快速選擇</div>
+      <div class="quick-types" id="quickTypes"></div>
       <div class="form-group">
-        <label class="form-label">開始時間</label>
-        <input class="form-input" type="time" id="shiftStart" value="08:00">
+        <label class="form-label">日期</label>
+        <input class="form-input" type="date" id="shiftDate">
       </div>
       <div class="form-group">
-        <label class="form-label">結束時間</label>
-        <input class="form-input" type="time" id="shiftEnd" value="16:00">
+        <label class="form-label">班次名稱</label>
+        <input class="form-input" type="text" id="shiftName" placeholder="例：日B班、夜班...">
       </div>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">顏色標記</label>
-      <div class="color-picker" id="colorPicker">
-        <div class="color-opt selected" data-color="#e8a020" style="background:#e8a020" onclick="selectColor(this)">✓</div>
-        <div class="color-opt" data-color="#4090e0" style="background:#4090e0" onclick="selectColor(this)"></div>
-        <div class="color-opt" data-color="#40b870" style="background:#40b870" onclick="selectColor(this)"></div>
-        <div class="color-opt" data-color="#9060d0" style="background:#9060d0" onclick="selectColor(this)"></div>
-        <div class="color-opt" data-color="#e05050" style="background:#e05050" onclick="selectColor(this)"></div>
-        <div class="color-opt" data-color="#3a3f50" style="background:#3a3f50" onclick="selectColor(this)"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">開始</label>
+          <input class="form-input" type="time" id="shiftStart" value="08:00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">結束</label>
+          <input class="form-input" type="time" id="shiftEnd" value="20:00">
+        </div>
       </div>
+      <div class="form-group">
+        <label class="form-label">顏色</label>
+        <div class="color-picker" id="colorPicker">
+          <div class="color-opt selected" data-color="blue"   style="background:var(--tag-blue)"   onclick="selectColor(this)">✓</div>
+          <div class="color-opt"          data-color="pink"   style="background:var(--tag-pink)"   onclick="selectColor(this)"></div>
+          <div class="color-opt"          data-color="orange" style="background:var(--tag-orange)" onclick="selectColor(this)"></div>
+          <div class="color-opt"          data-color="green"  style="background:var(--tag-green)"  onclick="selectColor(this)"></div>
+          <div class="color-opt"          data-color="purple" style="background:var(--tag-purple)" onclick="selectColor(this)"></div>
+          <div class="color-opt"          data-color="gray"   style="background:var(--tag-gray)"   onclick="selectColor(this)"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">備註（選填）</label>
+        <input class="form-input" type="text" id="shiftNote" placeholder="地點、說明...">
+      </div>
+      <button class="btn btn-primary" onclick="saveShift()">儲存</button>
+      <button class="btn btn-danger" id="deleteShiftBtn" onclick="deleteShift()" style="display:none">刪除此班次</button>
+      <button class="btn btn-ghost" onclick="closeModal('shiftModal')">取消</button>
     </div>
-
-    <div class="form-group">
-      <label class="form-label">備註（選填）</label>
-      <input class="form-input" type="text" id="shiftNote" placeholder="工作地點、特殊說明...">
-    </div>
-
-    <button class="btn btn-primary" onclick="saveShift()">儲存班次</button>
-    <button class="btn btn-danger" id="deleteShiftBtn" onclick="deleteShift()" style="display:none">刪除此班次</button>
-    <button class="btn btn-ghost" onclick="closeModal('shiftModal')">取消</button>
   </div>
 </div>
 
-<!-- ══ MODAL: 姓名設定 ══ -->
+<!-- MODAL: 姓名 -->
+
 <div class="modal-backdrop" id="nameModal">
   <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">設定姓名</div>
-    <div class="form-group">
-      <label class="form-label">您的姓名</label>
-      <input class="form-input" type="text" id="nameInput" placeholder="請輸入姓名">
+    <div class="modal-handle-row"><div class="modal-handle"></div></div>
+    <div class="modal-header">
+      <div class="modal-title">我的姓名</div>
+      <button class="modal-close" onclick="closeModal('nameModal')">×</button>
     </div>
-    <button class="btn btn-primary" onclick="saveName()">儲存</button>
-    <button class="btn btn-ghost" onclick="closeModal('nameModal')">取消</button>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">姓名</label><input class="form-input" type="text" id="nameInput" placeholder="請輸入姓名"></div>
+      <button class="btn btn-primary" onclick="saveName()">儲存</button>
+    </div>
   </div>
 </div>
 
-<!-- ══ MODAL: 員工編號 ══ -->
+<!-- MODAL: 員工編號 -->
+
 <div class="modal-backdrop" id="staffIdModal">
   <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">員工編號</div>
-    <div class="form-group">
-      <label class="form-label">員工編號（D- 本地 / N- 外籍）</label>
-      <input class="form-input" type="text" id="staffIdInput" placeholder="例：D001">
+    <div class="modal-handle-row"><div class="modal-handle"></div></div>
+    <div class="modal-header">
+      <div class="modal-title">員工編號</div>
+      <button class="modal-close" onclick="closeModal('staffIdModal')">×</button>
     </div>
-    <button class="btn btn-primary" onclick="saveStaffId()">儲存</button>
-    <button class="btn btn-ghost" onclick="closeModal('staffIdModal')">取消</button>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">編號（D- 本地 / N- 外籍）</label><input class="form-input" type="text" id="staffIdInput" placeholder="例：D001"></div>
+      <button class="btn btn-primary" onclick="saveStaffId()">儲存</button>
+    </div>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════
-// STATE
-// ═══════════════════════════════
-let currentMode = 'personal';
-let currentYear = new Date().getFullYear();
-let currentMonth = new Date().getMonth(); // 0-based
-let selectedColor = '#e8a020';
+let currentYear  = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
+let selectedColor = 'blue';
 let editingShiftId = null;
 let editingDate = null;
-
-// 本機存儲 (Firebase 整合時改為 Firebase)
-let shifts = JSON.parse(localStorage.getItem('shifts') || '{}');
+let shifts   = JSON.parse(localStorage.getItem('shifts') || '{}');
 let userName = localStorage.getItem('userName') || '';
-let staffId = localStorage.getItem('staffId') || '';
-let hourlyRate = parseInt(localStorage.getItem('hourlyRate') || '176');
-
-// 預設班次類型
-const shiftTypes = [
-  { name: '白班', start: '08:00', end: '16:00', color: '#e8a020' },
-  { name: '夜班', start: '16:00', end: '00:00', color: '#4090e0' },
-  { name: '大夜', start: '00:00', end: '08:00', color: '#9060d0' },
-  { name: '假日特勤', start: '08:00', end: '20:00', color: '#40b870' },
-  { name: '休假', start: '00:00', end: '00:00', color: '#3a3f50' },
+let staffId  = localStorage.getItem('staffId')  || '';
+const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+const DOWS   = ['日','一','二','三','四','五','六'];
+const TAG_DOT = { blue:'#2a6be8', pink:'#d04040', orange:'#c07010', green:'#1a9050', purple:'#6030b0', gray:'#7080a0' };
+const QUICK_TYPES = [
+  {name:'日B班',start:'08:00',end:'20:00',color:'blue'},
+  {name:'夜班', start:'20:00',end:'08:00',color:'purple'},
+  {name:'特休', start:'00:00',end:'00:00',color:'orange'},
+  {name:'例假', start:'00:00',end:'00:00',color:'pink'},
+  {name:'休假', start:'00:00',end:'00:00',color:'gray'},
 ];
 
-// ═══════════════════════════════
-// NAV
-// ═══════════════════════════════
 function showPage(pageId, navEl) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + pageId).classList.add('active');
-  navEl.classList.add('active');
-
-  const fab = document.getElementById('fab');
-  fab.style.display = pageId === 'cal' ? 'flex' : 'none';
-
-  if (pageId === 'wage') recalcWage();
+  document.getElementById('page-'+pageId).classList.add('active');
+  if (navEl) navEl.classList.add('active');
+  document.getElementById('calTopbar').style.display = pageId==='cal' ? '' : 'none';
+  if (pageId==='wage')  recalcWage();
+  if (pageId==='today') renderToday();
 }
-
-// ═══════════════════════════════
-// MODE
-// ═══════════════════════════════
-function setMode(mode) {
-  currentMode = mode;
-  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector(`.mode-btn[onclick="setMode('${mode}')"]`).classList.add('active');
-  document.getElementById('adminBanner').style.display = mode === 'admin' ? 'flex' : 'none';
-  document.getElementById('adminExportSection').style.display = mode === 'admin' ? 'block' : 'none';
-  document.getElementById('calPageTitle').textContent = mode === 'admin' ? '全員班表' : '我的班表';
-  document.getElementById('calPageSub').textContent = mode === 'admin' ? '管理者總覽模式' : '點擊日期查看或新增班次';
-  renderCalendar();
-}
-
-// ═══════════════════════════════
-// CALENDAR
-// ═══════════════════════════════
-const MONTHS_ZH = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 
 function changeMonth(dir) {
   currentMonth += dir;
-  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-  if (currentMonth < 0)  { currentMonth = 11; currentYear--; }
+  if (currentMonth>11){currentMonth=0;currentYear++;}
+  if (currentMonth<0) {currentMonth=11;currentYear--;}
   renderCalendar();
 }
 
 function renderCalendar() {
-  document.getElementById('calMonthLabel').textContent = `${currentYear}年${MONTHS_ZH[currentMonth]}`;
-
-  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const y=currentYear, m=currentMonth;
+  document.getElementById('topbarMonthNum').textContent = m+1;
+  document.getElementById('topbarYear').textContent = y;
+  document.getElementById('topbarYM').textContent = MONTHS[m];
+  document.getElementById('monthNavLabel').textContent = `${y}年${MONTHS[m]}`;
+  const firstDow    = new Date(y,m,1).getDay();
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  const prevDays    = new Date(y,m,0).getDate();
   const today = new Date();
+  const pad = n => String(n).padStart(2,'0');
   const grid = document.getElementById('calGrid');
   grid.innerHTML = '';
 
-  // 空格
-  for (let i = 0; i < firstDay; i++) {
-    const empty = document.createElement('div');
-    empty.className = 'cal-cell empty';
-    grid.appendChild(empty);
-  }
-
-  for (let d = 1; d <= daysInMonth; d++) {
+  for (let i=0;i<42;i++) {
+    const dow = i%7;
     const cell = document.createElement('div');
-    const dow = (firstDay + d - 1) % 7;
     cell.className = 'cal-cell';
-    if (dow === 0) cell.classList.add('sunday');
-    if (dow === 6) cell.classList.add('saturday');
+    if (dow===0) cell.classList.add('sunday');
+    if (dow===6) cell.classList.add('saturday');
 
-    const isToday = d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
-    if (isToday) cell.classList.add('today');
+    let cellDate, d;
+    if (i < firstDow) {
+      d = prevDays - firstDow + i + 1;
+      const pm = m-1<0?11:m-1, py = m-1<0?y-1:y;
+      cellDate = `${py}-${pad(pm+1)}-${pad(d)}`;
+      cell.classList.add('other-month');
+    } else if (i-firstDow < daysInMonth) {
+      d = i-firstDow+1;
+      cellDate = `${y}-${pad(m+1)}-${pad(d)}`;
+    } else {
+      d = i-firstDow-daysInMonth+1;
+      const nm = m+1>11?0:m+1, ny = m+1>11?y+1:y;
+      cellDate = `${ny}-${pad(nm+1)}-${pad(d)}`;
+      cell.classList.add('other-month');
+    }
 
-    const dateKey = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dayShifts = shifts[dateKey] || [];
+    const [cy,cm2,cd] = cellDate.split('-').map(Number);
+    if (cy===today.getFullYear()&&cm2===today.getMonth()+1&&cd===today.getDate()) cell.classList.add('today');
 
     const numEl = document.createElement('div');
     numEl.className = 'cal-day-num';
     numEl.textContent = d;
     cell.appendChild(numEl);
 
-    if (dayShifts.length > 0) {
-      const shift = dayShifts[0];
-      const dot = document.createElement('div');
-      dot.className = 'cal-dot';
-      dot.style.background = shift.color || '#e8a020';
-      dot.style.color = '#000';
-      const abbr = shift.name ? shift.name.slice(0,2) : '班';
-      dot.textContent = abbr;
-      cell.appendChild(dot);
-    }
+    (shifts[cellDate]||[]).slice(0,2).forEach(s => {
+      const tag = document.createElement('div');
+      tag.className = `shift-tag tag-${s.color||'blue'}`;
+      tag.textContent = s.name||'班';
+      cell.appendChild(tag);
+    });
 
-    cell.onclick = () => openAddShift(dateKey);
+    cell.onclick = () => openAddShift(cellDate);
     grid.appendChild(cell);
   }
-
-  renderShiftSummary();
-  renderStats();
+  renderStatsBar();
 }
 
-function renderStats() {
-  let days = 0, hours = 0;
+function renderStatsBar() {
   const prefix = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-`;
-  Object.keys(shifts).forEach(k => {
-    if (k.startsWith(prefix)) {
-      shifts[k].forEach(s => {
-        if (s.color !== '#3a3f50') {
-          days++;
-          hours += calcHours(s.start, s.end);
-        }
-      });
-    }
-  });
-  document.getElementById('statDays').innerHTML = `${days}<span class="stat-unit">天</span>`;
-  document.getElementById('statHours').innerHTML = `${Math.round(hours)}<span class="stat-unit">小時</span>`;
-}
-
-function renderShiftSummary() {
-  const container = document.getElementById('shiftSummary');
-  container.innerHTML = '';
-  const prefix = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-`;
-  const keys = Object.keys(shifts).filter(k => k.startsWith(prefix)).sort();
-
-  keys.forEach(k => {
-    shifts[k].forEach((s, i) => {
-      const row = document.createElement('div');
-      row.className = 'shift-row';
-      const hours = calcHours(s.start, s.end);
-      const wage = Math.round(hours * parseInt(document.getElementById('hourlyRate')?.value || hourlyRate));
-      const d = k.split('-')[2];
-      row.innerHTML = `
-        <div class="shift-color-bar" style="background:${s.color||'#e8a020'}"></div>
-        <div class="shift-info">
-          <div class="shift-date-label">${parseInt(d)}日（${getDowLabel(new Date(k).getDay())}）</div>
-          <div class="shift-name" style="color:${s.color||'#e8a020'}">${s.name||'班次'}</div>
-          <div class="shift-time">${s.start} – ${s.end}　${hours > 0 ? hours.toFixed(1)+'h' : ''}</div>
-          ${s.note ? `<div class="shift-time">${s.note}</div>` : ''}
-        </div>
-        <div class="shift-wage">${wage > 0 ? '$'+wage.toLocaleString() : ''}</div>
-      `;
-      row.onclick = () => editShift(k, i);
-      container.appendChild(row);
+  let days=0, hours=0;
+  const rate = parseInt(document.getElementById('hourlyRate')?.value||176);
+  Object.keys(shifts).filter(k=>k.startsWith(prefix)).forEach(k=>{
+    shifts[k].forEach(s=>{
+      if (s.color!=='gray'&&s.color!=='pink'){ days++; hours+=calcHours(s.start,s.end); }
     });
   });
+  const wage = Math.round(hours*rate);
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-item"><div class="stat-val">${days}</div><div class="stat-lbl">出勤天</div></div>
+    <div class="stat-item"><div class="stat-val">${Math.round(hours)}</div><div class="stat-lbl">工時</div></div>
+    <div class="stat-item"><div class="stat-val">$${wage.toLocaleString()}</div><div class="stat-lbl">預估薪資</div></div>`;
+}
 
-  if (keys.length === 0) {
-    container.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3);font-size:13px">本月尚無班次<br>點「＋」新增</div>`;
+function renderToday() {
+  const t=new Date(), pad=n=>String(n).padStart(2,'0');
+  const todayKey=`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`;
+  const s0 = (shifts[todayKey]||[])[0];
+  const dow = DOWS[t.getDay()];
+  const label=`${t.getFullYear()}年${t.getMonth()+1}月${t.getDate()}日（週${dow}）`;
+  document.getElementById('todayCard').innerHTML = s0
+    ? `<div class="today-date-label">${label}</div>
+       <div class="today-shift-name">${s0.name}</div>
+       <div class="today-shift-time">${s0.start} – ${s0.end}　${calcHours(s0.start,s0.end).toFixed(1)} 小時</div>
+       ${s0.note?`<div class="today-shift-time" style="margin-top:4px;color:var(--text3)">${s0.note}</div>`:''}`
+    : `<div class="today-date-label">${label}</div><div style="font-size:16px;color:var(--text3);text-align:center;padding:20px 0">今日無班次</div>`;
+
+  const wkStart = new Date(t); wkStart.setDate(t.getDate()-t.getDay());
+  const weekList = document.getElementById('weekList');
+  weekList.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d2=new Date(wkStart); d2.setDate(wkStart.getDate()+i);
+    const key=`${d2.getFullYear()}-${pad(d2.getMonth()+1)}-${pad(d2.getDate())}`;
+    const ws=(shifts[key]||[])[0];
+    const isToday=key===todayKey;
+    const row=document.createElement('div');
+    row.className='wage-row';
+    const tagHtml=ws
+      ?`<span class="shift-tag tag-${ws.color||'blue'}" style="width:auto;padding:2px 14px">${ws.name}</span>`
+      :`<span style="color:var(--text3);font-size:13px">—</span>`;
+    row.innerHTML=`
+      <div style="width:36px;text-align:center">
+        <div style="font-size:11px;color:var(--text3)">${DOWS[d2.getDay()]}</div>
+        <div style="font-size:16px;font-weight:${isToday?700:400};color:${isToday?'var(--today-bg)':'var(--text)'}">${d2.getDate()}</div>
+      </div>
+      <div style="flex:1">${tagHtml}</div>`;
+    weekList.appendChild(row);
   }
 }
 
-function getDowLabel(dow) {
-  return ['日','一','二','三','四','五','六'][dow];
+function buildQuickTypes() {
+  const c=document.getElementById('quickTypes'); c.innerHTML='';
+  QUICK_TYPES.forEach(t=>{
+    const btn=document.createElement('button');
+    btn.className=`quick-type-btn tag-${t.color}`;
+    btn.textContent=t.name;
+    btn.onclick=()=>{
+      document.getElementById('shiftName').value=t.name;
+      document.getElementById('shiftStart').value=t.start;
+      document.getElementById('shiftEnd').value=t.end;
+      selectColorByValue(t.color);
+    };
+    c.appendChild(btn);
+  });
 }
 
-// ═══════════════════════════════
-// SHIFT MODAL
-// ═══════════════════════════════
 function openAddShift(dateKey) {
-  editingShiftId = null;
-  editingDate = dateKey;
-  document.getElementById('modalTitle').textContent = '新增班次';
-  document.getElementById('shiftDate').value = dateKey || getTodayStr();
-  document.getElementById('shiftName').value = '';
-  document.getElementById('shiftStart').value = '08:00';
-  document.getElementById('shiftEnd').value = '16:00';
-  document.getElementById('shiftNote').value = '';
-  document.getElementById('deleteShiftBtn').style.display = 'none';
-  selectColorByValue('#e8a020');
+  editingShiftId=null; editingDate=dateKey;
+  const d=dateKey?parseInt(dateKey.split('-')[2]):'';
+  document.getElementById('modalTitle').textContent=dateKey?`新增班次・${d}日`:'新增班次';
+  document.getElementById('shiftDate').value=dateKey||getTodayStr();
+  document.getElementById('shiftName').value='';
+  document.getElementById('shiftStart').value='08:00';
+  document.getElementById('shiftEnd').value='20:00';
+  document.getElementById('shiftNote').value='';
+  document.getElementById('deleteShiftBtn').style.display='none';
+  selectColorByValue('blue'); buildQuickTypes();
   document.getElementById('shiftModal').classList.add('open');
 }
 
-function editShift(dateKey, idx) {
-  const s = shifts[dateKey][idx];
-  editingShiftId = idx;
-  editingDate = dateKey;
-  document.getElementById('modalTitle').textContent = '編輯班次';
-  document.getElementById('shiftDate').value = dateKey;
-  document.getElementById('shiftName').value = s.name || '';
-  document.getElementById('shiftStart').value = s.start || '08:00';
-  document.getElementById('shiftEnd').value = s.end || '16:00';
-  document.getElementById('shiftNote').value = s.note || '';
-  document.getElementById('deleteShiftBtn').style.display = 'block';
-  selectColorByValue(s.color || '#e8a020');
+function editShift(dateKey,idx) {
+  const s=shifts[dateKey][idx];
+  editingShiftId=idx; editingDate=dateKey;
+  document.getElementById('modalTitle').textContent='編輯班次';
+  document.getElementById('shiftDate').value=dateKey;
+  document.getElementById('shiftName').value=s.name||'';
+  document.getElementById('shiftStart').value=s.start||'08:00';
+  document.getElementById('shiftEnd').value=s.end||'20:00';
+  document.getElementById('shiftNote').value=s.note||'';
+  document.getElementById('deleteShiftBtn').style.display='block';
+  selectColorByValue(s.color||'blue'); buildQuickTypes();
   document.getElementById('shiftModal').classList.add('open');
 }
 
 function saveShift() {
-  const date = document.getElementById('shiftDate').value;
-  const name = document.getElementById('shiftName').value.trim() || '班次';
-  const start = document.getElementById('shiftStart').value;
-  const end = document.getElementById('shiftEnd').value;
-  const note = document.getElementById('shiftNote').value.trim();
-
-  if (!date) { showToast('請選擇日期'); return; }
-
-  if (!shifts[date]) shifts[date] = [];
-
-  const shiftObj = { name, start, end, color: selectedColor, note };
-
-  if (editingShiftId !== null && editingDate === date) {
-    shifts[date][editingShiftId] = shiftObj;
+  const date=document.getElementById('shiftDate').value;
+  if(!date){showToast('請選擇日期');return;}
+  const obj={name:document.getElementById('shiftName').value.trim()||'班次',start:document.getElementById('shiftStart').value,end:document.getElementById('shiftEnd').value,color:selectedColor,note:document.getElementById('shiftNote').value.trim()};
+  if(!shifts[date]) shifts[date]=[];
+  if(editingShiftId!==null&&editingDate===date) {
+    shifts[date][editingShiftId]=obj;
   } else {
-    if (editingShiftId !== null) {
-      shifts[editingDate].splice(editingShiftId, 1);
-      if (shifts[editingDate].length === 0) delete shifts[editingDate];
-    }
-    shifts[date].push(shiftObj);
+    if(editingShiftId!==null){shifts[editingDate].splice(editingShiftId,1);if(!shifts[editingDate].length)delete shifts[editingDate];}
+    shifts[date].push(obj);
   }
-
-  saveToStorage();
-  closeModal('shiftModal');
-  renderCalendar();
-  showToast('✓ 班次已儲存');
+  saveToStorage(); closeModal('shiftModal'); renderCalendar(); showToast('✓ 班次已儲存');
 }
 
 function deleteShift() {
-  if (editingShiftId === null) return;
-  if (!confirm('確定刪除此班次？')) return;
-  shifts[editingDate].splice(editingShiftId, 1);
-  if (shifts[editingDate].length === 0) delete shifts[editingDate];
-  saveToStorage();
-  closeModal('shiftModal');
-  renderCalendar();
-  showToast('班次已刪除');
+  if(editingShiftId===null||!confirm('確定刪除？'))return;
+  shifts[editingDate].splice(editingShiftId,1);
+  if(!shifts[editingDate].length) delete shifts[editingDate];
+  saveToStorage(); closeModal('shiftModal'); renderCalendar(); showToast('班次已刪除');
 }
 
 function selectColor(el) {
-  document.querySelectorAll('.color-opt').forEach(o => { o.classList.remove('selected'); o.textContent = ''; });
-  el.classList.add('selected');
-  el.textContent = '✓';
-  selectedColor = el.dataset.color;
+  document.querySelectorAll('.color-opt').forEach(o=>{o.classList.remove('selected');o.textContent='';});
+  el.classList.add('selected'); el.textContent='✓'; selectedColor=el.dataset.color;
 }
-
 function selectColorByValue(val) {
-  document.querySelectorAll('.color-opt').forEach(o => {
-    o.classList.remove('selected'); o.textContent = '';
-    if (o.dataset.color === val) { o.classList.add('selected'); o.textContent = '✓'; }
+  document.querySelectorAll('.color-opt').forEach(o=>{
+    o.classList.remove('selected');o.textContent='';
+    if(o.dataset.color===val){o.classList.add('selected');o.textContent='✓';}
   });
-  selectedColor = val;
+  selectedColor=val;
 }
 
-// ═══════════════════════════════
-// WAGE
-// ═══════════════════════════════
-function calcHours(start, end) {
-  if (!start || !end || start === end) return 0;
-  const [sh, sm] = start.split(':').map(Number);
-  const [eh, em] = end.split(':').map(Number);
-  let mins = (eh * 60 + em) - (sh * 60 + sm);
-  if (mins < 0) mins += 24 * 60;
-  return mins / 60;
+function calcHours(start,end) {
+  if(!start||!end||(start==='00:00'&&end==='00:00'))return 0;
+  const [sh,sm]=start.split(':').map(Number), [eh,em]=end.split(':').map(Number);
+  let mins=(eh*60+em)-(sh*60+sm);
+  if(mins<=0)mins+=1440;
+  return mins/60;
 }
 
 function recalcWage() {
-  const rate = parseInt(document.getElementById('hourlyRate').value || 176);
-  localStorage.setItem('hourlyRate', rate);
-  hourlyRate = rate;
-
-  const prefix = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-`;
-  let totalHours = 0;
-  let shiftBreakdown = [];
-
-  Object.keys(shifts).filter(k => k.startsWith(prefix)).sort().forEach(k => {
-    shifts[k].forEach(s => {
-      const h = calcHours(s.start, s.end);
-      totalHours += h;
-      if (h > 0) {
-        shiftBreakdown.push({ date: k, name: s.name, hours: h, wage: Math.round(h * rate), color: s.color });
+  const rate=parseInt(document.getElementById('hourlyRate').value||176);
+  localStorage.setItem('hourlyRate',rate);
+  const prefix=`${currentYear}-${String(currentMonth+1).padStart(2,'0')}-`;
+  let total=0, rows='';
+  Object.keys(shifts).filter(k=>k.startsWith(prefix)).sort().forEach(k=>{
+    shifts[k].forEach(s=>{
+      const h=calcHours(s.start,s.end), pay=Math.round(h*rate);
+      total+=pay;
+      if(h>0){
+        const d=parseInt(k.split('-')[2]);
+        rows+=`<div class="wage-row">
+          <div class="wage-row-dot" style="background:${TAG_DOT[s.color]||'#2a6be8'}"></div>
+          <div class="wage-row-info"><div class="wage-row-date">${d}日（${DOWS[new Date(k).getDay()]}）</div><div class="wage-row-name">${s.name}</div></div>
+          <div class="wage-row-right"><div class="wage-row-hours">${h.toFixed(1)}h × ${rate}</div><div class="wage-row-pay">$${pay.toLocaleString()}</div></div>
+        </div>`;
       }
     });
   });
-
-  const total = Math.round(totalHours * rate);
-  document.getElementById('wageTotal').textContent = total.toLocaleString();
-  document.getElementById('wagePeriodLabel').textContent = `${currentYear}年${MONTHS_ZH[currentMonth]} 預估`;
-
-  const breakdown = document.getElementById('wageBreakdown');
-  if (shiftBreakdown.length === 0) {
-    breakdown.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3);font-size:13px">本月尚無班次資料</div>`;
-    return;
-  }
-  breakdown.innerHTML = shiftBreakdown.map(s => `
-    <div class="wage-row">
-      <div style="display:flex;align-items:center;gap:8px">
-        <div style="width:10px;height:10px;border-radius:50%;background:${s.color||'#e8a020'};flex-shrink:0"></div>
-        <div class="wage-row-label">${s.date.slice(5)} ${s.name}</div>
-      </div>
-      <div class="wage-row-value">${s.hours.toFixed(1)}h × ${rate} = $${s.wage.toLocaleString()}</div>
-    </div>
-  `).join('') + `
-    <div class="wage-row" style="border-top:2px solid var(--accent)">
-      <div class="wage-row-label" style="font-weight:700;color:var(--text)">合計</div>
-      <div class="wage-row-value" style="color:var(--accent);font-size:18px">$${total.toLocaleString()}</div>
-    </div>
-  `;
+  document.getElementById('wageTotal').textContent=total.toLocaleString();
+  document.getElementById('wageTotalBottom').textContent='$'+total.toLocaleString();
+  document.getElementById('wagePeriodLabel').textContent=`${currentYear}年${MONTHS[currentMonth]} 預估薪資`;
+  document.getElementById('wageBreakdown').innerHTML=rows||`<div style="padding:20px;text-align:center;color:var(--text3);font-size:14px">本月尚無班次</div>`;
+  renderStatsBar();
 }
 
-// ═══════════════════════════════
-// EXPORT
-// ═══════════════════════════════
 function exportCSV() {
-  const prefix = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-`;
-  let csv = '日期,星期,班次名稱,開始,結束,工時,備註\n';
-  Object.keys(shifts).filter(k => k.startsWith(prefix)).sort().forEach(k => {
-    shifts[k].forEach(s => {
-      const dow = getDowLabel(new Date(k).getDay());
-      const hours = calcHours(s.start, s.end).toFixed(1);
-      csv += `${k},${dow},${s.name||''},${s.start||''},${s.end||''},${hours},${s.note||''}\n`;
-    });
+  const prefix=`${currentYear}-${String(currentMonth+1).padStart(2,'0')}-`;
+  let csv='日期,星期,班次,開始,結束,工時,備註\n';
+  Object.keys(shifts).filter(k=>k.startsWith(prefix)).sort().forEach(k=>{
+    shifts[k].forEach(s=>{csv+=`${k},${DOWS[new Date(k).getDay()]},${s.name||''},${s.start||''},${s.end||''},${calcHours(s.start,s.end).toFixed(1)},${s.note||''}\n`;});
   });
-  downloadFile(csv, `班表_${currentYear}${String(currentMonth+1).padStart(2,'0')}.csv`, 'text/csv;charset=utf-8;');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=`班表_${currentYear}${String(currentMonth+1).padStart(2,'0')}.csv`; a.click();
   showToast('✓ CSV 已下載');
 }
 
 function exportText() {
-  const prefix = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-`;
-  let text = `【${currentYear}年${MONTHS_ZH[currentMonth]}班表】\n\n`;
-  Object.keys(shifts).filter(k => k.startsWith(prefix)).sort().forEach(k => {
-    shifts[k].forEach(s => {
-      const dow = getDowLabel(new Date(k).getDay());
-      const d = parseInt(k.split('-')[2]);
-      text += `${d}日(${dow}) ${s.name} ${s.start}~${s.end}${s.note ? ' ・'+s.note : ''}\n`;
-    });
+  const prefix=`${currentYear}-${String(currentMonth+1).padStart(2,'0')}-`;
+  let text=`【${currentYear}年${MONTHS[currentMonth]}班表】\n`;
+  Object.keys(shifts).filter(k=>k.startsWith(prefix)).sort().forEach(k=>{
+    shifts[k].forEach(s=>{const d=parseInt(k.split('-')[2]);text+=`${d}日(${DOWS[new Date(k).getDay()]}) ${s.name} ${s.start}~${s.end}${s.note?' ・'+s.note:''}\n`;});
   });
-  navigator.clipboard?.writeText(text).then(() => showToast('✓ 已複製到剪貼簿'));
+  navigator.clipboard?.writeText(text).then(()=>showToast('✓ 已複製到剪貼簿'));
 }
 
-function printCalendar() {
-  window.print();
-}
-
-function exportAllStaffCSV() {
-  showToast('🔄 功能開發中（需連接 Firebase）');
-}
-
-function downloadFile(content, filename, type) {
-  const BOM = '\uFEFF';
-  const blob = new Blob([BOM + content], { type });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-}
-
-// ═══════════════════════════════
-// SETTINGS
-// ═══════════════════════════════
-function renderSettings() {
-  document.getElementById('settingName').textContent = userName || '（未設定）';
-  document.getElementById('settingId').textContent = staffId || '（未設定）';
-
-  const list = document.getElementById('shiftTypeList');
-  list.innerHTML = shiftTypes.map(t => `
-    <div class="settings-item" style="cursor:default">
-      <div class="settings-item-left">
-        <div style="width:12px;height:12px;border-radius:3px;background:${t.color};flex-shrink:0"></div>
-        <div>
-          <div class="settings-item-label">${t.name}</div>
-          <div class="settings-item-sub">${t.start} – ${t.end}</div>
-        </div>
-      </div>
-    </div>
-  `).join('');
-}
-
-function openNameModal() {
-  document.getElementById('nameInput').value = userName;
-  document.getElementById('nameModal').classList.add('open');
-}
-
-function saveName() {
-  userName = document.getElementById('nameInput').value.trim();
-  localStorage.setItem('userName', userName);
-  renderSettings();
-  closeModal('nameModal');
-  showToast('✓ 姓名已儲存');
-}
-
-function openStaffIdModal() {
-  document.getElementById('staffIdInput').value = staffId;
-  document.getElementById('staffIdModal').classList.add('open');
-}
-
-function saveStaffId() {
-  staffId = document.getElementById('staffIdInput').value.trim();
-  localStorage.setItem('staffId', staffId);
-  renderSettings();
-  closeModal('staffIdModal');
-  showToast('✓ 員工編號已儲存');
-}
-
-function clearAllData() {
-  if (confirm('確定清除所有班表資料？此動作無法復原。')) {
-    shifts = {};
-    saveToStorage();
-    renderCalendar();
-    showToast('已清除所有資料');
-  }
-}
-
-// ═══════════════════════════════
-// UTILS
-// ═══════════════════════════════
-function saveToStorage() {
-  localStorage.setItem('shifts', JSON.stringify(shifts));
-  // TODO: 同步至 Firebase
-  // if (window._firebaseReady && staffId) { ... }
-}
-
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-}
-
-function getTodayStr() {
-  const t = new Date();
-  return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
-}
-
+function openNameModal(){document.getElementById('nameInput').value=userName;document.getElementById('nameModal').classList.add('open');}
+function saveName(){userName=document.getElementById('nameInput').value.trim();localStorage.setItem('userName',userName);document.getElementById('settingName').textContent=userName||'（未設定）';closeModal('nameModal');showToast('✓ 已儲存');}
+function openStaffIdModal(){document.getElementById('staffIdInput').value=staffId;document.getElementById('staffIdModal').classList.add('open');}
+function saveStaffId(){staffId=document.getElementById('staffIdInput').value.trim();localStorage.setItem('staffId',staffId);document.getElementById('settingId').textContent=staffId||'（未設定）';closeModal('staffIdModal');showToast('✓ 已儲存');}
+function clearAllData(){if(confirm('確定清除所有班表資料？')){shifts={};saveToStorage();renderCalendar();showToast('已清除');}}
+function saveToStorage(){localStorage.setItem('shifts',JSON.stringify(shifts));}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function getTodayStr(){const t=new Date();return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;}
 let toastTimer;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
-}
+function showToast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2200);}
+document.querySelectorAll('.modal-backdrop').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)b.classList.remove('open');}));
 
-// 點背景關閉 modal
-document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-  backdrop.addEventListener('click', e => { if (e.target === backdrop) backdrop.classList.remove('open'); });
-});
-
-// ═══════════════════════════════
-// INIT
-// ═══════════════════════════════
-renderCalendar();
-renderSettings();
-
-// Demo 資料（首次使用）
-if (Object.keys(shifts).length === 0) {
-  const y = currentYear, m = currentMonth + 1;
-  const pad = n => String(n).padStart(2,'0');
-  [
-    { d: 3,  name: '白班',   start: '08:00', end: '16:00', color: '#e8a020' },
-    { d: 4,  name: '白班',   start: '08:00', end: '16:00', color: '#e8a020' },
-    { d: 5,  name: '白班',   start: '08:00', end: '16:00', color: '#e8a020' },
-    { d: 8,  name: '夜班',   start: '16:00', end: '00:00', color: '#4090e0' },
-    { d: 9,  name: '夜班',   start: '16:00', end: '00:00', color: '#4090e0' },
-    { d: 11, name: '休假',   start: '00:00', end: '00:00', color: '#3a3f50' },
-    { d: 15, name: '特勤',   start: '08:00', end: '20:00', color: '#40b870' },
-    { d: 18, name: '大夜',   start: '00:00', end: '08:00', color: '#9060d0' },
-    { d: 22, name: '白班',   start: '08:00', end: '16:00', color: '#e8a020' },
-    { d: 25, name: '白班',   start: '08:00', end: '16:00', color: '#e8a020' },
-  ].forEach(s => {
-    const key = `${y}-${pad(m)}-${pad(s.d)}`;
-    shifts[key] = [{ name: s.name, start: s.start, end: s.end, color: s.color, note: '' }];
-  });
+// DEMO DATA
+if(Object.keys(shifts).length===0){
+  const y=currentYear,m=currentMonth+1,pad=n=>String(n).padStart(2,'0');
+  [[2,'日B班','08:00','20:00','blue'],[3,'日B班','08:00','20:00','blue'],[4,'休假','00:00','00:00','pink'],
+   [5,'日B班','08:00','20:00','blue'],[6,'日B班','08:00','20:00','blue'],[7,'日B班','08:00','20:00','blue'],
+   [9,'日B班','08:00','20:00','blue'],[10,'日B班','08:00','20:00','blue'],[11,'休假','00:00','00:00','pink'],
+   [12,'日B班','08:00','20:00','blue'],[13,'日B班','08:00','20:00','blue'],[14,'日B班','08:00','20:00','blue'],
+   [16,'日B班','08:00','20:00','blue'],[17,'日B班','08:00','20:00','blue'],[18,'特休','00:00','00:00','orange'],
+   [19,'日B班','08:00','20:00','blue'],[20,'日B班','08:00','20:00','blue'],[21,'日B班','08:00','20:00','blue'],
+   [23,'日B班','08:00','20:00','blue'],[24,'日B班','08:00','20:00','blue'],[25,'特休','00:00','00:00','orange'],
+   [26,'日B班','08:00','20:00','blue'],[27,'日B班','08:00','20:00','blue'],[28,'日B班','08:00','20:00','blue'],
+   [30,'日B班','08:00','20:00','blue'],[31,'日B班','08:00','20:00','blue']
+  ].forEach(([d,name,start,end,color])=>{shifts[`${y}-${pad(m)}-${pad(d)}`]=[{name,start,end,color,note:''}];});
+  [1,8,15,22,29].forEach(d=>{shifts[`${y}-${pad(m)}-${pad(d)}`]=[{name:'例假',start:'00:00',end:'00:00',color:'pink',note:''}];});
   saveToStorage();
-  renderCalendar();
 }
+
+document.getElementById('settingName').textContent=userName||'（未設定）';
+document.getElementById('settingId').textContent=staffId||'（未設定）';
+renderCalendar();
 </script>
+
 </body>
 </html>
