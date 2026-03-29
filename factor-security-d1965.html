@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>排班助手 - 最終整合版</title>
+    <title>排班助手 - 功能全開版</title>
     <style>
         :root {
             --bg-color: #ffffff;
@@ -11,100 +11,49 @@
             --sunday-color: #d9534f;
             --saturday-color: #428bca;
             --primary-teal: #2d8a8a;
-            /* 標籤顏色定義 */
-            --color-rest-bg: #ffd9d9; --color-rest-text: #8a3a3a;
-            --color-b-bg: #d1eaff;    --color-b-text: #3a5a8a;
-            --color-special-bg: #ffead1; --color-special-text: #8a6a3a;
-            --color-affair-bg: #fff5ba; --color-affair-text: #8a8a3a;
+            --color-b-bg: #d1eaff;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        html, body {
-            height: 100%; margin: 0; display: flex; flex-direction: column;
-            background: var(--bg-color); font-family: -apple-system, sans-serif;
-            overflow: hidden; /* 防止橡皮筋回彈影響操作 */
-        }
+        html, body { height: 100%; margin: 0; display: flex; flex-direction: column; background: var(--bg-color); font-family: sans-serif; overflow: hidden; }
 
-        /* Header */
         header { padding: 15px 0 5px; text-align: center; border-bottom: 1px solid var(--border-color); }
-        .month-num { font-size: 38px; font-weight: bold; line-height: 1; margin-bottom: 2px; }
-        .month-year { font-size: 14px; font-weight: 600; color: #333; }
+        .month-num { font-size: 38px; font-weight: bold; }
 
-        /* 星期列 */
-        .weekdays {
-            display: grid; grid-template-columns: repeat(7, 1fr);
-            text-align: center; padding: 12px 0; font-size: 13px;
-            border-bottom: 1px solid var(--border-color);
-        }
+        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; padding: 12px 0; border-bottom: 1px solid var(--border-color); font-size: 13px; }
         .weekdays div:first-child { color: var(--sunday-color); }
         .weekdays div:last-child { color: var(--saturday-color); }
 
-        /* 日曆主網格 */
-        .calendar-grid {
-            flex: 1; display: grid; grid-template-columns: repeat(7, 1fr);
-            grid-auto-rows: 1fr; width: 100%;
-        }
-
-        .day-cell {
-            border-right: 0.5px solid var(--border-color);
-            border-bottom: 0.5px solid var(--border-color);
-            display: flex; flex-direction: column; align-items: center;
-            justify-content: flex-start; padding-top: 8px; cursor: pointer;
-        }
-        .day-cell:nth-child(7n) { border-right: none; }
+        .calendar-grid { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: 1fr; width: 100%; }
+        .day-cell { border-right: 0.5px solid var(--border-color); border-bottom: 0.5px solid var(--border-color); display: flex; flex-direction: column; align-items: center; padding-top: 8px; position: relative; }
+        .day-cell.multiselect { background-color: #e0f2f1; border: 2px dashed var(--primary-teal); }
         .day-cell.selected { outline: 3px solid var(--primary-teal); outline-offset: -3px; z-index: 5; }
-        .day-cell.today-highlight { background-color: #fffde7; }
+        .date-num { font-size: 22px; }
 
-        .date-num { font-size: 22px; margin-bottom: 4px; }
-
-        /* 寬版膠囊標籤 */
-        .shift-label {
-            font-size: 12px; width: 92%; padding: 5px 0;
-            border-radius: 20px; text-align: center; font-weight: 600;
-        }
-        .shift-rest { background-color: var(--color-rest-bg); color: var(--color-rest-text); }
-        .shift-b { background-color: var(--color-b-bg); color: var(--color-b-text); }
-        .shift-special { background-color: var(--color-special-bg); color: var(--color-special-text); }
-        .shift-affair { background-color: var(--color-affair-bg); color: var(--color-affair-text); }
+        .shift-label { font-size: 12px; width: 92%; padding: 5px 0; border-radius: 20px; text-align: center; font-weight: 600; margin-top: 2px; }
+        .shift-rest { background-color: #ffd9d9; color: #8a3a3a; }
+        .shift-b { background-color: #d1eaff; color: #3a5a8a; }
 
         /* 底部導航 */
-        .bottom-nav {
-            height: 85px; display: flex; justify-content: space-around;
-            align-items: center; border-top: 1px solid var(--border-color);
-            background: #fff; padding-bottom: 15px;
-        }
-        .nav-item { text-align: center; font-size: 11px; color: #666; width: 60px; }
-        .nav-item:active { opacity: 0.5; }
-        .nav-icon { font-size: 22px; margin-bottom: 2px; }
+        .bottom-nav { height: 85px; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border-color); padding-bottom: 15px; background: white; }
+        .nav-item { text-align: center; font-size: 11px; color: #666; cursor: pointer; }
+        .add-btn-main { width: 58px; height: 58px; background: #555; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 32px; margin-top: -40px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .add-btn-main.active { background: var(--primary-teal); }
 
-        .add-btn-main {
-            width: 58px; height: 58px; background: #555; color: white;
-            border-radius: 50%; display: flex; justify-content: center;
-            align-items: center; font-size: 32px; margin-top: -40px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        /* 選單彈窗 */
-        #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); display:none; z-index:90; }
-        #shiftSheet {
-            position: fixed; bottom: -100%; left: 0; width: 100%;
-            background: #f8f9f9; transition: bottom 0.3s ease;
-            z-index: 100; border-radius: 20px 20px 0 0;
-        }
+        /* 彈窗樣式 */
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; z-index: 90; }
+        #shiftSheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: #f8f9f9; transition: bottom 0.3s ease; z-index: 100; border-radius: 20px 20px 0 0; }
         #shiftSheet.active { bottom: 0; }
-        .sheet-header { background: var(--primary-teal); color:white; padding:15px; text-align:center; border-radius:20px 20px 0 0; }
+        .sheet-header { background: var(--primary-teal); color: white; padding: 15px; text-align: center; border-radius: 20px 20px 0 0; }
         .shift-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 20px; }
         .opt-btn { background: white; border: 1px solid #ddd; border-radius: 12px; padding: 12px; text-align: center; }
-        .opt-btn .title { font-weight: bold; font-size: 16px; display: block; }
-        .opt-btn .sub { font-size: 11px; color: #999; }
     </style>
 </head>
 <body>
 
 <header>
     <div class="month-num">4</div>
-    <div class="month-year">4月 2026</div>
+    <div style="font-size:14px; font-weight:600;">4月 2026</div>
 </header>
 
 <div class="weekdays">
@@ -114,22 +63,21 @@
 <div class="calendar-grid" id="calendarGrid"></div>
 
 <nav class="bottom-nav">
-    <div class="nav-item" onclick="alert('程式夥伴 v1.0')"><div class="nav-icon">ℹ️</div>資訊</div>
-    <div class="nav-item" onclick="goToToday()"><div class="nav-icon">📅</div>今日</div>
-    <div class="add-btn-main" onclick="alert('快速排班模式')">+</div>
-    <div class="nav-item" onclick="calculateSalary()"><div class="nav-icon">💰</div>薪水</div>
-    <div class="nav-item" onclick="alert('更多設定')"><div class="nav-icon">⋯</div>其它</div>
+    <div class="nav-item" id="infoBtn">ℹ️<br>資訊</div>
+    <div class="nav-item" id="todayBtn">📅<br>今日</div>
+    <div class="add-btn-main" id="batchBtn">+</div>
+    <div class="nav-item" id="salaryBtn">💰<br>薪水</div>
+    <div class="nav-item" id="settingBtn">⋯<br>其它</div>
 </nav>
 
 <div id="overlay"></div>
 <div id="shiftSheet">
-    <div class="sheet-header">請選擇班別</div>
+    <div class="sheet-header" id="sheetTitle">請選擇班別</div>
     <div class="shift-options">
-        <div class="opt-btn" onclick="saveShift('休假', 'shift-rest')"><span class="title" style="color:var(--sunday-color)">休假</span><span class="sub">台灣精銳</span></div>
-        <div class="opt-btn" onclick="saveShift('日B班', 'shift-b')"><span class="title" style="color:var(--saturday-color)">日B班</span><span class="sub">07:00-19:00</span></div>
-        <div class="opt-btn" onclick="saveShift('例假', 'shift-rest')"><span class="title" style="color:var(--sunday-color)">例假</span><span class="sub">台灣精銳</span></div>
-        <div class="opt-btn" onclick="saveShift('特休', 'shift-special')"><span class="title" style="color:#f0ad4e">特休</span><span class="sub">台灣精銳</span></div>
-        <div class="opt-btn" onclick="saveShift('', '')"><span class="title" style="color:#999">清除</span><span class="sub">空白輪班</span></div>
+        <div class="opt-btn" onclick="applyShift('休假', 'shift-rest')"><b>休假</b><br><small>台灣精銳</small></div>
+        <div class="opt-btn" onclick="applyShift('日B班', 'shift-b')"><b>日B班</b><br><small>07:00-19:00</small></div>
+        <div class="opt-btn" onclick="applyShift('', '')"><b>清除</b><br><small>空白</small></div>
+        <div class="opt-btn" onclick="closeSheet()"><b>取消</b><br><small>關閉選單</small></div>
     </div>
 </div>
 
@@ -137,72 +85,115 @@
     const grid = document.getElementById('calendarGrid');
     const sheet = document.getElementById('shiftSheet');
     const overlay = document.getElementById('overlay');
-    let selectedDate = null;
+    
+    let isBatchMode = false;
+    let selectedDates = []; // 快速排班模式用的日期陣列
+    let singleSelectedDate = null; // 單選模式
+    let dailyPay = localStorage.getItem('dailyPay') || 2000;
+    let schedule = JSON.parse(localStorage.getItem('schedule_2026_04')) || {};
 
-    // 儲存資料的物件
-    let schedule = JSON.parse(localStorage.getItem('mySchedule_2026_04')) || {};
-
-    function init() {
+    function initCalendar() {
         grid.innerHTML = '';
-        const firstDay = new Date(2026, 3, 1).getDay(); // 4月1日是週三 (3)
-        
+        const firstDay = 3; // 4/1是週三
         for (let i = 0; i < 35; i++) {
             const cell = document.createElement('div');
             cell.className = 'day-cell';
             const date = i - firstDay + 1;
-
             if (date > 0 && date <= 30) {
-                cell.innerHTML = `<div class="date-num">${date}</div><div class="label-box" style="width:100%; display:flex; justify-content:center;"></div>`;
+                cell.innerHTML = `<div class="date-num">${date}</div><div class="lb"></div>`;
+                if (schedule[date]) cell.querySelector('.lb').innerHTML = `<div class="shift-label ${schedule[date].type}">${schedule[date].name}</div>`;
                 if (i % 7 === 0) cell.style.color = 'var(--sunday-color)';
                 if (i % 7 === 6) cell.style.color = 'var(--saturday-color)';
                 
-                // 讀取已儲存的班表
-                if (schedule[date]) {
-                    cell.querySelector('.label-box').innerHTML = `<div class="shift-label ${schedule[date].type}">${schedule[date].name}</div>`;
-                }
-
-                cell.onclick = () => {
-                    if(selectedDate) document.querySelectorAll('.day-cell').forEach(c => c.classList.remove('selected'));
-                    selectedDate = date;
-                    cell.classList.add('selected');
-                    sheet.classList.add('active');
-                    overlay.style.display = 'block';
-                };
+                cell.onclick = () => handleCellClick(date, cell);
             }
             grid.appendChild(cell);
         }
     }
 
-    function saveShift(name, type) {
-        if (name === "") delete schedule[selectedDate];
-        else schedule[selectedDate] = { name, type };
-        
-        localStorage.setItem('mySchedule_2026_04', JSON.stringify(schedule));
-        init(); // 重新整理畫面
-        closeSheet();
+    function handleCellClick(date, cell) {
+        if (isBatchMode) {
+            if (selectedDates.includes(date)) {
+                selectedDates = selectedDates.filter(d => d !== date);
+                cell.classList.remove('multiselect');
+            } else {
+                selectedDates.push(date);
+                cell.classList.add('multiselect');
+            }
+        } else {
+            singleSelectedDate = date;
+            document.querySelectorAll('.day-cell').forEach(c => c.classList.remove('selected'));
+            cell.classList.add('selected');
+            openSheet("修改單日班別");
+        }
+    }
+
+    function openSheet(title) {
+        document.getElementById('sheetTitle').innerText = title;
+        sheet.classList.add('active');
+        overlay.style.display = 'block';
     }
 
     function closeSheet() {
         sheet.classList.remove('active');
         overlay.style.display = 'none';
+        if (!isBatchMode) document.querySelectorAll('.day-cell').forEach(c => c.classList.remove('selected'));
     }
 
-    function goToToday() {
-        const d = new Date();
-        if(d.getFullYear() === 2026 && d.getMonth() === 2) { // 模擬 2026/3
-             alert("今天日期已標註！");
+    function applyShift(name, type) {
+        if (isBatchMode) {
+            selectedDates.forEach(d => {
+                if (name === "") delete schedule[d];
+                else schedule[d] = { name, type };
+            });
+            toggleBatchMode(); // 關閉模式
         } else {
-             alert("跳轉到 2026/4/1 (模擬今日)");
+            if (name === "") delete schedule[singleSelectedDate];
+            else schedule[singleSelectedDate] = { name, type };
+        }
+        localStorage.setItem('schedule_2026_04', JSON.stringify(schedule));
+        initCalendar();
+        closeSheet();
+    }
+
+    // 底部按鈕功能
+    document.getElementById('batchBtn').onclick = toggleBatchMode;
+    function toggleBatchMode() {
+        isBatchMode = !isBatchMode;
+        selectedDates = [];
+        document.getElementById('batchBtn').classList.toggle('active');
+        if (isBatchMode) {
+            alert("已開啟快速排班：點選多個日期後，再按一次 '+' 進行設定");
+        } else if (document.getElementById('batchBtn').classList.contains('active') === false && selectedDates.length === 0) {
+            // 如果是在選完日期後按第二次
+            if (selectedDates.length === 0) {
+                // 如果已經選了日期
+                const tempDates = [];
+                document.querySelectorAll('.multiselect').forEach(c => tempDates.push(parseInt(c.innerText)));
+                if (tempDates.length > 0) {
+                    selectedDates = tempDates;
+                    openSheet(`批次設定 ${selectedDates.length} 天的班別`);
+                }
+            }
         }
     }
 
-    function calculateSalary() {
+    document.getElementById('salaryBtn').onclick = () => {
         const count = Object.values(schedule).filter(s => s.name === '日B班').length;
-        alert(`本月日B班共：${count} 天\n預估薪水：$${count * 2000}`);
-    }
+        alert(`本月日B班：${count} 天\n設定日薪：$${dailyPay}\n預估總薪資：$${count * dailyPay}`);
+    };
+
+    document.getElementById('settingBtn').onclick = () => {
+        const p = prompt("請輸入日B班的日薪：", dailyPay);
+        if (p) {
+            dailyPay = p;
+            localStorage.setItem('dailyPay', p);
+            alert("設定成功！");
+        }
+    };
 
     overlay.onclick = closeSheet;
-    init();
+    initCalendar();
 </script>
 </body>
 </html>
