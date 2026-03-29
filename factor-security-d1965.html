@@ -2,187 +2,171 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>シフター ShiftAR Pro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>排班日曆骨架</title>
     <style>
-        :root { --primary: #4a6ea9; --bg: #f8f9fa; }
-        body { margin:0; padding:0; font-family: 'Noto Sans TC', sans-serif; background:var(--bg); color:#333; -webkit-tap-highlight-color: transparent; }
-        #header { background: var(--primary); color: white; padding: 16px; font-size: 18px; font-weight: 700; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        
-        /* 快捷按鈕區 */
-        #quick-bar { background: white; padding: 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; border-bottom: 1px solid #eee; }
-        .quick-btn { border: none; border-radius: 10px; padding: 12px 5px; color: white; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.1s; }
-        .quick-btn:active { transform: scale(0.95); opacity: 0.8; }
-        
-        /* 月曆調整 */
-        #calendar { background: white; padding: 5px; }
-        .fc .fc-toolbar-title { font-size: 1.2em !important; font-weight: 700; color: var(--primary); }
-        .fc .fc-button-primary { background-color: var(--primary); border-color: var(--primary); }
-        .fc-daygrid-day.fc-day-today { background-color: #ebf2ff !important; }
-        
-        /* 薪資面板 */
-        #salary-bar { background: white; padding: 16px; margin: 15px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .salary-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .salary-val { font-size: 18px; font-weight: 700; color: #d9534f; }
-        
-        /* Modal */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: flex-end; }
-        .modal.open { display: flex; }
-        .modal-content { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 25px; animation: slideUp 0.3s ease-out; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .form-input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        :root {
+            --bg-color: #ffffff;
+            --border-color: #e0e0e0;
+            --sunday-color: #e57373;
+            --saturday-color: #64b5f6;
+            --text-main: #333;
+            --label-blue: #bbdefb;
+            --label-red: #ffcdd2;
+            --label-orange: #ffe0b2;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .month-title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        /* Weekday Bar */
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            padding: 10px 0;
+            font-size: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .weekdays div:first-child { color: var(--sunday-color); }
+        .weekdays div:last-child { color: var(--saturday-color); }
+
+        /* Calendar Grid */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            width: 100%;
+        }
+
+        .day-cell {
+            min-height: 100px;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .date-num {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        /* 不同的班別標籤樣式 */
+        .shift-label {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            width: 80%;
+            text-align: center;
+        }
+        .shift-rest { background-color: var(--label-red); }
+        .shift-b { background-color: var(--label-blue); }
+        .shift-special { background-color: var(--label-orange); }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            background: #f9f9f9;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .nav-item {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .add-btn {
+            font-size: 30px;
+            background: #666;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: -25px;
+        }
     </style>
 </head>
 <body>
 
-    <div id="header">ShiftAR - 輪班工時助手</div>
+    <header>
+        <div class="icon">⎋</div>
+        <div class="month-title">3 <br><span style="font-size: 14px;">3月 2026</span></div>
+        <div class="icon"></div>
+    </header>
 
-    <div id="quick-bar">
-        <button class="quick-btn" style="background:#5cb85c" onclick="quickAdd('早番', 8, '#5cb85c')">早番 (8h)</button>
-        <button class="quick-btn" style="background:#f0ad4e" onclick="quickAdd('遅番', 8, '#f0ad4e')">遅番 (8h)</button>
-        <button class="quick-btn" style="background:#d9534f" onclick="quickAdd('夜勤', 10, '#d9534f')">夜勤 (10h)</button>
-        <button class="quick-btn" style="background:#777" onclick="quickAdd('休假', 0, '#777')">休み</button>
-        <button class="quick-btn" style="background:#337ab7" onclick="quickAdd('特休', 8, '#337ab7')">有給</button>
-        <button class="quick-btn" style="background:#8a6bb8" onclick="showCustomModal()">自訂...</button>
+    <div class="weekdays">
+        <div>週日</div><div>週一</div><div>週二</div><div>週三</div><div>週四</div><div>週五</div><div>週六</div>
     </div>
 
-    <div id="calendar"></div>
-
-    <div id="salary-bar">
-        <div class="salary-row"><span>今日薪資</span><span id="today-earn" class="salary-val">¥0</span></div>
-        <div class="salary-row"><span>本月預估</span><span id="month-earn" class="salary-val">¥0</span></div>
-        <div class="salary-row" style="font-size:14px; color:#666;"><span>累積總工時</span><span id="month-hours">0</span> 小時</div>
-    </div>
-
-    <div id="customModal" class="modal">
-        <div class="modal-content">
-            <h3>新增自訂班別</h3>
-            <input id="cName" class="form-input" placeholder="名稱（如：加班）">
-            <input id="cHours" class="form-input" type="number" placeholder="時數" value="4">
-            <input id="cColor" type="color" value="#4a6ea9" style="width:100%; height:40px; margin-bottom:15px;">
-            <button onclick="addCustom()" class="quick-btn" style="background:var(--primary); width:100%; font-size:16px;">確認加入</button>
-            <button onclick="hideModal()" class="quick-btn" style="background:#eee; color:#333; width:100%; margin-top:10px;">取消</button>
+    <div class="calendar-grid">
+        <div class="day-cell" style="color: var(--sunday-color);">
+            <div class="date-num">1</div>
+            <div class="shift-label shift-rest">例假</div>
         </div>
-    </div>
+        <div class="day-cell">
+            <div class="date-num">2</div>
+            <div class="shift-label shift-b">日B班</div>
+        </div>
+        <div class="day-cell">
+            <div class="date-num">3</div>
+            <div class="shift-label shift-b">日B班</div>
+        </div>
+        <div class="day-cell">
+            <div class="date-num">4</div>
+            <div class="shift-label shift-rest">休假</div>
+        </div>
+        <div class="day-cell">
+            <div class="date-num">5</div>
+            <div class="shift-label shift-b">日B班</div>
+        </div>
+        <div class="day-cell">
+            <div class="date-num">6</div>
+            <div class="shift-label shift-b">日B班</div>
+        </div>
+        <div class="day-cell" style="color: var(--saturday-color);">
+            <div class="date-num">7</div>
+            <div class="shift-label shift-b">日B班</div>
+        </div>
+        </div>
 
-    <script>
-        let calendar;
-        let shiftEvents = JSON.parse(localStorage.getItem('shiftar_events_v2') || '[]');
-        let hourlyRate = 180; // 建議設為變數，未來可增加設定頁面修改
-        let currentSelectedRange = null;
+    <nav class="bottom-nav">
+        <div class="nav-item">ℹ️<br>資訊</div>
+        <div class="nav-item">📅<br>今日</div>
+        <div class="add-btn">+</div>
+        <div class="nav-item">💰<br>薪水</div>
+        <div class="nav-item">...<br>其它</div>
+    </nav>
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const calendarEl = document.getElementById('calendar');
-
-            calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                locale: 'zh-tw',
-                selectable: true,
-                unselectAuto: false, // 點擊按鈕時不自動取消選取
-                headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
-                events: shiftEvents,
-                
-                // 核心：監聽選取範圍
-                select: function(info) {
-                    currentSelectedRange = info;
-                },
-                
-                // 點擊刪除
-                eventClick: function(info) {
-                    if (confirm(`確定刪除「${info.event.title}」？`)) {
-                        shiftEvents = shiftEvents.filter(e => e.id !== info.event.id);
-                        refreshCalendar();
-                    }
-                }
-            });
-
-            calendar.render();
-            updateSalary();
-        });
-
-        function quickAdd(title, hours, color) {
-            if (!currentSelectedRange) {
-                alert('請先在月曆上「點擊」或「拖拉選取」日期');
-                return;
-            }
-
-            // 取得日期範圍內的所有天數
-            let curr = new Date(currentSelectedRange.start);
-            let end = new Date(currentSelectedRange.end);
-
-            while (curr < end) {
-                const dateStr = curr.toISOString().split('T')[0];
-                
-                // 避免重複新增同一天的班
-                shiftEvents = shiftEvents.filter(e => e.start !== dateStr);
-                
-                shiftEvents.push({
-                    id: 'ID_' + Math.random().toString(36).substr(2, 9),
-                    title: title,
-                    start: dateStr,
-                    allDay: true,
-                    backgroundColor: color,
-                    borderColor: color,
-                    extendedProps: { hours: hours }
-                });
-                curr.setDate(curr.getDate() + 1);
-            }
-
-            refreshCalendar();
-            calendar.unselect(); // 新增完後取消選取狀態
-            currentSelectedRange = null;
-        }
-
-        function refreshCalendar() {
-            // 清除舊 events 並重新加入新的
-            calendar.removeAllEvents();
-            calendar.addEventSource(shiftEvents);
-            localStorage.setItem('shiftar_events_v2', JSON.stringify(shiftEvents));
-            updateSalary();
-        }
-
-        function updateSalary() {
-            const now = new Date();
-            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            const todayStr = now.toISOString().split('T')[0];
-
-            let todayEarn = 0;
-            let monthEarn = 0;
-            let totalHours = 0;
-
-            shiftEvents.forEach(ev => {
-                const h = parseFloat(ev.extendedProps?.hours || 0);
-                const pay = h * hourlyRate;
-
-                // 判斷是否為本月
-                if (ev.start.startsWith(currentMonthStr)) {
-                    monthEarn += pay;
-                    totalHours += h;
-                }
-                
-                // 判斷是否為今日
-                if (ev.start === todayStr) {
-                    todayEarn += pay;
-                }
-            });
-
-            document.getElementById('today-earn').textContent = `¥${Math.round(todayEarn).toLocaleString()}`;
-            document.getElementById('month-earn').textContent = `¥${Math.round(monthEarn).toLocaleString()}`;
-            document.getElementById('month-hours').textContent = totalHours.toFixed(1);
-        }
-
-        function showCustomModal() { document.getElementById('customModal').classList.add('open'); }
-        function hideModal() { document.getElementById('customModal').classList.remove('open'); }
-
-        function addCustom() {
-            const name = document.getElementById('cName').value || '加班';
-            const hrs = document.getElementById('cHours').value || 0;
-            const color = document.getElementById('cColor').value;
-            quickAdd(name, hrs, color);
-            hideModal();
-        }
-    </script>
 </body>
 </html>
