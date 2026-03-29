@@ -3,221 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>シフター ShiftAR</title>
+    <title>シフター ShiftAR Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
     <style>
-        :root {
-            --primary: #4a6ea9;
-        }
-        body { 
-            margin:0; padding:0; font-family: 'Noto Sans TC', -apple-system, sans-serif; 
-            background:#f8f9fa; color:#333; 
-        }
-        #header {
-            background: var(--primary); color: white; padding: 14px 16px; 
-            font-size: 19px; font-weight: 500; text-align: center;
-            position: sticky; top: 0; z-index: 100;
-        }
-        #quick-bar {
-            background: white; padding: 12px 8px; display: flex; flex-wrap: wrap; gap: 8px;
-            border-bottom: 1px solid #ddd; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        }
-        .quick-btn {
-            flex: 1; min-width: 70px; padding: 12px 8px; border: none; border-radius: 12px;
-            font-size: 15px; font-weight: 500; color: white; cursor: pointer;
-            text-align: center;
-        }
-        #calendar { max-width: 100%; margin: 10px auto; }
-        .fc-toolbar-title { font-size: 18px !important; }
-        #salary-bar {
-            background: white; padding: 16px 20px; margin: 8px 12px; border-radius: 16px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.08); font-size: 16px;
-        }
-        .salary-row { display: flex; justify-content: space-between; margin: 8px 0; }
-        .modal {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-            z-index: 200; align-items: flex-end;
-        }
-        .modal-content {
-            background: white; width: 100%; border-radius: 20px 20px 0 0;
-            padding: 20px; max-height: 85vh; overflow-y: auto;
-        }
-        button { padding: 12px 20px; border-radius: 12px; font-size: 16px; }
-        .dark-mode { background: #121212; color: #eee; }
-        .dark-mode #header { background: #2c3e6e; }
+        :root { --primary: #4a6ea9; --bg: #f8f9fa; }
+        body { margin:0; padding:0; font-family: 'Noto Sans TC', sans-serif; background:var(--bg); color:#333; -webkit-tap-highlight-color: transparent; }
+        #header { background: var(--primary); color: white; padding: 16px; font-size: 18px; font-weight: 700; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        
+        /* 快捷按鈕區 */
+        #quick-bar { background: white; padding: 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; border-bottom: 1px solid #eee; }
+        .quick-btn { border: none; border-radius: 10px; padding: 12px 5px; color: white; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.1s; }
+        .quick-btn:active { transform: scale(0.95); opacity: 0.8; }
+        
+        /* 月曆調整 */
+        #calendar { background: white; padding: 5px; }
+        .fc .fc-toolbar-title { font-size: 1.2em !important; font-weight: 700; color: var(--primary); }
+        .fc .fc-button-primary { background-color: var(--primary); border-color: var(--primary); }
+        .fc-daygrid-day.fc-day-today { background-color: #ebf2ff !important; }
+        
+        /* 薪資面板 */
+        #salary-bar { background: white; padding: 16px; margin: 15px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .salary-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .salary-val { font-size: 18px; font-weight: 700; color: #d9534f; }
+        
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: flex-end; }
+        .modal.open { display: flex; }
+        .modal-content { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 25px; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .form-input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
     </style>
 </head>
 <body>
-    <div id="header">シフター - 輪班給料計算</div>
 
-    <!-- 快捷班別按鈕 -->
+    <div id="header">ShiftAR - 輪班工時助手</div>
+
     <div id="quick-bar">
-        <button class="quick-btn" style="background:#5cb85c" onclick="quickAdd('早番', 8, '#5cb85c')">早番</button>
-        <button class="quick-btn" style="background:#f0ad4e" onclick="quickAdd('遅番', 8, '#f0ad4e')">遅番</button>
-        <button class="quick-btn" style="background:#337ab7" onclick="quickAdd('日勤', 8, '#337ab7')">日勤</button>
-        <button class="quick-btn" style="background:#d9534f" onclick="quickAdd('夜勤', 10, '#d9534f')">夜勤</button>
-        <button class="quick-btn" style="background:#777" onclick="quickAdd('休み', 0, '#777')">休み</button>
-        <button class="quick-btn" style="background:#8a6bb8" onclick="showCustomModal()">自訂</button>
+        <button class="quick-btn" style="background:#5cb85c" onclick="quickAdd('早番', 8, '#5cb85c')">早番 (8h)</button>
+        <button class="quick-btn" style="background:#f0ad4e" onclick="quickAdd('遅番', 8, '#f0ad4e')">遅番 (8h)</button>
+        <button class="quick-btn" style="background:#d9534f" onclick="quickAdd('夜勤', 10, '#d9534f')">夜勤 (10h)</button>
+        <button class="quick-btn" style="background:#777" onclick="quickAdd('休假', 0, '#777')">休み</button>
+        <button class="quick-btn" style="background:#337ab7" onclick="quickAdd('特休', 8, '#337ab7')">有給</button>
+        <button class="quick-btn" style="background:#8a6bb8" onclick="showCustomModal()">自訂...</button>
     </div>
 
     <div id="calendar"></div>
 
-    <!-- 薪資資訊 -->
     <div id="salary-bar">
-        <div class="salary-row"><strong>今日已賺</strong> <span id="today-earn">¥0</span></div>
-        <div class="salary-row"><strong>本月預估</strong> <span id="month-earn">¥0</span></div>
-        <div class="salary-row"><strong>本月工時</strong> <span id="month-hours">0</span> 小時</div>
+        <div class="salary-row"><span>今日薪資</span><span id="today-earn" class="salary-val">¥0</span></div>
+        <div class="salary-row"><span>本月預估</span><span id="month-earn" class="salary-val">¥0</span></div>
+        <div class="salary-row" style="font-size:14px; color:#666;"><span>累積總工時</span><span id="month-hours">0</span> 小時</div>
     </div>
 
-    <!-- 自訂班別 Modal -->
     <div id="customModal" class="modal">
         <div class="modal-content">
-            <h3 style="margin-bottom:16px">自訂班別</h3>
-            <input id="cName" placeholder="班別名稱" style="width:100%; padding:12px; margin-bottom:12px; border:1px solid #ddd; border-radius:8px;">
-            <div style="display:flex; gap:12px; margin-bottom:12px;">
-                <input id="cHours" type="number" placeholder="小時" value="8" style="flex:1; padding:12px; border:1px solid #ddd; border-radius:8px;">
-                <input id="cColor" type="color" value="#4a6ea9" style="width:60px; height:48px; border:none;">
-            </div>
-            <button onclick="addCustom()" style="background:#4a6ea9; color:white; width:100%;">加入並套用</button>
-            <button onclick="hideModal()" style="background:#eee; width:100%; margin-top:8px;">取消</button>
+            <h3>新增自訂班別</h3>
+            <input id="cName" class="form-input" placeholder="名稱（如：加班）">
+            <input id="cHours" class="form-input" type="number" placeholder="時數" value="4">
+            <input id="cColor" type="color" value="#4a6ea9" style="width:100%; height:40px; margin-bottom:15px;">
+            <button onclick="addCustom()" class="quick-btn" style="background:var(--primary); width:100%; font-size:16px;">確認加入</button>
+            <button onclick="hideModal()" class="quick-btn" style="background:#eee; color:#333; width:100%; margin-top:10px;">取消</button>
         </div>
     </div>
 
     <script>
         let calendar;
-        let events = JSON.parse(localStorage.getItem('shiftar_events') || '[]');
-        let hourlyRate = 176;   // 預設時薪（台灣常見，可自行修改）
+        let shiftEvents = JSON.parse(localStorage.getItem('shiftar_events_v2') || '[]');
+        let hourlyRate = 180; // 建議設為變數，未來可增加設定頁面修改
+        let currentSelectedRange = null;
 
-        function saveEvents() {
-            localStorage.setItem('shiftar_events', JSON.stringify(events));
-            updateSalary();
-        }
-
-        function quickAdd(title, hours, color) {
-            const selected = calendar.getOption('selectedDates') || [];
-            if (selected.length === 0) {
-                alert('請先在月曆點選日期（可多選）');
-                return;
-            }
-            selected.forEach(dateStr => {
-                events.push({
-                    id: 'evt_' + Date.now() + Math.random().toString(36).substr(2),
-                    title: title,
-                    start: dateStr,
-                    allDay: true,
-                    extendedProps: { hours: hours, color: color }
-                });
-            });
-            calendar.refetchEvents();
-            saveEvents();
-        }
-
-        function showCustomModal() {
-            document.getElementById('customModal').style.display = 'flex';
-        }
-
-        function hideModal() {
-            document.getElementById('customModal').style.display = 'none';
-        }
-
-        function addCustom() {
-            const name = document.getElementById('cName').value.trim() || '自訂班';
-            const hours = parseFloat(document.getElementById('cHours').value) || 8;
-            const color = document.getElementById('cColor').value;
-
-            hideModal();
-
-            const selected = calendar.getOption('selectedDates') || [];
-            if (selected.length === 0) {
-                alert('請先點選日期');
-                return;
-            }
-            selected.forEach(dateStr => {
-                events.push({
-                    id: 'evt_' + Date.now() + Math.random().toString(36).substr(2),
-                    title: name,
-                    start: dateStr,
-                    allDay: true,
-                    extendedProps: { hours: hours, color: color }
-                });
-            });
-            calendar.refetchEvents();
-            saveEvents();
-        }
-
-        function updateSalary() {
-            const now = new Date();
-            const thisMonth = now.getMonth();
-            let todayEarn = 0;
-            let monthEarn = 0;
-            let monthHours = 0;
-
-            events.forEach(ev => {
-                const d = new Date(ev.start);
-                if (d.getMonth() !== thisMonth) return;
-                const h = ev.extendedProps?.hours || 0;
-                const pay = h * hourlyRate;
-                monthHours += h;
-                monthEarn += pay;
-                if (d.toDateString() === now.toDateString()) todayEarn = pay;
-            });
-
-            document.getElementById('today-earn').textContent = '¥' + Math.round(todayEarn).toLocaleString('zh-TW');
-            document.getElementById('month-earn').textContent = '¥' + Math.round(monthEarn).toLocaleString('zh-TW');
-            document.getElementById('month-hours').textContent = monthHours.toFixed(1);
-        }
-
-        // 初始化 FullCalendar
         document.addEventListener('DOMContentLoaded', function() {
-            const calEl = document.createElement('div');
-            document.getElementById('calendar').appendChild(calEl);
+            const calendarEl = document.getElementById('calendar');
 
-            calendar = new FullCalendar.Calendar(calEl, {
+            calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'zh-tw',
                 selectable: true,
-                selectMirror: true,
-                events: events,
+                unselectAuto: false, // 點擊按鈕時不自動取消選取
+                headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
+                events: shiftEvents,
+                
+                // 核心：監聽選取範圍
                 select: function(info) {
-                    // 多選後可直接用上方快捷按鈕
+                    currentSelectedRange = info;
                 },
+                
+                // 點擊刪除
                 eventClick: function(info) {
-                    if (confirm(`刪除「${info.event.title}」？`)) {
-                        events = events.filter(e => e.id !== info.event.id);
-                        calendar.refetchEvents();
-                        saveEvents();
+                    if (confirm(`確定刪除「${info.event.title}」？`)) {
+                        shiftEvents = shiftEvents.filter(e => e.id !== info.event.id);
+                        refreshCalendar();
                     }
-                },
-                eventDidMount: function(info) {
-                    const color = info.event.extendedProps.color;
-                    if (color) {
-                        info.el.style.backgroundColor = color;
-                        info.el.style.borderColor = color;
-                        info.el.style.color = '#fff';
-                    }
-                },
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: ''
                 }
             });
 
             calendar.render();
             updateSalary();
-
-            // 每 3 秒更新一次薪資
-            setInterval(updateSalary, 3000);
         });
 
-        // 讓 iPhone 感覺更像 App
-        window.addEventListener('load', () => {
-            if (window.navigator.standalone) {
-                console.log('Running as installed PWA');
+        function quickAdd(title, hours, color) {
+            if (!currentSelectedRange) {
+                alert('請先在月曆上「點擊」或「拖拉選取」日期');
+                return;
             }
-        });
+
+            // 取得日期範圍內的所有天數
+            let curr = new Date(currentSelectedRange.start);
+            let end = new Date(currentSelectedRange.end);
+
+            while (curr < end) {
+                const dateStr = curr.toISOString().split('T')[0];
+                
+                // 避免重複新增同一天的班
+                shiftEvents = shiftEvents.filter(e => e.start !== dateStr);
+                
+                shiftEvents.push({
+                    id: 'ID_' + Math.random().toString(36).substr(2, 9),
+                    title: title,
+                    start: dateStr,
+                    allDay: true,
+                    backgroundColor: color,
+                    borderColor: color,
+                    extendedProps: { hours: hours }
+                });
+                curr.setDate(curr.getDate() + 1);
+            }
+
+            refreshCalendar();
+            calendar.unselect(); // 新增完後取消選取狀態
+            currentSelectedRange = null;
+        }
+
+        function refreshCalendar() {
+            // 清除舊 events 並重新加入新的
+            calendar.removeAllEvents();
+            calendar.addEventSource(shiftEvents);
+            localStorage.setItem('shiftar_events_v2', JSON.stringify(shiftEvents));
+            updateSalary();
+        }
+
+        function updateSalary() {
+            const now = new Date();
+            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const todayStr = now.toISOString().split('T')[0];
+
+            let todayEarn = 0;
+            let monthEarn = 0;
+            let totalHours = 0;
+
+            shiftEvents.forEach(ev => {
+                const h = parseFloat(ev.extendedProps?.hours || 0);
+                const pay = h * hourlyRate;
+
+                // 判斷是否為本月
+                if (ev.start.startsWith(currentMonthStr)) {
+                    monthEarn += pay;
+                    totalHours += h;
+                }
+                
+                // 判斷是否為今日
+                if (ev.start === todayStr) {
+                    todayEarn += pay;
+                }
+            });
+
+            document.getElementById('today-earn').textContent = `¥${Math.round(todayEarn).toLocaleString()}`;
+            document.getElementById('month-earn').textContent = `¥${Math.round(monthEarn).toLocaleString()}`;
+            document.getElementById('month-hours').textContent = totalHours.toFixed(1);
+        }
+
+        function showCustomModal() { document.getElementById('customModal').classList.add('open'); }
+        function hideModal() { document.getElementById('customModal').classList.remove('open'); }
+
+        function addCustom() {
+            const name = document.getElementById('cName').value || '加班';
+            const hrs = document.getElementById('cHours').value || 0;
+            const color = document.getElementById('cColor').value;
+            quickAdd(name, hrs, color);
+            hideModal();
+        }
     </script>
 </body>
 </html>
