@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>排班助手 - 全年度版</title>
+    <title>排班助手 - 修復版</title>
     <style>
         :root {
             --bg-color: #ffffff;
@@ -17,12 +17,11 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html, body { height: 100%; margin: 0; display: flex; flex-direction: column; background: var(--bg-color); font-family: -apple-system, sans-serif; overflow: hidden; }
 
-        /* 頂部月份與切換 */
-        header { padding: 15px 0 10px; text-align: center; border-bottom: 1px solid var(--border-color); flex-shrink: 0; position: relative; }
-        .header-nav { display: flex; justify-content: space-between; align-items: center; padding: 0 30px; }
+        header { padding: 15px 0 10px; text-align: center; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+        .header-nav { display: flex; justify-content: space-between; align-items: center; padding: 0 40px; }
         .month-num { font-size: 36px; font-weight: bold; color: var(--text-main); line-height: 1; }
         .year-text { font-size: 13px; color: #999; margin-top: 5px; font-weight: 600; }
-        .nav-arrow { font-size: 24px; color: #ccc; cursor: pointer; padding: 10px; }
+        .nav-arrow { font-size: 28px; color: #ddd; cursor: pointer; padding: 5px 15px; }
 
         .weekdays { 
             display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; 
@@ -31,16 +30,12 @@
         .weekdays div:first-child { color: var(--sunday-color); }
         .weekdays div:last-child { color: var(--saturday-color); }
 
-        .calendar-grid { 
-            flex: 1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); 
-            grid-auto-rows: 1fr; width: 100%; 
-        }
+        .calendar-grid { flex: 1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-auto-rows: 1fr; width: 100%; }
 
         .day-cell { 
             border-right: 0.5px solid var(--border-color); border-bottom: 0.5px solid var(--border-color); 
             display: flex; flex-direction: column; align-items: center; padding-top: 6px; position: relative; 
         }
-        .day-cell.other-month { opacity: 0.2; } /* 非本月日期 */
         .day-cell.selected { background-color: #fff9c4; outline: 2px solid #ffeb3b; outline-offset: -2px; z-index: 2; }
         .day-cell.multiselect { background-color: #e0f2f1; }
 
@@ -54,7 +49,7 @@
         .shift-rest { background-color: #ffcdd2; color: #c62828; }
         .shift-b { background-color: #bbdefb; color: #1565c0; }
 
-        /* 底部導覽列 */
+        /* 底部導覽 */
         .bottom-nav { 
             height: 75px; display: flex; justify-content: space-around; align-items: flex-end; 
             border-top: 1px solid var(--border-color); padding-bottom: 10px; background: #fff; flex-shrink: 0;
@@ -62,16 +57,14 @@
         .nav-item { text-align: center; font-size: 10px; color: #666; cursor: pointer; flex: 1; }
         .nav-icon { font-size: 20px; margin-bottom: 3px; display: block; }
 
-        /* 修正後的 + 按鈕位置 */
+        /* + 按鈕：修正位置與旋轉效果 */
         .add-btn-main { 
-            width: 50px; height: 50px; background: #4a4a4a; color: white; border-radius: 50%; 
+            width: 52px; height: 52px; background: #4a4a4a; color: white; border-radius: 50%; 
             display: flex; justify-content: center; align-items: center; font-size: 28px; 
-            margin-bottom: 10px; /* 稍微再往下移一點 */
-            box-shadow: 0 4px 10px rgba(0,0,0,0.25); transition: 0.3s; z-index: 10;
+            margin-bottom: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.25); transition: 0.3s; z-index: 10;
         }
         .add-btn-main.active { background: var(--primary-teal); transform: rotate(45deg); }
 
-        /* 彈窗 */
         #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; z-index: 90; }
         #shiftSheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: #fff; transition: bottom 0.3s ease-out; z-index: 100; border-radius: 20px 20px 0 0; }
         #shiftSheet.active { bottom: 0; }
@@ -124,12 +117,10 @@
     const overlay = document.getElementById('overlay');
     const batchBtn = document.getElementById('batchBtn');
     
-    let currentDate = new Date(2026, 3, 1); // 預設 2026 年 4 月
+    let currentDate = new Date(2026, 3, 1); 
     let isBatchMode = false;
     let selectedDates = []; 
     let singleSelectedDate = null; 
-    
-    // 從本地儲存讀取所有資料，鍵名改為全年度格式
     let allSchedule = JSON.parse(localStorage.getItem('schedule_data')) || {};
 
     function initCalendar() {
@@ -143,20 +134,20 @@
         const firstDayOfMonth = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        // 填充空白格子（前一個月）
+        // 填充空格
         for (let i = 0; i < firstDayOfMonth; i++) {
-            const emptyCell = document.createElement('div');
-            emptyCell.className = 'day-cell other-month';
-            grid.appendChild(emptyCell);
+            grid.appendChild(document.createElement('div'));
         }
 
-        // 填充本月日期
+        // 填充日期
         for (let date = 1; date <= daysInMonth; date++) {
             const cell = document.createElement('div');
             cell.className = 'day-cell';
             cell.innerHTML = `<div class="date-num">${date}</div>`;
             
+            // 核心修正：統一使用 YYYY-M-D 格式
             const dateKey = `${year}-${month + 1}-${date}`;
+            
             if (allSchedule[dateKey]) {
                 const lb = document.createElement('div');
                 lb.className = `shift-label ${allSchedule[dateKey].type}`;
@@ -224,6 +215,7 @@
             selectedDates = [];
             batchBtn.classList.remove('active');
         } else {
+            // 修正點：確保 singleSelectedDate 存在且格式正確
             if (name === "") delete allSchedule[singleSelectedDate];
             else allSchedule[singleSelectedDate] = { name, type };
         }
@@ -233,15 +225,13 @@
     }
 
     batchBtn.onclick = () => {
-        if (!isBatchMode) {
-            isBatchMode = true;
+        isBatchMode = !isBatchMode;
+        if (isBatchMode) {
             selectedDates = [];
             batchBtn.classList.add('active');
-            alert("已開啟快速排班：請點選多個日期後，再按一次 [+] 儲存。");
         } else {
             if (selectedDates.length > 0) openSheet(`批次設定 ${selectedDates.length} 天`);
             else {
-                isBatchMode = false;
                 batchBtn.classList.remove('active');
                 initCalendar();
             }
