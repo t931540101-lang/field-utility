@@ -75,6 +75,13 @@ transition:background .1s;
 }
 .cal-cell:active { background:#f0f2f8; }
 .cal-cell.other-month { background:#fafbfc; }
+.cal-cell.selected {
+outline: 2px dashed #2a9d8f;
+outline-offset: -2px;
+background: #f0fafa;
+position: relative;
+z-index: 1;
+}
 
 .day-num {
 width:28px; height:28px;
@@ -412,7 +419,40 @@ opacity:0; transition:opacity .3s; pointer-events:none;
 
 <div class="toast" id="toast"></div>
 
-<!-- MODAL: 新增/編輯班次 -->
+<!-- SHIFTAR 風格：底部班次選單 -->
+
+<div id="shiftPicker" style="
+  display:none; position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+  width:100%; max-width:430px; z-index:200;
+">
+  <!-- 提示列 -->
+  <div style="background:#2a9d8f; color:#fff; text-align:center; padding:10px 16px; font-size:14px; font-weight:500;">
+    點擊你想要輸入資訊的輪班
+  </div>
+  <!-- 卡片橫排 -->
+  <div id="pickerCards" style="
+    background:#f5f6f8;
+    display:flex; flex-wrap:wrap;
+    padding:12px 10px 10px;
+    gap:10px;
+    max-height:260px; overflow-y:auto;
+  "></div>
+  <!-- 底部按鈕 -->
+  <div style="background:#f5f6f8; display:flex; justify-content:center; gap:40px; padding:10px 0 max(14px,env(safe-area-inset-bottom)); border-top:1px solid #e8eaee;">
+    <div onclick="closePicker()" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer">
+      <div style="width:40px;height:40px;border-radius:50%;background:#e05050;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff">✕</div>
+      <div style="font-size:11px;color:#6b7080">關閉</div>
+    </div>
+    <div onclick="openSettingsFromPicker()" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer">
+      <div style="width:40px;height:40px;border-radius:50%;background:#2a9d8f;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff">⚙</div>
+      <div style="font-size:11px;color:#6b7080">設定</div>
+    </div>
+  </div>
+</div>
+<!-- 半透明背景 -->
+<div id="pickerBackdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:199;" onclick="closePicker()"></div>
+
+<!-- MODAL: 手動輸入班次（從選單進入） -->
 
 <div class="modal-backdrop" id="shiftModal">
   <div class="modal">
@@ -422,49 +462,43 @@ opacity:0; transition:opacity .3s; pointer-events:none;
       <button class="modal-close" onclick="closeModal('shiftModal')">×</button>
     </div>
     <div class="modal-body">
-      <div class="form-label">快速選擇</div>
-      <div class="quick-types" id="quickTypes"></div>
-
-```
-  <div class="form-group">
-    <label class="form-label">日期</label>
-    <input class="form-input" type="date" id="shiftDate">
-  </div>
-  <div class="form-group">
-    <label class="form-label">班次名稱</label>
-    <input class="form-input" type="text" id="shiftName" placeholder="例：日B班、夜班...">
-  </div>
-  <div class="form-row">
-    <div class="form-group">
-      <label class="form-label">開始</label>
-      <input class="form-input" type="time" id="shiftStart" value="08:00">
+      <div class="form-group">
+        <label class="form-label">日期</label>
+        <input class="form-input" type="date" id="shiftDate">
+      </div>
+      <div class="form-group">
+        <label class="form-label">班次名稱</label>
+        <input class="form-input" type="text" id="shiftName" placeholder="例：日B班 夜班 特休">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">開始</label>
+          <input class="form-input" type="time" id="shiftStart" value="08:00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">結束</label>
+          <input class="form-input" type="time" id="shiftEnd" value="20:00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">顏色標記</label>
+        <div class="color-picker" id="colorPicker">
+          <div class="color-opt selected" data-color="blue"   style="background:#cce0f8" onclick="selectColor(this)">✓</div>
+          <div class="color-opt"          data-color="pink"   style="background:#fce4e4" onclick="selectColor(this)"></div>
+          <div class="color-opt"          data-color="orange" style="background:#fde8c0" onclick="selectColor(this)"></div>
+          <div class="color-opt"          data-color="green"  style="background:#d4f0e0" onclick="selectColor(this)"></div>
+          <div class="color-opt"          data-color="purple" style="background:#e8d8f8" onclick="selectColor(this)"></div>
+          <div class="color-opt"          data-color="gray"   style="background:#e8eaee" onclick="selectColor(this)"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">備註（選填）</label>
+        <input class="form-input" type="text" id="shiftNote" placeholder="地點、說明...">
+      </div>
+      <button class="btn btn-primary" onclick="saveShift()">儲存</button>
+      <button class="btn btn-danger"  id="deleteShiftBtn" onclick="deleteShift()" style="display:none">刪除此班次</button>
+      <button class="btn btn-ghost"   onclick="closeModal('shiftModal')">取消</button>
     </div>
-    <div class="form-group">
-      <label class="form-label">結束</label>
-      <input class="form-input" type="time" id="shiftEnd" value="20:00">
-    </div>
-  </div>
-  <div class="form-group">
-    <label class="form-label">顏色標記</label>
-    <div class="color-picker" id="colorPicker">
-      <div class="color-opt selected" data-color="blue"   style="background:#cce0f8" onclick="selectColor(this)">✓</div>
-      <div class="color-opt"          data-color="pink"   style="background:#fce4e4" onclick="selectColor(this)"></div>
-      <div class="color-opt"          data-color="orange" style="background:#fde8c0" onclick="selectColor(this)"></div>
-      <div class="color-opt"          data-color="green"  style="background:#d4f0e0" onclick="selectColor(this)"></div>
-      <div class="color-opt"          data-color="purple" style="background:#e8d8f8" onclick="selectColor(this)"></div>
-      <div class="color-opt"          data-color="gray"   style="background:#e8eaee" onclick="selectColor(this)"></div>
-    </div>
-  </div>
-  <div class="form-group">
-    <label class="form-label">備註（選填）</label>
-    <input class="form-input" type="text" id="shiftNote" placeholder="地點、說明...">
-  </div>
-  <button class="btn btn-primary" onclick="saveShift()">儲存</button>
-  <button class="btn btn-danger"  id="deleteShiftBtn" onclick="deleteShift()" style="display:none">刪除此班次</button>
-  <button class="btn btn-ghost"   onclick="closeModal('shiftModal')">取消</button>
-</div>
-```
-
   </div>
 </div>
 
@@ -709,39 +743,154 @@ function renderToday() {
 // ══════════════════════════════════
 // SHIFT MODAL
 // ══════════════════════════════════
-function buildQuickTypes() {
-  const container = document.getElementById('quickTypes');
+// SHIFTAR 底部班次選單
+// ══════════════════════════════════
+let selectedDateKey = null;
+
+function openAddShift(dateKey) {
+  // 清除上一個虛線框
+  document.querySelectorAll('.cal-cell.selected').forEach(c => c.classList.remove('selected'));
+
+  // 如果有 dateKey，找對應格子加虛線框
+  if (dateKey) {
+    selectedDateKey = dateKey;
+    document.querySelectorAll('.cal-cell').forEach(cell => {
+      // 用 click listener 的 closure 比對日期 — 改用 data attribute
+    });
+    // 標記選中格子
+    const cells = document.querySelectorAll('#calGrid .cal-cell');
+    const y = currentYear, m = currentMonth;
+    const firstDow    = new Date(y, m, 1).getDay();
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    const prevDays    = new Date(y, m, 0).getDate();
+    const pad = n => String(n).padStart(2,'0');
+    cells.forEach((cell, i) => {
+      let d, cDate, otherMonth = false;
+      if (i < firstDow) {
+        d = prevDays - firstDow + i + 1;
+        const pm = m-1<0?11:m-1, py = m-1<0?y-1:y;
+        cDate = `${py}-${pad(pm+1)}-${pad(d)}`;
+        otherMonth = true;
+      } else if (i - firstDow < daysInMonth) {
+        d = i - firstDow + 1;
+        cDate = `${y}-${pad(m+1)}-${pad(d)}`;
+      } else {
+        d = i - firstDow - daysInMonth + 1;
+        const nm = m+1>11?0:m+1, ny = m+1>11?y+1:y;
+        cDate = `${ny}-${pad(nm+1)}-${pad(d)}`;
+        otherMonth = true;
+      }
+      if (cDate === dateKey) cell.classList.add('selected');
+    });
+  }
+
+  buildPickerCards(dateKey);
+  document.getElementById('shiftPicker').style.display = 'block';
+  document.getElementById('pickerBackdrop').style.display = 'block';
+}
+
+function buildPickerCards(dateKey) {
+  const container = document.getElementById('pickerCards');
   container.innerHTML = '';
+
+  // 卡片樣式
+  const cardStyle = `
+    width:calc(50% - 5px); background:#fff;
+    border-radius:14px; border:1.5px solid #e8eaee;
+    padding:12px 12px 10px; cursor:pointer;
+    display:flex; flex-direction:column; gap:6px;
+    transition:border-color .15s;
+    box-sizing:border-box;
+  `;
+
+  // ① 空白之輪班
+  const blankCard = document.createElement('div');
+  blankCard.style.cssText = cardStyle;
+  blankCard.innerHTML = `
+    <div style="width:100%;height:32px;border-radius:8px;border:2px dashed #c0c5d0;display:flex;align-items:center;justify-content:center;">
+      <span style="font-size:11px;color:#b0b5c0">　</span>
+    </div>
+    <div style="font-size:13px;font-weight:500;color:#1a1c22;text-align:center">空白之輪班</div>
+  `;
+  blankCard.onclick = () => {
+    closePicker();
+    openManualInput(dateKey, { name:'', start:'08:00', end:'20:00', color:'gray' });
+  };
+  container.appendChild(blankCard);
+
+  // ② 手動輸入
+  const manualCard = document.createElement('div');
+  manualCard.style.cssText = cardStyle;
+  manualCard.innerHTML = `
+    <div style="width:100%;height:32px;border-radius:8px;background:#f5f6f8;display:flex;align-items:center;justify-content:center;">
+      <span style="font-size:18px">✏️</span>
+    </div>
+    <div style="font-size:13px;font-weight:500;color:#1a1c22;text-align:center">手動輸入</div>
+  `;
+  manualCard.onclick = () => {
+    closePicker();
+    openManualInput(dateKey, null);
+  };
+  container.appendChild(manualCard);
+
+  // ③ 預設班次類型
   QUICK_TYPES.forEach(t => {
     const c = COLOR_MAP[t.color] || COLOR_MAP.blue;
-    const btn = document.createElement('button');
-    btn.className = 'q-btn';
-    btn.style.background = c.bg;
-    btn.style.color = c.text;
-    btn.textContent = t.name;
-    btn.onclick = () => {
-      document.getElementById('shiftName').value  = t.name;
-      document.getElementById('shiftStart').value = t.start;
-      document.getElementById('shiftEnd').value   = t.end;
-      selectColorByKey(t.color);
+    const card = document.createElement('div');
+    card.style.cssText = cardStyle;
+    const timeLabel = (t.start === '00:00' && t.end === '00:00') ? '' :
+      `<div style="font-size:11px;color:#6b7080">${t.start} - ${t.end}</div>`;
+    card.innerHTML = `
+      <div style="width:100%;height:32px;border-radius:8px;background:${c.bg};display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:13px;font-weight:600;color:${c.text}">${t.name}</span>
+      </div>
+      ${timeLabel}
+      <div style="font-size:11px;color:#b0b5c0">台灣精銳</div>
+    `;
+    card.onclick = () => {
+      closePicker();
+      quickSaveShift(dateKey, t);
     };
-    container.appendChild(btn);
+    container.appendChild(card);
   });
 }
 
-function openAddShift(dateKey) {
+function quickSaveShift(dateKey, t) {
+  if (!shifts[dateKey]) shifts[dateKey] = [];
+  // 同日期同名的直接覆蓋第一筆
+  const existing = shifts[dateKey].findIndex(s => s.name === t.name);
+  const obj = { name: t.name, start: t.start, end: t.end, color: t.color, note: '' };
+  if (existing >= 0) shifts[dateKey][existing] = obj;
+  else shifts[dateKey].push(obj);
+  saveStorage();
+  renderCalendar();
+  showToast(`✓ ${t.name} 已儲存`);
+}
+
+function closePicker() {
+  document.getElementById('shiftPicker').style.display = 'none';
+  document.getElementById('pickerBackdrop').style.display = 'none';
+  document.querySelectorAll('.cal-cell.selected').forEach(c => c.classList.remove('selected'));
+  selectedDateKey = null;
+}
+
+function openSettingsFromPicker() {
+  closePicker();
+  showPage('other', document.getElementById('nav-other'));
+}
+
+function openManualInput(dateKey, prefill) {
   editingShiftId = null;
   editingDate    = dateKey;
   const d = dateKey ? parseInt(dateKey.split('-')[2]) : '';
   document.getElementById('modalTitle').textContent  = dateKey ? `新增班次・${d}日` : '新增班次';
   document.getElementById('shiftDate').value  = dateKey || getTodayStr();
-  document.getElementById('shiftName').value  = '';
-  document.getElementById('shiftStart').value = '08:00';
-  document.getElementById('shiftEnd').value   = '20:00';
+  document.getElementById('shiftName').value  = prefill?.name  || '';
+  document.getElementById('shiftStart').value = prefill?.start || '08:00';
+  document.getElementById('shiftEnd').value   = prefill?.end   || '20:00';
   document.getElementById('shiftNote').value  = '';
   document.getElementById('deleteShiftBtn').style.display = 'none';
-  selectColorByKey('blue');
-  buildQuickTypes();
+  selectColorByKey(prefill?.color || 'blue');
   openModal('shiftModal');
 }
 
@@ -757,7 +906,6 @@ function editShift(dateKey, idx) {
   document.getElementById('shiftNote').value  = s.note  || '';
   document.getElementById('deleteShiftBtn').style.display = 'block';
   selectColorByKey(s.color || 'blue');
-  buildQuickTypes();
   openModal('shiftModal');
 }
 
