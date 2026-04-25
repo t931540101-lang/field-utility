@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>黑曜石排班表</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 10px; margin: 0; }
+    .card { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    h2 { margin-top: 0; color: #333; font-size: 1.2rem; border-left: 4px solid #007bff; padding-left: 10px; }
+    .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+    .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; }
+    .day { background: #fff3cd; color: #856404; }
+    .night { background: #d1ecf1; color: #0c5460; }
+    .off { background: #f8d7da; color: #721c24; }
+    .controls { margin-top: 20px; text-align: center; }
+    button { background: #333; color: white; border: none; padding: 10px 20px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+
+  <h2>3月排班總表 (測試版)</h2>
+
+  <div id="schedule-list">
+    <div class="card">
+      <div class="row"><strong>盧家慶</strong> <span class="status-badge day">日B班</span></div>
+      <div class="row"><strong>何鴻隆</strong> <span class="status-badge day">日B班</span></div>
+      <div class="row"><strong>邱鴻鈞</strong> <span class="status-badge night">夜B班</span></div>
+      <div class="row"><strong>魏榮志</strong> <span class="status-badge off">休假</span></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="saveData()">存檔至本地</button>
+  </div>
+
+  <script>
+    function saveData() {
+      // Local Storage 存檔功能建議
+      const data = { date: "2026/03/01", status: "sync" };
+      localStorage.setItem('obsidian_schedule', JSON.stringify(data));
+      alert("本地暫存已更新！");
+    }
+  </script>
+</body>
+</html>
