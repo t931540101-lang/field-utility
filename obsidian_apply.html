@@ -10,6 +10,7 @@
     h3 { color: #fff; text-align: center; }
     input, select { width: 100%; padding: 12px; margin: 10px 0; background: #333; border: 1px solid #444; border-radius: 8px; color: white; box-sizing: border-box; }
     button { width: 100%; padding: 15px; background: #007bff; border: none; border-radius: 8px; color: white; font-weight: bold; margin-top: 10px; }
+    .status-area { margin-top: 30px; padding: 15px; background: #2a2a2a; border-radius: 8px; border: 1px solid #444; }
     .note { font-size: 0.8rem; color: #888; text-align: center; margin-top: 20px; }
   </style>
 </head>
@@ -28,13 +29,37 @@
       <option value="事假">事假</option>
     </select>
     <button onclick="submitForm()">送出申請</button>
+
+    <div class="status-area">
+      <label>申請進度查詢：</label>
+      <input type="text" id="queryName" placeholder="輸入姓名查詢狀態">
+      <button style="background: #28a745;" onclick="lookupStatus()">查詢狀態</button>
+      <p id="statusDisplay" style="text-align: center; margin-top: 10px; color: #00ff00;"></p>
+    </div>
+
     <div class="note">黑曜石排班系統 v1.0</div>
   </div>
 
   <script>
     function submitForm() {
-      // 這裡未來會接 Google Apps Script 的 doPost
-      alert("申請已送出！系統將自動排入水位監控。");
+      // 這裡連接後端，把資料寫入 DB_Requests
+      const data = {
+        name: document.getElementById('name').value,
+        dept: document.getElementById('dept').value,
+        type: document.getElementById('type').value
+      };
+      
+      // 這邊呼叫你的 GAS doPost，請確認你的部署網址
+      fetch("你的部署網址", { method: "POST", body: JSON.stringify(data) })
+        .then(() => alert("申請已送出！"));
+    }
+
+    function lookupStatus() {
+      const name = document.getElementById('queryName').value;
+      // 這裡呼叫後端的 checkStatus 函式
+      google.script.run.withSuccessHandler(function(status) {
+        document.getElementById('statusDisplay').innerText = "狀態：" + status;
+      }).checkStatus(name);
     }
   </script>
 </body>
