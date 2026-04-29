@@ -386,6 +386,11 @@ select.form-input option { background: var(--s1); }
       <div class="nav-item" onclick="showPage('shifts',this)">
         <span class="nav-icon">⚙️</span><span>班別設定</span>
       </div>
+      <div class="nav-section">申請管理</div>
+      <div class="nav-item" onclick="showPage('leave',this)" id="nav-leave">
+        <span class="nav-icon">📋</span><span>請假審核</span>
+        <span id="leave-badge" style="display:none;margin-left:auto;background:var(--danger);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:'Rajdhani',sans-serif;"></span>
+      </div>
       <div class="nav-section">工具</div>
       <div class="nav-item" onclick="showPage('export',this)">
         <span class="nav-icon">📤</span><span>匯出 / 列印</span>
@@ -490,6 +495,20 @@ select.form-input option { background: var(--s1); }
         <div id="statsTable" style="margin-top:24px;"></div>
       </div>
 
+      <!-- ── PAGE: 請假審核 ── -->
+      <div id="page-leave" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-sm" id="filter-all"    onclick="filterLeave('all',this)"     style="background:var(--s3);border:1px solid var(--border2);color:var(--text)">全部</button>
+            <button class="btn btn-sm" id="filter-pending" onclick="filterLeave('待審核',this)"  style="background:rgba(224,80,80,.12);border:1px solid rgba(224,80,80,.3);color:var(--danger)">⏳ 待審核</button>
+            <button class="btn btn-sm" id="filter-approved" onclick="filterLeave('核准',this)"   style="background:rgba(64,200,112,.1);border:1px solid rgba(64,200,112,.3);color:var(--success)">✅ 核准</button>
+            <button class="btn btn-sm" id="filter-rejected" onclick="filterLeave('駁回',this)"   style="background:rgba(224,80,80,.08);border:1px solid rgba(224,80,80,.2);color:#a06060">❌ 駁回</button>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="loadLeaveRequests()">🔄 重新整理</button>
+        </div>
+        <div id="leaveList"></div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app -->
@@ -552,6 +571,7 @@ const DAYS_TW = ['日','一','二','三','四','五','六'];
 //  NAV
 // ═══════════════════════════════════════════════════════
 const pageTitles = {
+  leave:     ['請假審核',     `<button class="btn btn-ghost btn-sm" onclick="loadLeaveRequests()">🔄 重新整理</button>`],
   schedule:  ['排班表管理',  `<button class="btn btn-ghost btn-sm" onclick="goToday()">📍 本月</button><button class="btn btn-primary btn-sm" onclick="showPage('export',null)">📤 匯出</button>`],
   employees: ['員工管理',    `<button class="btn btn-primary btn-sm" onclick="document.getElementById('inp-name').focus()">＋ 新增員工</button>`],
   shifts:    ['班別設定',    ''],
@@ -559,7 +579,7 @@ const pageTitles = {
 };
 
 function showPage(name, el) {
-  ['schedule','employees','shifts','export'].forEach(p => {
+  ['schedule','employees','shifts','export','leave'].forEach(p => {
     document.getElementById('page-'+p).style.display = 'none';
   });
   document.getElementById('page-'+name).style.display = 'block';
@@ -892,6 +912,175 @@ function confirmDialog(msg, onOk) {
 //  INIT
 // ═══════════════════════════════════════════════════════
 renderSchedule();
+
+// ═══════════════════════════════════════════════════════
+//  FIREBASE — 請假審核
+// ═══════════════════════════════════════════════════════
+</script>
+<script type="module">
+import { initializeApp }                    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, get, update }    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+  authDomain:        "factor-security-d1965.firebaseapp.com",
+  databaseURL:       "https://factor-security-d1965-default-rtdb.firebaseio.com",
+  projectId:         "factor-security-d1965",
+  storageBucket:     "factor-security-d1965.firebasestorage.app",
+  messagingSenderId: "864846943143",
+  appId:             "1:864846943143:web:4cfa18cd20d2f712225c82"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+let allRequests  = []; // { fbKey, ...data }
+let currentFilter = 'all';
+
+// ── 載入所有請假申請 ──────────────────────────────────
+window.loadLeaveRequests = async function() {
+  const list = document.getElementById('leaveList');
+  if (!list) return;
+  list.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:40px">載入中...</div>';
+
+  try {
+    const snap = await get(ref(db, 'leave_requests'));
+    allRequests = [];
+    if (snap.exists()) {
+      snap.forEach(child => {
+        allRequests.push({ fbKey: child.key, ...child.val() });
+      });
+      allRequests.sort((a,b) => new Date(b.time) - new Date(a.time));
+    }
+    updateBadge();
+    renderLeaveList();
+  } catch(e) {
+    list.innerHTML = '<div style="color:var(--danger);text-align:center;padding:40px">載入失敗，請檢查 Firebase 規則</div>';
+  }
+}
+
+function updateBadge() {
+  const pending = allRequests.filter(r => r.status === '待審核').length;
+  const badge = document.getElementById('leave-badge');
+  if (!badge) return;
+  if (pending > 0) {
+    badge.textContent = pending;
+    badge.style.display = 'inline-block';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+window.filterLeave = function(type, el) {
+  currentFilter = type;
+  document.querySelectorAll('#page-leave .btn').forEach(b => b.style.opacity = '0.5');
+  if (el) el.style.opacity = '1';
+  renderLeaveList();
+}
+
+function renderLeaveList() {
+  const list = document.getElementById('leaveList');
+  if (!list) return;
+
+  const filtered = currentFilter === 'all'
+    ? allRequests
+    : allRequests.filter(r => r.status === currentFilter);
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:60px;color:var(--text-dim)">
+      <div style="font-size:36px;margin-bottom:12px">📭</div>
+      <div>${currentFilter === 'all' ? '目前沒有任何申請' : '沒有' + currentFilter + '的申請'}</div>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(r => {
+    const isPending  = r.status === '待審核';
+    const isApproved = r.status === '核准';
+    const statusCls  = isPending ? 'pending' : isApproved ? 'approved' : 'rejected';
+    const statusLbl  = isPending ? '⏳ 待審核' : isApproved ? '✅ 已核准' : '❌ 已駁回';
+
+    return `<div style="background:var(--s2);border:1px solid ${isPending?'rgba(224,80,80,.25)':'var(--border)'};
+      border-radius:12px;padding:18px;margin-bottom:12px;transition:border-color .2s">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <div style="font-size:16px;font-weight:500;color:#fff">${r.name}
+            <span style="font-size:12px;color:var(--text-dim);margin-left:8px">${r.dept}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:3px;font-family:'JetBrains Mono',monospace">${r.id||''}</div>
+        </div>
+        <div style="padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;
+          background:${isPending?'rgba(224,160,32,.12)':isApproved?'rgba(64,200,112,.12)':'rgba(224,80,80,.1)'};
+          color:${isPending?'var(--accent)':isApproved?'var(--success)':'var(--danger)'};
+          border:1px solid ${isPending?'rgba(232,160,32,.3)':isApproved?'rgba(64,200,112,.3)':'rgba(224,80,80,.3)'}">
+          ${statusLbl}
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 20px;font-size:12px;color:var(--text-mid);margin-bottom:12px">
+        <span>🏷 ${r.type}</span>
+        <span>📅 ${r.date}</span>
+        ${r.proxy?`<span>👤 代理：${r.proxy}</span>`:''}
+        ${r.ext?`<span>📞 分機：${r.ext}</span>`:''}
+      </div>
+      ${r.reason?`<div style="font-size:12px;color:var(--text-dim);padding:10px 12px;background:var(--s1);border-radius:6px;margin-bottom:12px">
+        💬 ${r.reason}
+      </div>`:''}
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:${isPending?'12px':'0'}">申請時間：${r.time}</div>
+      ${isPending ? `
+      <div style="display:flex;gap:10px;padding-top:12px;border-top:1px solid var(--border)">
+        <button onclick="reviewLeave('${r.fbKey}','核准')"
+          style="flex:1;padding:10px;background:rgba(64,200,112,.12);border:1px solid rgba(64,200,112,.3);
+          border-radius:8px;color:var(--success);font-size:13px;font-weight:700;cursor:pointer;
+          font-family:'Noto Sans TC',sans-serif;transition:all .15s"
+          onmouseover="this.style.background='rgba(64,200,112,.22)'"
+          onmouseout="this.style.background='rgba(64,200,112,.12)'">
+          ✅ 核准
+        </button>
+        <button onclick="reviewLeave('${r.fbKey}','駁回')"
+          style="flex:1;padding:10px;background:rgba(224,80,80,.1);border:1px solid rgba(224,80,80,.25);
+          border-radius:8px;color:var(--danger);font-size:13px;font-weight:700;cursor:pointer;
+          font-family:'Noto Sans TC',sans-serif;transition:all .15s"
+          onmouseover="this.style.background='rgba(224,80,80,.2)'"
+          onmouseout="this.style.background='rgba(224,80,80,.1)'">
+          ❌ 駁回
+        </button>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── 審核操作 → 寫回 Firebase ──────────────────────────
+window.reviewLeave = async function(fbKey, status) {
+  try {
+    await update(ref(db, `leave_requests/${fbKey}`), {
+      status,
+      reviewedAt: new Date().toLocaleString('zh-TW')
+    });
+    // 本地更新
+    const idx = allRequests.findIndex(r => r.fbKey === fbKey);
+    if (idx !== -1) allRequests[idx].status = status;
+    updateBadge();
+    renderLeaveList();
+    // toast
+    const el = document.getElementById('toast');
+    el.textContent = status === '核准' ? '✅ 已核准此申請' : '❌ 已駁回此申請';
+    el.className = 'toast ' + (status==='核准'?'success':'');
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2800);
+  } catch(e) {
+    alert('操作失敗：' + e.message);
+  }
+}
+
+// ── 進入請假審核頁時自動載入 ─────────────────────────
+const origShowPage = window.showPage;
+window.showPage = function(name, el) {
+  origShowPage(name, el);
+  if (name === 'leave') loadLeaveRequests();
+}
+
+// ── 頁面載入時先抓一次更新紅點 ──────────────────────
+loadLeaveRequests();
 </script>
 </body>
 </html>
