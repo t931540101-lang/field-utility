@@ -472,7 +472,29 @@ select.inp option { background: var(--s1); }
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<script>
+
+<script type="module">
+// ═══════════════════════════════════════════════
+//  FIREBASE INIT
+// ═══════════════════════════════════════════════
+import { initializeApp }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, push, get, orderByChild, equalTo, query as fbQuery }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+  authDomain:        "factor-security-d1965.firebaseapp.com",
+  databaseURL:       "https://factor-security-d1965-default-rtdb.firebaseio.com",
+  projectId:         "factor-security-d1965",
+  storageBucket:     "factor-security-d1965.firebasestorage.app",
+  messagingSenderId: "864846943143",
+  appId:             "1:864846943143:web:4cfa18cd20d2f712225c82"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
 // ═══════════════════════════════════════════════
 //  DATA
 // ═══════════════════════════════════════════════
@@ -485,9 +507,6 @@ let departments = [
   '二廠','三廠'
 ];
 
-// mock storage for demo
-let applications = [];
-
 let selectedLeave  = '';
 let selectedPeriod = '上午';
 let dateMode       = 'single';
@@ -499,7 +518,6 @@ function init() {
   renderLeaveChips();
   renderDeptSelect();
   renderSettings();
-  // default date = today
   const t = new Date().toISOString().split('T')[0];
   document.getElementById('f-date').value  = t;
   document.getElementById('f-pdate').value = t;
@@ -510,7 +528,7 @@ function init() {
 // ═══════════════════════════════════════════════
 //  TAB
 // ═══════════════════════════════════════════════
-function switchTab(name, el) {
+window.switchTab = function(name, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
@@ -521,12 +539,11 @@ function switchTab(name, el) {
 //  LEAVE CHIPS
 // ═══════════════════════════════════════════════
 function renderLeaveChips() {
-  const c = document.getElementById('leaveChips');
-  c.innerHTML = leaveTypes.map(t => `
+  document.getElementById('leaveChips').innerHTML = leaveTypes.map(t => `
     <div class="leave-chip ${t===selectedLeave?'active':''}" onclick="selectLeave('${t}')">${t}</div>
   `).join('');
 }
-function selectLeave(t) {
+window.selectLeave = function(t) {
   selectedLeave = t;
   renderLeaveChips();
 }
@@ -544,23 +561,22 @@ function renderDeptSelect() {
 // ═══════════════════════════════════════════════
 //  DATE MODE
 // ═══════════════════════════════════════════════
-function setDateMode(mode, el) {
+window.setDateMode = function(mode, el) {
   dateMode = mode;
   document.querySelectorAll('.dmt').forEach(d => d.classList.remove('active'));
   el.classList.add('active');
   document.querySelectorAll('.date-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('dp-'+mode).classList.add('active');
 }
-function setPeriod(p, el) {
+window.setPeriod = function(p, el) {
   selectedPeriod = p;
   document.querySelectorAll('.period-chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
 }
 
-// auto calc day count
 document.addEventListener('change', function(e) {
   if (e.target.id === 'f-start' || e.target.id === 'f-end') {
-    const s = document.getElementById('f-start').value;
+    const s  = document.getElementById('f-start').value;
     const en = document.getElementById('f-end').value;
     if (s && en) {
       const diff = Math.round((new Date(en)-new Date(s))/(1000*60*60*24))+1;
@@ -570,14 +586,14 @@ document.addEventListener('change', function(e) {
 });
 
 // ═══════════════════════════════════════════════
-//  SUBMIT
+//  SUBMIT → FIREBASE
 // ═══════════════════════════════════════════════
-function submitLeave() {
+window.submitLeave = async function() {
   const name = document.getElementById('f-name').value.trim();
   const dept = document.getElementById('f-dept').value;
-  if (!name) { toast('請填寫姓名', 'err'); return; }
-  if (!dept) { toast('請選擇部門', 'err'); return; }
-  if (!selectedLeave) { toast('請選擇假別', 'err'); return; }
+  if (!name)         { toast('請填寫姓名', 'err'); return; }
+  if (!dept)         { toast('請選擇部門', 'err'); return; }
+  if (!selectedLeave){ toast('請選擇假別', 'err'); return; }
 
   let dateInfo = '';
   if (dateMode === 'single') {
@@ -598,7 +614,9 @@ function submitLeave() {
 
   const id = genId();
   const record = {
-    id, name, dept,
+    id,
+    name,
+    dept,
     ext:    document.getElementById('f-ext').value.trim(),
     proxy:  document.getElementById('f-proxy').value.trim(),
     type:   selectedLeave,
@@ -608,128 +626,143 @@ function submitLeave() {
     time:   new Date().toLocaleString('zh-TW')
   };
 
-  applications.unshift(record);
+  // 顯示 loading
+  const btn = document.querySelector('.btn-submit');
+  btn.textContent = '送出中...';
+  btn.disabled = true;
 
-  // reset form
-  document.getElementById('f-name').value   = '';
-  document.getElementById('f-ext').value    = '';
-  document.getElementById('f-proxy').value  = '';
-  document.getElementById('f-reason').value = '';
-  selectedLeave = '';
-  renderLeaveChips();
+  try {
+    await push(ref(db, 'leave_requests'), record);
 
-  document.getElementById('successId').textContent = id;
-  document.getElementById('successOverlay').classList.add('open');
+    // reset form
+    document.getElementById('f-name').value   = '';
+    document.getElementById('f-ext').value    = '';
+    document.getElementById('f-proxy').value  = '';
+    document.getElementById('f-reason').value = '';
+    selectedLeave = '';
+    renderLeaveChips();
+
+    document.getElementById('successId').textContent = id;
+    document.getElementById('successOverlay').classList.add('open');
+  } catch(err) {
+    toast('送出失敗，請檢查網路', 'err');
+    console.error(err);
+  } finally {
+    btn.textContent = '送出申請';
+    btn.disabled = false;
+  }
 }
 
-function closeSuccess() {
+window.closeSuccess = function() {
   document.getElementById('successOverlay').classList.remove('open');
 }
 
 function genId() {
-  const d = new Date();
+  const d  = new Date();
   const ds = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
-  const rnd = String(Math.floor(Math.random()*900)+100);
-  return `LV-${ds}-${rnd}`;
+  return `LV-${ds}-${String(Math.floor(Math.random()*900)+100)}`;
 }
 
 // ═══════════════════════════════════════════════
-//  QUERY
+//  QUERY ← FIREBASE
 // ═══════════════════════════════════════════════
-function queryLeave() {
+window.queryLeave = async function() {
   const q = document.getElementById('q-input').value.trim();
   if (!q) { toast('請輸入姓名或申請單號', 'err'); return; }
 
-  const results = applications.filter(a =>
-    a.name.includes(q) || a.id.toLowerCase().includes(q.toLowerCase())
-  );
-
   const container = document.getElementById('queryResults');
-  if (results.length === 0) {
-    container.innerHTML = `<div class="empty-state">
-      <div class="empty-icon">🔎</div>
-      找不到「${q}」的申請紀錄
-    </div>`;
-    return;
-  }
+  container.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div>查詢中...</div>`;
 
-  container.innerHTML = `<div class="result-list">` +
-    results.map(r => `
-      <div class="result-card">
-        <div class="rc-top">
-          <div>
-            <div class="rc-name">${r.name}</div>
-            <div class="rc-dept">${r.dept}</div>
+  try {
+    const snapshot = await get(ref(db, 'leave_requests'));
+    if (!snapshot.exists()) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">🔎</div>目前沒有任何申請紀錄</div>`;
+      return;
+    }
+
+    const all = [];
+    snapshot.forEach(child => { all.push(child.val()); });
+
+    const results = all.filter(a =>
+      a.name.includes(q) || (a.id && a.id.toLowerCase().includes(q.toLowerCase()))
+    ).sort((a,b) => new Date(b.time) - new Date(a.time));
+
+    if (results.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">🔎</div>找不到「${q}」的申請紀錄</div>`;
+      return;
+    }
+
+    container.innerHTML = `<div class="result-list">` +
+      results.map(r => `
+        <div class="result-card">
+          <div class="rc-top">
+            <div>
+              <div class="rc-name">${r.name}</div>
+              <div class="rc-dept">${r.dept}</div>
+            </div>
+            <div class="status-badge status-${r.status==='待審核'?'pending':r.status==='核准'?'approved':'rejected'}">
+              ${r.status==='待審核'?'⏳ 待審核':r.status==='核准'?'✅ 核准':'❌ 駁回'}
+            </div>
           </div>
-          <div class="status-badge status-${r.status==='待審核'?'pending':r.status==='核准'?'approved':'rejected'}">
-            ${r.status==='待審核'?'⏳ 待審核':r.status==='核准'?'✅ 核准':'❌ 駁回'}
+          <div class="rc-detail">
+            <span>🏷 ${r.type}</span>
+            <span>📅 ${r.date}</span>
+            ${r.proxy?`<span>👤 代理：${r.proxy}</span>`:''}
+            <span style="color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:11px">${r.id||''}</span>
           </div>
-        </div>
-        <div class="rc-detail">
-          <span>🏷 ${r.type}</span>
-          <span>📅 ${r.date}</span>
-          ${r.proxy?`<span>👤 代理：${r.proxy}</span>`:''}
-          <span style="color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:11px">${r.id}</span>
-        </div>
-        ${r.reason?`<div style="font-size:12px;color:var(--text-dim);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">事由：${r.reason}</div>`:''}
-        <div style="font-size:11px;color:var(--text-dim);margin-top:6px">申請時間：${r.time}</div>
-      </div>`).join('') +
-    `</div>`;
+          ${r.reason?`<div style="font-size:12px;color:var(--text-dim);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">事由：${r.reason}</div>`:''}
+          <div style="font-size:11px;color:var(--text-dim);margin-top:6px">申請時間：${r.time}</div>
+        </div>`).join('') +
+      `</div>`;
+  } catch(err) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div>查詢失敗，請檢查網路</div>`;
+    console.error(err);
+  }
 }
 
 // ═══════════════════════════════════════════════
 //  SETTINGS
 // ═══════════════════════════════════════════════
 function renderSettings() {
-  // leave tags
   document.getElementById('leaveTagList').innerHTML = leaveTypes.map((t,i) => `
-    <div class="tag-item">
-      ${t}
+    <div class="tag-item">${t}
       <button class="tag-del" onclick="delLeave(${i})">×</button>
     </div>`).join('');
-
-  // dept tags
   document.getElementById('deptTagList').innerHTML = departments.map((d,i) => `
-    <div class="tag-item">
-      ${d}
+    <div class="tag-item">${d}
       <button class="tag-del" onclick="delDept(${i})">×</button>
     </div>`).join('');
 }
 
-function addLeave() {
+window.addLeave = function() {
   const v = document.getElementById('new-leave').value.trim();
   if (!v) return;
   if (leaveTypes.includes(v)) { toast('假別已存在', 'err'); return; }
   leaveTypes.push(v);
   document.getElementById('new-leave').value = '';
-  renderLeaveChips();
-  renderSettings();
+  renderLeaveChips(); renderSettings();
   toast(`已新增假別：${v}`, 'ok');
 }
-function delLeave(i) {
+window.delLeave = function(i) {
   const name = leaveTypes[i];
   leaveTypes.splice(i,1);
   if (selectedLeave === name) selectedLeave = '';
-  renderLeaveChips();
-  renderSettings();
+  renderLeaveChips(); renderSettings();
   toast(`已刪除假別：${name}`);
 }
-
-function addDept() {
+window.addDept = function() {
   const v = document.getElementById('new-dept').value.trim();
   if (!v) return;
   if (departments.includes(v)) { toast('部門已存在', 'err'); return; }
   departments.push(v);
   document.getElementById('new-dept').value = '';
-  renderDeptSelect();
-  renderSettings();
+  renderDeptSelect(); renderSettings();
   toast(`已新增部門：${v}`, 'ok');
 }
-function delDept(i) {
+window.delDept = function(i) {
   const name = departments[i];
   departments.splice(i,1);
-  renderDeptSelect();
-  renderSettings();
+  renderDeptSelect(); renderSettings();
   toast(`已刪除部門：${name}`);
 }
 
@@ -745,14 +778,11 @@ function toast(msg, type='') {
   el._t = setTimeout(() => el.classList.remove('show'), 2600);
 }
 
-// ═══════════════════════════════════════════════
-//  ENTER KEY
-// ═══════════════════════════════════════════════
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
-    if (document.activeElement.id === 'q-input') queryLeave();
-    if (document.activeElement.id === 'new-leave') addLeave();
-    if (document.activeElement.id === 'new-dept')  addDept();
+    if (document.activeElement.id === 'q-input')   window.queryLeave();
+    if (document.activeElement.id === 'new-leave') window.addLeave();
+    if (document.activeElement.id === 'new-dept')  window.addDept();
   }
 });
 
