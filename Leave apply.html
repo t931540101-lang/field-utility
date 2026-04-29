@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#07090e">
+<title>台灣精銳科技 — 請假申請</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: dark;
+  --bg:        #07090e;
+  --s1:        #0c0f18;
+  --s2:        #111520;
+  --s3:        #171c2c;
+  --border:    #1e2538;
+  --border2:   #252e45;
+  --text:      #c8d0e0;
+  --text-dim:  #45506a;
+  --text-mid:  #7080a0;
+  --accent:    #3d8ef0;
+  --accent2:   #60aaff;
+  --gold:      #e8a020;
+  --danger:    #e05555;
+  --success:   #38c870;
+  --warn:      #e8a020;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg) !important; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans TC', sans-serif;
+  min-height: 100vh;
+}
+
+/* ── TAB BAR ── */
+.tabbar {
+  display: flex;
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.tab {
+  flex: 1; padding: 14px 8px;
+  text-align: center; cursor: pointer;
+  font-size: 13px; color: var(--text-mid);
+  border-bottom: 2px solid transparent;
+  transition: all .2s; user-select: none;
+}
+.tab.active { color: var(--accent2); border-bottom-color: var(--accent); }
+.tab:hover:not(.active) { color: var(--text); background: rgba(255,255,255,.03); }
+.tab-icon { font-size: 18px; display: block; margin-bottom: 3px; }
+
+/* ── PAGES ── */
+.page { display: none; padding: 20px 16px; max-width: 560px; margin: 0 auto; }
+.page.active { display: block; }
+
+/* ── SECTION HEADER ── */
+.sec-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 20px;
+}
+.sec-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: rgba(61,142,240,.12); border: 1px solid rgba(61,142,240,.25);
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.sec-title { font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 1px; color: #fff; }
+.sec-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; letter-spacing: .5px; }
+
+/* ── FORM CARD ── */
+.form-card {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card-label {
+  font-size: 11px; color: var(--text-dim);
+  letter-spacing: 1.5px; text-transform: uppercase;
+  margin-bottom: 10px; font-weight: 500;
+}
+
+.field { margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+.field-label {
+  font-size: 12px; color: var(--text-mid);
+  margin-bottom: 6px; display: flex; align-items: center; gap-4px;
+}
+.required { color: var(--danger); margin-left: 3px; }
+
+.inp {
+  width: 100%; padding: 11px 14px;
+  background: var(--s1); border: 1px solid var(--border2);
+  border-radius: 8px; color: var(--text);
+  font-size: 14px; font-family: 'Noto Sans TC', sans-serif;
+  outline: none; transition: border-color .2s;
+  -webkit-appearance: none;
+}
+.inp:focus { border-color: var(--accent); }
+.inp::placeholder { color: var(--text-dim); }
+select.inp { cursor: pointer; }
+select.inp option { background: var(--s1); }
+
+.inp-row { display: flex; gap: 10px; }
+.inp-row .field { flex: 1; }
+
+/* date mode toggle */
+.date-mode-tabs {
+  display: flex; gap: 6px; margin-bottom: 12px;
+}
+.dmt {
+  flex: 1; padding: 8px; text-align: center;
+  background: var(--s1); border: 1px solid var(--border2);
+  border-radius: 7px; cursor: pointer; font-size: 12px;
+  color: var(--text-mid); transition: all .15s; user-select: none;
+}
+.dmt.active { background: rgba(61,142,240,.12); border-color: var(--accent); color: var(--accent2); }
+
+.date-panel { display: none; }
+.date-panel.active { display: block; }
+
+/* period chips */
+.period-chips { display: flex; gap: 8px; }
+.period-chip {
+  flex: 1; padding: 9px; text-align: center;
+  background: var(--s1); border: 1px solid var(--border2);
+  border-radius: 7px; cursor: pointer; font-size: 13px;
+  color: var(--text-mid); transition: all .15s; user-select: none;
+}
+.period-chip.active { background: rgba(61,142,240,.12); border-color: var(--accent); color: var(--accent2); }
+
+/* leave type chips */
+.leave-chips {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.leave-chip {
+  padding: 8px 14px; border-radius: 20px;
+  background: var(--s1); border: 1px solid var(--border2);
+  cursor: pointer; font-size: 13px; color: var(--text-mid);
+  transition: all .15s; user-select: none; white-space: nowrap;
+}
+.leave-chip.active {
+  background: rgba(61,142,240,.15);
+  border-color: var(--accent); color: var(--accent2);
+}
+
+/* submit btn */
+.btn-submit {
+  width: 100%; padding: 15px;
+  background: var(--accent); border: none; border-radius: 10px;
+  color: #fff; font-size: 15px; font-weight: 700;
+  font-family: 'Noto Sans TC', sans-serif;
+  cursor: pointer; transition: all .2s;
+  letter-spacing: 1px; margin-top: 4px;
+}
+.btn-submit:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(61,142,240,.3); }
+.btn-submit:active { transform: translateY(0); }
+
+/* ── QUERY PAGE ── */
+.query-box {
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px; margin-bottom: 16px;
+}
+.query-row { display: flex; gap: 10px; }
+.btn-query {
+  padding: 11px 20px; background: var(--s3);
+  border: 1px solid var(--border2); border-radius: 8px;
+  color: var(--text); font-size: 14px; cursor: pointer;
+  white-space: nowrap; transition: all .15s;
+  font-family: 'Noto Sans TC', sans-serif;
+}
+.btn-query:hover { border-color: var(--accent); color: var(--accent2); }
+
+.result-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.result-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px;
+  animation: fadeIn .25s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+.rc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.rc-name { font-size: 15px; font-weight: 500; color: #fff; }
+.rc-dept { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+.status-badge {
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; letter-spacing: .5px;
+  white-space: nowrap;
+}
+.status-pending  { background: rgba(232,160,32,.12); color: var(--warn);    border: 1px solid rgba(232,160,32,.3); }
+.status-approved { background: rgba(56,200,112,.12); color: var(--success); border: 1px solid rgba(56,200,112,.3); }
+.status-rejected { background: rgba(224,85,85,.12);  color: var(--danger);  border: 1px solid rgba(224,85,85,.3); }
+.rc-detail { font-size: 12px; color: var(--text-mid); display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.rc-detail span { display: flex; align-items: center; gap: 4px; }
+
+.empty-state {
+  text-align: center; padding: 40px 20px;
+  color: var(--text-dim); font-size: 13px;
+}
+.empty-icon { font-size: 36px; margin-bottom: 10px; }
+
+/* ── SETTINGS PAGE ── */
+.setting-section { margin-bottom: 24px; }
+.setting-title {
+  font-family: 'Rajdhani', sans-serif; font-size: 16px;
+  font-weight: 700; color: var(--accent2); letter-spacing: 1px;
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.tag-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 20px;
+  background: var(--s2); border: 1px solid var(--border2);
+  font-size: 13px; color: var(--text);
+}
+.tag-del {
+  background: none; border: none; color: var(--text-dim);
+  cursor: pointer; font-size: 14px; padding: 0; line-height: 1;
+  transition: color .15s;
+}
+.tag-del:hover { color: var(--danger); }
+.add-row { display: flex; gap: 8px; }
+.btn-add {
+  padding: 10px 16px; background: rgba(61,142,240,.12);
+  border: 1px solid rgba(61,142,240,.3); border-radius: 8px;
+  color: var(--accent2); font-size: 13px; cursor: pointer;
+  white-space: nowrap; transition: all .15s;
+  font-family: 'Noto Sans TC', sans-serif;
+}
+.btn-add:hover { background: rgba(61,142,240,.22); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(60px);
+  background: var(--s3); border: 1px solid var(--border2);
+  color: var(--text); padding: 12px 22px; border-radius: 10px;
+  font-size: 13px; z-index: 999; opacity: 0;
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  white-space: nowrap; pointer-events: none;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.ok  { border-color: rgba(56,200,112,.4); color: var(--success); }
+.toast.err { border-color: rgba(224,85,85,.4);  color: var(--danger); }
+
+/* ── MODAL (success) ── */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.7); z-index: 300;
+  align-items: center; justify-content: center; padding: 20px;
+}
+.overlay.open { display: flex; }
+.modal {
+  background: var(--s2); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 32px 24px; max-width: 320px; width: 100%;
+  text-align: center; animation: popIn .22s ease;
+}
+@keyframes popIn { from{transform:scale(.9);opacity:0;} to{transform:scale(1);opacity:1;} }
+.modal-big-icon { font-size: 52px; margin-bottom: 12px; }
+.modal-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+.modal-desc { font-size: 13px; color: var(--text-mid); line-height: 1.7; margin-bottom: 20px; }
+.modal-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px; font-weight: 600; color: var(--accent2);
+  background: var(--s1); padding: 10px 20px; border-radius: 8px;
+  border: 1px solid var(--border2); margin-bottom: 20px;
+  letter-spacing: 2px;
+}
+.btn-ok {
+  width: 100%; padding: 12px; background: var(--accent);
+  border: none; border-radius: 8px; color: #fff;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  font-family: 'Noto Sans TC', sans-serif;
+}
+
+/* divider */
+.divider { height: 1px; background: var(--border); margin: 20px 0; }
+</style>
+</head>
+<body>
+
+<!-- TAB BAR -->
+<div class="tabbar">
+  <div class="tab active" onclick="switchTab('apply',this)">
+    <span class="tab-icon">📝</span>請假申請
+  </div>
+  <div class="tab" onclick="switchTab('query',this)">
+    <span class="tab-icon">🔍</span>查詢進度
+  </div>
+  <div class="tab" onclick="switchTab('settings',this)">
+    <span class="tab-icon">⚙️</span>管理設定
+  </div>
+</div>
+
+<!-- ══ PAGE: 請假申請 ══ -->
+<div class="page active" id="page-apply">
+  <div class="sec-header">
+    <div class="sec-icon">📋</div>
+    <div>
+      <div class="sec-title">請假申請</div>
+      <div class="sec-sub">台灣精銳科技股份有限公司</div>
+    </div>
+  </div>
+
+  <!-- 基本資料 -->
+  <div class="form-card">
+    <div class="card-label">基本資料</div>
+    <div class="field">
+      <div class="field-label">姓名 <span class="required">*</span></div>
+      <input class="inp" id="f-name" placeholder="請輸入您的姓名" />
+    </div>
+    <div class="inp-row">
+      <div class="field">
+        <div class="field-label">部門 <span class="required">*</span></div>
+        <select class="inp" id="f-dept"></select>
+      </div>
+      <div class="field">
+        <div class="field-label">分機</div>
+        <input class="inp" id="f-ext" placeholder="選填" type="tel" />
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-label">代理人</div>
+      <input class="inp" id="f-proxy" placeholder="請假期間代理人姓名（選填）" />
+    </div>
+  </div>
+
+  <!-- 假別 -->
+  <div class="form-card">
+    <div class="card-label">假別 <span class="required" style="font-size:14px">*</span></div>
+    <div class="leave-chips" id="leaveChips"></div>
+  </div>
+
+  <!-- 請假日期 -->
+  <div class="form-card">
+    <div class="card-label">請假日期 <span class="required" style="font-size:14px">*</span></div>
+    <div class="date-mode-tabs">
+      <div class="dmt active" onclick="setDateMode('single',this)">📅 單日</div>
+      <div class="dmt" onclick="setDateMode('range',this)">📆 多日</div>
+      <div class="dmt" onclick="setDateMode('period',this)">🕐 時段</div>
+    </div>
+
+    <!-- 單日 -->
+    <div class="date-panel active" id="dp-single">
+      <div class="field">
+        <div class="field-label">請假日期</div>
+        <input class="inp" type="date" id="f-date" />
+      </div>
+    </div>
+
+    <!-- 多日 -->
+    <div class="date-panel" id="dp-range">
+      <div class="inp-row">
+        <div class="field">
+          <div class="field-label">開始日期</div>
+          <input class="inp" type="date" id="f-start" />
+        </div>
+        <div class="field">
+          <div class="field-label">結束日期</div>
+          <input class="inp" type="date" id="f-end" />
+        </div>
+      </div>
+      <div id="dayCount" style="font-size:12px;color:var(--accent2);margin-top:6px;text-align:right"></div>
+    </div>
+
+    <!-- 時段 -->
+    <div class="date-panel" id="dp-period">
+      <div class="field">
+        <div class="field-label">請假日期</div>
+        <input class="inp" type="date" id="f-pdate" />
+      </div>
+      <div class="field">
+        <div class="field-label">時段</div>
+        <div class="period-chips">
+          <div class="period-chip active" onclick="setPeriod('上午',this)">🌅 上午</div>
+          <div class="period-chip" onclick="setPeriod('下午',this)">🌇 下午</div>
+          <div class="period-chip" onclick="setPeriod('全天',this)">☀️ 全天</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 事由 -->
+  <div class="form-card">
+    <div class="card-label">請假事由</div>
+    <div class="field">
+      <textarea class="inp" id="f-reason" rows="3" placeholder="請簡述請假原因（選填）" style="resize:vertical;line-height:1.6"></textarea>
+    </div>
+  </div>
+
+  <button class="btn-submit" onclick="submitLeave()">送出申請</button>
+  <div style="text-align:center;font-size:11px;color:var(--text-dim);margin-top:14px;letter-spacing:.5px">
+    台灣精銳科技 請假系統 v1.0
+  </div>
+</div>
+
+<!-- ══ PAGE: 查詢進度 ══ -->
+<div class="page" id="page-query">
+  <div class="sec-header">
+    <div class="sec-icon">🔍</div>
+    <div>
+      <div class="sec-title">申請進度查詢</div>
+      <div class="sec-sub">輸入姓名或申請單號查詢狀態</div>
+    </div>
+  </div>
+
+  <div class="query-box">
+    <div class="field" style="margin-bottom:10px">
+      <div class="field-label">姓名 或 申請單號</div>
+      <div class="query-row">
+        <input class="inp" id="q-input" placeholder="王小明 或 LV-20260429-001" />
+        <button class="btn-query" onclick="queryLeave()">查詢</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="queryResults">
+    <div class="empty-state">
+      <div class="empty-icon">📭</div>
+      輸入姓名後按查詢<br>即可看到申請紀錄
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE: 管理設定 ══ -->
+<div class="page" id="page-settings">
+  <div class="sec-header">
+    <div class="sec-icon">⚙️</div>
+    <div>
+      <div class="sec-title">管理設定</div>
+      <div class="sec-sub">自訂假別與部門清單</div>
+    </div>
+  </div>
+
+  <!-- 假別管理 -->
+  <div class="setting-section">
+    <div class="setting-title">🏷 假別管理</div>
+    <div class="tag-list" id="leaveTagList"></div>
+    <div class="add-row">
+      <input class="inp" id="new-leave" placeholder="新增假別名稱" style="flex:1" />
+      <button class="btn-add" onclick="addLeave()">＋ 新增</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 部門管理 -->
+  <div class="setting-section">
+    <div class="setting-title">🏢 部門管理</div>
+    <div class="tag-list" id="deptTagList"></div>
+    <div class="add-row">
+      <input class="inp" id="new-dept" placeholder="新增部門名稱" style="flex:1" />
+      <button class="btn-add" onclick="addDept()">＋ 新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="overlay" id="successOverlay">
+  <div class="modal">
+    <div class="modal-big-icon">✅</div>
+    <div class="modal-title">申請已送出！</div>
+    <div class="modal-desc">您的請假申請已成功送出，請記錄以下申請單號，可用於查詢進度。</div>
+    <div class="modal-id" id="successId"></div>
+    <button class="btn-ok" onclick="closeSuccess()">確認</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════
+let leaveTypes = ['特休','病假','事假','婚假','喪假','公假','陪產假'];
+
+let departments = [
+  '財務室','稽核室','資訊部','管理部','工務',
+  '採購課','組立課','研發課','生產部','生管課',
+  '生技課','倉管組','品管課','驗證室','設備課','營業部',
+  '二廠','三廠'
+];
+
+// mock storage for demo
+let applications = [];
+
+let selectedLeave  = '';
+let selectedPeriod = '上午';
+let dateMode       = 'single';
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+function init() {
+  renderLeaveChips();
+  renderDeptSelect();
+  renderSettings();
+  // default date = today
+  const t = new Date().toISOString().split('T')[0];
+  document.getElementById('f-date').value  = t;
+  document.getElementById('f-pdate').value = t;
+  document.getElementById('f-start').value = t;
+  document.getElementById('f-end').value   = t;
+}
+
+// ═══════════════════════════════════════════════
+//  TAB
+// ═══════════════════════════════════════════════
+function switchTab(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  el.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════
+//  LEAVE CHIPS
+// ═══════════════════════════════════════════════
+function renderLeaveChips() {
+  const c = document.getElementById('leaveChips');
+  c.innerHTML = leaveTypes.map(t => `
+    <div class="leave-chip ${t===selectedLeave?'active':''}" onclick="selectLeave('${t}')">${t}</div>
+  `).join('');
+}
+function selectLeave(t) {
+  selectedLeave = t;
+  renderLeaveChips();
+}
+
+// ═══════════════════════════════════════════════
+//  DEPT SELECT
+// ═══════════════════════════════════════════════
+function renderDeptSelect() {
+  const s = document.getElementById('f-dept');
+  const v = s.value;
+  s.innerHTML = `<option value="">請選擇部門</option>` +
+    departments.map(d => `<option value="${d}" ${d===v?'selected':''}>${d}</option>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+//  DATE MODE
+// ═══════════════════════════════════════════════
+function setDateMode(mode, el) {
+  dateMode = mode;
+  document.querySelectorAll('.dmt').forEach(d => d.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.date-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('dp-'+mode).classList.add('active');
+}
+function setPeriod(p, el) {
+  selectedPeriod = p;
+  document.querySelectorAll('.period-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// auto calc day count
+document.addEventListener('change', function(e) {
+  if (e.target.id === 'f-start' || e.target.id === 'f-end') {
+    const s = document.getElementById('f-start').value;
+    const en = document.getElementById('f-end').value;
+    if (s && en) {
+      const diff = Math.round((new Date(en)-new Date(s))/(1000*60*60*24))+1;
+      document.getElementById('dayCount').textContent = diff > 0 ? `共 ${diff} 天` : '';
+    }
+  }
+});
+
+// ═══════════════════════════════════════════════
+//  SUBMIT
+// ═══════════════════════════════════════════════
+function submitLeave() {
+  const name = document.getElementById('f-name').value.trim();
+  const dept = document.getElementById('f-dept').value;
+  if (!name) { toast('請填寫姓名', 'err'); return; }
+  if (!dept) { toast('請選擇部門', 'err'); return; }
+  if (!selectedLeave) { toast('請選擇假別', 'err'); return; }
+
+  let dateInfo = '';
+  if (dateMode === 'single') {
+    const d = document.getElementById('f-date').value;
+    if (!d) { toast('請選擇日期', 'err'); return; }
+    dateInfo = d;
+  } else if (dateMode === 'range') {
+    const s = document.getElementById('f-start').value;
+    const e = document.getElementById('f-end').value;
+    if (!s || !e) { toast('請選擇開始和結束日期', 'err'); return; }
+    if (new Date(e) < new Date(s)) { toast('結束日期不可早於開始日期', 'err'); return; }
+    dateInfo = `${s} ～ ${e}`;
+  } else {
+    const d = document.getElementById('f-pdate').value;
+    if (!d) { toast('請選擇日期', 'err'); return; }
+    dateInfo = `${d}（${selectedPeriod}）`;
+  }
+
+  const id = genId();
+  const record = {
+    id, name, dept,
+    ext:    document.getElementById('f-ext').value.trim(),
+    proxy:  document.getElementById('f-proxy').value.trim(),
+    type:   selectedLeave,
+    date:   dateInfo,
+    reason: document.getElementById('f-reason').value.trim(),
+    status: '待審核',
+    time:   new Date().toLocaleString('zh-TW')
+  };
+
+  applications.unshift(record);
+
+  // reset form
+  document.getElementById('f-name').value   = '';
+  document.getElementById('f-ext').value    = '';
+  document.getElementById('f-proxy').value  = '';
+  document.getElementById('f-reason').value = '';
+  selectedLeave = '';
+  renderLeaveChips();
+
+  document.getElementById('successId').textContent = id;
+  document.getElementById('successOverlay').classList.add('open');
+}
+
+function closeSuccess() {
+  document.getElementById('successOverlay').classList.remove('open');
+}
+
+function genId() {
+  const d = new Date();
+  const ds = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  const rnd = String(Math.floor(Math.random()*900)+100);
+  return `LV-${ds}-${rnd}`;
+}
+
+// ═══════════════════════════════════════════════
+//  QUERY
+// ═══════════════════════════════════════════════
+function queryLeave() {
+  const q = document.getElementById('q-input').value.trim();
+  if (!q) { toast('請輸入姓名或申請單號', 'err'); return; }
+
+  const results = applications.filter(a =>
+    a.name.includes(q) || a.id.toLowerCase().includes(q.toLowerCase())
+  );
+
+  const container = document.getElementById('queryResults');
+  if (results.length === 0) {
+    container.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🔎</div>
+      找不到「${q}」的申請紀錄
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = `<div class="result-list">` +
+    results.map(r => `
+      <div class="result-card">
+        <div class="rc-top">
+          <div>
+            <div class="rc-name">${r.name}</div>
+            <div class="rc-dept">${r.dept}</div>
+          </div>
+          <div class="status-badge status-${r.status==='待審核'?'pending':r.status==='核准'?'approved':'rejected'}">
+            ${r.status==='待審核'?'⏳ 待審核':r.status==='核准'?'✅ 核准':'❌ 駁回'}
+          </div>
+        </div>
+        <div class="rc-detail">
+          <span>🏷 ${r.type}</span>
+          <span>📅 ${r.date}</span>
+          ${r.proxy?`<span>👤 代理：${r.proxy}</span>`:''}
+          <span style="color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:11px">${r.id}</span>
+        </div>
+        ${r.reason?`<div style="font-size:12px;color:var(--text-dim);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">事由：${r.reason}</div>`:''}
+        <div style="font-size:11px;color:var(--text-dim);margin-top:6px">申請時間：${r.time}</div>
+      </div>`).join('') +
+    `</div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  SETTINGS
+// ═══════════════════════════════════════════════
+function renderSettings() {
+  // leave tags
+  document.getElementById('leaveTagList').innerHTML = leaveTypes.map((t,i) => `
+    <div class="tag-item">
+      ${t}
+      <button class="tag-del" onclick="delLeave(${i})">×</button>
+    </div>`).join('');
+
+  // dept tags
+  document.getElementById('deptTagList').innerHTML = departments.map((d,i) => `
+    <div class="tag-item">
+      ${d}
+      <button class="tag-del" onclick="delDept(${i})">×</button>
+    </div>`).join('');
+}
+
+function addLeave() {
+  const v = document.getElementById('new-leave').value.trim();
+  if (!v) return;
+  if (leaveTypes.includes(v)) { toast('假別已存在', 'err'); return; }
+  leaveTypes.push(v);
+  document.getElementById('new-leave').value = '';
+  renderLeaveChips();
+  renderSettings();
+  toast(`已新增假別：${v}`, 'ok');
+}
+function delLeave(i) {
+  const name = leaveTypes[i];
+  leaveTypes.splice(i,1);
+  if (selectedLeave === name) selectedLeave = '';
+  renderLeaveChips();
+  renderSettings();
+  toast(`已刪除假別：${name}`);
+}
+
+function addDept() {
+  const v = document.getElementById('new-dept').value.trim();
+  if (!v) return;
+  if (departments.includes(v)) { toast('部門已存在', 'err'); return; }
+  departments.push(v);
+  document.getElementById('new-dept').value = '';
+  renderDeptSelect();
+  renderSettings();
+  toast(`已新增部門：${v}`, 'ok');
+}
+function delDept(i) {
+  const name = departments[i];
+  departments.splice(i,1);
+  renderDeptSelect();
+  renderSettings();
+  toast(`已刪除部門：${name}`);
+}
+
+// ═══════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast' + (type ? ' '+type : '');
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+// ═══════════════════════════════════════════════
+//  ENTER KEY
+// ═══════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (document.activeElement.id === 'q-input') queryLeave();
+    if (document.activeElement.id === 'new-leave') addLeave();
+    if (document.activeElement.id === 'new-dept')  addDept();
+  }
+});
+
+init();
+</script>
+</body>
+</html>
