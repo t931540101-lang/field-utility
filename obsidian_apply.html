@@ -17,28 +17,30 @@
 <body>
   <div class="container">
     <h3>請假申請通報</h3>
-    <label for="employeeSelect">選擇員工：</label>
-<select id="employeeSelect" name="employeeName">
-  <option value="">讀取中...</option>
-</select>
+    <input type="text" id="name" placeholder="您的姓名">
+    <select id="dept">
+      <option value="品保組">品保組</option>
+      <option value="組立一組">組立一組</option>
+      <option value="組立二組">組立二組</option>
+    </select>
+    <select id="type">
+      <option value="特休">特休</option>
+      <option value="病假">病假</option>
+      <option value="事假">事假</option>
+    </select>
+    <button onclick="submitForm()">送出申請</button>
 
-<script>
-  // 當畫面載入時，自動去呼叫後端的 getEmployeeList
-  window.onload = function() {
-    google.script.run.withSuccessHandler(populateDropdown).getEmployeeList();
-  };
+    <div class="status-area">
+      <label>申請進度查詢：</label>
+      <input type="text" id="queryName" placeholder="輸入姓名查詢狀態">
+      <button style="background: #28a745;" onclick="lookupStatus()">查詢狀態</button>
+      <p id="statusDisplay" style="text-align: center; margin-top: 10px; color: #00ff00;"></p>
+    </div>
 
-  function populateDropdown(list) {
-    var select = document.getElementById('employeeSelect');
-    select.innerHTML = '<option value="">請選擇員工</option>';
-    list.forEach(function(item) {
-      var option = document.createElement('option');
-      option.value = item;
-      option.text = item;
-      select.appendChild(option);
-    });
-  }
-</script>
+    <div class="note">黑曜石排班系統 v1.0</div>
+  </div>
+
+  <script>
     function submitForm() {
       // 這裡連接後端，把資料寫入 DB_Requests
       const data = {
