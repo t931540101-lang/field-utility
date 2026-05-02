@@ -1,46 +1,46 @@
+import os
+
+# 定義新的 HTML 內容
+html_content = """
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>K9 警衛輪班總管理系統</title>
+    <title>K9 警衛輪班總管理系統 - 公司格式版</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #d32f2f; --bg: #f0f2f5; --border: #ccc; }
-        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .header-box { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-        .month-ctrl { display: flex; align-items: center; gap: 20px; font-weight: 900; font-size: 1.4rem; color: #2c3e50; }
-        .btn-nav { padding: 8px 18px; cursor: pointer; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; transition: 0.2s; }
-        .btn-nav:hover { background: #e9ecef; }
-        .lock-btn { padding: 10px 20px; border-radius: 30px; border: none; background: #607d8b; color: white; cursor: pointer; font-weight: bold; }
-        .lock-btn.unlocked { background: #43a047; box-shadow: 0 0 12px rgba(67,160,71,0.4); }
-
-        /* ── 匯出按鈕 ── */
-        .export-btn { padding: 10px 22px; border-radius: 30px; border: none; background: #1565c0; color: white; cursor: pointer; font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
-        .export-btn:hover { background: #0d47a1; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(21,101,192,0.4); }
-        .export-btn:disabled { background: #90a4ae; cursor: not-allowed; transform: none; box-shadow: none; }
-
-        /* 匯出進度提示 */
-        .export-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 14px 28px; border-radius: 30px; font-weight: bold; font-size: 14px; z-index: 9999; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
-        .export-toast.show { display: block; animation: toastIn 0.3s ease; }
-        @keyframes toastIn { from { opacity:0; transform: translateX(-50%) translateY(20px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
-
-        .table-container { width: 100%; overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #eee; }
-        table { border-collapse: collapse; min-width: 1800px; width: 100%; table-layout: fixed; }
-        th, td { border: 1px solid var(--border); padding: 8px 0; text-align: center; font-size: 13px; }
-        th { background: #fdfcf9; color: #555; height: 40px; }
-        .sticky-left { position: sticky; left: 0; background: #fff !important; z-index: 5; border-right: 2px solid #999 !important; width: 50px; }
-        .sticky-left-2 { position: sticky; left: 50px; background: #fff !important; z-index: 5; border-right: 2px solid #ccc !important; width: 80px; }
-        input { width: 100%; border: none; text-align: center; font-size: 13px; background: transparent; pointer-events: none; font-weight: 700; outline: none; }
-        .can-edit input { pointer-events: auto; background: #fffde7; }
-        .val-日 { color: #0d47a1; background: #e3f2fd; }
-        .val-夜 { color: #4a148c; background: #f3e5f5; }
-        .val-休, .val-例, .val-❌ { color: #b71c1c; background: #ffebee; }
-        .val-特 { color: #f57f17; background: #fffde7; }
-        .weekend { color: #c62828; font-weight: bold; }
-        .summary-col { background: #f8f9fa; font-weight: bold; min-width: 35px; }
+        :root { --primary: #d32f2f; --bg: #f4f7f6; --border: #ddd; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        
+        .header-box { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 12px 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .month-ctrl { display: flex; align-items: center; gap: 15px; font-weight: bold; font-size: 1.2rem; }
+        .btn-nav { padding: 6px 15px; cursor: pointer; background: #eee; border: 1px solid #ccc; border-radius: 5px; }
+        
+        .table-container { width: 100%; overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        table { border-collapse: collapse; min-width: 1600px; width: 100%; }
+        th, td { border: 1px solid var(--border); padding: 6px 2px; text-align: center; font-size: 12px; }
+        th { background: #f8f9fa; position: sticky; top: 0; z-index: 2; }
+        
+        .sticky-left { position: sticky; left: 0; background: #fff !important; z-index: 10; border-right: 2px solid #bbb !important; width: 50px; }
+        .sticky-left-2 { position: sticky; left: 50px; background: #fff !important; z-index: 10; border-right: 2px solid #bbb !important; width: 80px; }
+        
+        input { width: 90%; border: none; text-align: center; font-weight: bold; background: transparent; pointer-events: none; }
+        .can-edit input { pointer-events: auto; background: #fff9c4; border-radius: 3px; }
+        
+        /* 班表代號配色 */
+        .val-D1, .val-D2, .val-D3 { color: #0d47a1; background: #e3f2fd; } /* 日班系列 */
+        .val-E1, .val-E2, .val-E3 { color: #4a148c; background: #f3e5f5; } /* 夜E班系列 */
+        .val-C1, .val-C2, .val-C3 { color: #1b5e20; background: #e8f5e9; } /* 夜B班系列 */
+        .val-休, .val-X { color: #d32f2f; background: #ffebee; }
+        
+        .is-holiday { background: #fff5f5; color: #e53935; } /* 假日欄位顏色 */
+        
+        .lock-btn { padding: 8px 16px; border-radius: 20px; border: none; background: #607d8b; color: #fff; cursor: pointer; }
+        .lock-btn.unlocked { background: #43a047; }
+        .export-btn { padding: 8px 16px; border-radius: 20px; border: none; background: #1565c0; color: #fff; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -51,14 +51,9 @@
         <span id="currentMonthDisplay">載入中...</span>
         <button class="btn-nav" onclick="changeMonth(1)">❯</button>
     </div>
-    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-        <button id="exportMonthBtn" class="export-btn" style="background:#2e7d32;" onclick="exportMonthToExcel()">
-            📄 匯出當月 Excel
-        </button>
-        <button id="exportBtn" class="export-btn" onclick="exportAllToExcel()">
-            📊 匯出全年 Excel
-        </button>
+    <div style="display:flex; gap:8px;">
         <button id="lockBtn" class="lock-btn" onclick="toggleLock()">🔒 唯讀模式</button>
+        <button class="export-btn" onclick="exportMonthToExcel()">📄 匯出符合公司格式</button>
     </div>
 </div>
 
@@ -72,9 +67,6 @@
     </table>
 </div>
 
-<!-- 匯出進度提示 -->
-<div class="export-toast" id="exportToast">⏳ 正在從雲端讀取排班資料...</div>
-
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
@@ -86,188 +78,32 @@
     const db = firebase.database();
 
     let curYear = 2026;
-    let curMonth = 2;
+    let curMonth = 4; // 預設 5 月 (0-indexed)
     let isEditing = false;
+
+    // 根據截圖定義的班別對應邏輯 (這部分是核心修改)
+    // 假設：星期日為例假日(1)，星期六為休息日(2)，其餘為平日
+    function getShiftCode(baseVal, dayOfWeek) {
+        if (!baseVal) return "";
+        let suffix = "";
+        if (dayOfWeek === 0) suffix = "1"; // 例假日
+        else if (dayOfWeek === 6) suffix = "2"; // 休息日
+        else suffix = ""; // 平日
+        
+        if (baseVal.includes("日")) return "D" + (suffix || "");
+        if (baseVal.includes("夜E")) return "E" + (suffix || "");
+        if (baseVal.includes("夜B")) return "C" + (suffix || "");
+        return baseVal;
+    }
 
     const staffData = [
         {group: "總務", name: "盧家慶"}, {group: "總務", name: "何鴻隆"},
         {group: "總務", name: "蔡易倫"}, {group: "總務", name: "邱鴻鈞"},
-        {group: "總務", name: "柳旭洲"}, {group: "總務", name: "魏榮志"},
-        {group: "總務", name: ""}
+        {group: "總務", name: "柳旭洲"}, {group: "總務", name: "魏榮志"}
     ];
+
     const weekNames = ["日", "一", "二", "三", "四", "五", "六"];
 
-    // ════════════════════════════════════════
-    //  📄 匯出當月 Excel
-    // ════════════════════════════════════════
-    async function exportMonthToExcel() {
-        const btn = document.getElementById('exportMonthBtn');
-        const toast = document.getElementById('exportToast');
-        btn.disabled = true;
-        btn.innerHTML = '⏳ 讀取中...';
-        toast.className = 'export-toast show';
-        toast.innerText = '⏳ 正在從雲端讀取排班資料...';
-
-        try {
-            const snapshot = await db.ref('guardSchedules').once('value');
-            const allData = snapshot.val() || {};
-
-            const wb = XLSX.utils.book_new();
-            const ws = buildMonthSheet(allData, curYear, curMonth);
-            const sheetName = `${curYear}-${String(curMonth+1).padStart(2,'0')}月`;
-            XLSX.utils.book_append_sheet(wb, ws, sheetName);
-
-            const fileName = `警衛排班表_${curYear}年${curMonth+1}月.xlsx`;
-            XLSX.writeFile(wb, fileName);
-
-            toast.innerText = `✅ 匯出完成！${fileName}`;
-            setTimeout(() => { toast.className = 'export-toast'; }, 3000);
-        } catch(err) {
-            toast.innerText = `❌ 匯出失敗：${err.message}`;
-            setTimeout(() => { toast.className = 'export-toast'; }, 4000);
-        }
-
-        btn.disabled = false;
-        btn.innerHTML = '📄 匯出當月 Excel';
-    }
-
-        // ════════════════════════════════════════
-    //  📊 一鍵匯出全年排班 Excel
-    // ════════════════════════════════════════
-    async function exportAllToExcel() {
-        const btn = document.getElementById('exportBtn');
-        const toast = document.getElementById('exportToast');
-        btn.disabled = true;
-        btn.innerHTML = '⏳ 讀取中...';
-        toast.className = 'export-toast show';
-
-        try {
-            // 1. 從 Firebase 一次性讀取所有排班資料
-            toast.innerText = '⏳ 正在從雲端讀取排班資料...';
-            const snapshot = await db.ref('guardSchedules').once('value');
-            const allData = snapshot.val() || {};
-
-            // 2. 建立 Excel 工作簿
-            const wb = XLSX.utils.book_new();
-
-            // 3. 全年12個月各建一個工作表
-            const exportYear = curYear;
-            for (let m = 0; m < 12; m++) {
-                toast.innerText = `📋 產生 ${exportYear}年${m+1}月 排班表...`;
-                const ws = buildMonthSheet(allData, exportYear, m);
-                const sheetName = `${exportYear}-${String(m+1).padStart(2,'0')}月`;
-                XLSX.utils.book_append_sheet(wb, ws, sheetName);
-            }
-
-            // 4. 額外建一個「全年統計」工作表
-            toast.innerText = '📊 產生全年統計表...';
-            const summaryWs = buildSummarySheet(allData, exportYear);
-            XLSX.utils.book_append_sheet(wb, summaryWs, `${exportYear}年全年統計`);
-
-            // 5. 下載
-            toast.innerText = '💾 準備下載...';
-            const fileName = `警衛排班表_${exportYear}年_${new Date().toLocaleDateString('zh-TW').replace(/\//g,'-')}.xlsx`;
-            XLSX.writeFile(wb, fileName);
-
-            toast.innerText = `✅ 匯出完成！${fileName}`;
-            setTimeout(() => { toast.className = 'export-toast'; }, 3000);
-
-        } catch(err) {
-            toast.innerText = `❌ 匯出失敗：${err.message}`;
-            setTimeout(() => { toast.className = 'export-toast'; }, 4000);
-        }
-
-        btn.disabled = false;
-        btn.innerHTML = '📊 一鍵匯出全年排班 Excel';
-    }
-
-    // 建立單月工作表
-    function buildMonthSheet(allData, year, month) {
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const rows = [];
-
-        // 標題列1：日期
-        const dateRow = ['組別', '姓名'];
-        for (let d = 1; d <= daysInMonth; d++) dateRow.push(d);
-        dateRow.push('日班', '夜班', '其他');
-        rows.push(dateRow);
-
-        // 標題列2：星期
-        const weekRow = ['', ''];
-        for (let d = 1; d <= daysInMonth; d++) {
-            weekRow.push(weekNames[new Date(year, month, d).getDay()]);
-        }
-        weekRow.push('', '', '');
-        rows.push(weekRow);
-
-        // 每位人員的排班
-        staffData.forEach(p => {
-            if (!p.name) { rows.push([]); return; }
-            const row = [p.group, p.name];
-            let dc = 0, nc = 0, oc = 0;
-            for (let d = 1; d <= daysInMonth; d++) {
-                const key = `${year}_${month+1}_${p.name}_${d}`;
-                const val = allData[key] || '';
-                row.push(val);
-                if (val.includes('日')) dc++;
-                else if (val.includes('夜')) nc++;
-                else if (val !== '') oc++;
-            }
-            row.push(dc, nc, oc);
-            rows.push(row);
-        });
-
-        const ws = XLSX.utils.aoa_to_sheet(rows);
-
-        // 欄寬設定
-        const cols = [{ wch: 8 }, { wch: 10 }];
-        for (let d = 0; d < daysInMonth; d++) cols.push({ wch: 5 });
-        cols.push({ wch: 6 }, { wch: 6 }, { wch: 6 });
-        ws['!cols'] = cols;
-
-        return ws;
-    }
-
-    // 建立全年統計工作表
-    function buildSummarySheet(allData, year) {
-        const rows = [];
-        const header = ['組別', '姓名'];
-        for (let m = 1; m <= 12; m++) header.push(`${m}月日班`, `${m}月夜班`, `${m}月其他`);
-        header.push('全年日班', '全年夜班', '全年其他', '全年總班數');
-        rows.push(header);
-
-        staffData.forEach(p => {
-            if (!p.name) return;
-            const row = [p.group, p.name];
-            let totalD = 0, totalN = 0, totalO = 0;
-            for (let m = 0; m < 12; m++) {
-                const days = new Date(year, m + 1, 0).getDate();
-                let dc = 0, nc = 0, oc = 0;
-                for (let d = 1; d <= days; d++) {
-                    const key = `${year}_${m+1}_${p.name}_${d}`;
-                    const val = allData[key] || '';
-                    if (val.includes('日')) dc++;
-                    else if (val.includes('夜')) nc++;
-                    else if (val !== '') oc++;
-                }
-                row.push(dc, nc, oc);
-                totalD += dc; totalN += nc; totalO += oc;
-            }
-            row.push(totalD, totalN, totalO, totalD + totalN + totalO);
-            rows.push(row);
-        });
-
-        const ws = XLSX.utils.aoa_to_sheet(rows);
-        const cols = [{ wch: 8 }, { wch: 10 }];
-        for (let i = 0; i < 36; i++) cols.push({ wch: 7 });
-        cols.push({ wch: 9 }, { wch: 9 }, { wch: 9 }, { wch: 10 });
-        ws['!cols'] = cols;
-        return ws;
-    }
-
-    // ════════════════════════════════════════
-    //  既有功能（維持原版）
-    // ════════════════════════════════════════
     function initTable() {
         const dHead = document.getElementById('dateHeader');
         const wHead = document.getElementById('weekHeader');
@@ -275,6 +111,7 @@
         dHead.innerHTML = `<th class="sticky-left">組別</th><th class="sticky-left-2">姓名</th>`;
         wHead.innerHTML = `<th class="sticky-left">-</th><th class="sticky-left-2">-</th>`;
         tbody.innerHTML = '';
+        
         document.getElementById('currentMonthDisplay').innerText = `${curYear}年 ${curMonth + 1}月`;
         const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
 
@@ -282,18 +119,13 @@
             const dateTh = document.createElement('th');
             dateTh.innerText = d;
             dHead.appendChild(dateTh);
-            const dayOfWeek = weekNames[new Date(curYear, curMonth, d).getDay()];
+            
+            const dayOfWeek = new Date(curYear, curMonth, d).getDay();
             const weekTh = document.createElement('th');
-            weekTh.innerText = dayOfWeek;
-            if(dayOfWeek === "日" || dayOfWeek === "六") weekTh.className = "weekend";
+            weekTh.innerText = weekNames[dayOfWeek];
+            if(dayOfWeek === 0 || dayOfWeek === 6) weekTh.className = "is-holiday";
             wHead.appendChild(weekTh);
         }
-
-        ["日", "夜", "休"].forEach(t => {
-            const th = document.createElement('th'); th.className = "summary-col"; th.innerText = t;
-            dHead.appendChild(th);
-            wHead.appendChild(document.createElement('th'));
-        });
 
         staffData.forEach(p => {
             const tr = document.createElement('tr');
@@ -301,7 +133,6 @@
             for (let d = 1; d <= daysInMonth; d++) {
                 rowHtml += `<td><input id="${curYear}_${curMonth+1}_${p.name}_${d}" onchange="saveShift('${p.name}', ${d}, this.value)"></td>`;
             }
-            rowHtml += `<td id="sd_${p.name}" class="summary-col">0</td><td id="sn_${p.name}" class="summary-col">0</td><td id="so_${p.name}" class="summary-col">0</td>`;
             tr.innerHTML = rowHtml;
             tbody.appendChild(tr);
         });
@@ -314,24 +145,14 @@
         db.ref('guardSchedules').on('value', (snapshot) => {
             const data = snapshot.val() || {};
             staffData.forEach(p => {
-                let dc=0, nc=0, oc=0;
                 for (let d = 1; d <= days; d++) {
                     const id = `${curYear}_${curMonth+1}_${p.name}_${d}`;
                     const val = data[id] || "";
                     const el = document.getElementById(id);
                     if(el) {
                         el.value = val;
-                        el.parentElement.className = "";
-                        if(val) el.parentElement.classList.add('val-' + val.substring(0,1));
-                        if(val.includes("日")) dc++;
-                        else if(val.includes("夜")) nc++;
-                        else if(val!=="") oc++;
+                        el.parentElement.className = val ? 'val-' + val.replace(/[0-9]/g, '') : '';
                     }
-                }
-                if(document.getElementById(`sd_${p.name}`)) {
-                    document.getElementById(`sd_${p.name}`).innerText = dc;
-                    document.getElementById(`sn_${p.name}`).innerText = nc;
-                    document.getElementById(`so_${p.name}`).innerText = oc;
                 }
             });
         });
@@ -350,18 +171,54 @@
     }
 
     function toggleLock() {
-        if(!isEditing && prompt("人事密碼：") === "8888") {
-            isEditing = true; document.body.classList.add('can-edit');
-            document.getElementById('lockBtn').innerText = "🔓 編輯中";
+        if(!isEditing && prompt("人事管理密碼：") === "8888") {
+            isEditing = true;
+            document.body.classList.add('can-edit');
+            document.getElementById('lockBtn').innerText = "🔓 編輯模式";
             document.getElementById('lockBtn').classList.add('unlocked');
         } else if(isEditing) {
-            isEditing = false; document.body.classList.remove('can-edit');
+            isEditing = false;
+            document.body.classList.remove('can-edit');
             document.getElementById('lockBtn').innerText = "🔒 唯讀模式";
             document.getElementById('lockBtn').classList.remove('unlocked');
         }
+    }
+
+    async function exportMonthToExcel() {
+        const snapshot = await db.ref('guardSchedules').once('value');
+        const allData = snapshot.val() || {};
+        const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
+        
+        const rows = [];
+        // 建立標題列
+        const header = ['組別', '姓名'];
+        for(let d=1; d<=daysInMonth; d++) header.push(d);
+        rows.push(header);
+
+        staffData.forEach(p => {
+            const row = [p.group, p.name];
+            for(let d=1; d<=daysInMonth; d++) {
+                const dayOfWeek = new Date(curYear, curMonth, d).getDay();
+                const key = `${curYear}_${curMonth+1}_${p.name}_${d}`;
+                let val = allData[key] || "";
+                // 自動轉換為截圖中的代號
+                row.push(getShiftCode(val, dayOfWeek));
+            }
+            rows.push(row);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "月排班表");
+        XLSX.writeFile(wb, `公司格式排班表_${curYear}_${curMonth+1}.xlsx`);
     }
 
     initTable();
 </script>
 </body>
 </html>
+"""
+
+# 將更新後的代碼寫入檔案
+with open("roster_v2.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
