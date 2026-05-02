@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>K9 警衛輪班總管理系統 · 管理者視角</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+
+        :root {
+            --navy:       #1a2744;
+            --navy-mid:   #2c3e6b;
+            --navy-light: #3d5291;
+            --gold:       #c9a84c;
+            --bg:         #e8e2d0;
+            --border:     #c2b99a;
+            --text:       #2c3349;
+            --muted:      #7a849a;
+
+            /* 日B系列（D） — 綠色調 */
+            --d-bg:  #d4edda; --d-fg:  #2e5a44;
+            /* 夜E系列（E） — 紫色調 */
+            --e-bg:  #f3e5f5; --e-fg:  #6a1b9a;
+            /* 夜B系列（C） — 藍灰色調 */
+            --c-bg:  #e3f2fd; --c-fg:  #1565c0;
+            /* 空班 */
+            --off-bg:#f5f5f5; --off-fg:#9e9e9e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+            background: var(--bg); color: var(--text); min-height: 100vh;
+        }
+
+        /* ══ Header ══ */
+        .page-header {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, var(--navy-light) 100%);
+            padding: 14px 18px 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px;
+            box-shadow: 0 4px 20px rgba(26,39,68,0.35);
+            position: sticky; top: 0; z-index: 60;
+        }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .header-badge {
+            width: 40px; height: 40px; background: var(--gold);
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.25); flex-shrink: 0;
+        }
+        .header-title h1 { font-size: 1rem; font-weight: 900; color: #fff; letter-spacing: 1px; line-height: 1.3; }
+        .header-title p  { font-size: 11px; color: rgba(255,255,255,0.48); margin-top: 2px; }
+
+        .month-ctrl { display: flex; align-items: center; gap: 12px; }
+        .btn-nav {
+            width: 32px; height: 32px;
+            background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px; color: white; font-size: 13px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: 0.2s;
+        }
+        .btn-nav:hover { background: rgba(255,255,255,0.22); }
+        .month-label { font-size: 1rem; font-weight: 900; color: #fff; min-width: 100px; text-align: center; }
+
+        .header-right { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .btn {
+            padding: 8px 14px; border: none; border-radius: 8px;
+            font-size: 12px; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; gap: 5px;
+            transition: 0.2s; font-family: inherit; white-space: nowrap;
+        }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .btn-green { background: #27ae60; color: white; }
+        .btn-green:hover:not(:disabled) { background: #219a52; }
+        .btn-blue  { background: #2980b9; color: white; }
+        .btn-blue:hover:not(:disabled)  { background: #2471a3; }
+        .btn-ghost { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.22); }
+        .btn-ghost:hover { background: rgba(255,255,255,0.22); }
+        .btn-ghost.unlocked { background: #27ae60; border-color: #27ae60; }
+
+        /* ══ 載入條 ══ */
+        .loading-bar {
+            background: var(--navy-mid); padding: 7px 18px;
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; color: rgba(255,255,255,0.65);
+        }
+        .loading-bar.hidden { display: none; }
+        .loading-dot {
+            width: 7px; height: 7px; background: var(--gold);
+            border-radius: 50%; animation: pulse 1.2s infinite; flex-shrink: 0;
+        }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.5)} }
+
+        /* ══ 表格區 ══ */
+        .table-wrapper { padding: 14px; }
+        .section-title {
+            font-size: 13px; font-weight: 900; color: var(--navy);
+            letter-spacing: 2px; padding: 6px 0 12px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .section-title::after {
+            content: ''; flex: 1; height: 2px;
+            background: linear-gradient(to right, var(--navy-mid), transparent); border-radius: 2px;
+        }
+        .compat-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: rgba(201,168,76,0.15); border: 1px solid rgba(201,168,76,0.4);
+            color: var(--gold); font-size: 10px; font-weight: 700;
+            padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+        }
+
+        .table-scroll {
+            overflow-x: auto; border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(26,39,68,0.12);
+            border: 1px solid var(--border); background: white;
+        }
+        table { border-collapse: collapse; width: max-content; min-width: 100%; }
+        th, td { border: 1px solid var(--border); text-align: center; vertical-align: middle; white-space: nowrap; }
+
+        /* 標頭 */
+        thead tr { background: var(--navy); }
+        .th-date {
+            position: sticky; left: 0; z-index: 10;
+            background: var(--navy); color: rgba(255,255,255,0.55);
+            font-size: 11px; font-weight: 500; padding: 10px 12px; min-width: 44px;
+            border-right: 2px solid var(--gold) !important;
+        }
+        .th-week {
+            position: sticky; left: 44px; z-index: 10;
+            background: var(--navy); color: rgba(255,255,255,0.55);
+            font-size: 11px; font-weight: 500; padding: 10px 10px; min-width: 34px;
+            border-right: 2px solid rgba(255,255,255,0.12) !important;
+        }
+        .th-staff {
+            background: var(--navy); color: white;
+            padding: 8px 6px; min-width: 80px; max-width: 96px;
+        }
+        .th-staff .s-id   { font-size: 10px; color: var(--gold); font-weight: 700; margin-bottom: 3px; }
+        .th-staff .s-name { font-size: 13px; font-weight: 900; color: white; margin-bottom: 3px; }
+        .th-staff .s-unit { font-size: 10px; color: rgba(255,255,255,0.42); }
+
+        /* 資料列 */
+        tbody tr:nth-child(even) { background: #fafaf7; }
+        tbody tr:hover { background: #f5f0e8; }
+        td { padding: 0; height: 36px; }
+
+        .td-date {
+            position: sticky; left: 0; z-index: 5;
+            background: var(--navy); color: white;
+            font-size: 13px; font-weight: 900; padding: 0 12px; min-width: 44px;
+            border-right: 2px solid var(--gold) !important;
+        }
+        .td-week {
+            position: sticky; left: 44px; z-index: 5;
+            background: #f5f0e6; font-size: 12px; font-weight: 700;
+            padding: 0 8px; min-width: 34px;
+            border-right: 2px solid var(--border) !important; color: var(--muted);
+        }
+        .td-week.wknd { color: #c0392b; background: #fff5f5; }
+        .td-date.wknd { color: #ffcdd2; }
+
+        /* 排班格 */
+        .td-shift { min-width: 80px; max-width: 96px; }
+        .td-shift input {
+            width: 100%; height: 36px; border: none; text-align: center;
+            font-size: 13px; font-weight: 900;
+            background: transparent; pointer-events: none;
+            outline: none; font-family: inherit; color: inherit; cursor: default;
+        }
+        .can-edit .td-shift input { pointer-events: auto; cursor: text; }
+        .can-edit .td-shift input:focus {
+            background: rgba(255,235,59,0.2); outline: 2px solid var(--gold);
+        }
+
+        /* ══ 班別顏色 ══
+           D系列 = 日B班（綠）
+           E系列 = 夜E班（紫）
+           C系列 = 夜B班（藍）
+        */
+        .v-D { background: var(--d-bg) !important; color: var(--d-fg) !important; }
+        .v-E { background: var(--e-bg) !important; color: var(--e-fg) !important; }
+        .v-C { background: var(--c-bg) !important; color: var(--c-fg) !important; }
+
+        /* ══ 班別說明區 ══ */
+        .legend {
+            margin: 0 14px 20px;
+            background: white; border-radius: 10px;
+            border: 1px solid var(--border); padding: 14px 16px;
+            box-shadow: 0 2px 10px rgba(26,39,68,0.06);
+        }
+        .legend-title {
+            font-size: 11px; font-weight: 700; color: var(--muted);
+            letter-spacing: 2px; margin-bottom: 12px;
+            padding-bottom: 8px; border-bottom: 1px solid var(--border);
+        }
+        .legend-group { margin-bottom: 12px; }
+        .legend-group:last-child { margin-bottom: 0; }
+        .legend-group-title {
+            font-size: 11px; font-weight: 700; color: var(--muted);
+            margin-bottom: 6px; letter-spacing: 1px;
+        }
+        .legend-row { display: flex; flex-wrap: wrap; gap: 6px; }
+        .legend-item {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border);
+            min-width: 120px;
+        }
+        .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .legend-item .lcode { font-size: 13px; font-weight: 900; min-width: 24px; }
+        .legend-item .ldesc { font-size: 11px; color: var(--muted); }
+
+        /* D系列 */
+        .li-D { background: var(--d-bg); border-color: #a5d6a7; }
+        .li-D .lcode { color: var(--d-fg); }
+        .li-D .legend-dot { background: var(--d-fg); }
+        /* E系列 */
+        .li-E { background: var(--e-bg); border-color: #ce93d8; }
+        .li-E .lcode { color: var(--e-fg); }
+        .li-E .legend-dot { background: var(--e-fg); }
+        /* C系列 */
+        .li-C { background: var(--c-bg); border-color: #90caf9; }
+        .li-C .lcode { color: var(--c-fg); }
+        .li-C .legend-dot { background: var(--c-fg); }
+
+        /* 時間說明列 */
+        .time-row {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
+            padding-top: 10px; border-top: 1px dashed var(--border);
+        }
+        .time-chip {
+            display: flex; align-items: center; gap: 6px;
+            padding: 5px 12px; border-radius: 20px;
+            font-size: 11px; font-weight: 700; border: 1px solid var(--border);
+        }
+        .tc-D { background: var(--d-bg); color: var(--d-fg); border-color: #a5d6a7; }
+        .tc-E { background: var(--e-bg); color: var(--e-fg); border-color: #ce93d8; }
+        .tc-C { background: var(--c-bg); color: var(--c-fg); border-color: #90caf9; }
+
+        /* ══ Toast ══ */
+        .toast {
+            position: fixed; bottom: 28px; left: 50%;
+            transform: translateX(-50%) translateY(16px);
+            background: #1e293b; color: white;
+            padding: 12px 24px; border-radius: 30px;
+            font-weight: 700; font-size: 13px; z-index: 9999; opacity: 0;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            transition: 0.3s; pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="page-header">
+    <div class="header-left">
+        <div class="header-badge">🐕</div>
+        <div class="header-title">
+            <h1>K9 警衛輪班 · 管理者視角</h1>
+            <p>全員排班總覽 · 總務組</p>
+        </div>
+    </div>
+    <div class="month-ctrl">
+        <button class="btn-nav" onclick="changeMonth(-1)">❮</button>
+        <div class="month-label" id="monthLabel">載入中...</div>
+        <button class="btn-nav" onclick="changeMonth(1)">❯</button>
+    </div>
+    <div class="header-right">
+        <button id="btnEM"   class="btn btn-green" onclick="exportMonthToExcel()">📄 匯出當月</button>
+        <button id="btnEA"   class="btn btn-blue"  onclick="exportAllToExcel()">📊 匯出全年</button>
+        <button id="btnLock" class="btn btn-ghost"  onclick="toggleLock()">🔒 唯讀</button>
+    </div>
+</div>
+
+<!-- 載入條 -->
+<div class="loading-bar" id="loadingBar">
+    <div class="loading-dot"></div>
+    <span id="loadingText">正在從 Firebase 讀取員工資料...</span>
+</div>
+
+<!-- 表格 -->
+<div class="table-wrapper">
+    <div class="section-title">
+        <span id="sectionTitle">排班總覽</span>
+        <span class="compat-badge">⇄ 與黑雲端班表 V5.2 資料互通</span>
+    </div>
+    <div class="table-scroll">
+        <table id="rosterTable">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+        <div id="emptyState" style="display:none; padding:40px; text-align:center; color:#999; font-size:14px;">
+            ⏳ 載入員工資料中，請稍候...
+        </div>
+    </div>
+</div>
+
+<!-- 班別說明 -->
+<div class="legend">
+    <div class="legend-title">班表代號對照表</div>
+
+    <div class="legend-group">
+        <div class="legend-group-title">☀️ 日B班系列</div>
+        <div class="legend-row">
+            <div class="legend-item li-D"><div class="legend-dot"></div><div class="lcode">D</div><div class="ldesc">工作日 日B班</div></div>
+            <div class="legend-item li-D"><div class="legend-dot"></div><div class="lcode">D1</div><div class="ldesc">例假日 日B班</div></div>
+            <div class="legend-item li-D"><div class="legend-dot"></div><div class="lcode">D2</div><div class="ldesc">休息日 日B班</div></div>
+            <div class="legend-item li-D"><div class="legend-dot"></div><div class="lcode">D3</div><div class="ldesc">國定假日 日B班</div></div>
+        </div>
+    </div>
+
+    <div class="legend-group">
+        <div class="legend-group-title">★ 夜E班系列</div>
+        <div class="legend-row">
+            <div class="legend-item li-E"><div class="legend-dot"></div><div class="lcode">E</div><div class="ldesc">工作日 夜E班</div></div>
+            <div class="legend-item li-E"><div class="legend-dot"></div><div class="lcode">E1</div><div class="ldesc">例假日 夜E班</div></div>
+            <div class="legend-item li-E"><div class="legend-dot"></div><div class="lcode">E2</div><div class="ldesc">休息日 夜E班</div></div>
+            <div class="legend-item li-E"><div class="legend-dot"></div><div class="lcode">E3</div><div class="ldesc">國定假日 夜E班</div></div>
+        </div>
+    </div>
+
+    <div class="legend-group">
+        <div class="legend-group-title">@ 夜B班系列</div>
+        <div class="legend-row">
+            <div class="legend-item li-C"><div class="legend-dot"></div><div class="lcode">C</div><div class="ldesc">工作日 夜B班</div></div>
+            <div class="legend-item li-C"><div class="legend-dot"></div><div class="lcode">C1</div><div class="ldesc">例假日 夜B班</div></div>
+            <div class="legend-item li-C"><div class="legend-dot"></div><div class="lcode">C2</div><div class="ldesc">休息日 夜B班</div></div>
+            <div class="legend-item li-C"><div class="legend-dot"></div><div class="lcode">C3</div><div class="ldesc">國定假日 夜B班</div></div>
+        </div>
+    </div>
+
+    <div class="time-row">
+        <div class="time-chip tc-D">☀️ 日B班｜07:00 ~ 19:00（12h）</div>
+        <div class="time-chip tc-E">★ 夜E班｜19:00 ~ 07:00（12h）</div>
+        <div class="time-chip tc-C">@ 夜B班｜17:00 ~ 05:00（12h）</div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+//  Firebase
+// ══════════════════════════════════════
+const firebaseConfig = {
+    apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+    databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+    projectId: "factor-security-d1965",
+    appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ══════════════════════════════════════
+//  狀態
+// ══════════════════════════════════════
+let curYear   = new Date().getFullYear();
+let curMonth  = new Date().getMonth();
+let isEditing = false;
+let staffList = [];  // { id, name, reason }
+
+const weekNames = ["日","一","二","三","四","五","六"];
+
+// ══════════════════════════════════════
+//  班別代號 → CSS class
+//  D系列 → .v-D（綠）
+//  E系列 → .v-E（紫）
+//  C系列 → .v-C（藍）
+// ══════════════════════════════════════
+function shiftClass(val) {
+    if (!val) return '';
+    const v = val.trim().toUpperCase();
+    if (v.startsWith('D')) return 'v-D';
+    if (v.startsWith('E')) return 'v-E';
+    if (v.startsWith('C')) return 'v-C';
+    return '';
+}
+
+// ══════════════════════════════════════
+//  UI 工具
+// ══════════════════════════════════════
+let _tt;
+function showToast(msg, ms = 3000) {
+    const el = document.getElementById('toast');
+    el.innerText = msg; el.classList.add('show');
+    clearTimeout(_tt); _tt = setTimeout(() => el.classList.remove('show'), ms);
+}
+function setLoading(on, text = '') {
+    const bar = document.getElementById('loadingBar');
+    if (on) { document.getElementById('loadingText').innerText = text; bar.classList.remove('hidden'); }
+    else    { bar.classList.add('hidden'); }
+}
+
+// ══════════════════════════════════════
+//  讀取員工
+//  employee_list / key=代號 / 欄位：id, name, plate, reason
+//  篩選：reason 包含「總務」
+// ══════════════════════════════════════
+async function loadStaff() {
+    setLoading(true, '正在讀取員工資料（總務組）...');
+    try {
+        const snap = await db.ref('employee_list').once('value');
+        const raw  = snap.val() || {};
+        const list = [];
+
+        Object.entries(raw).forEach(([key, val]) => {
+            if (!val || !val.name) return;
+            if (!(val.reason || '').includes('總務')) return;
+            list.push({ id: val.id || key, name: val.name, reason: val.reason || '總務' });
+        });
+
+        list.sort((a, b) => a.id.localeCompare(b.id));
+        staffList = list;
+        setLoading(false);
+        console.log(`✅ 總務組 ${list.length} 人：`, list.map(p => `${p.id} ${p.name}`).join('、'));
+    } catch(err) {
+        setLoading(false);
+        showToast('❌ 讀取員工失敗：' + err.message, 6000);
+    }
+}
+
+// ══════════════════════════════════════
+//  Firebase key：年_月_姓名_日
+//  ✅ 與黑雲端班表 V5.2 完全相同
+// ══════════════════════════════════════
+function mkKey(name, day) {
+    return `${curYear}_${curMonth + 1}_${name}_${day}`;
+}
+
+// ══════════════════════════════════════
+//  建立表格
+// ══════════════════════════════════════
+async function initTable() {
+    document.getElementById('monthLabel').innerText = `${curYear}年 ${curMonth + 1}月`;
+    document.getElementById('sectionTitle').innerText =
+        `${curYear}年 ${String(curMonth + 1).padStart(2,'0')}月 排班總覽`;
+
+    if (staffList.length === 0) await loadStaff();
+
+    const days  = new Date(curYear, curMonth + 1, 0).getDate();
+    const thead = document.getElementById('tableHead');
+    const tbody = document.getElementById('tableBody');
+    thead.innerHTML = ''; tbody.innerHTML = '';
+
+    if (staffList.length === 0) {
+        document.getElementById('emptyState').style.display = 'block'; return;
+    }
+    document.getElementById('emptyState').style.display = 'none';
+
+    // 標頭列
+    const hRow = document.createElement('tr');
+    const thD  = document.createElement('th'); thD.className = 'th-date'; thD.innerText = '日';
+    const thW  = document.createElement('th'); thW.className = 'th-week'; thW.innerText = '週';
+    hRow.appendChild(thD); hRow.appendChild(thW);
+    staffList.forEach(p => {
+        const th = document.createElement('th');
+        th.className = 'th-staff';
+        th.innerHTML = `<div class="s-id">${p.id}</div><div class="s-name">${p.name}</div><div class="s-unit">${p.reason}</div>`;
+        hRow.appendChild(th);
+    });
+    thead.appendChild(hRow);
+
+    // 每天一列
+    for (let d = 1; d <= days; d++) {
+        const dow  = new Date(curYear, curMonth, d).getDay();
+        const isWk = (dow === 0 || dow === 6);
+        const tr   = document.createElement('tr');
+
+        const tdD = document.createElement('td');
+        tdD.className = 'td-date' + (isWk ? ' wknd' : '');
+        tdD.innerText = d;
+
+        const tdW = document.createElement('td');
+        tdW.className = 'td-week' + (isWk ? ' wknd' : '');
+        tdW.innerText = weekNames[dow];
+
+        tr.appendChild(tdD); tr.appendChild(tdW);
+
+        staffList.forEach(p => {
+            const td  = document.createElement('td');
+            td.className = 'td-shift';
+            const inp = document.createElement('input');
+            inp.id = mkKey(p.name, d);
+            inp.addEventListener('change', function() {
+                saveShift(p.name, d, this.value.trim());
+            });
+            td.appendChild(inp);
+            tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+    }
+
+    listenSchedule(days);
+}
+
+// ══════════════════════════════════════
+//  即時監聽
+// ══════════════════════════════════════
+function listenSchedule(days) {
+    db.ref('guardSchedules').off();
+    db.ref('guardSchedules').on('value', snap => {
+        const data = snap.val() || {};
+        staffList.forEach(p => {
+            for (let d = 1; d <= days; d++) {
+                const val = data[mkKey(p.name, d)] || '';
+                const inp = document.getElementById(mkKey(p.name, d));
+                if (!inp) continue;
+                inp.value = val;
+                const td  = inp.parentElement;
+                td.className = 'td-shift';
+                const cls = shiftClass(val);
+                if (cls) td.classList.add(cls);
+            }
+        });
+    });
+}
+
+// ══════════════════════════════════════
+//  儲存
+// ══════════════════════════════════════
+function saveShift(name, day, val) {
+    db.ref('guardSchedules/' + mkKey(name, day)).set(val);
+}
+
+// ══════════════════════════════════════
+//  換月 / 鎖定
+// ══════════════════════════════════════
+function changeMonth(dir) {
+    curMonth += dir;
+    if (curMonth < 0)  { curMonth = 11; curYear--; }
+    if (curMonth > 11) { curMonth = 0;  curYear++; }
+    initTable();
+}
+
+function toggleLock() {
+    const btn = document.getElementById('btnLock');
+    if (!isEditing) {
+        if (prompt('請輸入人事密碼：') !== '8888') { showToast('❌ 密碼錯誤'); return; }
+        isEditing = true;
+        document.body.classList.add('can-edit');
+        btn.innerText = '🔓 編輯中'; btn.classList.add('unlocked');
+        showToast('✅ 已進入編輯模式');
+    } else {
+        isEditing = false;
+        document.body.classList.remove('can-edit');
+        btn.innerText = '🔒 唯讀'; btn.classList.remove('unlocked');
+        showToast('🔒 已切換回唯讀模式');
+    }
+}
+
+// ══════════════════════════════════════
+//  匯出 Excel
+// ══════════════════════════════════════
+function buildMonthSheet(allData, year, month) {
+    const days = new Date(year, month + 1, 0).getDate();
+    const rows = [];
+    const hId   = ['日期','星期']; const hName = ['',''  ];
+    staffList.forEach(p => { hId.push(p.id); hName.push(p.name); });
+    rows.push(hId, hName);
+    for (let d = 1; d <= days; d++) {
+        const row = [d, weekNames[new Date(year, month, d).getDay()]];
+        staffList.forEach(p => row.push(allData[`${year}_${month+1}_${p.name}_${d}`] || ''));
+        rows.push(row);
+    }
+    const ws   = XLSX.utils.aoa_to_sheet(rows);
+    const cols = [{wch:6},{wch:6}]; staffList.forEach(() => cols.push({wch:8}));
+    ws['!cols'] = cols; return ws;
+}
+
+function buildSummarySheet(allData, year) {
+    const rows   = [];
+    const header = ['代號','姓名'];
+    for (let m = 1; m <= 12; m++) header.push(`${m}月D系`,`${m}月E系`,`${m}月C系`);
+    header.push('全年D','全年E','全年C','全年總班');
+    rows.push(header);
+    staffList.forEach(p => {
+        const row = [p.id, p.name]; let tD=0,tE=0,tC=0;
+        for (let m = 0; m < 12; m++) {
+            const days = new Date(year, m+1, 0).getDate();
+            let dc=0,ec=0,cc=0;
+            for (let d = 1; d <= days; d++) {
+                const v = (allData[`${year}_${m+1}_${p.name}_${d}`] || '').toUpperCase();
+                if (v.startsWith('D')) dc++;
+                else if (v.startsWith('E')) ec++;
+                else if (v.startsWith('C')) cc++;
+            }
+            row.push(dc,ec,cc); tD+=dc; tE+=ec; tC+=cc;
+        }
+        row.push(tD,tE,tC,tD+tE+tC); rows.push(row);
+    });
+    const ws   = XLSX.utils.aoa_to_sheet(rows);
+    const cols = [{wch:8},{wch:10}];
+    for (let i=0; i<36; i++) cols.push({wch:7});
+    cols.push({wch:7},{wch:7},{wch:7},{wch:9}); ws['!cols'] = cols; return ws;
+}
+
+async function exportMonthToExcel() {
+    const btn = document.getElementById('btnEM'); btn.disabled = true;
+    showToast('⏳ 讀取雲端資料中...', 10000);
+    try {
+        const data = (await db.ref('guardSchedules').once('value')).val() || {};
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, buildMonthSheet(data, curYear, curMonth),
+            `${curYear}-${String(curMonth+1).padStart(2,'0')}月`);
+        XLSX.writeFile(wb, `警衛排班表_${curYear}年${curMonth+1}月.xlsx`);
+        showToast('✅ 匯出完成！');
+    } catch(e) { showToast('❌ 匯出失敗：' + e.message, 5000); }
+    btn.disabled = false;
+}
+
+async function exportAllToExcel() {
+    const btn = document.getElementById('btnEA'); btn.disabled = true;
+    showToast('⏳ 讀取雲端資料中...', 30000);
+    try {
+        const data = (await db.ref('guardSchedules').once('value')).val() || {};
+        const wb   = XLSX.utils.book_new();
+        for (let m = 0; m < 12; m++) {
+            XLSX.utils.book_append_sheet(wb, buildMonthSheet(data, curYear, m),
+                `${curYear}-${String(m+1).padStart(2,'0')}月`);
+        }
+        XLSX.utils.book_append_sheet(wb, buildSummarySheet(data, curYear), `${curYear}年全年統計`);
+        XLSX.writeFile(wb, `警衛排班表_${curYear}年.xlsx`);
+        showToast('✅ 全年 Excel 匯出完成！');
+    } catch(e) { showToast('❌ 匯出失敗：' + e.message, 5000); }
+    btn.disabled = false;
+}
+
+// ══════════════════════════════════════
+//  啟動
+// ══════════════════════════════════════
+initTable();
+</script>
+</body>
+</html>
