@@ -27,14 +27,20 @@
         .col-id { left: 150px; width: 80px; }
         .col-name { left: 230px; width: 80px; }
 
-        input { width: 95%; border: none; text-align: center; font-size: 13px; background: transparent; pointer-events: none; }
-        .can-edit input { pointer-events: auto; background: #fff9c4; }
+        input { width: 95%; border: none; text-align: center; font-size: 13px; background: transparent; }
+        /* 唯讀模式下禁止聚焦，並在編輯模式下高亮輸入框 */
+        .can-edit input { background: #fff9c4; }
 
-        /* 照片中的假日配色 */
+        /* 符合照片標準的配色樣式 */
         .is-holiday { color: red; font-weight: bold; }
-        .val-例假 { background: #fce4ec; color: #c2185b; }
-        .val-休息日, .val-休息日2 { background: #e8f5e9; color: #2e7d32; }
-        .val-國定假日 { background: #fff3e0; color: #ef6c00; }
+        .bg-例假 { background: #fce4ec !important; color: #c2185b; }
+        .bg-休息日 { background: #e8f5e9 !important; color: #2e7d32; }
+        .bg-國定假日 { background: #fff3e0 !important; color: #ef6c00; }
+        
+        /* 英文簡稱上色對應（D1/E2等） */
+        .bg-D1, .bg-E1, .bg-C1 { background: #fce4ec !important; color: #c2185b; }
+        .bg-D2, .bg-E2, .bg-C2 { background: #e8f5e9 !important; color: #2e7d32; }
+        .bg-D3, .bg-E3, .bg-C3 { background: #fff3e0 !important; color: #ef6c00; }
 
         /* 底部備註欄 */
         .footer-note { margin-top: 20px; background: #fff; padding: 20px; border: 1px solid #ccc; display: flex; gap: 50px; font-size: 14px; line-height: 1.6; }
@@ -95,10 +101,9 @@
     const db = firebase.database();
 
     let curYear = 2024;
-    let curMonth = 2; // 預設 3 月
+    let curMonth = 2; // 預設 3 月 (JavaScript 的月份是 0-11)
     let isEditing = false;
 
-    // 依照照片更新人員資料
     const staffData = [
         {group: "總務", shift: "日班B班", id: "D0762", name: "盧家慶"},
         {group: "總務", shift: "日班B班", id: "D03807", name: "何鴻隆"},
@@ -115,7 +120,6 @@
         const wHead = document.getElementById('weekHeader');
         const tbody = document.getElementById('rosterBody');
         
-        // 建立左側固定標題
         dHead.innerHTML = `<th class="sticky-col col-group">組別</th><th class="sticky-col col-shift">班別</th><th class="sticky-col col-id">員工代號</th><th class="sticky-col col-name">姓名</th>`;
         wHead.innerHTML = `<th class="sticky-col col-group">-</th><th class="sticky-col col-shift">-</th><th class="sticky-col col-id">-</th><th class="sticky-col col-name">-</th>`;
         tbody.innerHTML = '';
@@ -124,7 +128,6 @@
         
         const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
 
-        // 建立日期與星期標頭
         for (let d = 1; d <= daysInMonth; d++) {
             const dateTh = document.createElement('th');
             dateTh.innerText = d;
@@ -137,7 +140,6 @@
             wHead.appendChild(weekTh);
         }
 
-        // 建立表格內容
         staffData.forEach(p => {
             const tr = document.createElement('tr');
             let rowHtml = `
@@ -147,12 +149,15 @@
                 <td class="sticky-col col-name"><b>${p.name}</b></td>
             `;
             for (let d = 1; d <= daysInMonth; d++) {
-                rowHtml += `<td><input id="${curYear}_${curMonth+1}_${p.name}_${d}" onchange="saveShift('${p.name}', ${d}, this.value)"></td>`;
+                // 初始化 input，預設帶入 readOnly 限制 Tab 鍵聚焦
+                rowHtml += `<td><input id="${curYear}_${curMonth+1}_${p.name}_${d}" onchange="saveShift('${p.name}', ${d}, this.value)" readOnly tabindex="-1"></td>`;
             }
             tr.innerHTML = rowHtml;
             tbody.appendChild(tr);
         });
 
+        // 重新初始化輸入框的唯讀與 tabIndex 狀態
+        applyReadOnlyState();
         listenToData(daysInMonth);
     }
 
@@ -167,9 +172,14 @@
                     const el = document.getElementById(id);
                     if(el) {
                         el.value = val;
-                        // 根據填寫內容上色
+                        // 移除所有舊的上色 CSS
                         el.parentElement.className = "";
-                        if(val) el.parentElement.classList.add('val-' + val);
+                        
+                        // 動態上色機制（相容中文與英文代號）
+                        if(val) {
+                            const formattedVal = val.replace(/[\(\)\s]/g, ""); // 移除括號與空白，避免 CSS 報錯
+                            el.parentElement.classList.add('bg-' + formattedVal);
+                        }
                     }
                 }
             });
@@ -177,6 +187,7 @@
     }
 
     function saveShift(name, day, val) {
+        if (!isEditing) return; // 二次防禦：非編輯狀態不允許寫入資料庫
         const id = `${curYear}_${curMonth+1}_${name}_${day}`;
         db.ref('guardSchedules/' + id).set(val);
     }
@@ -186,6 +197,20 @@
         if (curMonth < 0) { curMonth = 11; curYear--; }
         else if (curMonth > 11) { curMonth = 0; curYear++; }
         initTable();
+    }
+
+    // 集中管理唯讀與可聚焦狀態，防禦鍵盤 Tab 修改
+    function applyReadOnlyState() {
+        const inputs = document.querySelectorAll('#rosterBody input');
+        inputs.forEach(input => {
+            if (isEditing) {
+                input.removeAttribute('readOnly');
+                input.removeAttribute('tabindex');
+            } else {
+                input.setAttribute('readOnly', 'true');
+                input.setAttribute('tabindex', '-1');
+            }
+        });
     }
 
     function toggleLock() {
@@ -200,6 +225,7 @@
             document.getElementById('lockBtn').innerText = "🔒 唯讀模式";
             document.getElementById('lockBtn').classList.remove('unlocked');
         }
+        applyReadOnlyState(); // 切換鎖定時立刻套用狀態
     }
 
     async function exportMonthToExcel() {
@@ -208,17 +234,14 @@
         const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
         
         const rows = [];
-        // 第一列：日期
         const r1 = ['組別', '班別', '員工代號', '姓名'];
         for(let d=1; d<=daysInMonth; d++) r1.push(d);
         rows.push(r1);
 
-        // 第二列：星期
         const r2 = ['', '', '', ''];
         for(let d=1; d<=daysInMonth; d++) r2.push(weekNames[new Date(curYear, curMonth, d).getDay()]);
         rows.push(r2);
 
-        // 人員資料
         staffData.forEach(p => {
             const row = [p.group, p.shift, p.id, p.name];
             for(let d=1; d<=daysInMonth; d++) {
