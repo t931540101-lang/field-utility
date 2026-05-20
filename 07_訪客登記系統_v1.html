@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>台灣精銳科技 - 訪客進出登記系統</title>
+    <title>台灣精銳科技 - 雲端訪客登記系統</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
     <style>
         :root {
             --bg-color: #121212;
             --card-bg: #1e1e1e;
             --text-main: #ffffff;
             --text-sub: #aaaaaa;
-            --accent: #00ffd2;
+            --accent: #ffa500; /* 改用搶眼的工廠安全橘金配色 */
             --success: #28a745;
             --danger: #dc3545;
             --border: #333333;
@@ -19,7 +22,7 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             padding: 12px;
             display: flex;
             flex-direction: column;
@@ -27,12 +30,10 @@
         }
         .container { width: 100%; max-width: 380px; }
         
-        /* 標題與標籤 */
         .header { margin: 10px 0 15px 0; text-align: center; }
         .header h1 { font-size: 1.1rem; color: var(--accent); letter-spacing: 1px; }
         .header p { font-size: 0.75rem; color: var(--text-sub); margin-top: 4px; }
         
-        /* 表單卡片 */
         .form-card {
             background: var(--card-bg);
             padding: 14px;
@@ -40,13 +41,9 @@
             margin-bottom: 15px;
             border: 1px solid var(--border);
         }
-        .form-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
+        .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
         .form-group { flex: 1; display: flex; flex-direction: column; }
-        .form-group.fixed-w { flex: 0 0 80px; } /* 人數欄位縮小 */
+        .form-group.fixed-w { flex: 0 0 80px; }
         
         label { font-size: 0.75rem; color: var(--text-sub); margin-bottom: 4px; font-weight: bold; }
         .form-input {
@@ -73,9 +70,7 @@
             background: var(--accent);
             margin-top: 5px;
         }
-        .btn-submit:active { opacity: 0.8; }
-
-        /* 統計狀態 */
+        
         .status-bar {
             display: flex;
             justify-content: space-between;
@@ -87,38 +82,19 @@
             border: 1px solid var(--border);
         }
         
-        /* 歷史表格區（支援手機橫向滑動） */
-        .table-title {
-            font-size: 0.85rem;
-            color: var(--text-sub);
-            margin-bottom: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .table-title { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 6px; }
         .table-container {
             width: 100%;
-            overflow-x: auto; /* 關鍵：讓手機可以左右滑動看完整欄位 */
+            overflow-x: auto;
             background: var(--card-bg);
             border-radius: 8px;
             border: 1px solid var(--border);
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-            text-align: left;
-            min-width: 600px; /* 確保在手機上不會擠成一團 */
-        }
-        th, td {
-            padding: 10px 8px;
-            border-bottom: 1px solid var(--border);
-            white-space: nowrap;
-        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left; min-width: 600px; }
+        th, td { padding: 10px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
         th { background: #252525; color: var(--accent); font-weight: bold; }
-        tr.inside { background: rgba(0, 255, 210, 0.03); }
+        tr.inside { background: rgba(255, 165, 0, 0.04); }
         
-        /* 離開按鈕 */
         .btn-out {
             background: rgba(40, 167, 69, 0.15);
             color: #4cd137;
@@ -137,7 +113,7 @@
 <div class="container">
     <div class="header">
         <h1>台灣精銳科技股份有限公司</h1>
-        <p>訪客進出電子登記中樞 v1.0</p>
+        <p>☁️ 雲端即時訪客監控中樞 v2.0</p>
     </div>
 
     <div class="form-card">
@@ -166,7 +142,7 @@
         <div class="form-row">
             <div class="form-group">
                 <label>事由</label>
-                <input type="text" id="vReason" class="form-input" placeholder="例: 設備維修 / 面試" autocomplete="off">
+                <input type="text" id="vReason" class="form-input" placeholder="例: 設備維修" autocomplete="off">
             </div>
             <div class="form-group">
                 <label>聯絡電話</label>
@@ -174,17 +150,15 @@
             </div>
         </div>
 
-        <button class="btn-submit" onclick="checkInVisitor()">🚀 登記進廠 (Check-In)</button>
+        <button class="btn-submit" onclick="checkInToFirebase()">🚀 雲端登記進廠 (Check-In)</button>
     </div>
 
     <div class="status-bar">
-        <span>廠內現有訪客：<strong id="insideCount" style="color:var(--accent)">0</strong> 批</span>
-        <span style="color:var(--danger); cursor:pointer;" onclick="clearAllData()">🗑️ 清空今日紀錄</span>
+        <span>雲端即時在廠訪客：<strong id="insideCount" style="color:var(--accent)">0</strong> 批</span>
+        <span id="netStatus" style="color:#4cd137">● 雲端連線正常</span>
     </div>
 
-    <div class="table-title">
-        <span>📋 今日進出流水線 (左右滑動檢視)</span>
-    </div>
+    <div class="table-title">📋 雲端流水線 (自動即時重整 / 左右滑動)</div>
     <div class="table-container">
         <table>
             <thead>
@@ -200,25 +174,39 @@
                 </tr>
             </thead>
             <tbody id="visitorTableBody">
-                </tbody>
+                <tr><td colspan="8" style="text-align:center; color:#555;">正在連線雲端資料庫...</td></tr>
+            </tbody>
         </table>
     </div>
 </div>
 
 <script>
-    let visitors = [];
+    // ⚠️ 小黑哥，請把這裡換成你自己的 Firebase 專案專屬配置（去 Firebase 控制台的專案設定裡複製）
+    const firebaseConfig = {
+        apiKey: "你的API_KEY",
+        authDomain: "factor-security-d1965.firebaseapp.com",
+        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+        projectId: "factor-security-d1965",
+        storageBucket: "factor-security-d1965.appspot.com",
+        messagingSenderId: "你的SENDER_ID",
+        appId: "你的APP_ID"
+    };
 
-    // 初始化：載入 Local Storage
-    document.addEventListener('DOMContentLoaded', () => {
-        const localData = localStorage.getItem('apex_visitors');
-        if (localData) {
-            visitors = JSON.parse(localData);
-        }
-        renderTable();
+    // 初始化 Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // 監聽 Firebase 的 visitor_logs 節點，只要資料一變動，網頁和手機會自動刷新，連按按鈕都不用！
+    database.ref('visitor_logs').on('value', (snapshot) => {
+        const data = snapshot.val();
+        renderTableFromFirebase(data);
+    }, (error) => {
+        document.getElementById('netStatus').innerText = "● 連線失敗";
+        document.getElementById('netStatus').style.color = "var(--danger)";
     });
 
-    // 登記進廠
-    function checkInVisitor() {
+    // 寫入資料到 Firebase
+    function checkInToFirebase() {
         const name = document.getElementById('vName').value.trim();
         const count = document.getElementById('vCount').value.trim();
         const company = document.getElementById('vCompany').value.trim();
@@ -227,16 +215,19 @@
         const phone = document.getElementById('vPhone').value.trim();
 
         if (!name || !company || !target) {
-            alert('小黑哥，姓名、公司、受訪人員是必填的喔！');
+            alert('姓名、公司、受訪人員要填喔，小黑哥！');
             return;
         }
 
         const now = new Date();
         const dateStr = `${now.getMonth()+1}/${now.getDate()}`;
         const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-
-        const newVisitor = {
-            id: Date.now(),
+        
+        // 產生一個新的 Firebase 雲端主鍵
+        const newLogRef = database.ref('visitor_logs').push();
+        
+        newLogRef.set({
+            id: newLogRef.key,
             date: dateStr,
             name: name,
             count: count || 1,
@@ -246,10 +237,7 @@
             phone: phone || "無",
             timeIn: timeStr,
             timeOut: null
-        };
-
-        visitors.push(newVisitor);
-        saveAndRefresh();
+        });
 
         // 清空表單
         document.getElementById('vName').value = '';
@@ -260,39 +248,32 @@
         document.getElementById('vPhone').value = '';
     }
 
-    // 登記出廠
-    function checkOutVisitor(id) {
+    // 更新 Firebase 中的出廠時間
+    function checkOutFromFirebase(key) {
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
         
-        const visitor = visitors.find(v => v.id === id);
-        if (visitor) {
-            visitor.timeOut = timeStr;
-            saveAndRefresh();
-        }
+        database.ref('visitor_logs/' + key).update({
+            timeOut: timeStr
+        });
     }
 
-    function saveAndRefresh() {
-        localStorage.setItem('apex_visitors', JSON.stringify(visitors));
-        renderTable();
-    }
-
-    // 渲染表格
-    function renderTable() {
+    // 解析雲端資料並渲染
+    function renderTableFromFirebase(data) {
         const tbody = document.getElementById('visitorTableBody');
         const insideCountEl = document.getElementById('insideCount');
         
-        let insideCount = 0;
-        // 最新登記的排在最上面
-        const displayData = [...visitors].reverse();
-
-        if (displayData.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#555;">目前尚無登記資料</td></tr>';
+        if (!data) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#555;">雲端目前無訪客資料</td></tr>';
             insideCountEl.innerText = 0;
             return;
         }
 
-        tbody.innerHTML = displayData.map(v => {
+        // 將 Firebase 的物件轉換成陣列並倒序排列（最新在最上）
+        const list = Object.keys(data).map(key => data[key]).reverse();
+        let insideCount = 0;
+
+        tbody.innerHTML = list.map(v => {
             const isInside = v.timeOut === null;
             if (isInside) insideCount++;
 
@@ -303,12 +284,12 @@
                     <td>${v.target}</td>
                     <td><span class="text-muted">${v.reason}</span></td>
                     <td>${v.date} ${v.timeIn}</td>
-                    <td>${v.timeOut ? v.timeOut : '<span style="color:#eccc68">廠內中</span>'}</td>
+                    <td>${v.timeOut ? v.timeOut : '<span style="color:var(--accent); font-weight:bold;">廠內中 🏭</span>'}</td>
                     <td>${v.phone}</td>
                     <td>
                         ${isInside ? 
-                            `<button class="btn-out" onclick="checkOutVisitor(${v.id})">確認離開 🚪</button>` : 
-                            `<span style="color:var(--text-sub)">已安全出廠</span>`
+                            `<button class="btn-out" onclick="checkOutFromFirebase('${v.id}')">出廠確認 🚪</button>` : 
+                            `<span style="color:var(--text-sub)">已出廠</span>`
                         }
                     </td>
                 </tr>
@@ -316,14 +297,6 @@
         }).join('');
 
         insideCountEl.innerText = insideCount;
-    }
-
-    // 清空數據
-    function clearAllData() {
-        if (confirm('小黑哥，確定要清空手機內的訪客資料庫嗎？（清除後無法復原）')) {
-            visitors = [];
-            saveAndRefresh();
-        }
     }
 </script>
 
