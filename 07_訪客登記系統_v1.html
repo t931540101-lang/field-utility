@@ -182,15 +182,24 @@
 
 <script>
     // ⚠️ 小黑哥，請把這裡換成你自己的 Firebase 專案專屬配置（去 Firebase 控制台的專案設定裡複製）
-    const firebaseConfig = {
-        apiKey: "你的API_KEY",
-        authDomain: "factor-security-d1965.firebaseapp.com",
-        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
-        projectId: "factor-security-d1965",
-        storageBucket: "factor-security-d1965.appspot.com",
-        messagingSenderId: "你的SENDER_ID",
-        appId: "你的APP_ID"
-    };
+    // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+  authDomain: "factor-security-d1965.firebaseapp.com",
+  databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+  projectId: "factor-security-d1965",
+  storageBucket: "factor-security-d1965.firebasestorage.app",
+  messagingSenderId: "864846943143",
+  appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
     // 初始化 Firebase
     firebase.initializeApp(firebaseConfig);
