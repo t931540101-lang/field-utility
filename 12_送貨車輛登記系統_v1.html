@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台灣精銳科技 - 物流車輛進出管制系統</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #ffffff;
+            --text-sub: #aaaaaa;
+            --accent: #ff9f43; /* 帥氣的物流橘色 */
+            --success: #28a745;
+            --danger: #dc3545;
+            --border: #333333;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container { width: 100%; max-width: 380px; }
+        
+        .header { margin: 10px 0 15px 0; text-align: center; }
+        .header h1 { font-size: 1.1rem; color: var(--accent); letter-spacing: 1px; }
+        .header p { font-size: 0.75rem; color: var(--text-sub); margin-top: 4px; }
+        
+        .form-card {
+            background: var(--card-bg);
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border);
+        }
+        .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .form-group { flex: 1; display: flex; flex-direction: column; }
+        
+        label { font-size: 0.75rem; color: var(--text-sub); margin-bottom: 4px; font-weight: bold; }
+        .form-input {
+            width: 100%;
+            padding: 8px 10px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+        .form-input:focus { border-color: var(--accent); }
+        
+        /* 車牌號碼輸入框大字樣式 */
+        .plate-input {
+            font-size: 1.1rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--accent);
+            text-align: center;
+        }
+        
+        .btn-submit {
+            width: 100%;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: #121212;
+            background: var(--accent);
+            margin-top: 5px;
+        }
+        .btn-submit:active { opacity: 0.8; }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            background: var(--card-bg);
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.8rem;
+            border: 1px solid var(--border);
+        }
+        
+        .table-title {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            margin-bottom: 6px;
+        }
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            text-align: left;
+            min-width: 650px;
+        }
+        th, td {
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        th { background: #252525; color: var(--accent); font-weight: bold; }
+        tr.inside { background: rgba(255, 159, 67, 0.04); }
+        
+        .btn-out {
+            background: rgba(40, 167, 69, 0.15);
+            color: #4cd137;
+            border: 1px solid var(--success);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .text-muted { color: var(--text-sub); }
+        .badge-plate {
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #fff;
+            border: 1px solid #555;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>台灣精銳科技股份有限公司</h1>
+        <p>🚚 物流車輛進出管制中樞 v1.0</p>
+    </div>
+
+    <div class="form-card">
+        <div class="form-row">
+            <div class="form-group">
+                <label>車牌號碼</label>
+                <input type="text" id="tPlate" class="form-input plate-input" placeholder="例: ABC-1234" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>物流公司 / 行號</label>
+                <input type="text" id="tCompany" class="form-input" placeholder="例: 新竹物流" autocomplete="off">
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>司機姓名</label>
+                <input type="text" id="tDriver" class="form-input" placeholder="例: 王大同" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>聯絡電話</label>
+                <input type="text" id="tPhone" class="form-input" placeholder="例: 0912-345678" autocomplete="off">
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+            <label>載運項目 / 事由</label>
+            <input type="text" id="tReason" class="form-input" placeholder="例: 製造部進料 / 載運成品出廠" autocomplete="off">
+        </div>
+
+        <button class="btn-submit" onclick="checkInTruck()">🚚 登記進廠 (Check-In)</button>
+    </div>
+
+    <div class="status-bar">
+        <span>廠內現有車輛：<strong id="insideCount" style="color:var(--accent)">0</strong> 輛</span>
+        <span style="color:var(--danger); cursor:pointer;" onclick="clearAllData()">🗑️ 清空車輛紀錄</span>
+    </div>
+
+    <div class="table-title">
+        <span>📋 今日車輛流水線 (左右滑動檢視)</span>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>車牌號碼</th>
+                    <th>物流公司</th>
+                    <th>司機姓名</th>
+                    <th>載運項目 / 事由</th>
+                    <th>進廠時間</th>
+                    <th>出廠時間</th>
+                    <th>聯絡電話</th>
+                    <th>管理動作</th>
+                </tr>
+            </thead>
+            <tbody id="truckTableBody">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let trucks = [];
+
+    // 初始化：載入 Local Storage
+    document.addEventListener('DOMContentLoaded', () => {
+        const localData = localStorage.getItem('apex_trucks');
+        if (localData) {
+            trucks = JSON.parse(localData);
+        }
+        renderTable();
+    });
+
+    // 登記車輛進廠
+    function checkInTruck() {
+        const plate = document.getElementById('tPlate').value.trim();
+        const company = document.getElementById('tCompany').value.trim();
+        const driver = document.getElementById('tDriver').value.trim();
+        const phone = document.getElementById('tPhone').value.trim();
+        const reason = document.getElementById('tReason').value.trim();
+
+        if (!plate || !company) {
+            alert('小黑哥，車牌號碼和物流公司一定要填喔！');
+            return;
+        }
+
+        const now = new Date();
+        const dateStr = `${now.getMonth()+1}/${now.getDate()}`;
+        const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+        const newTruck = {
+            id: Date.now(),
+            date: dateStr,
+            plate: plate.toUpperCase(),
+            company: company,
+            driver: driver || "未填",
+            phone: phone || "未填",
+            reason: reason || "送貨",
+            timeIn: timeStr,
+            timeOut: null
+        };
+
+        trucks.push(newTruck);
+        saveAndRefresh();
+
+        // 清空表單
+        document.getElementById('tPlate').value = '';
+        document.getElementById('tCompany').value = '';
+        document.getElementById('tDriver').value = '';
+        document.getElementById('tPhone').value = '';
+        document.getElementById('tReason').value = '';
+    }
+
+    // 車輛出廠
+    function checkOutTruck(id) {
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        
+        const truck = trucks.find(t => t.id === id);
+        if (truck) {
+            truck.timeOut = timeStr;
+            saveAndRefresh();
+        }
+    }
+
+    function saveAndRefresh() {
+        localStorage.setItem('apex_trucks', JSON.stringify(trucks));
+        renderTable();
+    }
+
+    // 渲染車輛表格
+    function renderTable() {
+        const tbody = document.getElementById('truckTableBody');
+        const insideCountEl = document.getElementById('insideCount');
+        
+        let insideCount = 0;
+        const displayData = [...trucks].reverse();
+
+        if (displayData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#555;">目前尚無大車進廠紀錄</td></tr>';
+            insideCountEl.innerText = 0;
+            return;
+        }
+
+        tbody.innerHTML = displayData.map(t => {
+            const isInside = t.timeOut === null;
+            if (isInside) insideCount++;
+
+            return `
+                <tr class="${isInside ? 'inside' : ''}">
+                    <td><span class="badge-plate">${t.plate}</span></td>
+                    <td><strong>${t.company}</strong></td>
+                    <td>${t.driver}</td>
+                    <td><span class="text-muted">${t.reason}</span></td>
+                    <td>${t.date} ${t.timeIn}</td>
+                    <td>${t.timeOut ? t.timeOut : '<span style="color:#ff9f43; font-weight:bold;">卸貨廠區中</span>'}</td>
+                    <td>${t.phone}</td>
+                    <td>
+                        ${isInside ? 
+                            `<button class="btn-out" onclick="checkOutTruck(${t.id})">放行出廠 🚪</button>` : 
+                            `<span style="color:var(--text-sub)">已離廠</span>`
+                        }
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        insideCountEl.innerText = insideCount;
+    }
+
+    // 清空數據
+    function clearAllData() {
+        if (confirm('小黑哥，確定要清空手機內的物流車輛資料庫嗎？')) {
+            trucks = [];
+            saveAndRefresh();
+        }
+    }
+</script>
+
+</body>
+</html>
