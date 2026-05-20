@@ -2,188 +2,248 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title> 訪客登記系統 | 雲端同步 V1.2</title>
-    <link rel="icon" href="IMG_0968.png">
-    <link rel="apple-touch-icon" href="IMG_0968.png">
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黑曜石訪客登記中樞 v1.0</title>
     <style>
-        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #f4f7f6; --danger: #e74c3c; }
-        body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 450px; }
-        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        
-        /* 個人資訊顯示 */
-        .user-info { background: #1e293b; color: white; width: 100%; padding: 8px 15px; font-size: 12px; display: flex; justify-content: space-between; border-radius: 8px 8px 0 0; }
-        
-        h2 { text-align: center; color: var(--primary); margin-bottom: 15px; font-size: 1.2rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .full-width { grid-column: span 2; }
-        label { font-size: 0.85rem; color: #666; font-weight: bold; }
-        input, textarea { 
-            width: 100%; padding: 10px; margin: 5px 0 12px 0; border: 1px solid #ddd; 
-            border-radius: 6px; box-sizing: border-box; font-size: 16px; 
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #ffffff;
+            --text-sub: #aaaaaa;
+            --accent: #00adb5;
+            --success: #28a745;
+            --danger: #dc3545;
         }
-        .btn-submit { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
-        .btn-submit:active { background: var(--accent); }
-
-        .log-item { background: #fff; border-left: 5px solid var(--accent); padding: 12px; margin-bottom: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-size: 0.9rem; position: relative; }
-        .log-header { display: flex; justify-content: space-between; font-weight: bold; color: var(--primary); margin-bottom: 5px; padding-right: 50px; }
-        .del-btn { position: absolute; top: 10px; right: 10px; color: var(--danger); font-size: 11px; cursor: pointer; padding: 3px 6px; border: 1px solid #ffeded; border-radius: 4px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container { width: 100%; max-width: 360px; }
+        .header { margin: 10px 0; text-align: center; }
+        .header h1 { font-size: 1.2rem; color: var(--accent); letter-spacing: 1px; }
         
-        /* 簽退按鈕 */
-        .checkout-btn { margin-top: 10px; background: #fff; color: var(--accent); border: 1px solid var(--accent); padding: 8px; border-radius: 6px; width: 100%; font-weight: bold; font-size: 13px; }
-        .checkout-btn:active { background: var(--accent); color: white; }
+        /* 登記表單 */
+        .form-card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+        }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 4px; }
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .form-input:focus { border-color: var(--accent); }
+        .btn {
+            width: 100%;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: white;
+            background: var(--accent);
+            transition: background 0.2s;
+        }
+        .btn:active { background: #008c92; }
+
+        /* 統計區 */
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            background: var(--card-bg);
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            color: var(--text-sub);
+        }
+
+        /* 訪客名單 */
+        .list-title { font-size: 0.95rem; color: var(--text-sub); margin-bottom: 8px; }
+        .visitor-list { list-style: none; max-height: 350px; overflow-y: auto; }
+        .visitor-item {
+            background: var(--card-bg);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border-left: 4px solid #555;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .visitor-item.inside { border-left-color: var(--success); }
+        
+        .info strong { color: white; font-size: 0.95rem; }
+        .info p { color: var(--text-sub); font-size: 0.75rem; margin-top: 3px; }
+        
+        .action-zone { text-align: right; }
+        .btn-checkout {
+            background: rgba(40, 167, 69, 0.2);
+            color: #4cd137;
+            border: 1px solid #28a745;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .time-out-text { font-size: 0.75rem; color: var(--text-sub); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="user-info">
-        <span onclick="changeName()">姓名：<span id="userNameDisplay">未設定</span> ✎</span>
-        <span onclick="changeID()">工號：<span id="userIDDisplay">未設定</span> ✎</span>
-    </div>
-    
-    <div class="card">
-        <h2>訪客登記入廠</h2>
-        <div class="form-grid">
-            <div><label>入廠時間</label><input type="time" id="vTimeIn"></div>
-            <div><label>來訪人數</label><input type="number" id="vCount" value="1"></div>
-            
-            <div class="full-width"><label>訪客姓名</label><input type="text" id="vName"></div>
-            <div><label>電話</label><input type="tel" id="vPhone"></div>
-            <div><label>公司行號</label><input type="text" id="vComp"></div>
-            <div class="full-width"><label>受訪人員</label><input type="text" id="vTarget"></div>
-            <div class="full-width"><label>事由</label><textarea id="vReason" rows="1"></textarea></div>
-        </div>
-        <button class="btn-submit" onclick="submitLog()">送出登記並同步雲端</button>
+    <div class="header">
+        <h1>OBSIDIAN 訪客登記中樞</h1>
     </div>
 
-    <div id="logList">
-        <h3 style="text-align:center; color:#666; font-size: 14px;">實時登記清單</h3>
+    <div class="form-card">
+        <div class="form-group">
+            <label>訪客姓名</label>
+            <input type="text" id="vName" class="form-input" placeholder="例：張經理" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label>拜訪部門 / 對象</label>
+            <input type="text" id="vTarget" class="form-input" placeholder="例：製造部 小黑哥" autocomplete="off">
+        </div>
+        <button class="btn" onclick="checkInVisitor()">🚀 登記進入 (Check-In)</button>
     </div>
+
+    <div class="stats-bar">
+        <span>廠內現有訪客：<strong id="insideCount" style="color:var(--success)">0</strong> 人</span>
+        <span style="cursor:pointer;" onclick="clearAllData()">🗑️ 清空歷史</span>
+    </div>
+
+    <div class="list-title">今日進出水線</div>
+    <ul id="visitorList" class="visitor-list"></ul>
 </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
-        authDomain: "factor-security-d1965.firebaseapp.com",
-        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
-        projectId: "factor-security-d1965",
-        storageBucket: "factor-security-d1965.firebasestorage.app",
-        messagingSenderId: "864846943143",
-        appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
-    };
+    // 記憶體資料庫
+    let visitors = [];
 
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    // 初始化：從手機 LocalStorage 載入歷史檔案
+    document.addEventListener('DOMContentLoaded', () => {
+        const localData = localStorage.getItem('obsidian_visitors');
+        if (localData) {
+            visitors = JSON.parse(localData);
+        }
+        renderList();
+    });
 
-    let userName = localStorage.getItem('guardName') || "";
-    let userID = localStorage.getItem('guardID') || "";
+    // 動作：訪客進入登記
+    function checkInVisitor() {
+        const nameInput = document.getElementById('vName');
+        const targetInput = document.getElementById('vTarget');
 
-    function updateUserInfo() {
-        document.getElementById('userNameDisplay').innerText = userName || "未設定";
-        document.getElementById('userIDDisplay').innerText = userID || "未設定";
-    }
+        if (!nameInput.value.trim() || !targetInput.value.trim()) {
+            alert('欄位填一下啦，小黑哥！');
+            return;
+        }
 
-    // 設定當前時間到時間欄位
-    function setCurrentTime() {
         const now = new Date();
-        const hh = now.getHours().toString().padStart(2, '0');
-        const mm = now.getMinutes().toString().padStart(2, '0');
-        document.getElementById('vTimeIn').value = `${hh}:${mm}`;
-    }
+        const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
 
-    function changeName() {
-        const n = prompt("請輸入您的姓名", userName);
-        if(n) { userName = n; localStorage.setItem('guardName', n); updateUserInfo(); }
-    }
-
-    function changeID() {
-        const id = prompt("請輸入您的工號", userID);
-        if(id) { userID = id; localStorage.setItem('guardID', id); updateUserInfo(); }
-    }
-
-    // 網頁載入時，同時更新使用者名稱與當前時間
-    window.onload = function() {
-        updateUserInfo();
-        setCurrentTime();
-    };
-
-    function submitLog() {
-        if(!userName) return alert("請先點擊上方設定「姓名」！");
-        
-        const now = new Date();
-        // 抓取表單上可以被修改的時間
-        const timeIn = document.getElementById('vTimeIn').value; 
-        
-        if(!timeIn) return alert("請確認入廠時間！");
-        if(!document.getElementById('vName').value) return alert("請輸入訪客姓名！");
-
-        const logData = {
-            date: now.toISOString().split('T')[0],
-            name: document.getElementById('vName').value,
-            count: document.getElementById('vCount').value,
-            phone: document.getElementById('vPhone').value,
-            company: document.getElementById('vComp').value,
-            target: document.getElementById('vTarget').value,
-            timeIn: timeIn, // 使用你輸入或微調過的時間
-            leaveTime: "",
-            recorder: userName,
-            reason: document.getElementById('vReason').value,
-            timestamp: Date.now()
+        const newVisitor = {
+            id: Date.now(),
+            name: nameInput.value.trim(),
+            target: targetInput.value.trim(),
+            timeIn: timeStr,
+            timeOut: null
         };
 
-        db.ref('visitor_logs').push(logData).then(() => {
-            alert("登記成功！");
-            // 送出後清空姓名，並把時間重置回最新的「現在時間」
-            document.getElementById('vName').value = ""; 
-            setCurrentTime();
-        });
+        visitors.push(newVisitor);
+        saveToLocal();
+        renderList();
+
+        // 清空輸入框
+        nameInput.value = '';
+        targetInput.value = '';
     }
 
-    function checkout(key) {
+    // 動作：廠商辦完事離開 (Check-Out)
+    function checkOutVisitor(id) {
         const now = new Date();
-        const defaultTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-        const leaveTime = prompt("請確認/修改出廠時間：", defaultTime);
-        
-        if(leaveTime) {
-            db.ref('visitor_logs/' + key).update({ leaveTime: leaveTime });
+        const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+
+        const visitor = visitors.find(v => v.id === id);
+        if (visitor) {
+            visitor.timeOut = timeStr;
+            saveToLocal();
+            renderList();
         }
     }
 
-    function deleteRecord(key) {
-        if(confirm("確定要刪除這筆紀錄嗎？")) db.ref('visitor_logs/' + key).remove();
+    // 儲存至手機 LocalStorage
+    function saveToLocal() {
+        localStorage.setItem('obsidian_visitors', JSON.stringify(visitors));
     }
 
-    db.ref('visitor_logs').limitToLast(10).on('value', (snapshot) => {
-        const listDiv = document.getElementById('logList');
-        listDiv.innerHTML = '<h3 style="text-align:center; color:#666; font-size: 14px;">實時登記清單</h3>';
+    // 重新洗畫面
+    function renderList() {
+        const listEl = document.getElementById('visitorList');
+        const insideCountEl = document.getElementById('insideCount');
         
-        const data = snapshot.val();
-        if (data) {
-            Object.keys(data).reverse().forEach(key => {
-                const item = data[key];
-                const isOut = item.leaveTime !== "";
-                listDiv.innerHTML += `
-                    <div class="log-item" style="${isOut ? 'opacity: 0.6; border-left-color: #ccc;' : ''}">
-                        <span class="del-btn" onclick="deleteRecord('${key}')">刪除</span>
-                        <div class="log-header">
-                            <span>${item.name} (${item.count}人)</span>
-                            <span style="color: ${isOut ? '#999' : '#27ae60'}">${isOut ? '已出廠' : '在場中'}</span>
-                        </div>
-                        <div style="color:#555; line-height: 1.5;">
-                            公司：${item.company}<br>
-                            拜訪：${item.target} | 入廠：${item.timeIn}<br>
-                            ${isOut ? '<b>出廠時間：' + item.leaveTime + '</b>' : ''}
-                        </div>
-                        ${!isOut ? `<button class="checkout-btn" onclick="checkout('${key}')">簽退離開 (補填時間)</button>` : ''}
+        let insideCount = 0;
+        
+        // 最新登記的排在最上面
+        const displayData = [...visitors].reverse();
+
+        if (displayData.length === 0) {
+            listEl.innerHTML = '<li style="text-align:center; color:#555; padding:20px; font-size:0.85rem;">目前無訪客登記紀錄</li>';
+            insideCountEl.innerText = 0;
+            return;
+        }
+
+        listEl.innerHTML = displayData.map(v => {
+            const isInside = v.timeOut === null;
+            if (isInside) insideCount++;
+
+            return `
+                <li class="visitor-item ${isInside ? 'inside' : ''}">
+                    <div class="info">
+                        <strong>${v.name}</strong>
+                        <p>🎯 拜訪: ${v.target}</p>
+                        <p>⏱️ 進入: ${v.timeIn}</p>
                     </div>
-                `;
-            });
+                    <div class="action-zone">
+                        ${isInside ? 
+                            `<button class="btn-checkout" onclick="checkOutVisitor(${v.id})">離開 🚪</button>` : 
+                            `<span class="time-out-text">🚪 離開:<br>${v.timeOut}</span>`
+                        }
+                    </div>
+                </li>
+            `;
+        }).join('');
+
+        insideCountEl.innerText = insideCount;
+    }
+
+    // 清空重來
+    function clearAllData() {
+        if (confirm('確定要清空手機內的所有訪客紀錄嗎？')) {
+            visitors = [];
+            saveToLocal();
+            renderList();
         }
-    });
+    }
 </script>
 
 </body>
