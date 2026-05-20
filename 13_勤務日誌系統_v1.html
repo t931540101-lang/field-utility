@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台灣精銳科技 - 安全勤務日誌系統</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #ffffff;
+            --text-sub: #aaaaaa;
+            --accent: #00ffd2; /* 經典科技青 */
+            --warning: #ffb142;
+            --danger: #ff5252;
+            --border: #333333;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container { width: 100%; max-width: 380px; }
+        
+        .header { margin: 10px 0 15px 0; text-align: center; }
+        .header h1 { font-size: 1.1rem; color: var(--accent); letter-spacing: 1px; }
+        .header p { font-size: 0.75rem; color: var(--text-sub); margin-top: 4px; }
+        
+        .form-card {
+            background: var(--card-bg);
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border);
+        }
+        .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .form-group { flex: 1; display: flex; flex-direction: column; }
+        
+        label { font-size: 0.75rem; color: var(--text-sub); margin-bottom: 4px; font-weight: bold; }
+        .form-input {
+            width: 100%;
+            padding: 9px 10px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+        .form-input:focus { border-color: var(--accent); }
+        select.form-input { height: 38px; color: white; }
+        textarea.form-input { min-height: 70px; resize: vertical; }
+        
+        .btn-submit {
+            width: 100%;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: #121212;
+            background: var(--accent);
+            margin-top: 5px;
+        }
+        .btn-submit:active { opacity: 0.8; }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            background: var(--card-bg);
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.8rem;
+            border: 1px solid var(--border);
+        }
+        
+        .table-title { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 6px; }
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            text-align: left;
+            min-width: 600px;
+        }
+        th, td {
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        th { background: #252525; color: var(--accent); font-weight: bold; }
+        
+        /* 根據重要度做顏色分類 */
+        .badge-type {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        .bg-normal { background: rgba(0, 255, 210, 0.15); color: var(--accent); }
+        .bg-warn { background: rgba(255, 177, 66, 0.15); color: var(--warning); }
+        .bg-danger { background: rgba(255, 82, 82, 0.15); color: var(--danger); }
+        .text-wrap { white-space: normal; min-width: 200px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>台灣精銳科技股份有限公司</h1>
+        <p>🛡️ 安全勤務日誌電子中樞 v1.0</p>
+    </div>
+
+    <div class="form-card">
+        <div class="form-row">
+            <div class="form-group">
+                <label>當班人員 / 執勤衛兵</label>
+                <input type="text" id="logUser" class="form-input" placeholder="例: 王大同" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>目前值班時段</label>
+                <select id="logShift" class="form-input">
+                    <option value="日班 (07:00-19:00)">日班 (07:00-19:00)</option>
+                    <option value="夜班 (19:00-07:00)">夜班 (19:00-07:00)</option>
+                    <option value="中班/特殊時段">中班/特殊時段</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 10px;">
+            <label>日誌類別</label>
+            <select id="logType" class="form-input">
+                <option value="常態交接">🟢 常態交接班紀錄</option>
+                <option value="常態巡邏">🟢 廠區巡邏：無異常</option>
+                <option value="代收包裹">🟡 廠商包裹/重要物件代收</option>
+                <option value="交辦事項">🟡 長官/人事課交辦事項</option>
+                <option value="設備報修">🟠 廠區設備損壞報修登記</option>
+                <option value="異常事件">🔴 突發異常事件報告</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+            <label>日誌詳細內容描述</label>
+            <textarea id="logDetail" class="form-input" placeholder="請詳細記錄勤務內容或交接事項..."></textarea>
+        </div>
+
+        <button class="btn-submit" onclick="addLogEntry()">✍️ 寫入勤務日誌</button>
+    </div>
+
+    <div class="status-bar">
+        <span>今日累計日誌：<strong id="logCount" style="color:var(--accent)">0</strong> 筆</span>
+        <span style="color:var(--danger); cursor:pointer;" onclick="clearAllData()">🗑️ 清空歷史日誌</span>
+    </div>
+
+    <div class="table-title">
+        <span>📋 今日日誌流水線 (左右滑動檢視)</span>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>時間</th>
+                    <th>類別</th>
+                    <th>值班時段</th>
+                    <th>執勤人員</th>
+                    <th>日誌詳細內容描述</th>
+                </tr>
+            </thead>
+            <tbody id="logTableBody">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let logs = [];
+
+    // 初始化：載入 Local Storage
+    document.addEventListener('DOMContentLoaded', () => {
+        const localData = localStorage.getItem('apex_duty_logs');
+        if (localData) {
+            logs = JSON.parse(localData);
+        }
+        renderTable();
+    });
+
+    // 寫入日誌
+    function addLogEntry() {
+        const user = document.getElementById('logUser').value.trim();
+        const shift = document.getElementById('logShift').value;
+        const type = document.getElementById('logType').value;
+        const detail = document.getElementById('logDetail').value.trim();
+
+        if (!user || !detail) {
+            alert('小黑哥，執勤人員跟日誌內容不能空白喔！');
+            return;
+        }
+
+        const now = new Date();
+        const dateStr = `${now.getMonth()+1}/${now.getDate()}`;
+        const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+        const newLog = {
+            id: Date.now(),
+            dateTime: `${dateStr} ${timeStr}`,
+            user: user,
+            shift: shift,
+            type: type,
+            detail: detail
+        };
+
+        logs.push(newLog);
+        saveAndRefresh();
+
+        // 僅清空詳細內容，保留執勤人員跟班別方便連續輸入
+        document.getElementById('logDetail').value = '';
+    }
+
+    function saveAndRefresh() {
+        localStorage.setItem('apex_duty_logs', JSON.stringify(logs));
+        renderTable();
+    }
+
+    // 渲染表格
+    function renderTable() {
+        const tbody = document.getElementById('logTableBody');
+        const logCountEl = document.getElementById('logCount');
+        
+        const displayData = [...logs].reverse();
+        logCountEl.innerText = logs.length;
+
+        if (displayData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#555;">目前尚無勤務日誌紀錄</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = displayData.map(l => {
+            // 根據類別給顏色標籤
+            let badgeClass = 'bg-normal';
+            if (l.type.includes('包裹') || l.type.includes('交辦')) badgeClass = 'bg-warn';
+            if (l.type.includes('報修') || l.type.includes('異常')) badgeClass = 'bg-danger';
+
+            return `
+                <tr>
+                    <td><strong>${l.dateTime}</strong></td>
+                    <td><span class="badge-type ${badgeClass}">${l.type}</span></td>
+                    <td><span style="color:var(--text-sub)">${l.shift}</span></td>
+                    <td>${l.user}</td>
+                    <td class="text-wrap">${l.detail}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // 清空數據
+    function clearAllData() {
+        if (confirm('小黑哥，確定要清空手機內的所有勤務日誌嗎？')) {
+            logs = [];
+            saveAndRefresh();
+        }
+    }
+</script>
+
+</body>
+</html>
