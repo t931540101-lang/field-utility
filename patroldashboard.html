@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>園區安全聯防後台｜警察隊</title>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getFirestore, collection, query, orderBy, limit,
+    onSnapshot, where, Timestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+    authDomain: "factor-security-d1965.firebaseapp.com",
+    projectId: "factor-security-d1965",
+    storageBucket: "factor-security-d1965.firebasestorage.app",
+    messagingSenderId: "864846943143",
+    appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // 即時監聽最新100筆
+  const q = query(
+    collection(db, "patrol_logs"),
+    orderBy("createdAt", "desc"),
+    limit(100)
+  );
+
+  onSnapshot(q, (snapshot) => {
+    const logs = [];
+    snapshot.forEach(doc => {
+      logs.push({ id: doc.id, ...doc.data() });
+    });
+    window.dispatchEvent(new CustomEvent("logsUpdated", { detail: logs }));
+  }, (err) => {
+    console.error("監聽失敗:", err);
+    window.dispatchEvent(new CustomEvent("logsError", { detail: err }));
+  });
+</script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+
+:root {
+  --bg: #060d1a;
+  --surface: #0d1626;
+  --surface2: #111f33;
+  --surface3: #162540;
+  --border: #1a2d45;
+  --accent: #f59e0b;
+  --danger: #ef4444;
+  --warning: #f97316;
+  --success: #10b981;
+  --info: #3b82f6;
+  --text: #cbd5e1;
+  --text-dim: #475569;
+  --text-bright: #f1f5f9;
+  --sidebar-w: 260px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans TC', sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── TOP NAV ── */
+.topnav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  flex-shrink: 0;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-logo {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+
+.nav-title {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--text-bright);
+  letter-spacing: 1px;
+}
+
+.nav-title span {
+  color: var(--accent);
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--success);
+  font-weight: 700;
+}
+
+.live-dot {
+  width: 8px; height: 8px;
+  background: var(--success);
+  border-radius: 50%;
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.clock-nav {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* ── LAYOUT ── */
+.layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.sidebar-section {
+  padding: 20px 16px 8px;
+}
+
+.sidebar-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  padding-left: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: rgba(245,158,11,0.1); color: var(--accent); font-weight: 700; }
+.nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+/* 園區篩選 */
+.zone-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+  border: 1px solid transparent;
+}
+
+.zone-btn:hover { background: var(--surface2); color: var(--text); }
+.zone-btn.active { border-color: var(--accent); background: rgba(245,158,11,0.08); color: var(--accent); font-weight: 700; }
+
+.zone-count {
+  font-size: 11px;
+  background: var(--surface3);
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* 聯絡人卡 */
+.contact-card {
+  margin: 0 12px 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.contact-zone {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.contact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 0;
+}
+
+.contact-name { font-size: 12px; color: var(--text); }
+.contact-role { font-size: 10px; color: var(--text-dim); }
+
+.call-btn {
+  font-size: 11px;
+  background: rgba(16,185,129,0.15);
+  color: var(--success);
+  border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Stats Row */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.stat-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.stat-icon.total   { background: rgba(59,130,246,0.15); }
+.stat-icon.normal  { background: rgba(16,185,129,0.15); }
+.stat-icon.anomaly { background: rgba(245,158,11,0.15); }
+.stat-icon.emergency { background: rgba(239,68,68,0.15); }
+
+.stat-num {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--text-bright);
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 3px;
+  letter-spacing: 0.5px;
+}
+
+/* Table Section */
+.table-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  flex: 1;
+}
+
+.table-header {
+  padding: 14px 20px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.table-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-bright);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: 'Noto Sans TC', sans-serif;
+  outline: none;
+  cursor: pointer;
+}
+
+.filter-select:focus { border-color: var(--accent); }
+
+/* Data Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  padding: 10px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-align: left;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 12px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(26,45,69,0.6);
+  vertical-align: middle;
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+
+.data-table tr.row-emergency {
+  background: rgba(239,68,68,0.06);
+  animation: flashRow 2s infinite;
+}
+
+@keyframes flashRow {
+  0%, 100% { background: rgba(239,68,68,0.06); }
+  50% { background: rgba(239,68,68,0.12); }
+}
+
+.data-table tr.row-anomaly {
+  background: rgba(245,158,11,0.04);
+}
+
+.data-table tr:hover { background: var(--surface2); }
+
+/* Status Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge-normal    { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+.badge-anomaly   { background: rgba(245,158,11,0.15); color: var(--accent); border: 1px solid rgba(245,158,11,0.3); }
+.badge-emergency { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+
+/* Zone Tag */
+.zone-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--surface3);
+  color: var(--text-dim);
+}
+
+/* Anomaly chips */
+.anomaly-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(239,68,68,0.15);
+  color: var(--danger);
+  border: 1px solid rgba(239,68,68,0.3);
+}
+
+/* Time */
+.time-cell {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-dim);
+}
+
+.empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+
+/* Loading */
+.loading-row td {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+/* Detail Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(6,13,26,0.9);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-overlay.show { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title { font-size: 16px; font-weight: 700; color: var(--text-bright); }
+
+.modal-close {
+  width: 30px; height: 30px;
+  background: var(--surface2);
+  border: none;
+  border-radius: 6px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.modal-body { padding: 20px; }
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.detail-cell {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.detail-label { font-size: 10px; color: var(--text-dim); margin-bottom: 4px; letter-spacing: 0.5px; }
+.detail-value { font-size: 14px; font-weight: 700; color: var(--text-bright); }
+
+.check-result-list { display: flex; flex-direction: column; gap: 4px; }
+
+.check-result-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.check-result-item.triggered {
+  background: rgba(239,68,68,0.1);
+  color: var(--danger);
+  border: 1px solid rgba(239,68,68,0.2);
+}
+
+.check-result-item.clear {
+  color: var(--text-dim);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .data-table th:nth-child(5),
+  .data-table td:nth-child(5) { display: none; }
+}
+
+@media (max-width: 600px) {
+  .main { padding: 12px; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stat-num { font-size: 22px; }
+  .data-table th:nth-child(4),
+  .data-table td:nth-child(4),
+  .data-table th:nth-child(6),
+  .data-table td:nth-child(6) { display: none; }
+  .topnav { padding: 0 14px; }
+}
+
+/* 緊急通報橫幅 */
+.emergency-banner {
+  display: none;
+  background: linear-gradient(90deg, #7f1d1d, #dc2626);
+  padding: 10px 20px;
+  align-items: center;
+  gap: 12px;
+  animation: flashBg 1s infinite;
+}
+
+.emergency-banner.show { display: flex; }
+
+@keyframes flashBg {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+.emergency-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  flex: 1;
+}
+
+.emergency-dismiss {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- Top Nav -->
+<div class="topnav">
+  <div class="nav-brand">
+    <div class="nav-logo">🛡️</div>
+    <div class="nav-title">園區安全聯防 <span>後台</span></div>
+  </div>
+  <div class="nav-right">
+    <div class="live-badge"><div class="live-dot"></div>即時監控</div>
+    <div class="clock-nav" id="navClock">--:--:--</div>
+  </div>
+</div>
+
+<!-- Emergency Banner -->
+<div class="emergency-banner" id="emergencyBanner">
+  <span style="font-size:20px;">🚨</span>
+  <div class="emergency-text" id="emergencyText">偵測到緊急通報！</div>
+  <button class="emergency-dismiss" onclick="dismissEmergency()">確認</button>
+</div>
+
+<!-- Layout -->
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">導覽</div>
+      <div class="nav-item active"><span class="icon">📊</span> 即時監控</div>
+      <div class="nav-item"><span class="icon">📋</span> 歷史紀錄</div>
+      <div class="nav-item"><span class="icon">📍</span> 巡邏點管理</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">園區篩選</div>
+      <div class="zone-btn active" data-zone="all" onclick="filterZone(this)">
+        全部園區 <span class="zone-count" id="zc-all">0</span>
+      </div>
+      <div class="zone-btn" data-zone="taichung" onclick="filterZone(this)">
+        🏭 臺中園區 <span class="zone-count" id="zc-taichung">0</span>
+      </div>
+      <div class="zone-btn" data-zone="houli" onclick="filterZone(this)">
+        🏭 后里園區 <span class="zone-count" id="zc-houli">0</span>
+      </div>
+      <div class="zone-btn" data-zone="huwei" onclick="filterZone(this)">
+        🏭 虎尾園區 <span class="zone-count" id="zc-huwei">0</span>
+      </div>
+      <div class="zone-btn" data-zone="erlin" onclick="filterZone(this)">
+        🏭 二林園區 <span class="zone-count" id="zc-erlin">0</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">緊急聯絡</div>
+    </div>
+
+    <!-- 聯絡人 -->
+    <div class="contact-card">
+      <div class="contact-zone">臺中園區</div>
+      <div class="contact-row">
+        <div><div class="contact-name">王戌戌 小隊長</div></div>
+        <a class="call-btn" href="tel:0925228885">📞 撥打</a>
+      </div>
+      <div class="contact-row">
+        <div><div class="contact-name">吳桐賢 小隊長</div></div>
+        <a class="call-btn" href="tel:0919239320">📞 撥打</a>
+      </div>
+    </div>
+
+    <div class="contact-card">
+      <div class="contact-zone">后里園區</div>
+      <div class="contact-row">
+        <div><div class="contact-name">羅威智 分隊長</div></div>
+        <a class="call-btn" href="tel:0921839789">📞 撥打</a>
+      </div>
+      <div class="contact-row">
+        <div><div class="contact-name">江偉啟 小隊長</div></div>
+        <a class="call-btn" href="tel:0911757706">📞 撥打</a>
+      </div>
+    </div>
+
+    <div class="contact-card">
+      <div class="contact-zone">虎尾園區</div>
+      <div class="contact-row">
+        <div><div class="contact-name">沈昌逸 小隊長</div></div>
+        <a class="call-btn" href="tel:0910488008">📞 撥打</a>
+      </div>
+    </div>
+
+    <div class="contact-card">
+      <div class="contact-zone">二林園區</div>
+      <div class="contact-row">
+        <div><div class="contact-name">林得如 小隊長</div></div>
+        <a class="call-btn" href="tel:0911364465">📞 撥打</a>
+      </div>
+      <div class="contact-row">
+        <div><div class="contact-name">許齊絃 小隊長</div></div>
+        <a class="call-btn" href="tel:0989589309">📞 撥打</a>
+      </div>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon total">📋</div>
+        <div>
+          <div class="stat-num" id="statTotal">0</div>
+          <div class="stat-label">今日巡邏總數</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon normal">✅</div>
+        <div>
+          <div class="stat-num" id="statNormal">0</div>
+          <div class="stat-label">正常回報</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon anomaly">⚠️</div>
+        <div>
+          <div class="stat-num" id="statAnomaly">0</div>
+          <div class="stat-label">異常通報</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon emergency">🚨</div>
+        <div>
+          <div class="stat-num" id="statEmergency">0</div>
+          <div class="stat-label">緊急通報</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-section">
+      <div class="table-header">
+        <div class="table-title">
+          📡 巡邏紀錄（即時）
+        </div>
+        <div class="filter-row">
+          <select class="filter-select" id="filterStatus" onchange="applyFilters()">
+            <option value="all">全部狀態</option>
+            <option value="normal">正常</option>
+            <option value="anomaly">異常</option>
+            <option value="emergency">緊急</option>
+          </select>
+          <select class="filter-select" id="filterZoneSelect" onchange="applyFilters()">
+            <option value="all">全部園區</option>
+            <option value="taichung">臺中園區</option>
+            <option value="houli">后里園區</option>
+            <option value="huwei">虎尾園區</option>
+            <option value="erlin">二林園區</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>狀態</th>
+              <th>時間</th>
+              <th>警衛</th>
+              <th>園區</th>
+              <th>巡邏點</th>
+              <th>異常項目</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr class="loading-row"><td colspan="6">⏳ 連線中，載入資料⋯</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">巡邏紀錄詳情</div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ======== 資料與狀態 ========
+const CHECK_LABELS = {
+  suspicious_loitering: "可疑份子徘徊/意圖闖入",
+  suspicious_theft:     "可疑份子竊取車輛/物品",
+  traffic_accident:     "突發交通狀況（車禍）",
+  civil_unrest:         "民眾聚集滋事/暴力事件",
+  fire_incident:        "消防事件（火災）",
+  env_incident:         "環保事件（氣體洩漏）",
+  safety_incident:      "工安事件（施工意外）",
+  typhoon_damage:       "颱風期間鄰廠損害",
+  drone_detected:       "發現不明無人機",
+  abandoned_vehicle:    "停放多日未移動車輛",
+  other_anomaly:        "其他異常事件"
+};
+
+const ZONE_NAMES = {
+  taichung: "臺中園區",
+  houli:    "后里園區",
+  huwei:    "虎尾園區",
+  erlin:    "二林園區"
+};
+
+let allLogs = [];
+let currentZoneFilter = "all";
+let emergencyDismissed = false;
+
+// ======== 時鐘 ========
+function updateClock() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById("navClock").textContent =
+    `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ======== 收到 Firebase 資料 ========
+window.addEventListener("logsUpdated", (e) => {
+  allLogs = e.detail;
+  updateStats();
+  updateZoneCounts();
+  renderTable();
+  checkEmergency();
+});
+
+window.addEventListener("logsError", () => {
+  document.getElementById("tableBody").innerHTML =
+    `<tr class="loading-row"><td colspan="6">❌ 連線失敗，請確認網路與 Firebase 規則</td></tr>`;
+});
+
+// ======== 統計 ========
+function todayLogs() {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  return allLogs.filter(l => {
+    if (!l.createdAt) return false;
+    const t = l.createdAt.toDate ? l.createdAt.toDate() : new Date(l.timestamp);
+    return t >= today;
+  });
+}
+
+function updateStats() {
+  const logs = todayLogs();
+  document.getElementById("statTotal").textContent = logs.length;
+  document.getElementById("statNormal").textContent = logs.filter(l => l.status === "normal").length;
+  document.getElementById("statAnomaly").textContent = logs.filter(l => l.status === "anomaly").length;
+  document.getElementById("statEmergency").textContent = logs.filter(l => l.status === "emergency").length;
+}
+
+function updateZoneCounts() {
+  const logs = todayLogs();
+  document.getElementById("zc-all").textContent = logs.length;
+  ["taichung","houli","huwei","erlin"].forEach(z => {
+    const el = document.getElementById(`zc-${z}`);
+    if (el) el.textContent = logs.filter(l => l.zoneId === z).length;
+  });
+}
+
+// ======== 緊急通報橫幅 ========
+function checkEmergency() {
+  if (emergencyDismissed) return;
+  const recent = allLogs.filter(l => {
+    if (l.status !== "emergency") return false;
+    const t = l.createdAt?.toDate ? l.createdAt.toDate() : new Date(l.timestamp);
+    return (Date.now() - t.getTime()) < 10 * 60 * 1000; // 10分鐘內
+  });
+  if (recent.length > 0) {
+    const banner = document.getElementById("emergencyBanner");
+    const text = document.getElementById("emergencyText");
+    const l = recent[0];
+    text.textContent = `🚨 緊急通報！${l.zoneName || ''} ${l.pointName || ''} — ${l.guardName || ''}`;
+    banner.classList.add("show");
+  }
+}
+
+function dismissEmergency() {
+  emergencyDismissed = true;
+  document.getElementById("emergencyBanner").classList.remove("show");
+}
+
+// ======== 篩選 ========
+function filterZone(btn) {
+  document.querySelectorAll(".zone-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  currentZoneFilter = btn.dataset.zone;
+  document.getElementById("filterZoneSelect").value = currentZoneFilter;
+  renderTable();
+}
+
+function applyFilters() {
+  currentZoneFilter = document.getElementById("filterZoneSelect").value;
+  document.querySelectorAll(".zone-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.zone === currentZoneFilter);
+  });
+  renderTable();
+}
+
+function getFilteredLogs() {
+  const statusFilter = document.getElementById("filterStatus").value;
+  return allLogs.filter(l => {
+    const zoneOk = currentZoneFilter === "all" || l.zoneId === currentZoneFilter;
+    const statusOk = statusFilter === "all" || l.status === statusFilter;
+    return zoneOk && statusOk;
+  });
+}
+
+// ======== 渲染表格 ========
+function renderTable() {
+  const logs = getFilteredLogs();
+  const tbody = document.getElementById("tableBody");
+
+  if (logs.length === 0) {
+    tbody.innerHTML = `
+      <tr><td colspan="6">
+        <div class="empty-state">
+          <div class="icon">📭</div>
+          <p>目前沒有符合條件的巡邏紀錄</p>
+        </div>
+      </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = logs.map(log => {
+    const t = log.createdAt?.toDate ? log.createdAt.toDate() : new Date(log.timestamp);
+    const timeStr = isNaN(t) ? "—" : formatTime(t);
+
+    const statusBadge = {
+      normal:    `<span class="badge badge-normal">✅ 正常</span>`,
+      anomaly:   `<span class="badge badge-anomaly">⚠️ 異常</span>`,
+      emergency: `<span class="badge badge-emergency">🚨 緊急</span>`
+    }[log.status] || `<span class="badge">${log.status}</span>`;
+
+    const triggeredKeys = log.checks
+      ? Object.entries(log.checks).filter(([k,v]) => v).map(([k]) => k)
+      : [];
+
+    const chips = triggeredKeys.length > 0
+      ? `<div class="anomaly-chips">${triggeredKeys.map(k =>
+          `<span class="chip">${CHECK_LABELS[k] || k}</span>`).join('')}</div>`
+      : `<span style="color:var(--text-dim);font-size:12px;">—</span>`;
+
+    const rowClass = log.status === "emergency" ? "row-emergency"
+                   : log.status === "anomaly"   ? "row-anomaly" : "";
+
+    const zoneName = ZONE_NAMES[log.zoneId] || log.zoneName || log.zoneId || "—";
+
+    return `<tr class="${rowClass}" onclick="openModal('${log.id}')" style="cursor:pointer;">
+      <td>${statusBadge}</td>
+      <td class="time-cell">${timeStr}</td>
+      <td>${log.guardName || "—"}</td>
+      <td><span class="zone-tag">${zoneName}</span></td>
+      <td>${log.pointName || log.pointId || "—"}</td>
+      <td>${chips}</td>
+    </tr>`;
+  }).join('');
+}
+
+function formatTime(d) {
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// ======== 詳細Modal ========
+function openModal(id) {
+  const log = allLogs.find(l => l.id === id);
+  if (!log) return;
+
+  const t = log.createdAt?.toDate ? log.createdAt.toDate() : new Date(log.timestamp);
+  const timeStr = isNaN(t) ? "—" : t.toLocaleString('zh-TW');
+
+  const statusLabel = { normal:"✅ 正常", anomaly:"⚠️ 異常", emergency:"🚨 緊急" }[log.status] || log.status;
+  const zoneName = ZONE_NAMES[log.zoneId] || log.zoneName || log.zoneId || "—";
+
+  const checkItems = Object.entries(CHECK_LABELS).map(([key, label]) => {
+    const triggered = log.checks?.[key];
+    return `<div class="check-result-item ${triggered ? 'triggered' : 'clear'}">
+      <span>${triggered ? '✕' : '✓'}</span>
+      <span>${label}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById("modalTitle").textContent = `${log.pointName || log.pointId} 巡邏紀錄`;
+  document.getElementById("modalBody").innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-cell"><div class="detail-label">狀態</div><div class="detail-value">${statusLabel}</div></div>
+      <div class="detail-cell"><div class="detail-label">時間</div><div class="detail-value" style="font-size:12px;">${timeStr}</div></div>
+      <div class="detail-cell"><div class="detail-label">警衛</div><div class="detail-value">${log.guardName || "—"}</div></div>
+      <div class="detail-cell"><div class="detail-label">園區</div><div class="detail-value">${zoneName}</div></div>
+      <div class="detail-cell" style="grid-column:span 2;"><div class="detail-label">巡邏點</div><div class="detail-value">${log.pointName || log.pointId || "—"}</div></div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <div class="detail-label" style="margin-bottom:8px;">查核結果</div>
+      <div class="check-result-list">${checkItems}</div>
+    </div>
+    ${log.notes ? `<div class="detail-cell" style="margin-top:8px;">
+      <div class="detail-label">備註</div>
+      <div style="font-size:13px;color:var(--text);margin-top:4px;">${log.notes}</div>
+    </div>` : ''}
+  `;
+
+  document.getElementById("modalOverlay").classList.add("show");
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById("modalOverlay")) closeModalDirect();
+}
+
+function closeModalDirect() {
+  document.getElementById("modalOverlay").classList.remove("show");
+}
+</script>
+</body>
+</html>
