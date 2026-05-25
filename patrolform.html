@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>園區安全巡邏通報</title>
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+    authDomain: "factor-security-d1965.firebaseapp.com",
+    databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+    projectId: "factor-security-d1965",
+    storageBucket: "factor-security-d1965.firebasestorage.app",
+    messagingSenderId: "864846943143",
+    appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // 掛到 window 讓下方 script 可以使用
+  window._db = db;
+  window._fsLib = { collection, addDoc, serverTimestamp };
+</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #f59e0b;
+    --accent2: #ef4444;
+    --accent3: #10b981;
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --text-bright: #f8fafc;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans TC', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border-bottom: 2px solid var(--accent);
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  .header-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .header-title {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--text-bright);
+    letter-spacing: 1px;
+  }
+
+  .header-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+  }
+
+  .point-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(245,158,11,0.15);
+    border: 1px solid rgba(245,158,11,0.4);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* Section */
+  .section {
+    margin: 16px 16px 0;
+    background: var(--surface);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .section-header {
+    background: var(--surface2);
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-header span {
+    font-size: 15px;
+  }
+
+  /* Info Grid */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .info-cell {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .info-cell:nth-child(odd) {
+    border-right: 1px solid var(--border);
+  }
+
+  .info-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .info-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-bright);
+  }
+
+  .info-value.accent {
+    color: var(--accent);
+  }
+
+  /* Guard Name Input */
+  .input-row {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .input-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .input-field {
+    width: 100%;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text-bright);
+    font-size: 16px;
+    font-family: 'Noto Sans TC', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .input-field:focus {
+    border-color: var(--accent);
+  }
+
+  /* Check Items */
+  .check-list {
+    padding: 8px 0;
+  }
+
+  .check-item {
+    display: flex;
+    align-items: center;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    gap: 14px;
+  }
+
+  .check-item:last-child {
+    border-bottom: none;
+  }
+
+  .check-item:active {
+    background: rgba(245,158,11,0.06);
+  }
+
+  .check-item.checked {
+    background: rgba(239,68,68,0.08);
+  }
+
+  .check-box {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    font-size: 14px;
+  }
+
+  .check-item.checked .check-box {
+    background: var(--accent2);
+    border-color: var(--accent2);
+  }
+
+  .check-number {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 700;
+    width: 20px;
+    flex-shrink: 0;
+    text-align: center;
+  }
+
+  .check-text {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  .check-item.checked .check-text {
+    color: var(--accent2);
+    font-weight: 500;
+  }
+
+  /* Status Radio */
+  .status-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+
+  .status-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 8px;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .status-btn .icon { font-size: 22px; }
+  .status-btn .label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+  }
+
+  .status-btn.active-normal {
+    border-color: var(--accent3);
+    background: rgba(16,185,129,0.1);
+  }
+  .status-btn.active-normal .label { color: var(--accent3); }
+
+  .status-btn.active-anomaly {
+    border-color: var(--accent);
+    background: rgba(245,158,11,0.1);
+  }
+  .status-btn.active-anomaly .label { color: var(--accent); }
+
+  .status-btn.active-emergency {
+    border-color: var(--accent2);
+    background: rgba(239,68,68,0.1);
+  }
+  .status-btn.active-emergency .label { color: var(--accent2); }
+
+  /* Notes */
+  .notes-area {
+    width: 100%;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text-bright);
+    font-size: 15px;
+    font-family: 'Noto Sans TC', sans-serif;
+    outline: none;
+    resize: none;
+    min-height: 90px;
+    transition: border-color 0.2s;
+  }
+
+  .notes-area:focus {
+    border-color: var(--accent);
+  }
+
+  /* Submit Button */
+  .submit-wrap {
+    padding: 20px 16px 0;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 18px;
+    border-radius: 14px;
+    border: none;
+    font-size: 17px;
+    font-weight: 900;
+    font-family: 'Noto Sans TC', sans-serif;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .submit-btn.normal {
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: white;
+  }
+
+  .submit-btn.anomaly {
+    background: linear-gradient(135deg, #d97706, #f59e0b);
+    color: #0a0e1a;
+  }
+
+  .submit-btn.emergency {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    color: white;
+    animation: pulse-btn 1.5s infinite;
+  }
+
+  @keyframes pulse-btn {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+    50% { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
+  }
+
+  .submit-btn:active {
+    transform: scale(0.97);
+  }
+
+  /* Success overlay */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,14,26,0.95);
+    z-index: 999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .overlay.show {
+    display: flex;
+  }
+
+  .overlay-icon {
+    font-size: 72px;
+    animation: pop 0.4s ease;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    80% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .overlay-title {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--text-bright);
+  }
+
+  .overlay-sub {
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+
+  .overlay-close {
+    margin-top: 20px;
+    padding: 14px 40px;
+    background: var(--accent);
+    color: #0a0e1a;
+    border: none;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 900;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+  }
+
+  /* Timestamp */
+  .timestamp-display {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-bright);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .date-display {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-icon">🛡️</div>
+    <div>
+      <div class="header-title">園區安全巡邏通報</div>
+      <div class="header-sub">Security Patrol Report System</div>
+    </div>
+  </div>
+  <div class="point-badge">📍 <span id="pointName">北側大門 PP001</span></div>
+</div>
+
+<!-- 基本資訊 -->
+<div class="section">
+  <div class="section-header"><span>🏢</span> 基本資訊</div>
+  <div class="info-grid">
+    <div class="info-cell">
+      <div class="info-label">園區</div>
+      <div class="info-value accent" id="zoneName">臺中園區</div>
+    </div>
+    <div class="info-cell">
+      <div class="info-label">巡邏點編號</div>
+      <div class="info-value" id="pointId">PP001</div>
+    </div>
+    <div class="info-cell" style="grid-column: span 2; border-bottom: none;">
+      <div class="info-label">巡邏時間</div>
+      <div class="timestamp-display" id="timeDisplay">--:--:--</div>
+      <div class="date-display" id="dateDisplay">----/--/--</div>
+    </div>
+  </div>
+  <div class="input-row">
+    <div class="input-label">警衛姓名 / 工號</div>
+    <input class="input-field" type="text" id="guardName" placeholder="請輸入姓名或工號" autocomplete="off">
+  </div>
+</div>
+
+<!-- 查核狀況 -->
+<div class="section">
+  <div class="section-header"><span>🔍</span> 巡邏查核項目</div>
+  <div class="check-list" id="checkList">
+    <!-- JS產生 -->
+  </div>
+</div>
+
+<!-- 整體狀態 -->
+<div class="section">
+  <div class="section-header"><span>🚦</span> 整體狀態評估</div>
+  <div class="status-row">
+    <div class="status-btn active-normal" data-status="normal" onclick="selectStatus(this)">
+      <span class="icon">✅</span>
+      <span class="label">正常</span>
+    </div>
+    <div class="status-btn" data-status="anomaly" onclick="selectStatus(this)">
+      <span class="icon">⚠️</span>
+      <span class="label">異常</span>
+    </div>
+    <div class="status-btn" data-status="emergency" onclick="selectStatus(this)">
+      <span class="icon">🚨</span>
+      <span class="label">緊急</span>
+    </div>
+  </div>
+</div>
+
+<!-- 備註 -->
+<div class="section">
+  <div class="section-header"><span>📝</span> 備註說明</div>
+  <div style="padding: 14px 16px;">
+    <textarea class="notes-area" id="notesInput" placeholder="有異常狀況請詳細描述（位置、人物特徵、車牌等）"></textarea>
+  </div>
+</div>
+
+<!-- 送出按鈕 -->
+<div class="submit-wrap">
+  <button class="submit-btn normal" id="submitBtn" onclick="submitForm()">
+    <span id="submitIcon">✅</span>
+    <span id="submitText">確認送出巡邏紀錄</span>
+  </button>
+</div>
+
+<!-- 送出成功 Overlay -->
+<div class="overlay" id="overlay">
+  <div class="overlay-icon" id="overlayIcon">✅</div>
+  <div class="overlay-title" id="overlayTitle">巡邏紀錄已送出</div>
+  <div class="overlay-sub" id="overlaySub">資料已同步至警察隊後台</div>
+  <button class="overlay-close" onclick="closeOverlay()">繼續巡邏</button>
+</div>
+
+<script>
+  // ======== 設定區（之後連 Firebase 時修改這裡）========
+  const POINT_DATA = {
+    pointId: "PP001",
+    pointName: "北側大門",
+    zoneId: "taichung",
+    zoneName: "臺中園區"
+  };
+
+  // 11項查核清單
+  const CHECK_ITEMS = [
+    { id: "suspicious_loitering", label: "可疑份子於重要設施周圍徘徊或意圖闖入" },
+    { id: "suspicious_theft",     label: "可疑份子疑似竊取車輛或物品" },
+    { id: "traffic_accident",     label: "突發交通狀況，如車禍" },
+    { id: "civil_unrest",         label: "民眾聚集意圖滋事、抗議或犯罪暴力事件" },
+    { id: "fire_incident",        label: "周邊公司意外消防事件，如火災" },
+    { id: "env_incident",         label: "周邊公司環保事件，如氣體洩漏" },
+    { id: "safety_incident",      label: "周邊公司工安事件，如施工意外傷害" },
+    { id: "typhoon_damage",       label: "颱風期間，鄰廠發生嚴重損害之狀況" },
+    { id: "drone_detected",       label: "發現不明無人機或無人機操作者" },
+    { id: "abandoned_vehicle",    label: "停放多日未移動之車輛" },
+    { id: "other_anomaly",        label: "其他異常事件" }
+  ];
+
+  // ======== 狀態 ========
+  let currentStatus = "normal";
+  let checkState = {};
+
+  // ======== 初始化 ========
+  document.getElementById("pointName").textContent = `${POINT_DATA.pointName} ${POINT_DATA.pointId}`;
+  document.getElementById("zoneName").textContent = POINT_DATA.zoneName;
+  document.getElementById("pointId").textContent = POINT_DATA.pointId;
+
+  // 產生查核清單
+  const checkList = document.getElementById("checkList");
+  CHECK_ITEMS.forEach((item, i) => {
+    checkState[item.id] = false;
+    const el = document.createElement("div");
+    el.className = "check-item";
+    el.id = `ci_${item.id}`;
+    el.innerHTML = `
+      <div class="check-box" id="cb_${item.id}"></div>
+      <div class="check-number">${String(i+1).padStart(2,'0')}</div>
+      <div class="check-text">${item.label}</div>
+    `;
+    el.onclick = () => toggleCheck(item.id, el);
+    checkList.appendChild(el);
+  });
+
+  // 時鐘
+  function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    document.getElementById("timeDisplay").textContent = `${h}:${m}:${s}`;
+    document.getElementById("dateDisplay").textContent =
+      `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} （${['日','一','二','三','四','五','六'][now.getDay()]}）`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ======== 交互 ========
+  function toggleCheck(id, el) {
+    checkState[id] = !checkState[id];
+    el.classList.toggle("checked", checkState[id]);
+    const cb = document.getElementById(`cb_${id}`);
+    cb.textContent = checkState[id] ? "✕" : "";
+    updateSubmitBtn();
+  }
+
+  function selectStatus(btn) {
+    document.querySelectorAll(".status-btn").forEach(b => {
+      b.className = "status-btn";
+    });
+    currentStatus = btn.dataset.status;
+    if (currentStatus === "normal")    btn.classList.add("active-normal");
+    if (currentStatus === "anomaly")   btn.classList.add("active-anomaly");
+    if (currentStatus === "emergency") btn.classList.add("active-emergency");
+    updateSubmitBtn();
+  }
+
+  function updateSubmitBtn() {
+    const btn = document.getElementById("submitBtn");
+    const icon = document.getElementById("submitIcon");
+    const text = document.getElementById("submitText");
+
+    const hasAnomaly = Object.values(checkState).some(v => v);
+
+    if (currentStatus === "emergency") {
+      btn.className = "submit-btn emergency";
+      icon.textContent = "🚨";
+      text.textContent = "緊急通報送出";
+    } else if (currentStatus === "anomaly" || hasAnomaly) {
+      btn.className = "submit-btn anomaly";
+      icon.textContent = "⚠️";
+      text.textContent = "異常狀況送出";
+    } else {
+      btn.className = "submit-btn normal";
+      icon.textContent = "✅";
+      text.textContent = "確認送出巡邏紀錄";
+    }
+  }
+
+  // ======== 送出 ========
+  async function submitForm() {
+    const guardName = document.getElementById("guardName").value.trim();
+    if (!guardName) {
+      document.getElementById("guardName").focus();
+      document.getElementById("guardName").style.borderColor = "#ef4444";
+      setTimeout(() => {
+        document.getElementById("guardName").style.borderColor = "";
+      }, 2000);
+      return;
+    }
+
+    const hasAnomaly = Object.values(checkState).some(v => v);
+
+    const logData = {
+      pointId: POINT_DATA.pointId,
+      pointName: POINT_DATA.pointName,
+      zoneId: POINT_DATA.zoneId,
+      zoneName: POINT_DATA.zoneName,
+      guardName: guardName,
+      timestamp: new Date().toISOString(),
+      checks: { ...checkState },
+      hasAnomaly: hasAnomaly,
+      notes: document.getElementById("notesInput").value.trim(),
+      status: currentStatus
+    };
+
+    // ======== Firebase Firestore 寫入 ========
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    btn.style.opacity = "0.6";
+
+    try {
+      const { collection, addDoc, serverTimestamp } = window._fsLib;
+      const db = window._db;
+
+      await addDoc(collection(db, "patrol_logs"), {
+        ...logData,
+        createdAt: serverTimestamp()  // 伺服器時間（更準確）
+      });
+
+    } catch (err) {
+      console.error("Firebase 寫入失敗:", err);
+      btn.disabled = false;
+      btn.style.opacity = "1";
+      alert("❌ 資料送出失敗，請確認網路連線後重試。");
+      return;
+    }
+
+    btn.disabled = false;
+    btn.style.opacity = "1";
+
+    // 顯示成功畫面
+    const overlay = document.getElementById("overlay");
+    const overlayIcon = document.getElementById("overlayIcon");
+    const overlayTitle = document.getElementById("overlayTitle");
+    const overlaySub = document.getElementById("overlaySub");
+
+    if (currentStatus === "emergency") {
+      overlayIcon.textContent = "🚨";
+      overlayTitle.textContent = "緊急通報已送出！";
+      overlaySub.textContent = "警察隊後台已收到緊急警示";
+    } else if (currentStatus === "anomaly" || hasAnomaly) {
+      overlayIcon.textContent = "⚠️";
+      overlayTitle.textContent = "異常通報已送出";
+      overlaySub.textContent = "異常狀況已記錄並通知後台";
+    } else {
+      overlayIcon.textContent = "✅";
+      overlayTitle.textContent = "巡邏紀錄已送出";
+      overlaySub.textContent = "資料已同步至警察隊後台";
+    }
+
+    overlay.classList.add("show");
+  }
+
+  function closeOverlay() {
+    document.getElementById("overlay").classList.remove("show");
+    // 重置表單
+    document.getElementById("guardName").value = "";
+    document.getElementById("notesInput").value = "";
+    checkState = {};
+    CHECK_ITEMS.forEach(item => {
+      checkState[item.id] = false;
+      const el = document.getElementById(`ci_${item.id}`);
+      el.classList.remove("checked");
+      document.getElementById(`cb_${item.id}`).textContent = "";
+    });
+    currentStatus = "normal";
+    document.querySelectorAll(".status-btn").forEach(b => b.className = "status-btn");
+    document.querySelector('[data-status="normal"]').classList.add("active-normal");
+    updateSubmitBtn();
+  }
+</script>
+</body>
+</html>
