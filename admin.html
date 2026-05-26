@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>園區安全防護網 - 中央管理後台</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --primary: #1e3a8a;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --success: #16a34a;
+            --text: #334155;
+            --card-bg: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            padding: 20px;
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0f172a, #1e3a8a);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        header h1 { font-size: 1.5rem; }
+
+        /* 數據儀表板 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            border-left: 5px solid var(--primary);
+        }
+
+        .stat-card.danger { border-left-color: var(--danger); }
+        .stat-card.warning { border-left-color: var(--warning); }
+        .stat-card.success { border-left-color: var(--success); }
+
+        .stat-title { font-size: 0.85rem; color: #64748b; font-weight: bold; }
+        .stat-value { font-size: 1.8rem; font-weight: bold; margin-top: 5px; }
+
+        /* 篩選與工具列 */
+        .toolbar {
+            background: var(--card-bg);
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .toolbar select, .btn-action {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .btn-action {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-action:hover { opacity: 0.9; }
+
+        /* 表格區塊 */
+        .table-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+            min-width: 800px;
+        }
+
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        tr:hover { background-color: #f8fafc; }
+
+        /* 標籤樣式 */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: white;
+        }
+        .bg-p1 { background-color: #ef4444; } /* 侵入、火警等高危 */
+        .bg-p2 { background-color: #f59e0b; } /* 竊盜、工安 */
+        .bg-p3 { background-color: #3b82f6; } /* 車輛、設備 */
+
+        /* 狀態下拉選單內嵌 */
+        .status-select {
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            border: 1px solid #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-container">
+    <header>
+        <h1>園區安全防護網 - 中央管理指揮後台</h1>
+        <div>管理員：小黑哥（總指揮）</div>
+    </header>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-title">今日累計通報</div>
+            <div id="totalCount" class="stat-value">0</div>
+        </div>
+        <div class="stat-card danger">
+            <div class="stat-title">待處理事件</div>
+            <div id="pendingCount" class="stat-value">0</div>
+        </div>
+        <div class="stat-card warning">
+            <div class="stat-title">處理中事件</div>
+            <div id="processingCount" class="stat-value">0</div>
+        </div>
+        <div class="stat-card success">
+            <div class="stat-title">已結案安全件數</div>
+            <div id="closedCount" class="stat-value">0</div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <strong>數據篩選：</strong>
+        <select id="filterPark" onchange="renderAdminTable()">
+            <option value="全部">所有園區</option>
+            <option value="臺中園區">臺中園區</option>
+            <option value="后里園區">后里園區</option>
+            <option value="虎尾園區">虎尾園區</option>
+            <option value="二林園區">二林園區</option>
+        </select>
+
+        <button class="btn-action" onclick="exportToCSV()">📊 匯出效能統計報表 (CSV)</button>
+        <button class="btn-action" style="background-color: #64748b;" onclick="refreshData()">🔄 重新整理資料</button>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>通報時間</th>
+                    <th>所屬園區</th>
+                    <th>精確地點</th>
+                    <th>通報項目</th>
+                    <th>現場狀況描述</th>
+                    <th>處理進度狀態</th>
+                </tr>
+            </thead>
+            <tbody id="adminTableBody">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // 頁面載入
+    document.addEventListener('DOMContentLoaded', () => {
+        initStatusMap();
+        refreshData();
+    });
+
+    // 用來儲存後台案件狀態的 Map (模擬後端資料庫狀態變更)
+    let statusMap = JSON.parse(localStorage.getItem('admin_status_map')) || {};
+
+    function initStatusMap() {
+        if (!localStorage.getItem('admin_status_map')) {
+            localStorage.setItem('admin_status_map', JSON.stringify(statusMap));
+        }
+    }
+
+    function refreshData() {
+        renderAdminTable();
+        calculateStats();
+    }
+
+    // 渲染表格
+    function renderAdminTable() {
+        const reports = JSON.parse(localStorage.getItem('security_network_reports')) || [];
+        const filterPark = document.getElementById('filterPark').value;
+        const tbody = document.getElementById('adminTableBody');
+        
+        if (reports.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8;">目前暫無任何前端通報數據。</td></tr>`;
+            return;
+        }
+
+        let filtered = reports;
+        if (filterPark !== '全部') {
+            filtered = reports.filter(r => r.park === filterPark);
+        }
+
+        tbody.innerHTML = filtered.map((item, index) => {
+            // 使用時間與地點當作唯一 Key 來記錄狀態
+            const itemKey = `${item.time}_${item.location}`;
+            const currentStatus = statusMap[itemKey] || '待處理';
+
+            // 根據類型給予標籤顏色防呆
+            let badgeColor = 'bg-p3';
+            if (item.type.includes('可疑人員') || item.type.includes('消防') || item.type.includes('滋事')) {
+                badgeColor = 'bg-p1';
+            } else if (item.type.includes('工安') || item.type.includes('無人機')) {
+                badgeColor = 'bg-p2';
+            }
+
+            return `
+                <tr>
+                    <td style="color:#64748b; font-size:0.8rem;">${item.time}</td>
+                    <td><span class="badge ${badgeColor}">${item.park}</span></td>
+                    <td><strong>${item.location}</strong></td>
+                    <td style="font-weight:500;">${item.type}</td>
+                    <td><div style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${item.description}">${item.description}</div></td>
+                    <td>
+                        <select class="status-select" onchange="updateStatus('${itemKey}', this.value)">
+                            <option value="待處理" ${currentStatus === '待處理' ? 'selected' : ''}>🔴 待處理</option>
+                            <option value="處理中" ${currentStatus === '處理中' ? 'selected' : ''}>🟡 處理中</option>
+                            <option value="已結案" ${currentStatus === '已結案' ? 'selected' : ''}>🟢 已結案</option>
+                        </select>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // 更新案件進度
+    function updateStatus(key, newStatus) {
+        statusMap[key] = newStatus;
+        localStorage.setItem('admin_status_map', JSON.stringify(statusMap));
+        calculateStats();
+    }
+
+    // 計算儀表板數據
+    function calculateStats() {
+        const reports = JSON.parse(localStorage.getItem('security_network_reports')) || [];
+        
+        let total = reports.length;
+        let pending = 0;
+        let processing = 0;
+        let closed = 0;
+
+        reports.forEach(item => {
+            const itemKey = `${item.time}_${item.location}`;
+            const status = statusMap[itemKey] || '待處理';
+            if (status === '待處理') pending++;
+            if (status === '處理中') processing++;
+            if (status === '已結案') closed++;
+        });
+
+        document.getElementById('totalCount').innerText = total;
+        document.getElementById('pendingCount').innerText = pending;
+        document.getElementById('processingCount').innerText = processing;
+        document.getElementById('closedCount').innerText = closed;
+    }
+
+    // 匯出 CSV 報表作業 (對應規格第5點：日後續效統計)
+    function exportToCSV() {
+        const reports = JSON.parse(localStorage.getItem('security_network_reports')) || [];
+        if (reports.length === 0) {
+            alert('沒有數據可供匯出！');
+            return;
+        }
+
+        // CSV 標頭
+        let csvContent = "\uFEFF時間,園區,精確地點,通報項目,現場描述,處理狀態\n";
+        
+        reports.forEach(item => {
+            const itemKey = `${item.time}_${item.location}`;
+            const status = statusMap[itemKey] || '待處理';
+            // 清除可能干擾 CSV 的逗號與換行
+            const desc = item.description.replace(/,/g, '，').replace(/\n/g, ' ');
+            csvContent += `${item.time},${item.park},${item.location},${item.type},${desc},${status}\n`;
+        });
+
+        // 下載邏輯
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `園區安全防護網_績效統計報表_${new Date().toLocaleDateString()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+</body>
+</html>
