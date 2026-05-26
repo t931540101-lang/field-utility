@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>園區安全防護網 - 智慧通報系統</title>
+    <style>
+        :root {
+            --bg-color: #f1f5f9;
+            --primary-color: #1e3a8a;
+            --danger-color: #dc2626;
+            --success-color: #16a34a;
+            --warning-color: #d97706;
+            --text-color: #0f172a;
+            --card-bg: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.4;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+            padding: 14px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+            border-left: 4px solid var(--primary-color);
+            padding-left: 6px;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        input[type="text"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background-color: #fff;
+            -webkit-appearance: none;
+        }
+
+        textarea {
+            resize: none;
+            height: 65px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
+        }
+
+        /* 聯絡窗口資訊框 */
+        .contact-box {
+            background-color: #f8fafc;
+            border: 1px dashed #94a3b8;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 12px;
+        }
+
+        .contact-info {
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .btn-call {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 8px;
+            background-color: var(--success-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .btn-submit {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+        }
+
+        .btn-submit:active { background-color: #b91c1c; }
+        .btn-call:active { background-color: #15803d; }
+
+        /* 歷史紀錄細項 */
+        .history-list {
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.8rem;
+        }
+
+        .history-item:last-child { border-bottom: none; }
+
+        .badge {
+            display: inline-block;
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: white;
+        }
+        .bg-danger { background-color: var(--danger-color); }
+        .bg-warning { background-color: var(--warning-color); }
+
+        .time-tag {
+            color: #64748b;
+            font-size: 0.75rem;
+            float: right;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>園區安全防護網通報系統</h1>
+    </header>
+
+    <div class="card">
+        <div class="card-title">新事件登記</div>
+        <form id="reportForm">
+            
+            <div class="form-group">
+                <label for="park">所屬園區</label>
+                <select id="park" onchange="updateContact()" required>
+                    <option value="臺中園區">臺中園區</option>
+                    <option value="后里園區">后里園區</option>
+                    <option value="虎尾園區">虎尾園區</option>
+                    <option value="二林園區">二林園區</option>
+                </select>
+            </div>
+
+            <div class="contact-box">
+                <div class="card-title" style="border-left-color: var(--success-color); font-size: 0.85rem; margin-bottom: 6px;">
+                    應變通報窗口 (保警中隊)
+                </div>
+                <div id="contactDetails" class="contact-info">
+                    </div>
+                <div id="callContainer">
+                    </div>
+            </div>
+
+            <div class="form-group">
+                <label for="location">精確地點</label>
+                <input type="text" id="location" placeholder="例如：西側圍牆、B棟機房旁" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="type">查看重點項目 (異常類型)</label>
+                <select id="type" required>
+                    <option value="可疑人員徘徊/意圖闖入">(1) 可疑人員徘徊/意圖闖入</option>
+                    <option value="竊取車輛或物品">(2) 可疑人員疑似竊取車輛/物品</option>
+                    <option value="突發交通狀況/車禍">(3) 突發交通狀況、車禍</option>
+                    <option value="民眾聚集滋事/暴力事件">(4) 民眾聚集滋事、抗議或犯罪暴力</option>
+                    <option value="周邊公司意外消防事件">(5) 周邊公司意外消防事件(如火災)</option>
+                    <option value="周邊公司環保事件">(6) 周邊公司環保事件(如氣體洩漏)</option>
+                    <option value="周邊公司工安事件">(7) 周邊公司工安事件(如施工受傷)</option>
+                    <option value="颱風期間鄰廠嚴重損害">(8) 颱風期間鄰廠嚴重損害狀況</option>
+                    <option value="不明無人機/操作者">(9) 發現不明無人機或其操作者</option>
+                    <option value="停放多日未移動車輛">(10) 停放多日未移動之車輛</option>
+                    <option value="其他異常事件">(11) 其他異常事件</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="description">狀況簡述 / 現場回報</label>
+                <textarea id="description" placeholder="請簡短描述現狀描述..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn-submit">送出防護網通報</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="card-title">本機通報日誌</div>
+        <div id="historyList" class="history-list"></div>
+    </div>
+</div>
+
+<script>
+    // 通訊錄資料庫 (依據圖片規格精確建立)
+    const contactsDb = {
+        "臺中園區": {
+            leaders: [
+                { title: "小隊長", name: "王茂戌", phone: "0925-228885" },
+                { title: "小隊長", name: "吳桐賢", phone: "0919-239320" }
+            ],
+            tel: "04-25605768"
+        },
+        "后里園區": {
+            leaders: [
+                { title: "分隊長", name: "羅威智", phone: "0921-839789" },
+                { title: "小隊長", name: "江偉車", phone: "0911-757706" }
+            ],
+            tel: "04-25584750"
+        },
+        "虎尾園區": {
+            leaders: [
+                { title: "小隊長", name: "沈昌逸", phone: "0910-488008" }
+            ],
+            tel: "05-6312155"
+        },
+        "二林園區": {
+            leaders: [
+                { title: "小隊長", name: "林得如", phone: "0911-364465" },
+                { title: "小隊長", name: "許齊紘", phone: "0989-589309" }
+            ],
+            tel: "048-902248"
+        }
+    };
+
+    const parkSelect = document.getElementById('park');
+    const contactDetails = document.getElementById('contactDetails');
+    const callContainer = document.getElementById('callContainer');
+    const reportForm = document.getElementById('reportForm');
+    const historyList = document.getElementById('historyList');
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+        updateContact();
+        loadHistory();
+    });
+
+    // 動態更新聯絡資訊與撥號鈕
+    function updateContact() {
+        const selectedPark = parkSelect.value;
+        const info = contactsDb[selectedPark];
+        
+        let html = '';
+        info.leaders.forEach(l => {
+            html += `• ${l.title}：${l.name} (${l.phone})<br>`;
+        });
+        html += `• 市話：${info.tel}`;
+        contactDetails.innerHTML = html;
+
+        // 產生一鍵撥號按鈕 (優先撥打第一順位手機，並提供市話)
+        const primaryMobile = info.leaders[0].phone.replace(/-/g, '');
+        const landline = info.tel.replace(/-/g, '');
+        
+        callContainer.innerHTML = `
+            <a href="tel:${primaryMobile}" class="btn-call" style="background-color: var(--primary-color);">📞 撥打小隊長手機</a>
+            <a href="tel:${landline}" class="btn-call">📞 撥打中隊市話</a>
+            <a href="tel:110" class="btn-call" style="background-color: var(--danger-color);">🚨 緊急直撥 110</a>
+        `;
+    }
+
+    // 表單送出
+    reportForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const park = parkSelect.value;
+        const location = document.getElementById('location').value;
+        const type = document.getElementById('type').value;
+        const description = document.getElementById('description').value;
+        const time = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+        const reportData = { park, location, type, description, time };
+
+        // 存入 Local Storage
+        let reports = JSON.parse(localStorage.getItem('security_network_reports')) || [];
+        reports.unshift(reportData);
+        localStorage.setItem('security_network_reports', JSON.stringify(reports));
+
+        loadHistory();
+        reportForm.reset();
+        updateContact(); // 重置後重新整理聯絡人
+        
+        alert('防護網事件已成功登錄並暫存。');
+    });
+
+    // 載入歷史紀錄
+    function loadHistory() {
+        let reports = JSON.parse(localStorage.getItem('security_network_reports')) || [];
+        if (reports.length === 0) {
+            historyList.innerHTML = '<p style="color:#94a3b8; text-align:center; font-size:0.85rem; padding:10px;">目前尚無歷史通報日誌</p>';
+            return;
+        }
+
+        historyList.innerHTML = reports.map(item => {
+            return `
+                <div class="history-item">
+                    <span class="time-tag">${item.time}</span>
+                    <span class="badge bg-danger">${item.park}</span> <strong>${item.location}</strong>
+                    <div style="color: #1e293b; font-weight: 500; margin-top: 2px;">${item.type}</div>
+                    <p style="color: #64748b; font-size: 0.75rem; margin-top: 2px; background:#f8fafc; padding:4px; border-radius:4px;">描述: ${item.description}</p>
+                </div>
+            `;
+        }).join('');
+    }
+</script>
+</body>
+</html>
