@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>園區安全防護網 - 通報端</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        :root { --bg-color: #f1f5f9; --primary-color: #1e3a8a; --danger-color: #dc2626; --success-color: #16a34a; --text-color: #0f172a; --card-bg: #ffffff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); padding: 12px; }
+        .container { max-width: 480px; margin: 0 auto; }
+        header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; padding: 14px; border-radius: 12px; text-align: center; margin-bottom: 12px; }
+        header h1 { font-size: 1.2rem; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .card-title { font-size: 1rem; margin-bottom: 12px; font-weight: 600; border-left: 4px solid var(--primary-color); padding-left: 8px; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.85rem; margin-bottom: 4px; font-weight: 500; }
+        input[type="text"], select, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; }
+        textarea { resize: none; height: 70px; }
+        .contact-box { background-color: #f8fafc; border: 1px dashed #94a3b8; border-radius: 8px; padding: 10px; margin-bottom: 12px; font-size: 0.85rem; }
+        .btn-call { display: block; text-align: center; width: 100%; padding: 8px; background-color: var(--primary-color); color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 6px; }
+        .btn { display: block; width: 100%; padding: 12px; background-color: var(--danger-color); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header><h1>園區安全防護網通報端</h1></header>
+    <div class="card">
+        <div class="card-title">即時事件通報</div>
+        <form id="reportForm">
+            <div class="form-group">
+                <label for="park">所屬園區</label>
+                <select id="park" onchange="updateContact()" required>
+                    <option value="臺中園區">臺中園區</option>
+                    <option value="后里園區">后里園區</option>
+                    <option value="虎尾園區">虎尾園區</option>
+                    <option value="二林園區">二林園區</option>
+                </select>
+            </div>
+            <div class="contact-box">
+                <div id="contactDetails"></div>
+                <div id="callContainer"></div>
+            </div>
+            <div class="form-group">
+                <label for="location">精確地點</label>
+                <input type="text" id="location" placeholder="例如：西側圍牆、B棟機房旁" required>
+            </div>
+            <div class="form-group">
+                <label for="type">查看重點項目</label>
+                <select id="type" required>
+                    <option value="可疑人員徘徊/意圖闖入">(1) 可疑人員徘徊/意圖闖入</option>
+                    <option value="竊取車輛或物品">(2) 可疑人員疑似竊取車輛/物品</option>
+                    <option value="突發交通狀況/車禍">(3) 突發交通狀況、車禍</option>
+                    <option value="民眾聚集滋事/暴力事件">(4) 民眾聚集滋事、抗議或犯罪暴力</option>
+                    <option value="周邊公司意外消防事件">(5) 周邊公司意外消防事件(如火災)</option>
+                    <option value="周邊公司環保事件">(6) 周邊公司環保事件(如氣體洩漏)</option>
+                    <option value="周邊公司工安事件">(7) 周邊公司工安事件(如施工受傷)</option>
+                    <option value="颱風期間鄰廠嚴重損害">(8) 颱風期間鄰廠嚴重損害狀況</option>
+                    <option value="不明無人機/操作者">(9) 發現不明無人機或其操作者</option>
+                    <option value="停放多日未移動車輛">(10) 停放多日未移動之車輛</option>
+                    <option value="其他異常事件">(11) 其他異常事件</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="description">狀況簡述</label>
+                <textarea id="description" placeholder="請簡短描述現場狀況..." required></textarea>
+            </div>
+            <button type="submit" class="btn">發送雲端通報</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // ⚙️ 貼上排班系統的 Firebase 設定
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    const contactsDb = {
+        "臺中園區": { title: "小隊長王茂戌", phone: "0925-228885" },
+        "后里園區": { title: "分隊長羅威智", phone: "0921-839789" },
+        "虎尾園區": { title: "小隊長沈昌逸", phone: "0910-488008" },
+        "二林園區": { title: "小隊長林得如", phone: "0911-364465" }
+    };
+
+    function updateContact() {
+        const park = document.getElementById('park').value;
+        const info = contactsDb[park];
+        document.getElementById('contactDetails').innerText = `應變通報窗口：${info.title} (${info.phone})`;
+        document.getElementById('callContainer').innerHTML = `<a href="tel:${info.phone.replace(/-/g,'')}" class="btn-call">📞 快速撥號</a>`;
+    }
+
+    document.getElementById('reportForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const park = document.getElementById('park').value;
+        const location = document.getElementById('location').value;
+        const type = document.getElementById('type').value;
+        const description = document.getElementById('description').value;
+        const time = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+        database.ref('security_reports').push({
+            park, location, type, description, time,
+            status: "待處理",
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        }).then(() => {
+            document.getElementById('reportForm').reset();
+            updateContact();
+            alert('🚀 雲端防護網通報成功！');
+        });
+    });
+    document.addEventListener('DOMContentLoaded', updateContact);
+</script>
+</body>
+</html>
