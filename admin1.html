@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>園區安全防護網 - 中央管理後台</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        :root { --bg-color: #f8fafc; --primary: #1e3a8a; --danger: #dc2626; --warning: #d97706; --success: #16a34a; --text: #334155; --card-bg: #ffffff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text); padding: 20px; }
+        .admin-container { max-width: 1100px; margin: 0 auto; }
+        header { background: linear-gradient(135deg, #0f172a, #1e3a8a); color: white; padding: 16px; border-radius: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .stat-card { background: var(--card-bg); padding: 16px; border-radius: 8px; border-left: 5px solid var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .stat-card.danger { border-left-color: var(--danger); }
+        .stat-card.warning { border-left-color: var(--warning); }
+        .stat-card.success { border-left-color: var(--success); }
+        .stat-title { font-size: 0.8rem; color: #64748b; font-weight: bold; }
+        .stat-value { font-size: 1.6rem; font-weight: bold; margin-top: 4px; }
+        .toolbar { background: var(--card-bg); padding: 12px; border-radius: 8px; margin-bottom: 16px; display: flex; gap: 10px; align-items: center; }
+        .btn-action { padding: 8px 12px; background-color: var(--primary); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .table-container { background: var(--card-bg); border-radius: 12px; overflow-x: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; min-width: 700px; }
+        th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        th { background-color: #f1f5f9; }
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; color: white; background-color: #3b82f6; }
+    </style>
+</head>
+<body>
+<div class="admin-container">
+    <header><h1>園區安全防護網 - 指揮管理後台</h1><div>總指揮：小黑哥</div></header>
+    
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-title">總通報</div><div id="totalCount" class="stat-value">0</div></div>
+        <div class="stat-card danger"><div class="stat-title">待處理</div><div id="pendingCount" class="stat-value">0</div></div>
+        <div class="stat-card warning"><div class="stat-title">處理中</div><div id="processingCount" class="stat-value">0</div></div>
+        <div class="stat-card success"><div class="stat-title">已結案</div><div id="closedCount" class="stat-value">0</div></div>
+    </div>
+
+    <div class="toolbar">
+        <select id="filterPark" onchange="renderTable()" style="padding:6px; border-radius:4px;">
+            <option value="全部">所有園區</option>
+            <option value="臺中園區">臺中園區</option>
+            <option value="后里園區">后里園區</option>
+            <option value="虎尾園區">虎尾園區</option>
+            <option value="二林園區">二林園區</option>
+        </select>
+        <button class="btn-action" onclick="exportToCSV()">📊 匯出績效報表 (CSV)</button>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr><th>時間</th><th>園區</th><th>精確地點</th><th>通報項目</th><th>現場狀況</th><th>處理進度控管</th></tr>
+            </thead>
+            <tbody id="adminTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // ⚙️ 貼上相同的 Firebase 設定
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    let globalReports = [];
+
+    // 連線並監聽 Firebase 數據
+    database.ref('security_reports').on('value', (snapshot) => {
+        const data = snapshot.val();
+        globalReports = [];
+        if (data) {
+            Object.keys(data).forEach(id => { globalReports.push({ id, ...data[id] }); });
+            globalReports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        }
+        calculateStats();
+        renderTable();
+    });
+
+    function renderTable() {
+        const filter = document.getElementById('filterPark').value;
+        const tbody = document.getElementById('adminTableBody');
+        let filtered = filter === '全部' ? globalReports : globalReports.filter(r => r.park === filter);
+        
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8;">暫無雲端數據</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(item => `
+            <tr>
+                <td style="font-size:0.8rem; color:#64748b;">${item.time}</td>
+                <td><span class="badge">${item.park}</span></td>
+                <td><strong>${item.location}</strong></td>
+                <td>${item.type}</td>
+                <td>${item.description}</td>
+                <td>
+                    <select onchange="updateStatus('${item.id}', this.value)" style="padding:4px; font-size:0.85rem;">
+                        <option value="待處理" ${item.status==='待處理'?'selected':''}>🔴 待處理</option>
+                        <option value="處理中" ${item.status==='處理中'?'selected':''}>🟡 處理中</option>
+                        <option value="已結案" ${item.status==='已結案'?'selected':''}>🟢 已結案</option>
+                    </select>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function updateStatus(id, newStatus) {
+        database.ref(`security_reports/${id}`).update({ status: newStatus });
+    }
+
+    function calculateStats() {
+        let pending = 0, processing = 0, closed = 0;
+        globalReports.forEach(r => {
+            if(r.status === '待處理') pending++;
+            if(r.status === '處理中') processing++;
+            if(r.status === '已結案') closed++;
+        });
+        document.getElementById('totalCount').innerText = globalReports.length;
+        document.getElementById('pendingCount').innerText = pending;
+        document.getElementById('processingCount').innerText = processing;
+        document.getElementById('closedCount').innerText = closed;
+    }
+
+    function exportToCSV() {
+        if(globalReports.length === 0) return alert('無數據');
+        let csv = "\uFEFF時間,園區,地點,項目,描述,狀態\n";
+        globalReports.forEach(r => { csv += `${r.time},${r.park},${r.location},${r.type},${r.description.replace(/,/g,'，')},${r.status}\n`; });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `園區安全防護網報表.csv`;
+        link.click();
+    }
+</script>
+</body>
+</html>
