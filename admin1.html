@@ -30,7 +30,10 @@
 </head>
 <body>
 <div class="admin-container">
-    <header><h1>園區安全防護網 - 指揮管理後台</h1><div>總指揮：小隊長王茂戌</div></header>
+    <header>
+        <h1>園區安全防護網 - 指揮管理後台</h1>
+        <div>總指揮：小黑哥</div>
+    </header>
     
     <div class="stats-grid">
         <div class="stat-card"><div class="stat-title">總通報</div><div id="totalCount" class="stat-value">0</div></div>
@@ -61,29 +64,26 @@
 </div>
 
 <script>
-    // ⚙️ 貼上相同的 Firebase 設定
     const firebaseConfig = {
-  apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
-  authDomain: "factor-security-d1965.firebaseapp.com",
-  databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
-  projectId: "factor-security-d1965",
-  storageBucket: "factor-security-d1965.firebasestorage.app",
-  messagingSenderId: "864846943143",
-  appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+        apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
+        authDomain: "factor-security-d1965.firebaseapp.com",
+        databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com",
+        projectId: "factor-security-d1965",
+        storageBucket: "factor-security-d1965.firebasestorage.app",
+        messagingSenderId: "864846943143",
+        appId: "1:864846943143:web:4cfa18cd20d2f712225c82"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
     let globalReports = [];
 
-    // 連線並監聽 Firebase 數據
     database.ref('security_reports').on('value', (snapshot) => {
         const data = snapshot.val();
         globalReports = [];
         if (data) {
             Object.keys(data).forEach(id => { globalReports.push({ id, ...data[id] }); });
-            globalReports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            globalReports.sort((a, b) => b.timestamp - a.timestamp);
         }
         calculateStats();
         renderTable();
@@ -95,7 +95,7 @@ const app = initializeApp(firebaseConfig);
         let filtered = filter === '全部' ? globalReports : globalReports.filter(r => r.park === filter);
         
         if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8;">暫無雲端數據</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:40px;">暫無雲端數據</td></tr>`;
             return;
         }
 
@@ -137,7 +137,9 @@ const app = initializeApp(firebaseConfig);
     function exportToCSV() {
         if(globalReports.length === 0) return alert('無數據');
         let csv = "\uFEFF時間,園區,地點,項目,描述,狀態\n";
-        globalReports.forEach(r => { csv += `${r.time},${r.park},${r.location},${r.type},${r.description.replace(/,/g,'，')},${r.status}\n`; });
+        globalReports.forEach(r => {
+            csv += `${r.time},${r.park},${r.location},${r.type},${r.description.replace(/,/g,'，')},${r.status}\n`;
+        });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
