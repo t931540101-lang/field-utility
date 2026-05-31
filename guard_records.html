@@ -3,213 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>守衛室寄放與消防登記系統</title>
+    <title>火警警報狀況通報登記</title>
     <style>
         :root {
-            --primary: #2c3e50;
-            --accent: #e67e22; /* 消防橘色提示 */
-            --bg: #f5f7fa;
+            --danger-color: #d35400; /* 警報橘紅色 */
+            --primary-color: #2c3e50;
+            --bg-color: #f4f6f7;
             --card-bg: #ffffff;
-            --border: #ccc;
+            --border-color: #bdc3c7;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background-color: var(--bg); color: #333; padding: 10px; font-size: 15px; }
+        body { background-color: var(--bg-color); color: #333; padding: 8px; font-size: 15px; }
         
-        h2 { text-align: center; color: var(--primary); margin: 10px 0 15px; font-size: 1.3rem; letter-spacing: 1px; }
+        .header { text-align: center; margin: 10px 0 15px; }
+        h2 { color: var(--danger-color); font-size: 1.25rem; letter-spacing: 1px; }
+        .sub-title { font-size: 0.85rem; color: #7f8c8d; margin-top: 4px; }
         
-        /* 表單卡片（手機大按鈕好輸入） */
-        .card { background: var(--card-bg); border-radius: 8px; padding: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; border-top: 4px solid var(--primary); }
+        /* 表單卡片（符合手機大按鈕與窄螢幕） */
+        .card { background: var(--card-bg); border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; border-top: 4px solid var(--danger-color); }
         .form-group { margin-bottom: 10px; }
         .form-group label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 0.85rem; color: #555; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 5px; font-size: 1rem; }
-        .form-control:focus { border-color: var(--primary); outline: none; background: #fdfefe; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 0.95rem; -webkit-appearance: none; }
+        .form-control:focus { border-color: var(--danger-color); outline: none; background: #fffdfb; }
         
-        /* 快捷勾選區（消防專用） */
-        .quick-check { display: flex; gap: 8px; margin-bottom: 10px; }
-        .checkbox-label { display: flex; align-items: center; gap: 4px; font-weight: bold; color: var(--accent); font-size: 0.95rem; cursor: pointer; }
-        
-        /* 按鈕優化 */
+        /* 快速輸入按紐群（消防最需要這個，手打太慢） */
+        .quick-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+        .tag { background: #eaeded; color: #5d6d7e; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-weight: bold; border: 1px solid #d5dbdb; }
+        .tag:active { background: #d5dbdb; }
+
+        /* 按鈕列 */
         .btn-group { display: flex; gap: 8px; margin-top: 12px; }
         .btn { flex: 1; padding: 12px; border: none; border-radius: 5px; color: white; font-size: 0.95rem; font-weight: bold; cursor: pointer; text-align: center; }
-        .btn-primary { background-color: var(--primary); }
-        .btn-success { background-color: #27ae60; }
-        .btn-clear { background: #e74c3c; width: 100%; margin-top: 10px; padding: 8px; font-size: 0.85rem; }
+        .btn-add { background-color: var(--danger-color); }
+        .btn-export { background-color: #2980b9; }
+        .btn-clear { background: #7f8c8d; width: 100%; margin-top: 15px; padding: 8px; font-size: 0.8rem; color: white; border: none; border-radius: 4px; }
         
-        /* 歷史明細（手機卡片式，絕不爆開） */
-        .history-title { font-size: 1.05rem; font-weight: bold; color: var(--primary); margin: 15px 0 8px; padding-left: 4px; }
-        .record-list { display: flex; flex-direction: column; gap: 10px; }
-        .record-card { background: var(--card-bg); padding: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-left: 5px solid #bdc3c7; position: relative; }
+        /* 歷史明細流（直式卡片，絕不爆版） */
+        .history-section { margin-top: 15px; }
+        .section-title { font-size: 1rem; font-weight: bold; color: var(--primary-color); margin-bottom: 8px; padding-left: 4px; }
+        .log-list { display: flex; flex-direction: column; gap: 10px; }
+        .log-card { background: var(--card-bg); padding: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-left: 5px solid var(--danger-color); position: relative; }
         
-        /* 如果是消防紀錄，特別標註橘色邊框 */
-        .record-card.fire-type { border-left-color: var(--accent); background: #fffcf9; }
-        .fire-badge { background: var(--accent); color: white; font-size: 0.75rem; padding: 2px 6px; border-radius: 3px; font-weight: bold; margin-left: 5px; }
+        .log-row { margin-bottom: 4px; font-size: 0.9rem; line-height: 1.4; }
+        .log-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #edf2f4; padding-bottom: 4px; margin-bottom: 6px; }
+        .log-loc { font-weight: bold; color: #c0392b; font-size: 0.95rem; }
+        .log-time { color: #7f8c8d; font-size: 0.8rem; font-weight: bold; }
         
-        .r-row { margin-bottom: 4px; font-size: 0.9rem; line-height: 1.4; }
-        .r-title { font-weight: bold; color: #111; font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between; }
-        .r-time { color: #7f8c8d; font-size: 0.8rem; }
-        
-        .btn-delete { position: absolute; right: 10px; bottom: 10px; background: #e74c3c; color: white; border: none; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; }
-        .empty-msg { text-align: center; color: #999; padding: 3px; font-size: 0.9rem; }
+        .btn-delete { position: absolute; right: 10px; bottom: 10px; background: #edf2f4; color: #c0392b; border: 1px solid #d5dbdb; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
+        .empty-msg { text-align: center; color: #999; padding: 20px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
-    <h2>📋 守衛室寄放與消防登記表</h2>
+    <div class="header">
+        <h2>火警警報狀況通報登記</h2>
+        <div class="sub-title">台灣精銳(股)公司 - 守衛室專用系統</div>
+    </div>
 
     <div class="card">
         <div class="form-group">
             <label>日期與時間</label>
-            <input type="datetime-local" id="recDateTime" class="form-control">
+            <input type="datetime-local" id="alarmTime" class="form-control">
         </div>
         
         <div class="form-group">
-            <label>寄放人 / 單位</label>
-            <input type="text" id="depositor" class="form-control" placeholder="例如：金盛、洪一德、消防安檢">
-        </div>
-
-        <div class="quick-check">
-            <label class="checkbox-label">
-                <input type="checkbox" id="isFire" onchange="toggleFireType()" style="width: 16px; height: 16px;"> 🚨 這是消防相關紀錄
-            </label>
-        </div>
-        
-        <div class="form-group">
-            <label>品項及數量 / 說明</label>
-            <input type="text" id="items" class="form-control" placeholder="例如：3227 財奇、廢棄物合約書、消防缺失改善單">
+            <label>火警發報地點</label>
+            <input type="text" id="alarmLocation" class="form-control" placeholder="例如：2F P-01 火警迴路">
+            <div class="quick-tags">
+                <span class="tag" onclick="setLoc('1F SD02 走廊偵煙')">1F 走廊偵煙</span>
+                <span class="tag" onclick="setLoc('2F P-01 火警迴路')">2F P-01 迴路</span>
+                <span class="tag" onclick="setLoc('3F 迴路2 辦公室偵煙')">3F 辦公室偵煙</span>
+                <span class="tag" onclick="setLoc('B1F 迴路4 P-01')">B1F 迴路4</span>
+            </div>
         </div>
         
         <div class="form-group">
-            <label>領取人簽收紀錄</label>
-            <input type="text" id="receiver" class="form-control" placeholder="填寫領取人姓名與時間（未領取可先空白）">
+            <label>聯繫人 / 通報人</label>
+            <input type="text" id="contactPerson" class="form-control" placeholder="例如：王局長、班長、或空白">
+        </div>
+        
+        <div class="form-group">
+            <label>檢查情況</label>
+            <input type="text" id="checkStatus" class="form-control" value="警報發生">
+            <div class="quick-tags">
+                <span class="tag" onclick="setStatus('警報發生')">警報發生</span>
+                <span class="tag" onclick="setStatus('現場確認無異狀')">無異狀</span>
+                <span class="tag" onclick="setStatus('設備保養測試')">保養測試</span>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>回報 / 處置結果</label>
+            <input type="text" id="reportResult" class="form-control" value="誤報">
+            <div class="quick-tags">
+                <span class="tag" onclick="setResult('誤報')">誤報</span>
+                <span class="tag" onclick="setResult('誤動作復歸')">誤動作復歸</span>
+                <span class="tag" onclick="setResult('正常')">正常</span>
+                <span class="tag" onclick="setResult('開爐影響')">開爐影響</span>
+            </div>
         </div>
         
         <div class="btn-group">
-            <button class="btn btn-primary" onclick="addLog()">➕ 新增登記</button>
-            <button class="btn btn-success" onclick="exportLogCSV()">📊 匯出 Excel</button>
+            <button class="btn btn-add" onclick="addAlarmLog()">➕ 新增通報</button>
+            <button class="btn btn-export" onclick="exportAlarmCSV()">📊 匯出 Excel</button>
         </div>
     </div>
 
-    <div class="history-title">當前登記明細 (自動存檔)</div>
-    <div id="logList" class="record-list"></div>
+    <div class="history-section">
+        <div class="section-title">歷年通報明細 (自動存檔)</div>
+        <div id="logContainer" class="log-list"></div>
+    </div>
     
-    <button class="btn btn-clear" onclick="clearAllLogs()">⚠️ 清空所有紀錄</button>
+    <button class="btn btn-clear" onclick="clearAllAlarmLogs()">⚠️ 清空所有歷史紀錄</button>
 
     <script>
-        // 自動帶入現在的手機時間
-        function setNowDateTime() {
+        // 自動精準帶入當前手機時間
+        function setNowTime() {
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            document.getElementById('recDateTime').value = now.toISOString().slice(0, 16);
+            document.getElementById('alarmTime').value = now.toISOString().slice(0, 16);
         }
-        setNowDateTime();
+        setNowTime();
 
-        // 讀取快取
-        let logs = JSON.parse(localStorage.getItem('guard_deposit_logs')) || [];
+        // 讀取 LocalStorage 資料
+        let alarmLogs = JSON.parse(localStorage.getItem('taiwan_apex_fire_logs')) || [];
 
-        // 自動勾選消防時，幫忙填寫預設字樣
-        function toggleFireType() {
-            const isFire = document.getElementById('isFire').checked;
-            const depositorInput = document.getElementById('depositor');
-            const itemsInput = document.getElementById('items');
-            if (isFire) {
-                if(!depositorInput.value) depositorInput.value = "消防安檢廠商";
-                if(!itemsInput.value) itemsInput.value = "消防設備檢查/公文寄放";
-            }
-        }
+        // 快速輸入輔助
+        function setLoc(val) { document.getElementById('alarmLocation').value = val; }
+        function setStatus(val) { document.getElementById('checkStatus').value = val; }
+        function setResult(val) { document.getElementById('reportResult').value = val; }
 
-        // 渲染卡片清單（符合手機直式窄螢幕，絕不爆版）
-        function renderLogs() {
-            const list = document.getElementById('logList');
-            list.innerHTML = '';
+        // 渲染直式卡片
+        function renderAlarmLogs() {
+            const container = document.getElementById('logContainer');
+            container.innerHTML = '';
             
-            if (logs.length === 0) {
-                list.innerHTML = '<div class="empty-msg">目前沒有寄放或消防紀錄。</div>';
+            if (alarmLogs.length === 0) {
+                container.innerHTML = '<div class="empty-msg">目前尚無任何火警通報紀錄。</div>';
                 return;
             }
 
-            // 新的排在最上面
-            logs.slice().reverse().forEach((item, index) => {
-                const actualIndex = logs.length - 1 - index;
+            // 最新時間的排在最上面
+            alarmLogs.slice().reverse().forEach((log, index) => {
+                const actualIndex = alarmLogs.length - 1 - index;
                 const card = document.createElement('div');
-                card.className = `record-card ${item.isFire ? 'fire-type' : ''}`;
+                card.className = 'log-card';
                 
-                // 格式化時間顯示
-                const displayTime = item.dateTime.replace('T', ' ');
+                // 處理日期格式顯示 (2026-05-31 T 21:40 -> 05/31 21:40)
+                const tParts = log.dateTime.split('T');
+                const dParts = tParts[0].split('-');
+                const displayTime = `${dParts[1]}/${dParts[2]} ${tParts[1]}`;
 
                 card.innerHTML = `
-                    <div class="r-title">
-                        <span>👤 ${escapeHtml(item.depositor)} ${item.isFire ? '<span class="fire-badge">🚨 消防</span>' : ''}</span>
-                        <span class="r-time">⏱️ ${displayTime}</span>
+                    <div class="log-header">
+                        <span class="log-loc">📍 ${escapeHtml(log.location)}</span>
+                        <span class="log-time">⏱️ ${displayTime}</span>
                     </div>
-                    <div class="r-row" style="margin-top:6px;"><strong>📦 品項：</strong>${escapeHtml(item.items)}</div>
-                    <div class="r-row" style="color: #27ae60;"><strong>✍️ 領取簽收：</strong>${escapeHtml(item.receiver || '⏳ 尚未領取')}</div>
-                    <button class="btn-delete" onclick="deleteLog(${actualIndex})">刪除</button>
+                    <div class="log-row"><strong>👤 聯繫人：</strong>${escapeHtml(log.contact || '—')}</div>
+                    <div class="log-row"><strong>🔍 檢查情況：</strong>${escapeHtml(log.status)}</div>
+                    <div class="log-row" style="color: #d35400;"><strong>📢 回報結果：</strong><strong>${escapeHtml(log.result)}</strong></div>
+                    <button class="btn-delete" onclick="deleteAlarmLog(${actualIndex})">刪除</button>
                 `;
-                list.appendChild(card);
+                container.appendChild(card);
             });
         }
 
-        // 新增紀錄
-        function addLog() {
-            const dateTime = document.getElementById('recDateTime').value;
-            const depositor = document.getElementById('depositor').value.trim();
-            const isFire = document.getElementById('isFire').checked;
-            const items = document.getElementById('items').value.trim();
-            const receiver = document.getElementById('receiver').value.trim();
+        // 新增一筆
+        function addAlarmLog() {
+            const dateTime = document.getElementById('alarmTime').value;
+            const location = document.getElementById('alarmLocation').value.trim();
+            const contact = document.getElementById('contactPerson').value.trim();
+            const status = document.getElementById('checkStatus').value.trim();
+            const result = document.getElementById('reportResult').value.trim();
 
-            if (!depositor || !items) {
-                alert('請至少填寫「寄放人」與「品項內容」！');
+            if (!location) {
+                alert('請輸入或點選「火警發報地點」！');
                 return;
             }
 
-            const newLog = { dateTime, depositor, isFire, items, receiver };
-            logs.push(newLog);
+            const newLog = { dateTime, location, contact, status, result };
+            alarmLogs.push(newLog);
             
-            localStorage.setItem('guard_deposit_logs', JSON.stringify(logs));
+            localStorage.setItem('taiwan_apex_fire_logs', JSON.stringify(alarmLogs));
+            renderAlarmLogs();
             
-            renderLogs();
-            
-            // 表單重設
-            document.getElementById('depositor').value = '';
-            document.getElementById('items').value = '';
-            document.getElementById('receiver').value = '';
-            document.getElementById('isFire').checked = false;
-            setNowDateTime();
-        }
+            // 清空輸入框並重設時間
+            document.getElementById('alarmLocation').value = '';
+            document.getElementById('contactPerson').value = '';
+            document.getElementById('checkStatus').value = '警報發生';
+            document.getElementById('reportResult').value = '誤報';
+            setNowTime();
+        </div>
 
-        function deleteLog(index) {
-            if (confirm('確定要刪除這筆登記明細嗎？')) {
-                logs.splice(index, 1);
-                localStorage.setItem('guard_deposit_logs', JSON.stringify(logs));
-                renderLogs();
+        function deleteAlarmLog(index) {
+            if (confirm('確定要刪除這筆火警通報紀錄嗎？')) {
+                alarmLogs.splice(index, 1);
+                localStorage.setItem('taiwan_apex_fire_logs', JSON.stringify(alarmLogs));
+                renderAlarmLogs();
             }
         }
 
-        function clearAllLogs() {
-            if (confirm('⚠️ 警告：這會清空所有的寄放與消防歷史紀錄！確定嗎？')) {
-                localStorage.removeItem('guard_deposit_logs');
-                logs = [];
-                renderLogs();
+        function clearAllAlarmLogs() {
+            if (confirm('⚠️ 警告：這會永久刪除所有儲存的火警通報明細！確定要清空嗎？')) {
+                localStorage.removeItem('taiwan_apex_fire_logs');
+                alarmLogs = [];
+                renderAlarmLogs();
             }
         }
 
         // 匯出 CSV 檔案
-        function exportLogCSV() {
-            if (logs.length === 0) {
-                alert('沒有資料可以匯出！');
+        function exportAlarmCSV() {
+            if (alarmLogs.length === 0) {
+                alert('尚無資料可供匯出！');
                 return;
             }
-            let csvContent = "\uFEFF日期時間,類別,寄放人/單位,品項及數量,領取人簽收紀錄\n";
-            logs.forEach(item => {
-                const typeStr = item.isFire ? "🚨消防相關" : "一般寄放";
-                const displayTime = item.dateTime.replace('T', ' ');
-                csvContent += `"${displayTime}","${typeStr}","${item.depositor.replace(/"/g, '""')}","${item.items.replace(/"/g, '""')}","${(item.receiver || '未領取').replace(/"/g, '""')}"\n`;
+            let csvContent = "\uFEFF日期時間,火警發報地點,聯繫人,檢查情況,回報\n";
+            alarmLogs.forEach(log => {
+                const displayTime = log.dateTime.replace('T', ' ');
+                csvContent += `"${displayTime}","${log.location.replace(/"/g, '""')}","${log.contact.replace(/"/g, '""')}","${log.status.replace(/"/g, '""')}","${log.result.replace(/"/g, '""')}"\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.setAttribute("download", `守衛室寄放明細表_${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute("download", `火警警報狀況通報表_${new Date().toISOString().split('T')[0]}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -220,8 +237,8 @@
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
-        // 載入時初次渲染
-        renderLogs();
+        // 初始載入
+        renderAlarmLogs();
     </script>
 </body>
 </html>
