@@ -3,28 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#07090e">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#f5f7fa">
 <title>台灣精銳科技 — 請假申請</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  color-scheme: dark;
-  --bg:        #07090e;
-  --s1:        #0c0f18;
-  --s2:        #111520;
-  --s3:        #171c2c;
-  --border:    #1e2538;
-  --border2:   #252e45;
-  --text:      #c8d0e0;
-  --text-dim:  #45506a;
-  --text-mid:  #7080a0;
-  --accent:    #3d8ef0;
-  --accent2:   #60aaff;
-  --gold:      #e8a020;
-  --danger:    #e05555;
-  --success:   #38c870;
-  --warn:      #e8a020;
+  color-scheme: light;
+  --bg:        #f5f7fa;
+  --s1:        #ffffff;
+  --s2:        #ffffff;
+  --s3:        #f0f3f8;
+  --border:    #e2e8f0;
+  --border2:   #cbd5e1;
+  --text:      #1e2a3a;
+  --text-dim:  #94a3b8;
+  --text-mid:  #64748b;
+  --accent:    #2563eb;
+  --accent2:   #1d4ed8;
+  --gold:      #d97706;
+  --danger:    #dc2626;
+  --success:   #16a34a;
+  --warn:      #d97706;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { background: var(--bg) !important; }
@@ -41,6 +41,7 @@ body {
   background: var(--s1);
   border-bottom: 1px solid var(--border);
   position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
 }
 .tab {
   flex: 1; padding: 14px 8px;
@@ -49,8 +50,8 @@ body {
   border-bottom: 2px solid transparent;
   transition: all .2s; user-select: none;
 }
-.tab.active { color: var(--accent2); border-bottom-color: var(--accent); }
-.tab:hover:not(.active) { color: var(--text); background: rgba(255,255,255,.03); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab:hover:not(.active) { color: var(--text); background: var(--s3); }
 .tab-icon { font-size: 18px; display: block; margin-bottom: 3px; }
 
 /* ── PAGES ── */
@@ -64,10 +65,10 @@ body {
 }
 .sec-icon {
   width: 38px; height: 38px; border-radius: 10px;
-  background: rgba(61,142,240,.12); border: 1px solid rgba(61,142,240,.25);
+  background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.2);
   display: flex; align-items: center; justify-content: center; font-size: 18px;
 }
-.sec-title { font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 1px; color: #fff; }
+.sec-title { font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 1px; color: var(--text); }
 .sec-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; letter-spacing: .5px; }
 
 /* ── FORM CARD ── */
@@ -77,6 +78,7 @@ body {
   border-radius: 14px;
   padding: 20px;
   margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
 }
 .card-label {
   font-size: 11px; color: var(--text-dim);
@@ -88,37 +90,35 @@ body {
 .field:last-child { margin-bottom: 0; }
 .field-label {
   font-size: 12px; color: var(--text-mid);
-  margin-bottom: 6px; display: flex; align-items: center; gap-4px;
+  margin-bottom: 6px; display: flex; align-items: center;
 }
 .required { color: var(--danger); margin-left: 3px; }
 
 .inp {
   width: 100%; padding: 11px 14px;
-  background: var(--s1); border: 1px solid var(--border2);
+  background: var(--s3); border: 1px solid var(--border);
   border-radius: 8px; color: var(--text);
   font-size: 14px; font-family: 'Noto Sans TC', sans-serif;
-  outline: none; transition: border-color .2s;
+  outline: none; transition: border-color .2s, box-shadow .2s;
   -webkit-appearance: none;
 }
-.inp:focus { border-color: var(--accent); }
+.inp:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.1); background: #fff; }
 .inp::placeholder { color: var(--text-dim); }
 select.inp { cursor: pointer; }
-select.inp option { background: var(--s1); }
+select.inp option { background: #fff; color: var(--text); }
 
 .inp-row { display: flex; gap: 10px; }
 .inp-row .field { flex: 1; }
 
 /* date mode toggle */
-.date-mode-tabs {
-  display: flex; gap: 6px; margin-bottom: 12px;
-}
+.date-mode-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
 .dmt {
   flex: 1; padding: 8px; text-align: center;
-  background: var(--s1); border: 1px solid var(--border2);
+  background: var(--s3); border: 1px solid var(--border);
   border-radius: 7px; cursor: pointer; font-size: 12px;
   color: var(--text-mid); transition: all .15s; user-select: none;
 }
-.dmt.active { background: rgba(61,142,240,.12); border-color: var(--accent); color: var(--accent2); }
+.dmt.active { background: rgba(37,99,235,.08); border-color: var(--accent); color: var(--accent); font-weight: 500; }
 
 .date-panel { display: none; }
 .date-panel.active { display: block; }
@@ -127,25 +127,23 @@ select.inp option { background: var(--s1); }
 .period-chips { display: flex; gap: 8px; }
 .period-chip {
   flex: 1; padding: 9px; text-align: center;
-  background: var(--s1); border: 1px solid var(--border2);
+  background: var(--s3); border: 1px solid var(--border);
   border-radius: 7px; cursor: pointer; font-size: 13px;
   color: var(--text-mid); transition: all .15s; user-select: none;
 }
-.period-chip.active { background: rgba(61,142,240,.12); border-color: var(--accent); color: var(--accent2); }
+.period-chip.active { background: rgba(37,99,235,.08); border-color: var(--accent); color: var(--accent); font-weight: 500; }
 
 /* leave type chips */
-.leave-chips {
-  display: flex; flex-wrap: wrap; gap: 8px;
-}
+.leave-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .leave-chip {
   padding: 8px 14px; border-radius: 20px;
-  background: var(--s1); border: 1px solid var(--border2);
+  background: var(--s3); border: 1px solid var(--border);
   cursor: pointer; font-size: 13px; color: var(--text-mid);
   transition: all .15s; user-select: none; white-space: nowrap;
 }
 .leave-chip.active {
-  background: rgba(61,142,240,.15);
-  border-color: var(--accent); color: var(--accent2);
+  background: rgba(37,99,235,.1);
+  border-color: var(--accent); color: var(--accent); font-weight: 500;
 }
 
 /* submit btn */
@@ -156,43 +154,47 @@ select.inp option { background: var(--s1); }
   font-family: 'Noto Sans TC', sans-serif;
   cursor: pointer; transition: all .2s;
   letter-spacing: 1px; margin-top: 4px;
+  box-shadow: 0 4px 12px rgba(37,99,235,.3);
 }
-.btn-submit:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(61,142,240,.3); }
+.btn-submit:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(37,99,235,.35); }
 .btn-submit:active { transform: translateY(0); }
 
 /* ── QUERY PAGE ── */
 .query-box {
   background: var(--s2); border: 1px solid var(--border);
   border-radius: 14px; padding: 20px; margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
 }
 .query-row { display: flex; gap: 10px; }
 .btn-query {
-  padding: 11px 20px; background: var(--s3);
-  border: 1px solid var(--border2); border-radius: 8px;
-  color: var(--text); font-size: 14px; cursor: pointer;
+  padding: 11px 20px; background: var(--accent);
+  border: none; border-radius: 8px;
+  color: #fff; font-size: 14px; cursor: pointer;
   white-space: nowrap; transition: all .15s;
   font-family: 'Noto Sans TC', sans-serif;
+  font-weight: 600;
 }
-.btn-query:hover { border-color: var(--accent); color: var(--accent2); }
+.btn-query:hover { background: var(--accent2); }
 
 .result-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
 .result-card {
   background: var(--s1); border: 1px solid var(--border);
   border-radius: 10px; padding: 14px 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
   animation: fadeIn .25s ease;
 }
 @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
 .rc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-.rc-name { font-size: 15px; font-weight: 500; color: #fff; }
+.rc-name { font-size: 15px; font-weight: 500; color: var(--text); }
 .rc-dept { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
 .status-badge {
   padding: 4px 10px; border-radius: 20px;
   font-size: 11px; font-weight: 700; letter-spacing: .5px;
   white-space: nowrap;
 }
-.status-pending  { background: rgba(232,160,32,.12); color: var(--warn);    border: 1px solid rgba(232,160,32,.3); }
-.status-approved { background: rgba(56,200,112,.12); color: var(--success); border: 1px solid rgba(56,200,112,.3); }
-.status-rejected { background: rgba(224,85,85,.12);  color: var(--danger);  border: 1px solid rgba(224,85,85,.3); }
+.status-pending  { background: rgba(217,119,6,.1);  color: #b45309; border: 1px solid rgba(217,119,6,.3); }
+.status-approved { background: rgba(22,163,74,.1);  color: #15803d; border: 1px solid rgba(22,163,74,.3); }
+.status-rejected { background: rgba(220,38,38,.1);  color: #b91c1c; border: 1px solid rgba(220,38,38,.3); }
 .rc-detail { font-size: 12px; color: var(--text-mid); display: flex; flex-wrap: wrap; gap: 8px 16px; }
 .rc-detail span { display: flex; align-items: center; gap: 4px; }
 
@@ -206,14 +208,14 @@ select.inp option { background: var(--s1); }
 .setting-section { margin-bottom: 24px; }
 .setting-title {
   font-family: 'Rajdhani', sans-serif; font-size: 16px;
-  font-weight: 700; color: var(--accent2); letter-spacing: 1px;
+  font-weight: 700; color: var(--accent); letter-spacing: 1px;
   margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
 }
 .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .tag-item {
   display: flex; align-items: center; gap: 6px;
   padding: 6px 12px; border-radius: 20px;
-  background: var(--s2); border: 1px solid var(--border2);
+  background: var(--s3); border: 1px solid var(--border);
   font-size: 13px; color: var(--text);
 }
 .tag-del {
@@ -224,49 +226,51 @@ select.inp option { background: var(--s1); }
 .tag-del:hover { color: var(--danger); }
 .add-row { display: flex; gap: 8px; }
 .btn-add {
-  padding: 10px 16px; background: rgba(61,142,240,.12);
-  border: 1px solid rgba(61,142,240,.3); border-radius: 8px;
-  color: var(--accent2); font-size: 13px; cursor: pointer;
+  padding: 10px 16px; background: rgba(37,99,235,.08);
+  border: 1px solid rgba(37,99,235,.25); border-radius: 8px;
+  color: var(--accent); font-size: 13px; cursor: pointer;
   white-space: nowrap; transition: all .15s;
-  font-family: 'Noto Sans TC', sans-serif;
+  font-family: 'Noto Sans TC', sans-serif; font-weight: 500;
 }
-.btn-add:hover { background: rgba(61,142,240,.22); }
+.btn-add:hover { background: rgba(37,99,235,.15); }
 
 /* ── TOAST ── */
 .toast {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(60px);
-  background: var(--s3); border: 1px solid var(--border2);
-  color: var(--text); padding: 12px 22px; border-radius: 10px;
+  background: #1e293b; border: 1px solid #334155;
+  color: #f1f5f9; padding: 12px 22px; border-radius: 10px;
   font-size: 13px; z-index: 999; opacity: 0;
   transition: all .3s cubic-bezier(.34,1.56,.64,1);
   white-space: nowrap; pointer-events: none;
-  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  box-shadow: 0 8px 32px rgba(0,0,0,.2);
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-.toast.ok  { border-color: rgba(56,200,112,.4); color: var(--success); }
-.toast.err { border-color: rgba(224,85,85,.4);  color: var(--danger); }
+.toast.ok  { background: #14532d; border-color: #16a34a; color: #bbf7d0; }
+.toast.err { background: #7f1d1d; border-color: #dc2626; color: #fecaca; }
 
-/* ── MODAL (success) ── */
+/* ── MODAL ── */
 .overlay {
   display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,.7); z-index: 300;
+  background: rgba(15,23,42,.5); z-index: 300;
   align-items: center; justify-content: center; padding: 20px;
+  backdrop-filter: blur(4px);
 }
 .overlay.open { display: flex; }
 .modal {
-  background: var(--s2); border: 1px solid var(--border2);
+  background: #fff; border: 1px solid var(--border);
   border-radius: 16px; padding: 32px 24px; max-width: 320px; width: 100%;
   text-align: center; animation: popIn .22s ease;
+  box-shadow: 0 20px 60px rgba(0,0,0,.15);
 }
 @keyframes popIn { from{transform:scale(.9);opacity:0;} to{transform:scale(1);opacity:1;} }
 .modal-big-icon { font-size: 52px; margin-bottom: 12px; }
-.modal-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+.modal-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
 .modal-desc { font-size: 13px; color: var(--text-mid); line-height: 1.7; margin-bottom: 20px; }
 .modal-id {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 20px; font-weight: 600; color: var(--accent2);
-  background: var(--s1); padding: 10px 20px; border-radius: 8px;
-  border: 1px solid var(--border2); margin-bottom: 20px;
+  font-size: 18px; font-weight: 600; color: var(--accent);
+  background: var(--s3); padding: 10px 20px; border-radius: 8px;
+  border: 1px solid var(--border); margin-bottom: 20px;
   letter-spacing: 2px;
 }
 .btn-ok {
@@ -276,13 +280,11 @@ select.inp option { background: var(--s1); }
   font-family: 'Noto Sans TC', sans-serif;
 }
 
-/* divider */
 .divider { height: 1px; background: var(--border); margin: 20px 0; }
 </style>
 </head>
 <body>
 
-<!-- TAB BAR -->
 <div class="tabbar">
   <div class="tab active" onclick="switchTab('apply',this)">
     <span class="tab-icon">📝</span>請假申請
@@ -295,7 +297,6 @@ select.inp option { background: var(--s1); }
   </div>
 </div>
 
-<!-- ══ PAGE: 請假申請 ══ -->
 <div class="page active" id="page-apply">
   <div class="sec-header">
     <div class="sec-icon">📋</div>
@@ -304,8 +305,6 @@ select.inp option { background: var(--s1); }
       <div class="sec-sub">台灣精銳科技股份有限公司</div>
     </div>
   </div>
-
-  <!-- 基本資料 -->
   <div class="form-card">
     <div class="card-label">基本資料</div>
     <div class="field">
@@ -328,13 +327,11 @@ select.inp option { background: var(--s1); }
     </div>
   </div>
 
-  <!-- 假別 -->
   <div class="form-card">
     <div class="card-label">假別 <span class="required" style="font-size:14px">*</span></div>
     <div class="leave-chips" id="leaveChips"></div>
   </div>
 
-  <!-- 請假日期 -->
   <div class="form-card">
     <div class="card-label">請假日期 <span class="required" style="font-size:14px">*</span></div>
     <div class="date-mode-tabs">
@@ -342,16 +339,12 @@ select.inp option { background: var(--s1); }
       <div class="dmt" onclick="setDateMode('range',this)">📆 多日</div>
       <div class="dmt" onclick="setDateMode('period',this)">🕐 時段</div>
     </div>
-
-    <!-- 單日 -->
     <div class="date-panel active" id="dp-single">
       <div class="field">
         <div class="field-label">請假日期</div>
         <input class="inp" type="date" id="f-date" />
       </div>
     </div>
-
-    <!-- 多日 -->
     <div class="date-panel" id="dp-range">
       <div class="inp-row">
         <div class="field">
@@ -363,10 +356,8 @@ select.inp option { background: var(--s1); }
           <input class="inp" type="date" id="f-end" />
         </div>
       </div>
-      <div id="dayCount" style="font-size:12px;color:var(--accent2);margin-top:6px;text-align:right"></div>
+      <div id="dayCount" style="font-size:12px;color:var(--accent);margin-top:6px;text-align:right;font-weight:500"></div>
     </div>
-
-    <!-- 時段 -->
     <div class="date-panel" id="dp-period">
       <div class="field">
         <div class="field-label">請假日期</div>
@@ -383,7 +374,6 @@ select.inp option { background: var(--s1); }
     </div>
   </div>
 
-  <!-- 事由 -->
   <div class="form-card">
     <div class="card-label">請假事由</div>
     <div class="field">
@@ -397,7 +387,6 @@ select.inp option { background: var(--s1); }
   </div>
 </div>
 
-<!-- ══ PAGE: 查詢進度 ══ -->
 <div class="page" id="page-query">
   <div class="sec-header">
     <div class="sec-icon">🔍</div>
@@ -406,7 +395,6 @@ select.inp option { background: var(--s1); }
       <div class="sec-sub">輸入姓名或申請單號查詢狀態</div>
     </div>
   </div>
-
   <div class="query-box">
     <div class="field" style="margin-bottom:10px">
       <div class="field-label">姓名 或 申請單號</div>
@@ -416,7 +404,6 @@ select.inp option { background: var(--s1); }
       </div>
     </div>
   </div>
-
   <div id="queryResults">
     <div class="empty-state">
       <div class="empty-icon">📭</div>
@@ -425,7 +412,6 @@ select.inp option { background: var(--s1); }
   </div>
 </div>
 
-<!-- ══ PAGE: 管理設定 ══ -->
 <div class="page" id="page-settings">
   <div class="sec-header">
     <div class="sec-icon">⚙️</div>
@@ -434,8 +420,6 @@ select.inp option { background: var(--s1); }
       <div class="sec-sub">自訂假別與部門清單</div>
     </div>
   </div>
-
-  <!-- 假別管理 -->
   <div class="setting-section">
     <div class="setting-title">🏷 假別管理</div>
     <div class="tag-list" id="leaveTagList"></div>
@@ -444,10 +428,7 @@ select.inp option { background: var(--s1); }
       <button class="btn-add" onclick="addLeave()">＋ 新增</button>
     </div>
   </div>
-
   <div class="divider"></div>
-
-  <!-- 部門管理 -->
   <div class="setting-section">
     <div class="setting-title">🏢 部門管理</div>
     <div class="tag-list" id="deptTagList"></div>
@@ -458,7 +439,6 @@ select.inp option { background: var(--s1); }
   </div>
 </div>
 
-<!-- SUCCESS MODAL -->
 <div class="overlay" id="successOverlay">
   <div class="modal">
     <div class="modal-big-icon">✅</div>
@@ -469,17 +449,12 @@ select.inp option { background: var(--s1); }
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-
 <script type="module">
-// ═══════════════════════════════════════════════
-//  FIREBASE INIT
-// ═══════════════════════════════════════════════
 import { initializeApp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, push, get, orderByChild, equalTo, query as fbQuery }
+import { getDatabase, ref, push, get, query as fbQuery }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
@@ -495,39 +470,22 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 
-// ═══════════════════════════════════════════════
-//  DATA
-// ═══════════════════════════════════════════════
 let leaveTypes = ['特休','病假','事假','婚假','喪假','公假','陪產假'];
-
 let departments = [
   '財務室','稽核室','資訊部','管理部','工務',
   '採購課','組立課','研發課','生產部','生管課',
-  '生技課','倉管組','品管課','驗證室','設備課','營業部',
-  '二廠','三廠'
+  '生技課','倉管組','品管課','驗證室','設備課','營業部','二廠','三廠'
 ];
-
 let selectedLeave  = '';
 let selectedPeriod = '上午';
 let dateMode       = 'single';
 
-// ═══════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════
 function init() {
-  renderLeaveChips();
-  renderDeptSelect();
-  renderSettings();
+  renderLeaveChips(); renderDeptSelect(); renderSettings();
   const t = new Date().toISOString().split('T')[0];
-  document.getElementById('f-date').value  = t;
-  document.getElementById('f-pdate').value = t;
-  document.getElementById('f-start').value = t;
-  document.getElementById('f-end').value   = t;
+  ['f-date','f-pdate','f-start','f-end'].forEach(id => document.getElementById(id).value = t);
 }
 
-// ═══════════════════════════════════════════════
-//  TAB
-// ═══════════════════════════════════════════════
 window.switchTab = function(name, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -535,32 +493,19 @@ window.switchTab = function(name, el) {
   el.classList.add('active');
 }
 
-// ═══════════════════════════════════════════════
-//  LEAVE CHIPS
-// ═══════════════════════════════════════════════
 function renderLeaveChips() {
-  document.getElementById('leaveChips').innerHTML = leaveTypes.map(t => `
-    <div class="leave-chip ${t===selectedLeave?'active':''}" onclick="selectLeave('${t}')">${t}</div>
-  `).join('');
+  document.getElementById('leaveChips').innerHTML = leaveTypes.map(t =>
+    `<div class="leave-chip ${t===selectedLeave?'active':''}" onclick="selectLeave('${t}')">${t}</div>`
+  ).join('');
 }
-window.selectLeave = function(t) {
-  selectedLeave = t;
-  renderLeaveChips();
-}
+window.selectLeave = function(t) { selectedLeave = t; renderLeaveChips(); }
 
-// ═══════════════════════════════════════════════
-//  DEPT SELECT
-// ═══════════════════════════════════════════════
 function renderDeptSelect() {
-  const s = document.getElementById('f-dept');
-  const v = s.value;
+  const s = document.getElementById('f-dept'), v = s.value;
   s.innerHTML = `<option value="">請選擇部門</option>` +
     departments.map(d => `<option value="${d}" ${d===v?'selected':''}>${d}</option>`).join('');
 }
 
-// ═══════════════════════════════════════════════
-//  DATE MODE
-// ═══════════════════════════════════════════════
 window.setDateMode = function(mode, el) {
   dateMode = mode;
   document.querySelectorAll('.dmt').forEach(d => d.classList.remove('active'));
@@ -576,7 +521,7 @@ window.setPeriod = function(p, el) {
 
 document.addEventListener('change', function(e) {
   if (e.target.id === 'f-start' || e.target.id === 'f-end') {
-    const s  = document.getElementById('f-start').value;
+    const s = document.getElementById('f-start').value;
     const en = document.getElementById('f-end').value;
     if (s && en) {
       const diff = Math.round((new Date(en)-new Date(s))/(1000*60*60*24))+1;
@@ -585,15 +530,12 @@ document.addEventListener('change', function(e) {
   }
 });
 
-// ═══════════════════════════════════════════════
-//  SUBMIT → FIREBASE
-// ═══════════════════════════════════════════════
 window.submitLeave = async function() {
   const name = document.getElementById('f-name').value.trim();
   const dept = document.getElementById('f-dept').value;
-  if (!name)         { toast('請填寫姓名', 'err'); return; }
-  if (!dept)         { toast('請選擇部門', 'err'); return; }
-  if (!selectedLeave){ toast('請選擇假別', 'err'); return; }
+  if (!name)          { toast('請填寫姓名', 'err'); return; }
+  if (!dept)          { toast('請選擇部門', 'err'); return; }
+  if (!selectedLeave) { toast('請選擇假別', 'err'); return; }
 
   let dateInfo = '';
   if (dateMode === 'single') {
@@ -614,9 +556,7 @@ window.submitLeave = async function() {
 
   const id = genId();
   const record = {
-    id,
-    name,
-    dept,
+    id, name, dept,
     ext:    document.getElementById('f-ext').value.trim(),
     proxy:  document.getElementById('f-proxy').value.trim(),
     type:   selectedLeave,
@@ -626,72 +566,50 @@ window.submitLeave = async function() {
     time:   new Date().toLocaleString('zh-TW')
   };
 
-  // 顯示 loading
   const btn = document.querySelector('.btn-submit');
-  btn.textContent = '送出中...';
-  btn.disabled = true;
+  btn.textContent = '送出中...'; btn.disabled = true;
 
   try {
     await push(ref(db, 'leave_requests'), record);
-
-    // reset form
-    document.getElementById('f-name').value   = '';
-    document.getElementById('f-ext').value    = '';
-    document.getElementById('f-proxy').value  = '';
-    document.getElementById('f-reason').value = '';
-    selectedLeave = '';
-    renderLeaveChips();
-
+    ['f-name','f-ext','f-proxy','f-reason'].forEach(id => document.getElementById(id).value = '');
+    selectedLeave = ''; renderLeaveChips();
     document.getElementById('successId').textContent = id;
     document.getElementById('successOverlay').classList.add('open');
   } catch(err) {
-    toast('送出失敗，請檢查網路', 'err');
-    console.error(err);
+    toast('送出失敗，請檢查網路', 'err'); console.error(err);
   } finally {
-    btn.textContent = '送出申請';
-    btn.disabled = false;
+    btn.textContent = '送出申請'; btn.disabled = false;
   }
 }
 
-window.closeSuccess = function() {
-  document.getElementById('successOverlay').classList.remove('open');
-}
+window.closeSuccess = function() { document.getElementById('successOverlay').classList.remove('open'); }
 
 function genId() {
-  const d  = new Date();
+  const d = new Date();
   const ds = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
   return `LV-${ds}-${String(Math.floor(Math.random()*900)+100)}`;
 }
 
-// ═══════════════════════════════════════════════
-//  QUERY ← FIREBASE
-// ═══════════════════════════════════════════════
 window.queryLeave = async function() {
   const q = document.getElementById('q-input').value.trim();
   if (!q) { toast('請輸入姓名或申請單號', 'err'); return; }
-
   const container = document.getElementById('queryResults');
   container.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div>查詢中...</div>`;
-
   try {
     const snapshot = await get(ref(db, 'leave_requests'));
     if (!snapshot.exists()) {
       container.innerHTML = `<div class="empty-state"><div class="empty-icon">🔎</div>目前沒有任何申請紀錄</div>`;
       return;
     }
-
     const all = [];
-    snapshot.forEach(child => { all.push(child.val()); });
-
+    snapshot.forEach(child => all.push(child.val()));
     const results = all.filter(a =>
       a.name.includes(q) || (a.id && a.id.toLowerCase().includes(q.toLowerCase()))
     ).sort((a,b) => new Date(b.time) - new Date(a.time));
-
     if (results.length === 0) {
       container.innerHTML = `<div class="empty-state"><div class="empty-icon">🔎</div>找不到「${q}」的申請紀錄</div>`;
       return;
     }
-
     container.innerHTML = `<div class="result-list">` +
       results.map(r => `
         <div class="result-card">
@@ -710,65 +628,44 @@ window.queryLeave = async function() {
             ${r.proxy?`<span>👤 代理：${r.proxy}</span>`:''}
             <span style="color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:11px">${r.id||''}</span>
           </div>
-          ${r.reason?`<div style="font-size:12px;color:var(--text-dim);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">事由：${r.reason}</div>`:''}
+          ${r.reason?`<div style="font-size:12px;color:var(--text-mid);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">事由：${r.reason}</div>`:''}
           <div style="font-size:11px;color:var(--text-dim);margin-top:6px">申請時間：${r.time}</div>
-        </div>`).join('') +
-      `</div>`;
+        </div>`).join('') + `</div>`;
   } catch(err) {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div>查詢失敗，請檢查網路</div>`;
-    console.error(err);
   }
 }
 
-// ═══════════════════════════════════════════════
-//  SETTINGS
-// ═══════════════════════════════════════════════
 function renderSettings() {
-  document.getElementById('leaveTagList').innerHTML = leaveTypes.map((t,i) => `
-    <div class="tag-item">${t}
-      <button class="tag-del" onclick="delLeave(${i})">×</button>
-    </div>`).join('');
-  document.getElementById('deptTagList').innerHTML = departments.map((d,i) => `
-    <div class="tag-item">${d}
-      <button class="tag-del" onclick="delDept(${i})">×</button>
-    </div>`).join('');
+  document.getElementById('leaveTagList').innerHTML = leaveTypes.map((t,i) =>
+    `<div class="tag-item">${t}<button class="tag-del" onclick="delLeave(${i})">×</button></div>`).join('');
+  document.getElementById('deptTagList').innerHTML = departments.map((d,i) =>
+    `<div class="tag-item">${d}<button class="tag-del" onclick="delDept(${i})">×</button></div>`).join('');
 }
-
 window.addLeave = function() {
   const v = document.getElementById('new-leave').value.trim();
   if (!v) return;
   if (leaveTypes.includes(v)) { toast('假別已存在', 'err'); return; }
-  leaveTypes.push(v);
-  document.getElementById('new-leave').value = '';
-  renderLeaveChips(); renderSettings();
-  toast(`已新增假別：${v}`, 'ok');
+  leaveTypes.push(v); document.getElementById('new-leave').value = '';
+  renderLeaveChips(); renderSettings(); toast(`已新增假別：${v}`, 'ok');
 }
 window.delLeave = function(i) {
-  const name = leaveTypes[i];
-  leaveTypes.splice(i,1);
+  const name = leaveTypes[i]; leaveTypes.splice(i,1);
   if (selectedLeave === name) selectedLeave = '';
-  renderLeaveChips(); renderSettings();
-  toast(`已刪除假別：${name}`);
+  renderLeaveChips(); renderSettings(); toast(`已刪除假別：${name}`);
 }
 window.addDept = function() {
   const v = document.getElementById('new-dept').value.trim();
   if (!v) return;
   if (departments.includes(v)) { toast('部門已存在', 'err'); return; }
-  departments.push(v);
-  document.getElementById('new-dept').value = '';
-  renderDeptSelect(); renderSettings();
-  toast(`已新增部門：${v}`, 'ok');
+  departments.push(v); document.getElementById('new-dept').value = '';
+  renderDeptSelect(); renderSettings(); toast(`已新增部門：${v}`, 'ok');
 }
 window.delDept = function(i) {
-  const name = departments[i];
-  departments.splice(i,1);
-  renderDeptSelect(); renderSettings();
-  toast(`已刪除部門：${name}`);
+  const name = departments[i]; departments.splice(i,1);
+  renderDeptSelect(); renderSettings(); toast(`已刪除部門：${name}`);
 }
 
-// ═══════════════════════════════════════════════
-//  TOAST
-// ═══════════════════════════════════════════════
 function toast(msg, type='') {
   const el = document.getElementById('toast');
   el.textContent = msg;
