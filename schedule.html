@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>黑曜石計畫 - 寬螢幕排班系統</title>
+    <title>黑曜石計畫 - 智慧現場排班系統</title>
     <style>
         :root {
             --primary-color: #2c3e50;
-            --holiday-bg: #ffe4e1; /* 六日粉紅色背景 */
+            --holiday-bg: #ffe4e1; /* 粉紅色背景 */
             --holiday-text: #d9534f;
             --save-btn: #007bff;
             --load-btn: #28a745;
@@ -49,7 +49,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
-            min-width: 1800px; /* 31天展開，確保有完美的電腦版大表格氣勢 */
+            min-width: 2200px; /* 擴大寬度，確保新選單文字不會被擠壓 */
         }
 
         th, td {
@@ -65,27 +65,27 @@
         }
 
         .user-col {
-            min-width: 130px;
+            min-width: 140px;
             background-color: #fdfdfe;
             font-weight: bold;
-            position: sticky; /* 讓姓名欄可以固定在左側方便對齊 */
+            position: sticky; 
             left: 0;
             z-index: 2;
             border-right: 2px solid #b8c2cc;
         }
 
-        /* 標記橘色的機動與晚班人員 */
         .highlight-user {
             background-color: #ffeeba;
         }
 
-        /* 六日粉紅色標記 */
+        /* 六日標記 */
         .holiday {
             background-color: var(--holiday-bg) !important;
             color: var(--holiday-text);
             font-weight: bold;
         }
 
+        /* 班別自訂顏色功能 */
         select {
             padding: 4px 6px;
             border: 1px solid #ccc;
@@ -96,15 +96,10 @@
             font-weight: bold;
         }
 
-        select.val-休 {
-            color: var(--holiday-text);
-            background-color: var(--holiday-bg);
-        }
-
-        select.val-V {
-            color: #1890ff;
-            background-color: #e6f7ff;
-        }
+        select.val-日B班 { color: #1890ff; background-color: #e6f7ff; }
+        select.val-夜E班 { color: #873bf4; background-color: #f3e8ff; }
+        select.val-夜B班 { color: #d46b08; background-color: #fff7e6; }
+        select.val-例假, select.val-休息日 { color: var(--holiday-text); background-color: var(--holiday-bg); }
 
         .btn-group {
             display: flex;
@@ -130,30 +125,12 @@
         .btn-save { background-color: var(--save-btn); }
         .btn-load { background-color: var(--load-btn); }
 
-        /* 🖨️ A4 橫向列印最佳化 */
         @media print {
-            .btn-group {
-                display: none !important;
-            }
-            @page {
-                size: A4 landscape;
-                margin: 5mm;
-            }
-            body {
-                background: #fff;
-                padding: 0;
-            }
-            .container {
-                box-shadow: none;
-                padding: 0;
-            }
-            select {
-                border: none;
-                appearance: none;
-                -webkit-appearance: none;
-                text-align: center;
-                text-align-last: center;
-            }
+            .btn-group { display: none !important; }
+            @page { size: A4 landscape; margin: 5mm; }
+            body { background: #fff; padding: 0; }
+            .container { box-shadow: none; padding: 0; }
+            select { border: none; appearance: none; -webkit-appearance: none; text-align: center; }
         }
     </style>
 </head>
@@ -167,43 +144,23 @@
             <thead>
                 <tr>
                     <th class="user-col" rowspan="2">姓名 (班別)</th>
-                    <!-- 日期 1 ~ 31 -->
                     <th>1</th><th>2</th><th class="holiday">3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th class="holiday">10</th>
                     <th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th class="holiday">17</th><th>18</th><th>19</th><th>20</th>
                     <th>21</th><th>22</th><th>23</th><th class="holiday">24</th><th>25</th><th>26</th><th>27</th><th>28</th><th>29</th><th>30</th><th class="holiday">31</th>
                 </tr>
                 <tr>
-                    <!-- 星期對應 -->
                     <th>五</th><th class="holiday">六</th><th class="holiday">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="holiday">六</th><th class="holiday">日</th>
                     <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="holiday">六</th><th class="holiday">日</th><th>一</th><th>二</th><th>三</th>
                     <th>四</th><th>五</th><th class="holiday">六</th><th class="holiday">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="holiday">六</th><th class="holiday">日</th>
                 </tr>
             </thead>
             <tbody id="schedule-body">
-                <!-- 1. 盧家慶 (日B班) -->
-                <tr id="row-lu">
-                    <td class="user-col">盧家慶 (日B班)</td>
-                </tr>
-                <!-- 2. 何鴻隆 (日B班) -->
-                <tr id="row-ho">
-                    <td class="user-col">何鴻隆 (日B班)</td>
-                </tr>
-                <!-- 3. 蔡易倫 (夜E班) -->
-                <tr id="row-tsai">
-                    <td class="user-col highlight-user">蔡易倫 (夜E班)</td>
-                </tr>
-                <!-- 4. 邱鴻鈞 (夜B班) -->
-                <tr id="row-chiu">
-                    <td class="user-col highlight-user">邱鴻鈞 (夜B班)</td>
-                </tr>
-                <!-- 5. 柳旭洲 (日B班) -->
-                <tr id="row-liu">
-                    <td class="user-col highlight-user">柳旭洲 (日B班)</td>
-                </tr>
-                <!-- 6. 魏榮志 (夜E班) -->
-                <tr id="row-wei">
-                    <td class="user-col highlight-user">魏榮志 (夜E班)</td>
-                </tr>
+                <tr id="row-lu"><td class="user-col">盧家慶 (日B班)</td></tr>
+                <tr id="row-ho"><td class="user-col">何鴻隆 (日B班)</td></tr>
+                <tr id="row-tsai"><td class="user-col highlight-user">蔡易倫 (夜E班)</td></tr>
+                <tr id="row-chiu"><td class="user-col highlight-user">邱鴻鈞 (夜B班)</td></tr>
+                <tr id="row-liu"><td class="user-col highlight-user">柳旭洲 (日B班)</td></tr>
+                <tr id="row-wei"><td class="user-col highlight-user">魏榮志 (夜E班)</td></tr>
             </tbody>
         </table>
     </div>
@@ -215,24 +172,22 @@
 </div>
 
 <script>
-    // 精準對齊的初始資料 (0 代表空白)
-    // 柔幫你把原本照片中 5 位大大的資料對齊，另外一筆先放空白讓你可以自由選填
+    // 配合新選單規格，將原照片中的 V 與 休 對應成具體班別
     const initialData = {
-        "row-lu":   [0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0,"休"],
-        "row-ho":   [0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ],
-        "row-tsai": ["休",0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0],
-        "row-chiu": [0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,0],
-        "row-liu":  [0,0,0   ,0,0,0   ,0,0,0,0   ,0,0,0   ,"V" ,0,0,0   ,0,0,0   ,0,0,0   ,"V" ,0,0,0   ,0,0,0,0],
-        "row-wei":  [0,0,0   ,0,0,0   ,0,0,0,0   ,0,0,0   ,0   ,0,0,0   ,0,0,0   ,0,0,0   ,0   ,0,0,0   ,0,0,0,0]
+        "row-lu":   ["例假","日B班","日B班","休息日","日B班","日B班","日B班","例假",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "row-ho":   ["日B班","日B班","日B班","日B班","日B班","休息日","例假","日B班",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "row-tsai": ["日B班","日B班","日B班","日B班","日B班","日B班","例假","日B班",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "row-chiu": ["夜E班","休息日","夜E班","夜E班","例假","夜E班","夜E班","夜E班",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "row-liu":  ["夜B班","夜B班","休息日","夜B班","夜B班","夜B班","夜B班","夜B班",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "row-wei":  ["夜E班","夜E班","夜E班","夜E班","夜E班","例假","夜E班","夜E班",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     };
 
-    const holidays = [3, 10, 17, 24, 31, 2, 9, 16, 23, 30]; // 當月所有六日的日期
+    const holidays = [3, 10, 17, 24, 31, 2, 9, 16, 23, 30];
 
-    // 初始化動態渲染 31 天的下拉選單
     function initTable() {
         Object.keys(initialData).forEach(rowId => {
             const tr = document.getElementById(rowId);
-            if (!tr) return; // 安全檢查
+            if (!tr) return;
             
             const userSchedule = initialData[rowId];
             const userName = tr.cells[0].innerText.split(" ")[0];
@@ -247,22 +202,16 @@
                 select.setAttribute('data-user', userName);
                 select.setAttribute('data-date', day);
 
-                // 建立選項
-                const optBlank = new Option("", "");
-                const optV = new Option("V", "V");
-                const optRest = new Option("休", "休");
+                // 完全體選項架構
+                const options = ["", "日B班", "夜E班", "夜B班", "例假", "休息日"];
+                options.forEach(optText => {
+                    const opt = new Option(optText, optText);
+                    select.add(opt);
+                });
 
-                select.add(optBlank);
-                select.add(optV);
-                select.add(optRest);
-
-                // 帶入初始數值
+                // 填入對齊的初始狀態
                 const initVal = userSchedule[day - 1];
-                if (initVal === "V" || initVal === "休") {
-                    select.value = initVal;
-                } else {
-                    select.value = "";
-                }
+                select.value = initVal ? initVal : "";
 
                 updateSelectClass(select);
                 select.addEventListener('change', () => updateSelectClass(select));
@@ -280,7 +229,6 @@
         }
     }
 
-    // 儲存至 Local Storage
     function saveSchedule() {
         const selects = document.querySelectorAll('#schedule-body select');
         const data = [];
@@ -291,13 +239,12 @@
                 value: select.value
             });
         });
-        localStorage.setItem('black_project_schedule_v3', JSON.stringify(data));
-        alert('柔提醒您：31天排班資料已完整同步至瀏覽器暫存！');
+        localStorage.setItem('black_project_schedule_v4', JSON.stringify(data));
+        alert('柔提醒您：新版專業班別排班資料已成功儲存！');
     }
 
-    // 載入暫存
     function loadSchedule() {
-        const savedData = localStorage.getItem('black_project_schedule_v3');
+        const savedData = localStorage.getItem('black_project_schedule_v4');
         if (!savedData) return;
         const data = JSON.parse(savedData);
         data.forEach(item => {
@@ -309,7 +256,6 @@
         });
     }
 
-    // 執行初始化
     initTable();
     loadSchedule();
 </script>
