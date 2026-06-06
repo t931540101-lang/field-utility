@@ -2,7 +2,6 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <!-- 移除限制縮放的設定，讓手機可以像看網頁地圖一樣自由兩指縮放 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>黑曜石計畫 - 寬螢幕排班系統</title>
     <style>
@@ -33,15 +32,14 @@
             text-align: center;
             margin-top: 0;
             color: var(--primary-color);
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             letter-spacing: 1px;
         }
 
-        /* 關鍵架構：打造完美的橫向滾動容器，保留電腦版的大表格風味 */
         .table-wrapper {
             width: 100%;
-            overflow-x: auto; /* 允許橫向滾動 */
-            -webkit-overflow-scrolling: touch; /* 讓 iPhone 滑動更流暢 */
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
             border: 1px solid #e0e0e0;
             border-radius: 6px;
             margin-bottom: 20px;
@@ -50,15 +48,15 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px;
-            min-width: 1200px; /* 強制維持電腦版寬度，31天排開才好看！ */
+            font-size: 13px;
+            min-width: 1800px; /* 31天展開，確保有完美的電腦版大表格氣勢 */
         }
 
         th, td {
-            border: 1px solid #e0e0e0;
+            border: 1px solid #b8c2cc;
             text-align: center;
-            padding: 10px 6px;
-            white-space: nowrap; /* 防止文字自動換行擠歪 */
+            padding: 8px 4px;
+            white-space: nowrap;
         }
 
         th {
@@ -66,11 +64,19 @@
             font-weight: bold;
         }
 
-        /* 員工欄位固定稍微寬一點 */
         .user-col {
-            min-width: 110px;
+            min-width: 120px;
             background-color: #fdfdfe;
-            font-weight: 500;
+            font-weight: bold;
+            position: sticky; /* 讓姓名欄可以固定在左側方便對齊 */
+            left: 0;
+            z-index: 2;
+            border-right: 2px solid #b8c2cc;
+        }
+
+        /* 標記橘色的機動與晚班人員 */
+        .highlight-user {
+            background-color: #ffeeba;
         }
 
         /* 六日粉紅色標記 */
@@ -80,22 +86,26 @@
             font-weight: bold;
         }
 
-        /* 優化下拉選單，告別原生醜醜的箭頭 */
         select {
-            padding: 4px 8px;
+            padding: 4px 6px;
             border: 1px solid #ccc;
             border-radius: 4px;
             background-color: #fff;
-            font-size: 13px;
+            font-size: 12px;
             cursor: pointer;
+            font-weight: bold;
         }
 
-        select:focus {
-            border-color: #80bdff;
-            outline: 0;
+        select.val-休 {
+            color: var(--holiday-text);
+            background-color: var(--holiday-bg);
         }
 
-        /* 功能按鈕區 */
+        select.val-V {
+            color: #1890ff;
+            background-color: #e6f7ff;
+        }
+
         .btn-group {
             display: flex;
             gap: 15px;
@@ -116,12 +126,35 @@
             transition: opacity 0.2s;
         }
 
-        button:active {
-            opacity: 0.9;
-        }
-
+        button:active { opacity: 0.9; }
         .btn-save { background-color: var(--save-btn); }
         .btn-load { background-color: var(--load-btn); }
+
+        /* 🖨️ A4 橫向列印最佳化 */
+        @media print {
+            .btn-group {
+                display: none !important;
+            }
+            @page {
+                size: A4 landscape;
+                margin: 5mm;
+            }
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+            select {
+                border: none;
+                appearance: none;
+                -webkit-appearance: none;
+                text-align: center;
+                text-align-last: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -129,57 +162,49 @@
 <div class="container">
     <h2>萬安保全 臺中辦事處 115年05月份現場人員值勤排班表</h2>
     
-    <!-- 橫向滾動外框 -->
     <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
-                    <th class="user-col">姓名 (班別)</th>
-                    <th>1 (五)</th>
-                    <th>2 (六)</th>
-                    <th class="holiday">3 (日)</th>
-                    <th>4 (一)</th>
-                    <th>5 (二)</th>
-                    <th>6 (三)</th>
-                    <th>7 (四)</th>
-                    <th>8 (五)</th>
-                    <th>9 (六)</th>
-                    <th class="holiday">10 (日)</th>
-                    <!-- 可以依此類推加到 31 號 -->
+                    <th class="user-col" rowspan="2">姓名 (班別)</th>
+                    <!-- 日期 1 ~ 31 -->
+                    <th>1</th><th>2</th><th class="holiday">3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th class="holiday">10</th>
+                    <th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th class="holiday">17</th><th>18</th><th>19</th><th>20</th>
+                    <th>21</th><th>22</th><th>23</th><th class="holiday">24</th><th>25</th><th>26</th><th>27</th><th>28</th><th>29</th><th>30</th><th class="holiday">31</th>
+                </tr>
+                <tr>
+                    <!-- 星期對應 -->
+                    <th>五</th><th class="holiday">六</th><th class="holiday">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="holiday">六</th><th class="holiday">日</th>
+                    <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="holiday">六</th><th class="holiday">日</th><th>一</th><th>二</th><th>三</th>
+                    <th>四</th><th>五</th><th class="holiday">六</th><th class="holiday">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="holiday">六</th><th class="holiday">日</th>
                 </tr>
             </thead>
             <tbody id="schedule-body">
-                <tr>
+                <!-- 1. 盧家慶 (日班) -->
+                <tr id="row-lu">
                     <td class="user-col">盧家慶 (日班)</td>
-                    <td><select data-user="盧家慶" data-date="1"><option value="V">V</option><option value="休">休</option></select></td>
-                    <td><select data-user="盧家慶" data-date="2"><option value="V">V</option><option value="休">休</option></select></td>
-                    <td class="holiday"><select data-user="盧家慶" data-date="3"><option value="休">休</option><option value="V">V</option></select></td>
-                    <td><select data-user="盧家慶" data-date="4"><option value="V">V</option><option value="休">休</option></select></td>
-                    <td><select data-user="盧家慶" data-date="5"><option value="V">V</option><option value="休">休</option></select></td>
-                    <td><select data-user="盧家慶" data-date="6"><option value="V">V</option><option value="休">休</option></select></td>
-                    <td><select data-user="盧家慶" data-date="7"><option value="V">V</option><option value="休">休</option></select></td>
-                    <td><select data-user="盧家慶" data-date="8"><option value="V">V</option><option value="休">休</option></select></td>
-                    <td><select data-user="盧家慶" data-date="9"><option value="V">V</option><option value="休">休</option></select></td>
-                    <td class="holiday"><select data-user="盧家慶" data-date="10"><option value="休">休</option><option value="V">V</option></select></td>
+                    <!-- 這裡會由下方的 JS 腳本根據照片初始狀態自動填入，避免 HTML 太冗長 -->
                 </tr>
-                <tr>
-                    <td class="user-col">蔡易倫 (晚班)</td>
-                    <td><select data-user="蔡易倫" data-date="1"><option value="休">休</option><option value="V">V</option></select></td>
-                    <td><select data-user="蔡易倫" data-date="2"><option value="休">休</option><option value="V">V</option></select></td>
-                    <td class="holiday"><select data-user="蔡易倫" data-date="3"><option value="V">V</option><option value="休">休</option></select></td>
-                    <td><select data-user="蔡易倫" data-date="4"><option value="休">休</option><option value="V">V</option></select></td>
-                    <td><select data-user="蔡易倫" data-date="5"><option value="休">休</option><option value="V">V</option></select></td>
-                    <td><select data-user="蔡易倫" data-date="6"><option value="休">休</option><option value="V">V</option></select></td>
-                    <td><select data-user="蔡易倫" data-date="7"><option value="休">休</option><option value="V">V</option></select></td>
-                    <td><select data-user="蔡易倫" data-date="8"><option value="休">休</option><option value="V">V</option></select></td>
-                    <td><select data-user="蔡易倫" data-date="9"><option value="休">休</option><option value="V">V</option></select></td>
-                    <td class="holiday"><select data-user="蔡易倫" data-date="10"><option value="V">V</option><option value="休">休</option></select></td>
+                <!-- 2. 何鴻隆 (日班) -->
+                <tr id="row-ho">
+                    <td class="user-col">何鴻隆 (日班)</td>
+                </tr>
+                <!-- 3. 蔡易倫 (晚班) -->
+                <tr id="row-tsai">
+                    <td class="user-col highlight-user">蔡易倫 (晚班)</td>
+                </tr>
+                <!-- 4. 高忠民 (機動) -->
+                <tr id="row-kao">
+                    <td class="user-col highlight-user">高忠民 (機動)</td>
+                </tr>
+                <!-- 5. 林文豪 (機動) -->
+                <tr id="row-lin">
+                    <td class="user-col highlight-user">林文豪 (機動)</td>
                 </tr>
             </tbody>
         </table>
     </div>
 
-    <!-- 操作按鈕 -->
     <div class="btn-group">
         <button class="btn-save" onclick="saveSchedule()">儲存排班 (Local Storage)</button>
         <button class="btn-load" onclick="loadSchedule()">載入暫存</button>
@@ -187,6 +212,70 @@
 </div>
 
 <script>
+    // 根據照片 d7e35bfe-0193-476a-821b-8ac437c2fc7c.jpg 精準對齊的當月初始班表資料
+    // 0代表預設空白，"V"代表上班，"休"代表休息
+    const initialData = {
+        "row-lu":   [0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0,"休"],
+        "row-ho":   [0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ],
+        "row-tsai": ["休",0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0],
+        "row-kao":  [0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,0],
+        "row-lin":  [0,0,0   ,0,0,0   ,0,0,0,0   ,0,0,0   ,"V" ,0,0,0   ,0,0,0   ,0,0,0   ,"V" ,0,0,0   ,0,0,0,0]
+    };
+
+    const holidays = [3, 10, 17, 24, 31, 2, 9, 16, 23, 30]; // 當月所有六日的日期
+
+    // 初始化動態渲染 31 天的下拉選單
+    function initTable() {
+        Object.keys(initialData).forEach(rowId => {
+            const tr = document.getElementById(rowId);
+            const userSchedule = initialData[rowId];
+            const userName = tr.cells[0].innerText.split(" ")[0];
+
+            for (let day = 1; day <= 31; day++) {
+                const td = document.createElement('td');
+                if (holidays.includes(day)) {
+                    td.className = 'holiday';
+                }
+
+                const select = document.createElement('select');
+                select.setAttribute('data-user', userName);
+                select.setAttribute('data-date', day);
+
+                // 建立選項
+                const optBlank = new Option("", "");
+                const optV = new Option("V", "V");
+                const optRest = new Option("休", "休");
+
+                select.add(optBlank);
+                select.add(optV);
+                select.add(optRest);
+
+                // 帶入初始照片中的數值
+                const initVal = userSchedule[day - 1];
+                if (initVal === "V" || initVal === "休") {
+                    select.value = initVal;
+                } else {
+                    select.value = "";
+                }
+
+                // 動態切換顏色樣式
+                updateSelectClass(select);
+                select.addEventListener('change', () => updateSelectClass(select));
+
+                td.appendChild(select);
+                tr.appendChild(td);
+            }
+        });
+    }
+
+    function updateSelectClass(select) {
+        select.className = '';
+        if (select.value) {
+            select.classList.add('val-' + select.value);
+        }
+    }
+
+    // 儲存至 Local Storage
     function saveSchedule() {
         const selects = document.querySelectorAll('#schedule-body select');
         const data = [];
@@ -197,21 +286,27 @@
                 value: select.value
             });
         });
-        localStorage.setItem('black_project_schedule', JSON.stringify(data));
-        alert('柔提醒您：排班資料已同步至本機儲存！');
+        localStorage.setItem('black_project_schedule_v2', JSON.stringify(data));
+        alert('柔提醒您：31天排班資料已完整同步至瀏覽器暫存！');
     }
 
+    // 載入暫存
     function loadSchedule() {
-        const savedData = localStorage.getItem('black_project_schedule');
+        const savedData = localStorage.getItem('black_project_schedule_v2');
         if (!savedData) return;
         const data = JSON.parse(savedData);
         data.forEach(item => {
             const select = document.querySelector(`#schedule-body select[data-user="${item.user}"][data-date="${item.date}"]`);
-            if (select) select.value = item.value;
+            if (select) {
+                select.value = item.value;
+                updateSelectClass(select);
+            }
         });
     }
 
-    window.onload = loadSchedule;
+    // 執行初始化
+    initTable();
+    loadSchedule();
 </script>
 
 </body>
