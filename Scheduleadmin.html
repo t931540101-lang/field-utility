@@ -969,7 +969,7 @@ let currentFilter = 'all';
 window.loadScheduleFromDB = async function() {
   const monthStr = `${window._curYear}-${String(window._curMonth).padStart(2,'0')}`;
   try {
-    const snap = await get(ref(db, `guardSchedules/${monthStr}`));
+    const snap = await get(ref(db, `apex_schedule/${monthStr}`));
     if (snap.exists()) {
       snap.forEach(child => {
         window._schedule[child.key] = child.val();
@@ -987,7 +987,7 @@ window.saveShiftToDB = async function(empId, dateStr, shiftType) {
   const monthStr = dateStr.substring(0, 7); // YYYY-MM
   const key = `${empId}_${dateStr}`;
   try {
-    await set(ref(db, `guardSchedules/${monthStr}/${key}`), shiftType);
+    await set(ref(db, `apex_schedule/${monthStr}/${key}`), shiftType);
   } catch(e) {
     console.error('儲存排班失敗', e);
   }
@@ -998,7 +998,7 @@ let _unsubscribe = null;
 window.subscribeSchedule = function() {
   if (_unsubscribe) _unsubscribe(); // 取消舊監聽
   const monthStr = `${window._curYear}-${String(window._curMonth).padStart(2,'0')}`;
-  const unsubRef = onValue(ref(db, `guardSchedules/${monthStr}`), (snap) => {
+  const unsubRef = onValue(ref(db, `apex_schedule/${monthStr}`), (snap) => {
     if (snap.exists()) {
       snap.forEach(child => {
         window._schedule[child.key] = child.val();
