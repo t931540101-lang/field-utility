@@ -562,11 +562,14 @@ let shiftDefs = {
 };
 
 let schedule = {}; // key: empId_YYYY-MM-DD → 'E'|'M'|'N'|'O'
+window._schedule = schedule;
 let pendingCell = null;
 
 const today = new Date();
 let curYear  = today.getFullYear();
 let curMonth = today.getMonth() + 1;
+window._curYear  = curYear;
+window._curMonth = curMonth;
 
 const DAYS_TW = ['日','一','二','三','四','五','六'];
 
@@ -607,6 +610,14 @@ function changeMonth(d) {
   curMonth += d;
   if (curMonth > 12) { curMonth = 1; curYear++; }
   if (curMonth < 1)  { curMonth = 12; curYear--; }
+  window._curYear  = curYear;
+  window._curMonth = curMonth;
+  // 清空舊月份快取（只清這個月的）
+  const ms = `${curYear}-${String(curMonth).padStart(2,'0')}`;
+  Object.keys(schedule).forEach(k => {
+    if (k.includes(`_${ms}-`)) delete schedule[k];
+  });
+  if (window.subscribeSchedule) window.subscribeSchedule();
   renderSchedule();
 }
 function goToday() {
@@ -687,8 +698,11 @@ function autoFill() {
   const pool = ['E','M','N','O','O'];
   employees.forEach(emp => {
     for (let d=1; d<=days; d++) {
-      const key = `${emp.id}_${curYear}-${String(curMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      schedule[key] = pool[Math.floor(Math.random()*pool.length)];
+      const dateStr = `${curYear}-${String(curMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const key = `${emp.id}_${dateStr}`;
+      const val = pool[Math.floor(Math.random()*pool.length)];
+      schedule[key] = val;
+      if (window.saveShiftToDB) window.saveShiftToDB(emp.id, dateStr, val);
     }
   });
   renderSchedule();
@@ -700,8 +714,10 @@ function clearMonth() {
     const days = new Date(curYear, curMonth, 0).getDate();
     employees.forEach(emp => {
       for (let d=1; d<=days; d++) {
-        const key = `${emp.id}_${curYear}-${String(curMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const dateStr = `${curYear}-${String(curMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const key = `${emp.id}_${dateStr}`;
         schedule[key] = 'O';
+        if (window.saveShiftToDB) window.saveShiftToDB(emp.id, dateStr, 'O');
       }
     });
     renderSchedule();
@@ -734,7 +750,12 @@ function closeModal(e) {
 }
 function selectShift(type) {
   if (!pendingCell) return;
-  schedule[`${pendingCell.empId}_${pendingCell.dateStr}`] = type;
+  const key = `${pendingCell.empId}_${pendingCell.dateStr}`;
+  schedule[key] = type;
+  // 寫入 Firebase
+  if (window.saveShiftToDB) {
+    window.saveShiftToDB(pendingCell.empId, pendingCell.dateStr, type);
+  }
   document.getElementById('overlay').classList.remove('open');
   pendingCell = null;
   renderSchedule();
@@ -922,7 +943,7 @@ renderSchedule();
 </script>
 <script type="module">
 import { initializeApp }                    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, get, update }    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, get, set, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
   apiKey:            "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48",
@@ -939,6 +960,57 @@ const db  = getDatabase(app);
 
 let allRequests  = []; // { fbKey, ...data }
 let currentFilter = 'all';
+
+// ═══════════════════════════════════════════════════════
+//  FIREBASE — 排班表
+// ═══════════════════════════════════════════════════════
+
+// ── 載入當月排班資料 ──────────────────────────────────
+window.loadScheduleFromDB = async function() {
+  const monthStr = `${window._curYear}-${String(window._curMonth).padStart(2,'0')}`;
+  try {
+    const snap = await get(ref(db, `guardSchedules/${monthStr}`));
+    if (snap.exists()) {
+      snap.forEach(child => {
+        window._schedule[child.key] = child.val();
+      });
+    }
+    // 通知主 script 重繪
+    if (window.renderSchedule) window.renderSchedule();
+  } catch(e) {
+    console.error('載入排班失敗', e);
+  }
+}
+
+// ── 寫入單格排班 ──────────────────────────────────────
+window.saveShiftToDB = async function(empId, dateStr, shiftType) {
+  const monthStr = dateStr.substring(0, 7); // YYYY-MM
+  const key = `${empId}_${dateStr}`;
+  try {
+    await set(ref(db, `guardSchedules/${monthStr}/${key}`), shiftType);
+  } catch(e) {
+    console.error('儲存排班失敗', e);
+  }
+}
+
+// ── 即時監聽（其他人改動時自動更新畫面）──────────────
+let _unsubscribe = null;
+window.subscribeSchedule = function() {
+  if (_unsubscribe) _unsubscribe(); // 取消舊監聽
+  const monthStr = `${window._curYear}-${String(window._curMonth).padStart(2,'0')}`;
+  const unsubRef = onValue(ref(db, `guardSchedules/${monthStr}`), (snap) => {
+    if (snap.exists()) {
+      snap.forEach(child => {
+        window._schedule[child.key] = child.val();
+      });
+      if (window.renderSchedule) window.renderSchedule();
+    }
+  });
+  _unsubscribe = unsubRef;
+}
+
+// 頁面載入時啟動監聽
+window.subscribeSchedule();
 
 // ── 載入所有請假申請 ──────────────────────────────────
 window.loadLeaveRequests = async function() {
