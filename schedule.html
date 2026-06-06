@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>黑曜石計畫 - 智慧現場排班系統</title>
+    <title>黑曜石計畫 - 全年份智慧現場排班系統</title>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -11,6 +11,8 @@
             --holiday-text: #d9534f;
             --save-btn: #007bff;
             --load-btn: #28a745;
+            --nav-btn: #6c757d;
+            --nav-active: #e6f7ff;
         }
 
         body {
@@ -36,6 +38,32 @@
             letter-spacing: 1px;
         }
 
+        /* 月份切換導覽列 */
+        .month-selector {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .month-btn {
+            padding: 8px 16px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--nav-btn);
+            transition: all 0.2s;
+        }
+
+        .month-btn.active {
+            background-color: #1890ff;
+            color: #fff;
+            border-color: #1890ff;
+        }
+
         .table-wrapper {
             width: 100%;
             overflow-x: auto;
@@ -49,7 +77,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
-            min-width: 2200px; /* 擴大寬度，確保新選單文字不會被擠壓 */
+            min-width: 2200px; 
         }
 
         th, td {
@@ -108,7 +136,7 @@
             margin: 0 auto;
         }
 
-        button {
+        button.action-btn {
             flex: 1;
             padding: 12px;
             color: white;
@@ -121,12 +149,12 @@
             transition: opacity 0.2s;
         }
 
-        button:active { opacity: 0.9; }
+        button.action-btn:active { opacity: 0.9; }
         .btn-save { background-color: var(--save-btn); }
         .btn-load { background-color: var(--load-btn); }
 
         @media print {
-            .btn-group { display: none !important; }
+            .btn-group, .month-selector { display: none !important; }
             @page { size: A4 landscape; margin: 5mm; }
             body { background: #fff; padding: 0; }
             .container { box-shadow: none; padding: 0; }
@@ -137,24 +165,18 @@
 <body>
 
 <div class="container">
-    <h2>台灣精銳 股份有限公司 115年05月份警衛人員值勤排班表</h2>
+    <h2 id="table-title">台灣精銳 股份有限公司 115年05月份警衛人員值勤排班表</h2>
+    
+    <!-- 1~12月切換按鈕區 -->
+    <div class="month-selector" id="month-nav"></div>
     
     <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th class="user-col" rowspan="2">姓名 (班別)</th>
-                    <th>1</th><th>2</th><th class="holiday">3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th class="holiday">10</th>
-                    <th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th class="holiday">17</th><th>18</th><th>19</th><th>20</th>
-                    <th>21</th><th>22</th><th>23</th><th class="holiday">24</th><th>25</th><th>26</th><th>27</th><th>28</th><th>29</th><th>30</th><th class="holiday">31</th>
-                </tr>
-                <tr>
-                    <th>五</th><th class="holiday">六</th><th class="holiday">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="holiday">六</th><th class="holiday">日</th>
-                    <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="holiday">六</th><th class="holiday">日</th><th>一</th><th>二</th><th>三</th>
-                    <th>四</th><th>五</th><th class="holiday">六</th><th class="holiday">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="holiday">六</th><th class="holiday">日</th>
-                </tr>
+        <table id="schedule-table">
+            <thead id="table-head">
+                <!-- 這裡由 JavaScript 動態生成日期與星期 -->
             </thead>
             <tbody id="schedule-body">
+                <!-- 人員名單固定列在此 -->
                 <tr id="row-lu"><td class="user-col">盧家慶 (日B班)</td></tr>
                 <tr id="row-ho"><td class="user-col">何鴻隆 (日B班)</td></tr>
                 <tr id="row-tsai"><td class="user-col highlight-user">蔡易倫 (夜E班)</td></tr>
@@ -166,52 +188,129 @@
     </div>
 
     <div class="btn-group">
-        <button class="btn-save" onclick="saveSchedule()">儲存排班 (Local Storage)</button>
-        <button class="btn-load" onclick="loadSchedule()">載入暫存</button>
+        <button class="action-btn btn-save" onclick="saveSchedule()">儲存當月排班</button>
+        <button class="action-btn btn-load" onclick="loadSchedule()">載入暫存</button>
     </div>
 </div>
 
 <script>
-    // 配合新選單規格，將原照片中的 V 與 休 對應成具體班別
-    const initialData = {
-        "row-lu":   ["例假","日B班","日B班","休息日","日B班","日B班","日B班","例假",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        "row-ho":   ["日B班","日B班","日B班","日B班","日B班","休息日","例假","日B班",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        "row-tsai": ["日B班","日B班","日B班","日B班","日B班","日B班","例假","日B班",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        "row-chiu": ["夜E班","休息日","夜E班","夜E班","例假","夜E班","夜E班","夜E班",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        "row-liu":  ["夜B班","夜B班","休息日","夜B班","夜B班","夜B班","夜B班","夜B班",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        "row-wei":  ["夜E班","夜E班","夜E班","夜E班","夜E班","例假","夜E班","夜E班",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    // 設定全域年份 (115年 = 西元 2026年)
+    const CURRENT_YEAR = 2026; 
+    let currentMonth = 5; // 預設顯示 5 月
+    
+    const weekNames = ["日", "一", "二", "三", "四", "五", "六"];
+    const userRows = ["row-lu", "row-ho", "row-tsai", "row-chiu", "row-liu", "row-wei"];
+
+    // 5 月份初始樣板資料 (作為預設範本，其餘月份初次打開為空白)
+    const defaultMayData = {
+        "row-lu":   ["例假","日B班","日B班","休息日","日B班","日B班","日B班","例假"],
+        "row-ho":   ["日B班","日B班","日B班","日B班","日B班","休息日","例假","日B班"],
+        "row-tsai": ["日B班","日B班","日B班","日B班","日B班","日B班","例假","日B班"],
+        "row-chiu": ["夜E班","休息日","夜E班","夜E班","例假","夜E班","夜E班","夜E班"],
+        "row-liu":  ["夜B班","夜B班","休息日","夜B班","夜B班","夜B班","夜B班","夜B班"],
+        "row-wei":  ["夜E班","夜E班","夜E班","夜E班","夜E班","例假","夜E班","夜E班"]
     };
 
-    const holidays = [3, 10, 17, 24, 31, 2, 9, 16, 23, 30];
+    // 初始化生成 1~12 月切換鈕
+    function initMonthNav() {
+        const nav = document.getElementById('month-nav');
+        for (let m = 1; m <= 12; m++) {
+            const btn = document.createElement('button');
+            btn.className = `month-btn ${m === currentMonth ? 'active' : ''}`;
+            btn.innerText = `${m} 月`;
+            btn.onclick = () => switchMonth(m);
+            nav.appendChild(btn);
+        }
+    }
 
-    function initTable() {
-        Object.keys(initialData).forEach(rowId => {
+    // 切換月份主邏輯
+    function switchMonth(month) {
+        currentMonth = month;
+        
+        // 更新按鈕樣式
+        document.querySelectorAll('.month-btn').forEach((btn, idx) => {
+            btn.classList.toggle('active', (idx + 1) === month);
+        });
+
+        // 更新標題 (轉成民國年顯示)
+        const rocYear = CURRENT_YEAR - 1911;
+        const displayMonth = String(month).padStart(2, '0');
+        document.getElementById('table-title').innerText = `台灣精銳 股份有限公司 ${rocYear}年${displayMonth}月份警衛人員值勤排班表`;
+
+        renderTableStructure(month);
+        loadSchedule(); // 切換月份時，自動去撈該月在 Local Storage 的檔案
+    }
+
+    // 動態算當月有幾天、星期幾，並渲染表格
+    function renderTableStructure(month) {
+        const daysInMonth = new Date(CURRENT_YEAR, month, 0).getDate(); // 取得當月總天數
+        const head = document.getElementById('table-head');
+        
+        // 1. 清空舊的表頭天數
+        head.innerHTML = '';
+
+        // 2. 建立表頭 TR
+        const trDate = document.createElement('tr');
+        const trWeek = document.createElement('tr');
+
+        const thName1 = document.createElement('th');
+        thName1.className = 'user-col';
+        thName1.rowSpan = 2;
+        thName1.innerText = '姓名 (班別)';
+        trDate.appendChild(thName1);
+
+        // 3. 算出每天的星期，並填入表頭
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateObj = new Date(CURRENT_YEAR, month - 1, day);
+            const weekDay = dateObj.getDay(); // 0 是日, 6 是六
+            const isHoliday = (weekDay === 0 || weekDay === 6);
+
+            const thDate = document.createElement('th');
+            thDate.innerText = day;
+            if (isHoliday) thDate.className = 'holiday';
+            trDate.appendChild(thDate);
+
+            const thWeek = document.createElement('th');
+            thWeek.innerText = weekNames[weekDay];
+            if (isHoliday) thWeek.className = 'holiday';
+            trWeek.appendChild(thWeek);
+        }
+
+        head.appendChild(trDate);
+        head.appendChild(trWeek);
+
+        // 4. 清除所有人舊的選單欄位，重新建立
+        userRows.forEach(rowId => {
             const tr = document.getElementById(rowId);
-            if (!tr) return;
-            
-            const userSchedule = initialData[rowId];
+            // 保留第一個姓名欄位，其餘刪除
+            while (tr.cells.length > 1) {
+                tr.deleteCell(1);
+            }
+
             const userName = tr.cells[0].innerText.split(" ")[0];
 
-            for (let day = 1; day <= 31; day++) {
+            // 重新填入對應天數的 select
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateObj = new Date(CURRENT_YEAR, month - 1, day);
+                const weekDay = dateObj.getDay();
                 const td = document.createElement('td');
-                if (holidays.includes(day)) {
-                    td.className = 'holiday';
-                }
+                if (weekDay === 0 || weekDay === 6) td.className = 'holiday';
 
                 const select = document.createElement('select');
                 select.setAttribute('data-user', userName);
                 select.setAttribute('data-date', day);
 
-                // 完全體選項架構
                 const options = ["", "日B班", "夜E班", "夜B班", "例假", "休息日"];
                 options.forEach(optText => {
-                    const opt = new Option(optText, optText);
-                    select.add(opt);
+                    select.add(new Option(optText, optText));
                 });
 
-                // 填入對齊的初始狀態
-                const initVal = userSchedule[day - 1];
-                select.value = initVal ? initVal : "";
+                // 如果是 5 月且沒有存檔過，載入圖 3 範本
+                if (month === 5 && defaultMayData[rowId] && defaultMayData[rowId][day - 1]) {
+                    select.value = defaultMayData[rowId][day - 1];
+                } else {
+                    select.value = "";
+                }
 
                 updateSelectClass(select);
                 select.addEventListener('change', () => updateSelectClass(select));
@@ -229,6 +328,7 @@
         }
     }
 
+    // 儲存當月排班 (Key 值加入年份與月份，如 black_schedule_2026_5)
     function saveSchedule() {
         const selects = document.querySelectorAll('#schedule-body select');
         const data = [];
@@ -239,13 +339,18 @@
                 value: select.value
             });
         });
-        localStorage.setItem('black_project_schedule_v4', JSON.stringify(data));
-        alert('柔提醒您：新版專業班別排班資料已成功儲存！');
+        
+        const storageKey = `black_project_year_v1_${CURRENT_YEAR}_${currentMonth}`;
+        localStorage.setItem(storageKey, JSON.stringify(data));
+        alert(`柔提醒您：${currentMonth}月份排班資料已獨立同步存檔！`);
     }
 
+    // 載入當月暫存
     function loadSchedule() {
-        const savedData = localStorage.getItem('black_project_schedule_v4');
-        if (!savedData) return;
+        const storageKey = `black_project_year_v1_${CURRENT_YEAR}_${currentMonth}`;
+        const savedData = localStorage.getItem(storageKey);
+        if (!savedData) return; // 如果沒存過，就保持預設(5月範本或空白)
+        
         const data = JSON.parse(savedData);
         data.forEach(item => {
             const select = document.querySelector(`#schedule-body select[data-user="${item.user}"][data-date="${item.date}"]`);
@@ -256,8 +361,9 @@
         });
     }
 
-    initTable();
-    loadSchedule();
+    // 首次啟動
+    initMonthNav();
+    switchMonth(currentMonth);
 </script>
 
 </body>
