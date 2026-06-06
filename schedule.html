@@ -2,136 +2,194 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <!-- 移除限制縮放的設定，讓手機可以像看網頁地圖一樣自由兩指縮放 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>黑曜石計畫 - 智慧排班系統</title>
+    <title>黑曜石計畫 - 寬螢幕排班系統</title>
     <style>
         :root {
-            --primary: #333;
-            --holiday-bg: #ffe4e1;
+            --primary-color: #2c3e50;
+            --holiday-bg: #ffe4e1; /* 六日粉紅色背景 */
             --holiday-text: #d9534f;
-            --work-bg: #e6f7ff;
-            --work-text: #1890ff;
+            --save-btn: #007bff;
+            --load-btn: #28a745;
         }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0;
-            padding: 10px;
-            background: #f5f5f5;
-            color: var(--primary);
+            padding: 15px;
+            background-color: #f8f9fa;
+            color: var(--primary-color);
         }
+
         .container {
-            max-width: 100%;
             background: #fff;
             border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
+
         h2 {
-            font-size: 1.2rem;
             text-align: center;
             margin-top: 0;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            letter-spacing: 1px;
         }
-        /* 手機版窄螢幕優化：建立可橫向滾動的區域 */
-        .table-responsive {
+
+        /* 關鍵架構：打造完美的橫向滾動容器，保留電腦版的大表格風味 */
+        .table-wrapper {
             width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            margin-bottom: 15px;
+            overflow-x: auto; /* 允許橫向滾動 */
+            -webkit-overflow-scrolling: touch; /* 讓 iPhone 滑動更流暢 */
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            margin-bottom: 20px;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 14px;
-            min-width: 600px; /* 確保在手機上可滾動而不擠壓 */
+            min-width: 1200px; /* 強制維持電腦版寬度，31天排開才好看！ */
         }
+
         th, td {
-            border: 1px solid #ddd;
+            border: 1px solid #e0e0e0;
             text-align: center;
-            padding: 8px 4px;
+            padding: 10px 6px;
+            white-space: nowrap; /* 防止文字自動換行擠歪 */
         }
+
         th {
-            background: #f9f9f9;
+            background-color: #f1f3f5;
+            font-weight: bold;
         }
+
+        /* 員工欄位固定稍微寬一點 */
+        .user-col {
+            min-width: 110px;
+            background-color: #fdfdfe;
+            font-weight: 500;
+        }
+
+        /* 六日粉紅色標記 */
         .holiday {
-            background-color: var(--holiday-bg);
+            background-color: var(--holiday-bg) !important;
             color: var(--holiday-text);
+            font-weight: bold;
         }
+
+        /* 優化下拉選單，告別原生醜醜的箭頭 */
         select {
-            width: 100%;
-            padding: 4px;
+            padding: 4px 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
-        }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-        }
-        button {
-            flex: 1;
-            padding: 10px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 14px;
+            background-color: #fff;
+            font-size: 13px;
             cursor: pointer;
         }
-        button:active {
-            background: #0056b3;
+
+        select:focus {
+            border-color: #80bdff;
+            outline: 0;
         }
+
+        /* 功能按鈕區 */
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: opacity 0.2s;
+        }
+
+        button:active {
+            opacity: 0.9;
+        }
+
+        .btn-save { background-color: var(--save-btn); }
+        .btn-load { background-color: var(--load-btn); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>115年 05月份 值勤排班表 (手機版)</h2>
+    <h2>萬安保全 臺中辦事處 115年05月份現場人員值勤排班表</h2>
     
-    <div class="table-responsive">
+    <!-- 橫向滾動外框 -->
+    <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
-                    <th>姓名 (班別)</th>
-                    <th>5/1 (五)</th>
-                    <th>5/2 (六)</th>
-                    <th class="holiday">5/3 (日)</th>
-                    <th>5/4 (一)</th>
-                    <th>5/5 (二)</th>
+                    <th class="user-col">姓名 (班別)</th>
+                    <th>1 (五)</th>
+                    <th>2 (六)</th>
+                    <th class="holiday">3 (日)</th>
+                    <th>4 (一)</th>
+                    <th>5 (二)</th>
+                    <th>6 (三)</th>
+                    <th>7 (四)</th>
+                    <th>8 (五)</th>
+                    <th>9 (六)</th>
+                    <th class="holiday">10 (日)</th>
+                    <!-- 可以依此類推加到 31 號 -->
                 </tr>
             </thead>
             <tbody id="schedule-body">
-                <!-- 這裡用簡化版 5 天做示範，結構適用於 31 天 -->
                 <tr>
-                    <td>盧家慶 (日班)</td>
+                    <td class="user-col">盧家慶 (日班)</td>
                     <td><select data-user="盧家慶" data-date="1"><option value="V">V</option><option value="休">休</option></select></td>
                     <td><select data-user="盧家慶" data-date="2"><option value="V">V</option><option value="休">休</option></select></td>
                     <td class="holiday"><select data-user="盧家慶" data-date="3"><option value="休">休</option><option value="V">V</option></select></td>
                     <td><select data-user="盧家慶" data-date="4"><option value="V">V</option><option value="休">休</option></select></td>
                     <td><select data-user="盧家慶" data-date="5"><option value="V">V</option><option value="休">休</option></select></td>
+                    <td><select data-user="盧家慶" data-date="6"><option value="V">V</option><option value="休">休</option></select></td>
+                    <td><select data-user="盧家慶" data-date="7"><option value="V">V</option><option value="休">休</option></select></td>
+                    <td><select data-user="盧家慶" data-date="8"><option value="V">V</option><option value="休">休</option></select></td>
+                    <td><select data-user="盧家慶" data-date="9"><option value="V">V</option><option value="休">休</option></select></td>
+                    <td class="holiday"><select data-user="盧家慶" data-date="10"><option value="休">休</option><option value="V">V</option></select></td>
                 </tr>
                 <tr>
-                    <td>蔡易倫 (晚班)</td>
+                    <td class="user-col">蔡易倫 (晚班)</td>
                     <td><select data-user="蔡易倫" data-date="1"><option value="休">休</option><option value="V">V</option></select></td>
                     <td><select data-user="蔡易倫" data-date="2"><option value="休">休</option><option value="V">V</option></select></td>
                     <td class="holiday"><select data-user="蔡易倫" data-date="3"><option value="V">V</option><option value="休">休</option></select></td>
                     <td><select data-user="蔡易倫" data-date="4"><option value="休">休</option><option value="V">V</option></select></td>
                     <td><select data-user="蔡易倫" data-date="5"><option value="休">休</option><option value="V">V</option></select></td>
+                    <td><select data-user="蔡易倫" data-date="6"><option value="休">休</option><option value="V">V</option></select></td>
+                    <td><select data-user="蔡易倫" data-date="7"><option value="休">休</option><option value="V">V</option></select></td>
+                    <td><select data-user="蔡易倫" data-date="8"><option value="休">休</option><option value="V">V</option></select></td>
+                    <td><select data-user="蔡易倫" data-date="9"><option value="休">休</option><option value="V">V</option></select></td>
+                    <td class="holiday"><select data-user="蔡易倫" data-date="10"><option value="V">V</option><option value="休">休</option></select></td>
                 </tr>
             </tbody>
         </table>
     </div>
 
+    <!-- 操作按鈕 -->
     <div class="btn-group">
-        <button onclick="saveSchedule()">儲存排班 (Local Storage)</button>
-        <button onclick="loadSchedule()" style="background:#28a745;">載入暫存</button>
+        <button class="btn-save" onclick="saveSchedule()">儲存排班 (Local Storage)</button>
+        <button class="btn-load" onclick="loadSchedule()">載入暫存</button>
     </div>
 </div>
 
 <script>
-    // 儲存資料到 Local Storage
     function saveSchedule() {
         const selects = document.querySelectorAll('#schedule-body select');
         const data = [];
-        
         selects.forEach(select => {
             data.push({
                 user: select.getAttribute('data-user'),
@@ -139,30 +197,20 @@
                 value: select.value
             });
         });
-        
         localStorage.setItem('black_project_schedule', JSON.stringify(data));
-        alert('柔提醒您：排班資料已成功儲存至本機！');
+        alert('柔提醒您：排班資料已同步至本機儲存！');
     }
 
-    // 從 Local Storage 載入資料
     function loadSchedule() {
         const savedData = localStorage.getItem('black_project_schedule');
-        if (!savedData) {
-            alert('沒有找到暫存資料。');
-            return;
-        }
-        
+        if (!savedData) return;
         const data = JSON.parse(savedData);
         data.forEach(item => {
             const select = document.querySelector(`#schedule-body select[data-user="${item.user}"][data-date="${item.date}"]`);
-            if (select) {
-                select.value = item.value;
-            }
+            if (select) select.value = item.value;
         });
-        alert('柔已幫您恢復上次的排班進度！');
     }
 
-    // 頁面載入時自動讀取
     window.onload = loadSchedule;
 </script>
 
