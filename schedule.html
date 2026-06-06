@@ -65,7 +65,7 @@
         }
 
         .user-col {
-            min-width: 120px;
+            min-width: 130px;
             background-color: #fdfdfe;
             font-weight: bold;
             position: sticky; /* 讓姓名欄可以固定在左側方便對齊 */
@@ -183,7 +183,6 @@
                 <!-- 1. 盧家慶 (日B班) -->
                 <tr id="row-lu">
                     <td class="user-col">盧家慶 (日B班)</td>
-                    <!-- 這裡會由下方的 JS 腳本根據照片初始狀態自動填入，避免 HTML 太冗長 -->
                 </tr>
                 <!-- 2. 何鴻隆 (日B班) -->
                 <tr id="row-ho">
@@ -194,15 +193,15 @@
                     <td class="user-col highlight-user">蔡易倫 (夜E班)</td>
                 </tr>
                 <!-- 4. 邱鴻鈞 (夜B班) -->
-                <tr id="row-kao">
+                <tr id="row-chiu">
                     <td class="user-col highlight-user">邱鴻鈞 (夜B班)</td>
                 </tr>
-                <!-- 5.柳旭洲 (日B班) -->
-                <tr id="row-lin">
+                <!-- 5. 柳旭洲 (日B班) -->
+                <tr id="row-liu">
                     <td class="user-col highlight-user">柳旭洲 (日B班)</td>
                 </tr>
-                <!-- 6.魏榮志 (夜E班) -->
-                <tr id="row-lin">
+                <!-- 6. 魏榮志 (夜E班) -->
+                <tr id="row-wei">
                     <td class="user-col highlight-user">魏榮志 (夜E班)</td>
                 </tr>
             </tbody>
@@ -216,15 +215,15 @@
 </div>
 
 <script>
-    // 根據照片 d7e35bfe-0193-476a-821b-8ac437c2fc7c.jpg 精準對齊的當月初始班表資料
-    // 0代表預設空白，"V"代表上班，"休"代表休息
+    // 精準對齊的初始資料 (0 代表空白)
+    // 柔幫你把原本照片中 5 位大大的資料對齊，另外一筆先放空白讓你可以自由選填
     const initialData = {
         "row-lu":   [0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0,"休"],
         "row-ho":   [0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ],
         "row-tsai": ["休",0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0,"休",0,0,"休",0,0,0],
-        "row-kao":  [0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,0],
-        "row-lin":  [0,0,0   ,0,0,0   ,0,0,0,0   ,0,0,0   ,"V" ,0,0,0   ,0,0,0   ,0,0,0   ,"V" ,0,0,0   ,0,0,0,0]
-        "row-lin":  [0,0,0   ,0,0,0   ,0,0,0,0   ,0,0,0   ,"V" ,0,0,0   ,0,0,0   ,0,0,0   ,"V" ,0,0,0   ,0,0,0,0]
+        "row-chiu": [0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,"V" ,0,0,"V" ,0,0,0,0],
+        "row-liu":  [0,0,0   ,0,0,0   ,0,0,0,0   ,0,0,0   ,"V" ,0,0,0   ,0,0,0   ,0,0,0   ,"V" ,0,0,0   ,0,0,0,0],
+        "row-wei":  [0,0,0   ,0,0,0   ,0,0,0,0   ,0,0,0   ,0   ,0,0,0   ,0,0,0   ,0,0,0   ,0   ,0,0,0   ,0,0,0,0]
     };
 
     const holidays = [3, 10, 17, 24, 31, 2, 9, 16, 23, 30]; // 當月所有六日的日期
@@ -233,6 +232,8 @@
     function initTable() {
         Object.keys(initialData).forEach(rowId => {
             const tr = document.getElementById(rowId);
+            if (!tr) return; // 安全檢查
+            
             const userSchedule = initialData[rowId];
             const userName = tr.cells[0].innerText.split(" ")[0];
 
@@ -255,7 +256,7 @@
                 select.add(optV);
                 select.add(optRest);
 
-                // 帶入初始照片中的數值
+                // 帶入初始數值
                 const initVal = userSchedule[day - 1];
                 if (initVal === "V" || initVal === "休") {
                     select.value = initVal;
@@ -263,7 +264,6 @@
                     select.value = "";
                 }
 
-                // 動態切換顏色樣式
                 updateSelectClass(select);
                 select.addEventListener('change', () => updateSelectClass(select));
 
@@ -291,13 +291,13 @@
                 value: select.value
             });
         });
-        localStorage.setItem('black_project_schedule_v2', JSON.stringify(data));
+        localStorage.setItem('black_project_schedule_v3', JSON.stringify(data));
         alert('柔提醒您：31天排班資料已完整同步至瀏覽器暫存！');
     }
 
     // 載入暫存
     function loadSchedule() {
-        const savedData = localStorage.getItem('black_project_schedule_v2');
+        const savedData = localStorage.getItem('black_project_schedule_v3');
         if (!savedData) return;
         const data = JSON.parse(savedData);
         data.forEach(item => {
