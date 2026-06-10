@@ -18,10 +18,10 @@
         .card { background: var(--card); border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border); }
         .form-group { margin-bottom: 10px; }
         .form-group label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 13px; }
-        .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 15px; }
+        .form-group input { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 15px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         button { width: 100%; background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 15px; margin-top: 5px; }
-        .stats-box { background: #eff6ff; border-left: 4px solid var(--primary); padding: 10px; margin-bottom: 12px; font-size: 13px; }
+        .stats-box { background: #eff6ff; border-left: 4px solid var(--primary); padding: 10px; margin-bottom: 12px; font-size: 13px; line-height: 1.5; }
         .history-item { border-bottom: 1px solid var(--border); padding: 8px 0; font-size: 13px; }
         .history-item:last-child { border: none; }
         .accent { color: var(--primary); font-weight: bold; }
@@ -31,15 +31,11 @@
 
     <h3>💧 水資源抄表系統</h3>
 
-    <!-- 數據統計區 -->
     <div class="card">
         <label style="font-weight: bold;">📊 本月數據摘要 (CMD)</label>
-        <div class="stats-box" id="stats">
-            載入中...
-        </div>
+        <div class="stats-box" id="stats">載入中...</div>
     </div>
 
-    <!-- 即時輸入區 -->
     <div class="card">
         <div class="form-group">
             <label>抄表日期</label>
@@ -47,24 +43,23 @@
         </div>
         <div class="grid-2">
             <div class="form-group"><label>自來水讀值</label><input type="number" id="waterRead" placeholder="38665"></div>
-            <div class="form-group"><label>自來水用量</label><input type="number" id="waterUse" readonly style="background:#f1f5f9;"></div>
+            <div class="form-group"><label>自來水用量</label><input type="number" id="waterUse" value="0" readonly style="background:#f1f5f9;"></div>
         </div>
         <div class="grid-2">
             <div class="form-group"><label>生活污水讀值</label><input type="number" id="sewageRead" placeholder="55542"></div>
-            <div class="form-group"><label>污水排放量D01</label><input type="number" id="sewageDiff" readonly style="background:#f1f5f9;"></div>
+            <div class="form-group"><label>污水排放量D01</label><input type="number" id="sewageDiff" value="0" readonly style="background:#f1f5f9;"></div>
         </div>
         <div class="grid-2">
             <div class="form-group"><label>製程廢水讀值</label><input type="number" id="processRead" placeholder="54024"></div>
-            <div class="form-group"><label>廢水排放量D02</label><input type="number" id="processDiff" readonly style="background:#f1f5f9;"></div>
+            <div class="form-group"><label>廢水排放量D02</label><input type="number" id="processDiff" value="0" readonly style="background:#f1f5f9;"></div>
         </div>
         <div class="form-group">
-            <label>簽名 (英文/代碼)</label>
-            <input type="text" id="signature" placeholder="例如: BK">
+            <label>簽名</label>
+            <input type="text" id="signature" placeholder="小黑">
         </div>
         <button onclick="saveData()">儲存今日紀錄</button>
     </div>
 
-    <!-- 歷史紀錄 -->
     <div class="card">
         <label style="font-weight: bold; display: block; margin-bottom: 6px;">📋 歷史紀錄 (最新5筆)</label>
         <div id="historyList"></div>
@@ -77,23 +72,31 @@
         // 載入資料
         let records = JSON.parse(localStorage.getItem('water_records')) || [];
 
-        // 監聽讀值輸入，自動計算使用量
-        const inputs = ['waterRead', 'sewageRead', 'processRead'];
-        inputs.forEach(id => {
+        // 監聽讀值輸入
+        ['waterRead', 'sewageRead', 'processRead'].forEach(id => {
             document.getElementById(id).addEventListener('input', calculateDiffs);
         });
 
         function calculateDiffs() {
-            if (records.length === 0) return;
-            const lastRecord = records[0]; // 已按時間降序排序，最新的一筆
-            
             const wRead = parseFloat(document.getElementById('waterRead').value) || 0;
             const sRead = parseFloat(document.getElementById('sewageRead').value) || 0;
             const pRead = parseFloat(document.getElementById('processRead').value) || 0;
 
-            if (wRead >= lastRecord.waterRead) document.getElementById('waterUse').value = (wRead - lastRecord.waterRead).toFixed(0);
-            if (sRead >= lastRecord.sewageRead) document.getElementById('sewageDiff').value = (sRead - lastRecord.sewageRead).toFixed(0);
-            if (pRead >= lastRecord.processRead) document.getElementById('processDiff').value = (pRead - lastRecord.processRead).toFixed(0);
+            // 如果完全沒有歷史紀錄，用量就是 0
+            if (records.length === 0) {
+                document.getElementById('waterUse').value = 0;
+                document.getElementById('sewageDiff').value = 0;
+                document.getElementById('processDiff').value = 0;
+                return;
+            }
+
+            // 抓取最新的一筆歷史紀錄當作上期讀值
+            const lastRecord = records[0]; 
+            
+            // 計算差額 (新讀值必須大於舊讀值才計算，否則為 0)
+            document.getElementById('waterUse').value = (wRead > lastRecord.waterRead) ? (wRead - lastRecord.waterRead).toFixed(0) : 0;
+            document.getElementById('sewageDiff').value = (sRead > lastRecord.sewageRead) ? (sRead - lastRecord.sewageRead).toFixed(0) : 0;
+            document.getElementById('processDiff').value = (pRead > lastRecord.processRead) ? (pRead - lastRecord.processRead).toFixed(0) : 0;
         }
 
         function saveData() {
@@ -105,15 +108,16 @@
                 sewageDiff: parseFloat(document.getElementById('sewageDiff').value) || 0,
                 processRead: parseFloat(document.getElementById('processRead').value) || 0,
                 processDiff: parseFloat(document.getElementById('processDiff').value) || 0,
-                signature: document.getElementById('signature').value || 'N/A'
+                signature: document.getElementById('signature').value || '小黑'
             };
 
             if(!record.date) return alert('請選擇日期');
 
-            // 檢查是否重複，若重複則覆蓋
+            // 覆蓋同日期的舊資料
             records = records.filter(r => r.date !== record.date);
             records.push(record);
-            // 依日期降序排序 (最新的在上面)
+            
+            // 重新按日期排序（最新的在最上面）
             records.sort((a, b) => new Date(b.date) - new Date(a.date));
 
             localStorage.setItem('water_records', JSON.stringify(records));
@@ -122,12 +126,12 @@
         }
 
         function updateUI() {
-            // 更新歷史紀錄顯示
+            // 更新歷史紀錄
             const listEl = document.getElementById('historyList');
             listEl.innerHTML = records.slice(0, 5).map(r => `
                 <div class="history-item">
                     <strong>${r.date}</strong> (${r.signature})<br>
-                    自來水用量: <span class="accent">${r.waterUse}</span> | 
+                    自來水: <span class="accent">${r.waterUse}</span> | 
                     D01: <span class="accent">${r.sewageDiff}</span> | 
                     D02: <span class="accent">${r.processDiff}</span>
                 </div>
@@ -147,13 +151,13 @@
 
             statsEl.innerHTML = `
                 總自來水用量：<span class="accent">${totalWater}</span> CMD<br>
-                總污水排放(D01)：<span class="accent">${totalD02}</span> CMD<br>
+                總污水排放(D01)：<span class="accent">${totalD01}</span> CMD<br>
                 總廢水排放(D02)：<span class="accent">${totalD02}</span> CMD<br>
                 日平均自來水用量：<span class="accent">${avgWater}</span> CMD
             `;
         }
 
-        // 首次載入 UI
+        // 首次載入執行
         updateUI();
     </script>
 </body>
