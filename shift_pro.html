@@ -3,19 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小黑哥排班系統 - Pro</title>
+    <title>小黑哥排班系統 Pro</title>
     <style>
-        :root { --main-bg: #f8f9fa; --accent: #2d8a8a; --text-main: #333; }
-        body { margin: 0; background: var(--main-bg); font-family: -apple-system, sans-serif; height: 100vh; display: flex; flex-direction: column; }
-        header { background: #fff; padding: 15px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); flex: 1; gap: 1px; background: #ddd; }
-        .cell { background: #fff; padding: 8px 2px; text-align: center; display: flex; flex-direction: column; align-items: center; }
-        .date { font-size: 14px; margin-bottom: 4px; }
-        .tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 500; width: 85%; }
-        .tag-b { background: #e1f5fe; color: #0277bd; }
-        .tag-rest { background: #ffebee; color: #c62828; }
-        .nav { height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; }
-        .fab { width: 45px; height: 45px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        :root { --accent: #2d8a8a; --bg: #f5f5f7; --border: #e0e0e0; }
+        body { margin: 0; background: var(--bg); font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; }
+        header { background: #fff; padding: 15px; text-align: center; font-weight: bold; border-bottom: 1px solid var(--border); }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); flex: 1; background: var(--border); gap: 1px; }
+        .cell { background: #fff; padding: 5px 2px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+        .date { font-size: 13px; margin-bottom: 3px; }
+        .tag { font-size: 9px; padding: 2px 4px; border-radius: 4px; width: 90%; font-weight: 600; white-space: nowrap; overflow: hidden; }
+        
+        /* 專業配色 */
+        .tag-b { background: #e3f2fd; color: #1976d2; }
+        .tag-rest { background: #ffebee; color: #d32f2f; }
+        .tag-special { background: #fff3e0; color: #f57c00; }
+        .tag-matter { background: #f1f8e9; color: #388e3c; }
+
+        .nav { height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border); }
+        .fab { width: 45px; height: 45px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 3px 6px rgba(0,0,0,0.2); }
+        
+        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; }
+        #sheet { position: fixed; bottom: 0; width: 100%; background: #fff; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; }
+        .options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .btn { padding: 10px; border: 1px solid #ddd; border-radius: 8px; text-align: center; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -24,23 +34,53 @@
 <div class="grid" id="calendar"></div>
 <nav class="nav">
     <div>今日</div>
-    <div class="fab">+</div>
-    <div>其它</div>
+    <div class="fab" onclick="showSheet()">+</div>
+    <div>設定</div>
 </nav>
 
-<script>
-    const calendar = document.getElementById('calendar');
-    const days = 30;
-    // 模擬數據：你可以看到專業版標籤的結構更緊湊
-    const data = { 2: {name: '日B班', type: 'tag-b'}, 3: {name: '休假', type: 'tag-rest'} };
+<div id="overlay" onclick="hideSheet()"></div>
+<div id="sheet" style="display:none;">
+    <div style="text-align:center; margin-bottom:15px; font-weight:bold;">選擇班別</div>
+    <div class="options">
+        <div class="btn" onclick="apply('日B班', 'tag-b')">日B班</div>
+        <div class="btn" onclick="apply('休假', 'tag-rest')">休假</div>
+        <div class="btn" onclick="apply('例假', 'tag-rest')">例假</div>
+        <div class="btn" onclick="apply('特休', 'tag-special')">特休</div>
+        <div class="btn" onclick="apply('事假', 'tag-matter')">事假</div>
+        <div class="btn" onclick="apply('', '')">清除</div>
+    </div>
+</div>
 
-    for(let i=1; i<=days; i++) {
-        let div = document.createElement('div');
-        div.className = 'cell';
-        let label = data[i] ? `<div class="tag ${data[i].type}">${data[i].name}</div>` : '';
-        div.innerHTML = `<div class="date">${i}</div>${label}`;
-        calendar.appendChild(div);
+<script>
+    let activeDate = null;
+    let schedule = JSON.parse(localStorage.getItem('my_schedule') || '{}');
+    
+    function render() {
+        const grid = document.getElementById('calendar');
+        grid.innerHTML = '';
+        for(let i=1; i<=30; i++) {
+            let div = document.createElement('div');
+            div.className = 'cell';
+            div.onclick = () => { activeDate = i; showSheet(); };
+            let entry = schedule[i] ? `<div class="tag ${entry.type}">${schedule[i].name}</div>` : '';
+            div.innerHTML = `<div class="date">${i}</div>${entry}`;
+            grid.appendChild(div);
+        }
     }
+
+    function apply(name, type) {
+        if(activeDate) {
+            schedule[activeDate] = {name, type};
+            localStorage.setItem('my_schedule', JSON.stringify(schedule));
+            render();
+            hideSheet();
+        }
+    }
+
+    function showSheet() { document.getElementById('overlay').style.display = 'block'; document.getElementById('sheet').style.display = 'block'; }
+    function hideSheet() { document.getElementById('overlay').style.display = 'none'; document.getElementById('sheet').style.display = 'none'; }
+    
+    render();
 </script>
 </body>
 </html>
