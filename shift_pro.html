@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小黑哥排班表 Pro</title>
+    <title>小黑哥排班表 Pro - 統計版</title>
     <style>
         :root { --border: #f0f0f0; }
         body { margin: 0; font-family: sans-serif; background: #fff; height: 100vh; display: flex; flex-direction: column; }
         .header { display: flex; justify-content: space-between; align-items: center; padding: 15px; font-weight: bold; }
+        .stats { padding: 5px 15px; font-size: 12px; color: #666; background: #fafafa; text-align: center; }
         .grid { display: grid; grid-template-columns: repeat(7, 1fr); flex-grow: 1; border-top: 1px solid var(--border); }
         .cell { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 8px 2px; display: flex; flex-direction: column; align-items: center; }
         .date { font-size: 14px; margin-bottom: 4px; }
@@ -16,6 +17,7 @@
         #modal { display: none; position: fixed; bottom: 0; width: 100%; background: #fff; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); }
         .shift-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn { padding: 12px; background: #f8f9fa; border-radius: 10px; text-align: center; font-size: 14px; border: 1px solid #eee; }
+        .btn-clear { color: #d32f2f; background: #ffebee; border-color: #ffcdd2; }
     </style>
 </head>
 <body>
@@ -25,6 +27,7 @@
     <div id="monthDisplay"></div>
     <button onclick="changeMonth(1)">＞</button>
 </div>
+<div class="stats" id="statsDisplay"></div>
 
 <div class="grid" id="calendar"></div>
 
@@ -48,12 +51,16 @@
         const month = date.getMonth();
         document.getElementById('monthDisplay').innerText = `${year}年 ${month + 1}月`;
         
-        const grid = document.getElementById('calendar');
-        grid.innerHTML = '';
-        
-        // 讀取該月的班表存檔
         const savedData = JSON.parse(localStorage.getItem(`shifts_${year}_${month}`) || '{}');
         
+        // 計算統計
+        let counts = {};
+        Object.values(savedData).forEach(s => counts[s] = (counts[s] || 0) + 1);
+        document.getElementById('statsDisplay').innerText = Object.entries(counts)
+            .map(([name, count]) => `${name}:${count}`).join(' | ');
+
+        const grid = document.getElementById('calendar');
+        grid.innerHTML = '';
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
@@ -63,9 +70,7 @@
             cell.className = 'cell';
             let shiftName = savedData[i] || "";
             let style = shiftTypes[shiftName] || {bg: 'transparent', color: 'transparent'};
-            
-            cell.innerHTML = `<div class="date">${i}</div>
-                              <div class="tag" style="background:${style.bg}; color:${style.color}">${shiftName}</div>`;
+            cell.innerHTML = `<div class="date">${i}</div><div class="tag" style="background:${style.bg}; color:${style.color}">${shiftName}</div>`;
             cell.onclick = () => { selectedDay = i; document.getElementById('modal').style.display = 'block'; };
             grid.appendChild(cell);
         }
@@ -75,7 +80,8 @@
         const year = date.getFullYear();
         const month = date.getMonth();
         let data = JSON.parse(localStorage.getItem(`shifts_${year}_${month}`) || '{}');
-        data[selectedDay] = shift;
+        if (shift === null) delete data[selectedDay];
+        else data[selectedDay] = shift;
         localStorage.setItem(`shifts_${year}_${month}`, JSON.stringify(data));
         document.getElementById('modal').style.display = 'none';
         render();
@@ -87,6 +93,7 @@
     }
 
     const options = document.getElementById('shiftOptions');
+    // 加入班別按鈕
     Object.keys(shiftTypes).forEach(s => {
         let div = document.createElement('div');
         div.className = 'btn';
@@ -94,6 +101,12 @@
         div.onclick = () => saveShift(s);
         options.appendChild(div);
     });
+    // 加入清除按鈕
+    let clearBtn = document.createElement('div');
+    clearBtn.className = 'btn btn-clear';
+    clearBtn.innerText = '清空';
+    clearBtn.onclick = () => saveShift(null);
+    options.appendChild(clearBtn);
 
     render();
 </script>
