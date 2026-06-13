@@ -5,71 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>小黑哥排班表 Pro</title>
     <style>
-        /* 繼承先前的樣式，新增編輯器樣式 */
-        :root { --border: #f0f0f0; --sun: #d9534f; --sat: #428bca; }
-        body { margin: 0; font-family: sans-serif; background: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); flex-grow: 1; border-top: 1px solid var(--border); }
-        .cell { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 6px 2px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; cursor: pointer; }
-        .tag { font-size: 9px; padding: 2px 4px; border-radius: 4px; width: 85%; text-align: center; margin-top: 2px; }
+        :root { --border: #f0f0f0; }
+        body { margin: 0; font-family: sans-serif; background: #fff; height: 100vh; display: flex; flex-direction: column; }
         
-        /* 簡單的選擇器 Modal */
-        #modal { display: none; position: fixed; bottom: 0; width: 100%; background: white; border-top: 1px solid #ccc; padding: 20px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); flex-grow: 1; border-top: 1px solid var(--border); }
+        .cell { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 8px 2px; display: flex; flex-direction: column; align-items: center; }
+        
+        /* 圓潤彈窗樣式 */
+        #modal { display: none; position: fixed; bottom: 0; width: 100%; background: #fff; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); }
+        .shift-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn { padding: 12px; background: #f8f9fa; border-radius: 10px; text-align: center; font-size: 14px; border: 1px solid #eee; }
     </style>
 </head>
 <body>
 
+<div class="header">
+    <button onclick="changeMonth(-1)">＜</button>
+    <div id="monthDisplay">2026年 6月</div>
+    <button onclick="changeMonth(1)">＞</button>
+</div>
+
 <div class="grid" id="calendar"></div>
 
-<!-- 班別選擇器 -->
-<div id="modal">
-    <div id="shiftOptions" style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 10px;"></div>
+<div id="modal" onclick="this.style.display='none'">
+    <div class="shift-grid" id="shiftOptions" onclick="event.stopPropagation()"></div>
 </div>
 
 <script>
-    const shiftTypes = {
-        "日B": { bg: "#e3f2fd", color: "#1976d2" }, "夜B": { bg: "#f3e5f5", color: "#7b1fa2" },
-        "夜E": { bg: "#ede7f6", color: "#512da8" }, "休假": { bg: "#f5f5f5", color: "#616161" },
-        "例假": { bg: "#e8f5e9", color: "#2e7d32" }, "特休": { bg: "#fff3e0", color: "#e65100" },
-        "國定假日": { bg: "#ffebee", color: "#c62828" }, "換班": { bg: "#fff9c4", color: "#fbc02d" }
-    };
-
-    let currentDay = 0;
-    const calendar = document.getElementById('calendar');
+    let date = new Date(2026, 5, 1);
     
-    // 初始化畫面與載入資料
     function render() {
-        calendar.innerHTML = '';
-        const savedData = JSON.parse(localStorage.getItem('shiftData') || '{}');
-        for (let i = 1; i <= 30; i++) {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        document.getElementById('monthDisplay').innerText = `${year}年 ${month + 1}月`;
+        
+        const grid = document.getElementById('calendar');
+        grid.innerHTML = '';
+        
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for(let i=0; i<firstDay; i++) grid.appendChild(document.createElement('div'));
+        for(let i=1; i<=daysInMonth; i++) {
             let cell = document.createElement('div');
             cell.className = 'cell';
-            let shift = savedData[i] || "";
-            let style = shiftTypes[shift] || { bg: 'transparent', color: 'transparent' };
-            cell.innerHTML = `<div class="date">${i}</div><div class="tag" style="background:${style.bg}; color:${style.color}">${shift}</div>`;
-            cell.onclick = () => openModal(i);
-            calendar.appendChild(cell);
+            cell.innerHTML = `<div class="date">${i}</div>`;
+            cell.onclick = () => document.getElementById('modal').style.display = 'block';
+            grid.appendChild(cell);
         }
     }
 
-    function openModal(day) {
-        currentDay = day;
-        document.getElementById('modal').style.display = 'block';
+    function changeMonth(delta) {
+        date.setMonth(date.getMonth() + delta);
+        render();
     }
 
-    // 建立選項並存檔
+    // 初始化選單
+    const shifts = ["日B", "夜B", "夜E", "休假", "例假", "特休", "國定假日", "換班"];
     const options = document.getElementById('shiftOptions');
-    Object.keys(shiftTypes).forEach(type => {
-        let btn = document.createElement('div');
-        btn.innerHTML = type;
-        btn.style.padding = '10px'; btn.style.background = '#eee'; btn.style.textAlign = 'center';
-        btn.onclick = () => {
-            let data = JSON.parse(localStorage.getItem('shiftData') || '{}');
-            data[currentDay] = type;
-            localStorage.setItem('shiftData', JSON.stringify(data));
-            document.getElementById('modal').style.display = 'none';
-            render();
-        };
-        options.appendChild(btn);
+    shifts.forEach(s => {
+        let div = document.createElement('div');
+        div.className = 'btn';
+        div.innerText = s;
+        div.onclick = () => { alert('選了' + s); document.getElementById('modal').style.display='none'; };
+        options.appendChild(div);
     });
 
     render();
