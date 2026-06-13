@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小黑哥排班系統 - 全年整合版</title>
+    <title>小黑哥排班監控系統</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -12,10 +12,10 @@
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #e8e2d0; margin: 0; overflow-x: hidden; }
         .grid-cell { min-height: 75px; border-right: 1px solid #c2b99a; border-bottom: 1px solid #c2b99a; transition: all 0.2s; }
         .val-text { font-weight: 900; font-size: 13px; text-align: center; }
-        .color-off { color: #c0392b; } /* 紅色: 休假、例假 */
-        .color-special { color: #d4af37; } /* 金黃色: 特休 */
-        .color-day-shift { color: #2563eb; } /* 湛藍色: 日班 */
-        .color-night-shift { color: #4b5563; } /* 深灰色: 夜班 */
+        .color-off { color: #c0392b; }
+        .color-special { color: #d4af37; }
+        .color-day-shift { color: #2563eb; }
+        .color-night-shift { color: #4b5563; }
         .bottom-panel { position: fixed; bottom: 0; width: 100%; max-width: 512px; background: rgba(255,255,255,0.98); padding: 12px; border-top: 2px solid #2e5a44; z-index: 50; }
     </style>
 </head>
@@ -27,10 +27,16 @@
         function App() {
             const [data, setData] = useState(() => JSON.parse(localStorage.getItem('localSchedule') || "{}"));
             const [shiftText, setShiftText] = useState("日B");
+            const [userName, setUserName] = useState(localStorage.getItem('guardName') || "姓名");
+            const [userID, setUserID] = useState(localStorage.getItem('guardID') || "工號");
             const [curYear] = useState(new Date().getFullYear());
             const [curMonth, setCurMonth] = useState(new Date().getMonth());
 
-            useEffect(() => { localStorage.setItem('localSchedule', JSON.stringify(data)); }, [data]);
+            useEffect(() => { 
+                localStorage.setItem('localSchedule', JSON.stringify(data)); 
+                localStorage.setItem('guardName', userName);
+                localStorage.setItem('guardID', userID);
+            }, [data, userName, userID]);
 
             const handleCellClick = (day) => {
                 const cellId = `${curYear}_${curMonth + 1}_${day}`;
@@ -50,11 +56,17 @@
 
             return (
                 <div className="max-w-[512px] mx-auto pb-40 min-h-screen bg-[#e8e2d0] shadow-2xl">
-                    {/* 月份切換控制台 */}
-                    <div className="bg-black text-white p-3 flex justify-between items-center sticky top-0 z-40">
-                        <button onClick={() => setCurMonth(m => m - 1)} className="font-black text-xl px-2">❮</button>
-                        <div className="font-black text-lg">{curYear}年 {curMonth + 1}月</div>
-                        <button onClick={() => setCurMonth(m => m + 1)} className="font-black text-xl px-2">❯</button>
+                    {/* 頂部整合控制台 */}
+                    <div className="bg-black text-white p-3 sticky top-0 z-40">
+                        <div className="flex justify-between items-center mb-2 text-xs font-bold px-1">
+                            <span onClick={() => setUserName(prompt("請輸入姓名", userName) || userName)} className="cursor-pointer border-b border-gray-600">{userName}</span>
+                            <span onClick={() => setUserID(prompt("請輸入工號", userID) || userID)} className="cursor-pointer border-b border-gray-600">{userID}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <button onClick={() => setCurMonth(m => m - 1)} className="font-black text-xl px-2">❮</button>
+                            <div className="font-black text-lg">{curYear}年 {curMonth + 1}月</div>
+                            <button onClick={() => setCurMonth(m => m + 1)} className="font-black text-xl px-2">❯</button>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-7 border-t border-[#c2b99a]">
