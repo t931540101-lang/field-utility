@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>台灣精銳警衛排班系統</title>
+    <title>黑曜石排班監控系統</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -12,11 +12,12 @@
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #e8e2d0; margin: 0; overflow-x: hidden; }
         .grid-cell { min-height: 75px; border-right: 1px solid #c2b99a; border-bottom: 1px solid #c2b99a; transition: all 0.2s; }
         .val-text { font-weight: 900; font-size: 13px; text-align: center; }
-        .color-off { color: #c0392b; } /* 紅色 */
-        .color-special { color: #d4af37; } /* 金黃色 */
-        .color-day-shift { color: #2563eb; } /* 藍色 */
-        .color-night-shift { color: #4b5563; } /* 灰色 */
-        .bottom-panel { position: fixed; bottom: 0; width: 100%; max-width: 512px; background: rgba(255,255,255,0.98); padding: 12px; border-top: 2px solid #2e5a44; z-index: 50; }
+        .color-off { color: #c0392b; } /* 紅 */
+        .color-special { color: #d4af37; } /* 金 */
+        .color-day-shift { color: #2563eb; } /* 藍 */
+        .color-night-shift { color: #4b5563; } /* 灰 */
+        .scroll-container { padding-bottom: 220px; overflow-y: auto; }
+        .bottom-panel { position: fixed; bottom: 0; width: 100%; max-width: 512px; background: rgba(255,255,255,0.98); padding: 10px; border-top: 2px solid #2e5a44; z-index: 50; }
     </style>
 </head>
 <body>
@@ -32,8 +33,8 @@
             const [curYear] = useState(new Date().getFullYear());
             const [curMonth, setCurMonth] = useState(new Date().getMonth());
 
-            // 工時對照表
-            const shiftHoursMap = { "日B": 12, "夜B": 12, "夜E": 12, "國定": 12, };
+            // 請依實際需求調整工時數
+            const shiftHoursMap = { "日B": 12, "夜B": 12, "夜E": 12, "國定": 12 };
 
             useEffect(() => { 
                 localStorage.setItem('localSchedule', JSON.stringify(data)); 
@@ -54,7 +55,6 @@
                 return "text-gray-700";
             };
 
-            // 統計邏輯
             const currentPrefix = `${curYear}_${curMonth + 1}_`;
             const monthKeys = Object.keys(data).filter(key => key.startsWith(currentPrefix));
             const workDays = monthKeys.filter(k => data[k].includes("日") || data[k].includes("夜")).length;
@@ -65,11 +65,11 @@
             const firstDay = new Date(curYear, curMonth, 1).getDay();
 
             return (
-                <div className="max-w-[512px] mx-auto pb-48 min-h-screen bg-[#e8e2d0] shadow-2xl">
+                <div className="max-w-[512px] mx-auto min-h-screen bg-[#e8e2d0] shadow-2xl scroll-container">
                     <div className="bg-black text-white p-3 sticky top-0 z-40">
                         <div className="flex justify-between items-center mb-2 text-xs font-bold px-1">
-                            <span onClick={() => setUserName(prompt("請輸入姓名", userName) || userName)} className="cursor-pointer border-b border-gray-600">{userName}</span>
-                            <span onClick={() => setUserID(prompt("請輸入工號", userID) || userID)} className="cursor-pointer border-b border-gray-600">{userID}</span>
+                            <span onClick={() => setUserName(prompt("姓名", userName) || userName)} className="cursor-pointer border-b border-gray-600">{userName}</span>
+                            <span onClick={() => setUserID(prompt("工號", userID) || userID)} className="cursor-pointer border-b border-gray-600">{userID}</span>
                         </div>
                         <div className="flex justify-between items-center">
                             <button onClick={() => setCurMonth(m => m - 1)} className="font-black text-xl px-2">❮</button>
@@ -96,16 +96,18 @@
                     </div>
                     
                     <div className="bottom-panel">
-                        <div className="grid grid-cols-3 gap-1 mb-3 px-1 text-[11px] font-black text-gray-700 bg-white p-2 rounded border border-gray-200">
+                        <div className="grid grid-cols-3 gap-1 mb-2 px-1 text-[11px] font-black text-gray-700 bg-white p-2 rounded border border-gray-200">
                             <div className="text-center text-blue-600"><div>上班</div><div>{workDays} 天</div></div>
                             <div className="text-center text-orange-600 border-x border-gray-200"><div>工時</div><div>{totalHours} 時</div></div>
                             <div className="text-center text-red-600"><div>休息</div><div>{offDays} 天</div></div>
                         </div>
-                        <div className="font-bold text-xs mb-2 text-gray-500">目前選定：<span className={getNoteStyle(shiftText)}>{shiftText}</span></div>
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className="flex justify-between items-center px-1 mb-1">
+                            <div className="font-bold text-[10px] text-gray-500">目前選定：<span className={getNoteStyle(shiftText)}>{shiftText}</span></div>
+                        </div>
+                        <div className="grid grid-cols-4 gap-1.5">
                             {["日B", "夜B", "夜E", "休假", "例假", "特休", "國定", "清空"].map(s => (
                                 <button key={s} onClick={()=>s==='清空'?setShiftText(''):setShiftText(s)} 
-                                    className="bg-white border border-gray-300 py-2 rounded-lg text-xs font-black text-gray-700 active:bg-[#2e5a44] active:text-white shadow-sm">
+                                    className="bg-white border border-gray-300 py-1.5 rounded-lg text-[11px] font-black text-gray-700 active:bg-[#2e5a44] active:text-white shadow-sm">
                                     {s}
                                 </button>
                             ))}
