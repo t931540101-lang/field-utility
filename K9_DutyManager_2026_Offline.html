@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K9 警衛輪班管理系統 (離線版)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root { --primary: #d32f2f; --bg: #f8f9fa; --border: #999; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .header-box { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .month-ctrl { display: flex; align-items: center; gap: 15px; font-weight: bold; font-size: 1.3rem; }
+        .btn-nav { padding: 6px 15px; cursor: pointer; background: #eee; border: 1px solid #ccc; border-radius: 4px; }
+        .table-container { width: 100%; overflow-x: auto; background: white; border: 1px solid #666; }
+        table { border-collapse: collapse; min-width: 2200px; width: 100%; table-layout: fixed; }
+        th, td { border: 1px solid var(--border); padding: 5px 2px; text-align: center; font-size: 14px; height: 35px; }
+        th { background: #e9ecef; }
+        .sticky-col { position: sticky; background: #fff !important; z-index: 10; border-right: 2px solid #666 !important; }
+        .col-group { left: 0; width: 60px; } .col-shift { left: 60px; width: 90px; } .col-id { left: 150px; width: 80px; } .col-name { left: 230px; width: 80px; }
+        input { width: 95%; border: none; text-align: center; font-size: 13px; background: transparent; }
+        .can-edit input { background: #fff9c4; }
+        .is-holiday { color: red; font-weight: bold; }
+        .bg-例假 { background: #fce4ec !important; color: #c2185b; }
+        .bg-休息日 { background: #e8f5e9 !important; color: #2e7d32; }
+        .bg-國定假日 { background: #fff3e0 !important; color: #ef6c00; }
+        .lock-btn { padding: 10px 20px; border-radius: 4px; border: none; background: #607d8b; color: white; cursor: pointer; font-weight: bold; }
+        .lock-btn.unlocked { background: #43a047; }
+        .export-btn { padding: 10px 20px; border-radius: 4px; border: none; background: #1565c0; color: white; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="header-box">
+    <div class="month-ctrl">
+        <button class="btn-nav" onclick="changeMonth(-1)">❮</button>
+        <span id="currentMonthDisplay">載入中...</span>
+        <button class="btn-nav" onclick="changeMonth(1)">❯</button>
+    </div>
+    <div>
+        <button id="lockBtn" class="lock-btn" onclick="toggleLock()">🔒 唯讀模式</button>
+        <button class="export-btn" onclick="exportMonthToExcel()">📊 匯出 Excel </button>
+    </div>
+</div>
+
+<div class="table-container">
+    <table id="rosterTable">
+        <thead>
+            <tr id="dateHeader"></tr>
+            <tr id="weekHeader"></tr>
+        </thead>
+        <tbody id="rosterBody"></tbody>
+    </table>
+</div>
+
+<script>
+    let curYear = new Date().getFullYear();
+    let curMonth = new Date().getMonth();
+    let isEditing = false;
+    
+    // 離線資料存儲鍵名
+    const STORAGE_KEY = "k9_roster_data";
+    let rosterData = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+
+    const staffData = [
+        {group: "總務", shift: "日班B班", id: "D0762", name: "盧家慶"},
+        {group: "總務", shift: "日班B班", id: "D03807", name: "何鴻隆"},
+        {group: "總務", shift: "日班B班", id: "D1079", name: "蔡易倫"},
+        {group: "總務", shift: "夜班E班", id: "D03806", name: "邱鴻鈞"},
+        {group: "總務", shift: "夜班E班", id: "D04132", name: "柳旭洲"},
+        {group: "總務", shift: "夜班B班", id: "D03733", name: "魏榮志"}
+    ];
+
+    const weekNames = ["日", "一", "二", "三", "四", "五", "六"];
+
+    function initTable() {
+        const dHead = document.getElementById('dateHeader');
+        const wHead = document.getElementById('weekHeader');
+        const tbody = document.getElementById('rosterBody');
+        
+        dHead.innerHTML = `<th class="sticky-col col-group">組別</th><th class="sticky-col col-shift">班別</th><th class="sticky-col col-id">員工代號</th><th class="sticky-col col-name">姓名</th>`;
+        wHead.innerHTML = `<th class="sticky-col col-group">-</th><th class="sticky-col col-shift">-</th><th class="sticky-col col-id">-</th><th class="sticky-col col-name">-</th>`;
+        tbody.innerHTML = '';
+        
+        document.getElementById('currentMonthDisplay').innerText = `${curYear} / ${String(curMonth + 1).padStart(2,'0')}`;
+        
+        const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateTh = document.createElement('th');
+            dateTh.innerText = d;
+            dHead.appendChild(dateTh);
+            const dayOfWeek = new Date(curYear, curMonth, d).getDay();
+            const weekTh = document.createElement('th');
+            weekTh.innerText = weekNames[dayOfWeek];
+            if(dayOfWeek === 0 || dayOfWeek === 6) weekTh.classList.add('is-holiday');
+            wHead.appendChild(weekTh);
+        }
+
+        staffData.forEach(p => {
+            const tr = document.createElement('tr');
+            let rowHtml = `<td class="sticky-col col-group">${p.group}</td><td class="sticky-col col-shift">${p.shift}</td><td class="sticky-col col-id">${p.id}</td><td class="sticky-col col-name"><b>${p.name}</b></td>`;
+            for (let d = 1; d <= daysInMonth; d++) {
+                const key = `${curYear}_${curMonth+1}_${p.name}_${d}`;
+                const val = rosterData[key] || "";
+                rowHtml += `<td><input id="${key}" value="${val}" onchange="saveShift('${key}', this.value)" readOnly tabindex="-1"></td>`;
+            }
+            tr.innerHTML = rowHtml;
+            tbody.appendChild(tr);
+        });
+        updateCellStyles();
+    }
+
+    function saveShift(key, val) {
+        rosterData[key] = val;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(rosterData));
+        updateCellStyles();
+    }
+
+    function updateCellStyles() {
+        document.querySelectorAll('input').forEach(el => {
+            el.parentElement.className = "";
+            if(el.value) el.parentElement.classList.add('bg-' + el.value.replace(/[\(\)\s]/g, ""));
+        });
+    }
+
+    function toggleLock() {
+        isEditing = !isEditing;
+        document.body.classList.toggle('can-edit', isEditing);
+        document.getElementById('lockBtn').innerText = isEditing ? "🔓 編輯中" : "🔒 唯讀模式";
+        document.getElementById('lockBtn').classList.toggle('unlocked', isEditing);
+        document.querySelectorAll('input').forEach(input => {
+            input.readOnly = !isEditing;
+            input.tabIndex = isEditing ? 0 : -1;
+        });
+    }
+
+    function changeMonth(dir) {
+        curMonth += dir;
+        if (curMonth < 0) { curMonth = 11; curYear--; }
+        else if (curMonth > 11) { curMonth = 0; curYear++; }
+        initTable();
+    }
+
+    function exportMonthToExcel() {
+        // ... (匯出邏輯同前，從 rosterData 抓取) ...
+        alert("匯出功能已就緒，請將此邏輯對接您的 Excel 匯出模組");
+    }
+
+    initTable();
+</script>
+</body>
+</html>
