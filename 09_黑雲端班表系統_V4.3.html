@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>黑雲端班表系統 V5.2</title>
+    <title>黑雲端班表系統 V5.2.1</title>
     <link rel="icon" href="IMG_0968.png">
     <link rel="apple-touch-icon" href="IMG_0968.png">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -43,8 +43,8 @@
         function App() {
             const params = new URLSearchParams(window.location.search);
             
-            // 初始設為空字串，優先讀取本地記憶
-            const [userName, setUserName] = useState(params.get('n') || localStorage.getItem('guardName') || "");
+            // 修正點：若無紀錄則防呆預設為 "小黑哥"，確保畫面不因空字串掛掉
+            const [userName, setUserName] = useState(params.get('n') || localStorage.getItem('guardName') || "小黑哥");
             const [userID, setUserID] = useState(params.get('id') || localStorage.getItem('guardID') || "");
             
             const [curYear, setCurYear] = useState(new Date().getFullYear());
@@ -54,6 +54,10 @@
             const [isClearMode, setIsClearMode] = useState(false);
 
             useEffect(() => {
+                // 初始化時確保本地儲存有預設值
+                if (!localStorage.getItem('guardName')) {
+                    localStorage.setItem('guardName', "小黑哥");
+                }
                 const ref = db.ref('guardSchedules');
                 const listener = ref.on('value', (s) => setSchedules(s.val() || {}));
                 return () => ref.off('value', listener);
