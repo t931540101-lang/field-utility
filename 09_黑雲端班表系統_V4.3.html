@@ -43,7 +43,6 @@
         function App() {
             const params = new URLSearchParams(window.location.search);
             
-            // 修正點：若無紀錄則防呆預設為 "小黑哥"，確保畫面不因空字串掛掉
             const [userName, setUserName] = useState(params.get('n') || localStorage.getItem('guardName') || "小黑哥");
             const [userID, setUserID] = useState(params.get('id') || localStorage.getItem('guardID') || "");
             
@@ -54,7 +53,6 @@
             const [isClearMode, setIsClearMode] = useState(false);
 
             useEffect(() => {
-                // 初始化時確保本地儲存有預設值
                 if (!localStorage.getItem('guardName')) {
                     localStorage.setItem('guardName', "小黑哥");
                 }
@@ -62,6 +60,25 @@
                 const listener = ref.on('value', (s) => setSchedules(s.val() || {}));
                 return () => ref.off('value', listener);
             }, []);
+
+            // 修正月份切換邏輯（避免 13月 或 -1月 的問題）
+            const handlePrevMonth = () => {
+                if (curMonth === 0) {
+                    setCurMonth(11);
+                    setCurYear(curYear - 1);
+                } else {
+                    setCurMonth(curMonth - 1);
+                }
+            };
+
+            const handleNextMonth = () => {
+                if (curMonth === 11) {
+                    setCurMonth(0);
+                    setCurYear(curYear + 1);
+                } else {
+                    setCurMonth(curMonth + 1);
+                }
+            };
 
             const handleCellClick = (day) => {
                 if (!userName) return alert("請先點擊頂部設定您的「姓名」，才能排班喔！");
@@ -87,9 +104,9 @@
                     </div>
 
                     <header className="bg-[#2e5a44] text-white p-3 flex justify-between items-center shadow-md">
-                        <button onClick={() => setCurMonth(curMonth - 1)} className="px-4 text-xl font-bold">❮</button>
+                        <button onClick={handlePrevMonth} className="px-4 text-xl font-bold">❮</button>
                         <div className="text-center font-black">{curYear}年 {curMonth + 1}月</div>
-                        <button onClick={() => setCurMonth(curMonth + 1)} className="px-4 text-xl font-bold">❯</button>
+                        <button onClick={handleNextMonth} className="px-4 text-xl font-bold">❯</button>
                     </header>
 
                     <div className="grid grid-cols-7 border-t border-[#c2b99a]">
@@ -109,7 +126,7 @@
                             else if (note.includes("休")) colorClass = "color-off";
 
                             const isWeekend = new Date(curYear, curMonth, day).getDay() % 6 === 0;
-                            const isToday = new Date().getDate() === day && new Date().getMonth() === curMonth;
+                            const isToday = new Date().getDate() === day && new Date().getMonth() === curMonth && new Date().getFullYear() === curYear;
 
                             return (
                                 <div key={day} onClick={() => handleCellClick(day)} className={`grid-cell p-1 flex flex-col active:bg-white/50 ${isToday ? 'today-highlight' : ''}`}>
