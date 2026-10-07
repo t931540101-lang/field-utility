@@ -179,25 +179,39 @@
         }
 
         errorMsg.style.display = "none";
-        // 按下按鈕時，去 Firebase 抓最新的密碼
-        db.ref('system_settings/auth_code').once('value').then((snapshot) => {
-            const serverCode = snapshot.val();
-            // 如果雲端沒有設定密碼，預設為 0905，如果有就比對
-            const currentAuthCode = serverCode ? serverCode : "0905"; 
-
-            if (c === currentAuthCode) {
-                // 密碼正確，登入成功
-                localStorage.setItem('guardName', n); // 統一使用 guardName
-                document.getElementById('auth-screen').style.display = 'none'; 
-                document.getElementById('main-app').style.display = 'block';
-                fetchAllData(); 
+        
+        // 用查詢方式到 guard_accounts 列表比對姓名與密碼
+        db.ref('guard_accounts').orderByChild('name').equalTo(n).once('value').then((snapshot) => {
+            if (snapshot.exists()) {
+                let loginSuccess = false;
+                snapshot.forEach((childSnapshot) => {
+                    const guardData = childSnapshot.val();
+                    // 檢查密碼是否相符
+                    if (guardData.password === c) {
+                        loginSuccess = true;
+                    }
+                });
+                
+                if (loginSuccess) {
+                    // 密碼正確，登入成功
+                    localStorage.setItem('guardName', n); 
+                    document.getElementById('auth-screen').style.display = 'none'; 
+                    document.getElementById('main-app').style.display = 'block';
+                    fetchAllData(); 
+                } else {
+                    errorMsg.innerText = "⚠ 授權碼（密碼）錯誤！";
+                    errorMsg.style.display = "block";
+                }
             } else {
-                // 密碼錯誤
-                errorMsg.innerText = "⚠ 授權碼錯誤，請洽 HQ 指揮中心！";
+                errorMsg.innerText = "⚠ 查無此授權姓名，請洽 HQ 指揮中心！";
                 errorMsg.style.display = "block";
             }
         }).catch((error) => {
             errorMsg.innerText = "⚠ 連線失敗，請檢查網路狀態！";
+            errorMsg.style.display = "block";
+            console.error(error);
+        });
+    }
             errorMsg.style.display = "block";
             console.error(error);
         });
