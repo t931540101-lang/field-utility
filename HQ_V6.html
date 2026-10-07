@@ -2,58 +2,61 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>M-SECURITY HQ V8.1 | COMMAND CENTER</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root { --cyan: #00f2ff; --warn: #ff4d4f; --bg: #050505; --gold: #f1c40f; --green: #2ecc71; }
-        body { background: var(--bg); color: white; font-family: -apple-system, "Microsoft JhengHei", sans-serif; margin: 0; padding: 0; }
+        body { background: var(--bg); color: white; font-family: -apple-system, "Microsoft JhengHei", sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
         body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)); z-index: -1; background-size: 100% 2px, 3px 100%; pointer-events: none; }
-        .hq-header { background: #000; padding: 20px; text-align: center; border-bottom: 2px solid var(--cyan); }
-        .hq-logo { width: 140px; height: auto; filter: drop-shadow(0 0 8px var(--cyan)); }
-        .status-bar { display: flex; justify-content: center; gap: 10px; padding: 10px; background: #111; border-bottom: 1px solid #333; flex-wrap: wrap; }
-        .status-box { background: #000; border: 1px solid #222; padding: 5px 12px; border-radius: 4px; font-size: 11px; text-align: center; min-width: 80px; }
-        .status-val { display: block; font-size: 16px; font-weight: bold; color: var(--cyan); }
+        .hq-header { background: #000; padding: 15px; text-align: center; border-bottom: 2px solid var(--cyan); }
+        .hq-logo { width: 100px; height: auto; filter: drop-shadow(0 0 8px var(--cyan)); }
+        .status-bar { display: flex; justify-content: center; gap: 6px; padding: 8px; background: #111; border-bottom: 1px solid #333; flex-wrap: wrap; }
+        .status-box { background: #000; border: 1px solid #222; padding: 4px 8px; border-radius: 4px; font-size: 10px; text-align: center; min-width: 70px; }
+        .status-val { display: block; font-size: 14px; font-weight: bold; color: var(--cyan); }
         .blink { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.3; } }
         nav { display: flex; background: #111; overflow-x: auto; }
-        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; color: #666; font-weight: bold; white-space: nowrap; }
+        .tab { flex: 1; padding: 12px 8px; text-align: center; cursor: pointer; color: #666; font-weight: bold; font-size: 13px; white-space: nowrap; }
         .tab.active { color: var(--cyan); background: #1a1a1a; border-bottom: 2px solid var(--cyan); }
-        .content { padding: 20px; display: none; }
+        .content { padding: 15px; display: none; }
         .content.active { display: block; }
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .monitor-card { background: #111; border: 1px solid #333; border-radius: 8px; padding: 15px; height: 500px; display: flex; flex-direction: column; }
-        .card-header { border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px; font-weight: bold; color: var(--cyan); display: flex; justify-content: space-between; }
-        .scroll-list { flex: 1; overflow-y: auto; font-size: 13px; }
-        .input-group { background: #111; border: 1px dashed var(--cyan); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        input { width: 100%; padding: 10px; background: #000; border: 1px solid #444; color: #fff; margin-bottom: 8px; border-radius: 4px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .monitor-card { background: #111; border: 1px solid #333; border-radius: 8px; padding: 12px; height: 400px; display: flex; flex-direction: column; }
+        .card-header { border-bottom: 1px solid #333; padding-bottom: 8px; margin-bottom: 8px; font-weight: bold; font-size: 13px; color: var(--cyan); display: flex; justify-content: space-between; }
+        .scroll-list { flex: 1; overflow-y: auto; font-size: 12px; }
+        .input-group { background: #111; border: 1px dashed var(--cyan); padding: 12px; border-radius: 8px; margin-bottom: 15px; }
+        input { width: 100%; padding: 10px; background: #000; border: 1px solid #444; color: #fff; margin-bottom: 8px; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        .btn { width: 100%; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 14px; }
         .btn-cyan { background: var(--cyan); color: #000; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: #1a1a1a; color: var(--cyan); padding: 8px; text-align: left; }
-        td { padding: 10px 8px; border-bottom: 1px solid #222; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { background: #1a1a1a; color: var(--cyan); padding: 6px; text-align: left; }
+        td { padding: 8px 6px; border-bottom: 1px solid #222; word-break: break-all; }
         .entry { padding: 8px; border-bottom: 1px solid #222; }
-        .time { color: var(--cyan); font-size: 11px; }
+        .time { color: var(--cyan); font-size: 10px; }
         .visitor-active { border-left: 4px solid var(--green); margin-bottom: 5px; background: rgba(46, 204, 113, 0.05); }
         .handover-item { border-left: 4px solid var(--gold); margin-bottom: 5px; background: rgba(241, 196, 15, 0.05); }
     </style>
 </head>
 <body>
     <div class="hq-header">
-        <img src="IMG_1096.jpeg" class="hq-logo" alt="HQ Logo">
-        <div style="color:var(--cyan); font-weight:900; letter-spacing:2px; font-size: 20px;">M-SECURITY HQ COMMAND</div>
+        <img src="IMG_1096.jpeg" class="hq-logo" alt="HQ Logo" onerror="this.style.display='none'">
+        <div style="color:var(--cyan); font-weight:900; letter-spacing:1px; font-size: 16px; margin-top: 5px;">M-SECURITY HQ COMMAND</div>
     </div>
+    
     <div class="status-bar">
         <div class="status-box">NETWORK <span class="status-val blink" style="color:var(--green)">ONLINE</span></div>
         <div class="status-box">ON-SITE <span id="count-visitor" class="status-val" style="color:var(--green)">0</span></div>
         <div class="status-box">VIP <span id="count-vip" class="status-val" style="color:var(--gold)">0</span></div>
         <div class="status-box">GUARDS <span id="count-guards" class="status-val">0</span></div>
     </div>
+
     <nav>
-        <div class="tab active" onclick="switchTab('dashboard')">戰術監控</div>
-        <div class="tab" onclick="switchTab('manage')">數據部署</div>
-        <div class="tab" onclick="switchTab('auth')">人員授權</div>
-        <div class="tab" onclick="switchTab('search-logs')">查詢日誌</div>
+        <div class="tab active" onclick="switchTab('dashboard', event)">戰術監控</div>
+        <div class="tab" onclick="switchTab('manage', event)">數據部署</div>
+        <div class="tab" onclick="switchTab('auth', event)">人員授權</div>
+        <div class="tab" onclick="switchTab('search-logs', event)">查詢日誌</div>
     </nav>
 
     <div id="dashboard" class="content active">
@@ -71,13 +74,13 @@
 
     <div id="manage" class="content">
         <div class="input-group">
-            <input type="text" id="eID" placeholder="工號 / 編號">
-            <input type="text" id="eName" placeholder="姓名">
+            <input type="text" id="eID" placeholder="工號 / 編號 (留空自動生成)">
+            <input type="text" id="eName" placeholder="姓名 (必填)">
             <input type="text" id="ePlate" placeholder="車牌">
             <input type="text" id="eReason" placeholder="單位 / 備註">
             <div style="display:flex; gap:10px;">
                 <button class="btn btn-cyan" onclick="save('employee_list')">部署員工</button>
-                <button class="btn btn-cyan" style="background:var(--gold)" onclick="save('vip_list')">部署 VIP</button>
+                <button class="btn btn-cyan" style="background:var(--gold); color:#000;" onclick="save('vip_list')">部署 VIP</button>
             </div>
         </div>
         <table>
@@ -88,9 +91,9 @@
 
     <div id="auth" class="content">
         <div class="input-group">
-            <div style="color:var(--cyan); margin-bottom:10px; font-weight:bold;">🛡️ 新增值勤人員授權</div>
+            <div style="color:var(--cyan); margin-bottom:10px; font-weight:bold; font-size:13px;">🛡️ 新增值勤人員授權</div>
             <input type="text" id="gName" placeholder="弟兄姓名 (將作為登入帳號)">
-            <input type="text" id="gPwd" placeholder="設定登入密碼">
+            <input type="password" id="gPwd" placeholder="設定登入密碼">
             <button class="btn btn-cyan" onclick="addGuard()">核發通行權限</button>
         </div>
         <table>
@@ -100,24 +103,25 @@
     </div>
 
     <div id="search-logs" class="content">
-        <div id="logFeed" class="scroll-list">等待日誌傳輸...</div>
+        <div id="logFeed" class="scroll-list" style="height: 450px;">等待日誌傳輸...</div>
     </div>
 
 <script>
     const firebaseConfig = { apiKey: "AIzaSyB2_tKKsVT4kdW7PPkJgI9O7S1YdCWor48", databaseURL: "https://factor-security-d1965-default-rtdb.firebaseio.com", projectId: "factor-security-d1965", appId: "1:864846943143:web:4cfa18cd20d2f712225c82" };
-    firebase.initializeApp(firebaseConfig); const db = firebase.database();
+    firebase.initializeApp(firebaseConfig); 
+    const db = firebase.database();
 
-    function switchTab(id) {
+    function switchTab(id, evt) {
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        event.currentTarget.classList.add('active');
+        if(evt) evt.currentTarget.classList.add('active');
     }
 
     function startHQMonitor() {
         db.ref('visitor_logs').on('value', snap => {
             const list = document.getElementById('visitor-monitor'); let count = 0; list.innerHTML = '';
-            snap.forEach(c => { const d = c.val(); if(!d.leaveTime) { count++; list.innerHTML += `<div class="entry visitor-active"><span class="time">${d.timeIn}</span><br><b>${d.name}</b> (${d.count}人) - ${d.company}<br><small>事由：${d.reason}</small></div>`; } });
+            snap.forEach(c => { const d = c.val(); if(!d.leaveTime) { count++; list.innerHTML += `<div class="entry visitor-active"><span class="time">${d.timeIn}</span><br><b>${d.name}</b> (${d.count || 1}人) - ${d.company || ''}<br><small>事由：${d.reason || '無'}</small></div>`; } });
             document.getElementById('count-visitor').innerText = count; if(count === 0) list.innerHTML = "目前場內無訪客";
         });
         db.ref('reactLogs').limitToLast(10).on('value', snap => {
@@ -131,42 +135,79 @@
         db.ref('vip_list').on('value', s => { document.getElementById('count-vip').innerText = s.numChildren(); });
     }
 
-    // 🛡️ 人員授權管理邏輯
     function addGuard() {
         const name = document.getElementById('gName').value.trim();
         const pwd = document.getElementById('gPwd').value.trim();
         if(!name || !pwd) return alert("姓名與密碼均為必填！");
-        db.ref('guard_accounts/' + name).set({ password: pwd, addedAt: new Date().toLocaleString() }).then(() => {
-            alert("人員授權已核發！"); document.getElementById('gName').value = ''; document.getElementById('gPwd').value = ''; loadAuth();
+        
+        // 避開 Firebase key 不能包含的特殊字元（如點、斜線等）
+        const safeKey = name.replace(/[.#$/[\]]/g, "_");
+
+        db.ref('guard_accounts/' + safeKey).set({ 
+            name: name,
+            password: pwd, 
+            addedAt: new Date().toLocaleString() 
+        })
+        .then(() => {
+            alert("人員授權已核發！"); 
+            document.getElementById('gName').value = ''; 
+            document.getElementById('gPwd').value = ''; 
+        })
+        .catch(error => {
+            alert("新增失敗，錯誤原因: " + error.message);
+            console.error(error);
         });
     }
 
     function loadAuth() {
-        const tb = document.getElementById('authTableBody'); tb.innerHTML = '';
+        const tb = document.getElementById('authTableBody'); 
         db.ref('guard_accounts').on('value', snap => {
             tb.innerHTML = ''; document.getElementById('count-guards').innerText = snap.numChildren();
             snap.forEach(c => {
-                tb.innerHTML += `<tr><td><b>${c.key}</b></td><td style="color:var(--gold)">${c.val().password}</td><td><button onclick="delGuard('${c.key}')" style="background:red; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;">撤銷權限</button></td></tr>`;
+                const d = c.val();
+                tb.innerHTML += `<tr><td><b>${d.name || c.key}</b></td><td style="color:var(--gold)">${d.password}</td><td><button onclick="delGuard('${c.key}')" style="background:red; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;">撤銷</button></td></tr>`;
             });
         });
     }
     function delGuard(name) { if(confirm(`確定要撤銷 [${name}] 的登入權限嗎？`)) db.ref('guard_accounts/' + name).remove(); }
 
     function save(p) {
-        const n = document.getElementById('eName').value; if(!n) return alert("姓名必填");
-        const id = document.getElementById('eID').value || Date.now().toString();
-        db.ref(p+'/'+id).set({ name: n, id, plate: document.getElementById('ePlate').value.toUpperCase(), reason: document.getElementById('eReason').value }).then(()=>{ alert("部署成功"); loadTable(); });
+        const n = document.getElementById('eName').value.trim(); if(!n) return alert("姓名必填");
+        const id = document.getElementById('eID').value.trim() || Date.now().toString();
+        db.ref(p+'/'+id).set({ 
+            name: n, 
+            id: id, 
+            plate: document.getElementById('ePlate').value.toUpperCase(), 
+            reason: document.getElementById('eReason').value 
+        })
+        .then(()=>{ 
+            alert("部署成功"); 
+            document.getElementById('eID').value = '';
+            document.getElementById('eName').value = '';
+            document.getElementById('ePlate').value = '';
+            document.getElementById('eReason').value = '';
+            loadTable(); 
+        })
+        .catch(error => {
+            alert("部署失敗，錯誤原因: " + error.message);
+            console.error(error);
+        });
     }
+    
     function loadTable() {
         const tb = document.getElementById('tableBody'); tb.innerHTML = '';
         const fetch = (p, t, c) => db.ref(p).once('value', s => s.forEach(i => {
             const d = i.val(); tb.innerHTML += `<tr><td style="color:${c}">${t}</td><td>${d.name}<br>${d.plate||''}</td><td>${d.reason||''}</td><td><button onclick="del('${p}','${i.key}')" style="background:red; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;">刪除</button></td></tr>`;
         }));
-        fetch('employee_list','員工','var(--cyan)'); fetch('vip_list','VIP','var(--gold)');
+        fetch('employee_list','員工','var(--cyan)'); 
+        fetch('vip_list','VIP','var(--gold)');
     }
+    
     function del(p, i) { if(confirm("確定撤銷？")) db.ref(p+'/'+i).remove().then(()=>loadTable()); }
 
-    loadTable(); startHQMonitor(); loadAuth();
+    loadTable(); 
+    startHQMonitor(); 
+    loadAuth();
 </script>
 </body>
 </html>
