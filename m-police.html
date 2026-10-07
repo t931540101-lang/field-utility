@@ -69,6 +69,77 @@
             
             <div id="vip" class="content-section">
                 <div style="color:#e67e22; font-weight:bold; margin-bottom:10px; border-bottom: 2px solid #e67e22; padding-bottom: 5px;">🌟 董事及 VIP 車輛預警清單</div>
+                <div<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>M-Security V9.1</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #e3f2fd; margin: 0; padding: 0; }
+        #auth-screen { background: #cfd8dc; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: fixed; width: 100%; z-index: 999; }
+        .login-card { background: #fff; border: 2px solid #3273b5; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; text-align: center; position: relative; }
+        #main-app { display: none; }
+        header { background: #000; color: #00ff00; text-align: center; padding: 5px; font-size: 12px; font-weight: bold; }
+        .m-header { background: linear-gradient(to bottom, #74b9ff, #3273b5); color: #fff; padding: 15px; text-align: center; font-style: italic; font-weight: 900; font-size: 22px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        nav { display: flex; background: #546e7a; color: white; }
+        .nav-item { flex: 1; padding: 12px; text-align: center; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .nav-item.active { background: rgba(0,0,0,0.4); border-bottom: 3px solid #00f2ff; }
+        .container { padding: 15px; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .card { background: #fff; border: 2px solid #3273b5; border-radius: 12px; padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .vip-card { border-color: #f1c40f; background: #fffdf0; }
+        .item-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 15px; }
+        .btn { width: 100%; padding: 15px; background: linear-gradient(to bottom, #42a5f5, #1976d2); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 18px; box-shadow: 0 4px #0d47a1; margin-bottom: 10px; cursor: pointer; }
+        .btn:active { transform: translateY(2px); box-shadow: 0 2px #0d47a1; }
+        .btn-clear { background: linear-gradient(to bottom, #e74c3c, #c0392b); box-shadow: 0 4px #922b21; margin-top: 5px; }
+        .btn-clear:active { box-shadow: 0 2px #922b21; }
+        
+        /* 查詢框外觀微調 */
+        .search-box-container { display: flex; align-items: center; background: #fff; border: 2px solid #3273b5; border-radius: 8px; padding: 8px; margin-bottom: 10px; }
+        .search-box-container input { flex: 1; border: none; font-size: 18px; outline: none; padding: 5px; }
+        .clear-icon { color: #999; font-size: 20px; font-weight: bold; cursor: pointer; padding: 0 10px; }
+        
+        /* 錯誤訊息樣式 */
+        #login-error { color: #e74c3c; font-size: 13px; font-weight: bold; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+    <div id="auth-screen">
+        <div class="login-card">
+            <h2 style="color:#1976d2; margin-top:0; border-bottom: 2px solid #1976d2; padding-bottom: 10px;">M-Security</h2>
+            <input type="text" id="gName" placeholder="值勤人員姓名" style="width:100%; padding:12px; margin-bottom:12px; border: 1px solid #ccc; border-radius: 6px; box-sizing:border-box; font-size: 16px;">
+            <input type="password" id="aCode" placeholder="HQ 動態授權碼" style="width:100%; padding:12px; border: 1px solid #ccc; border-radius: 6px; box-sizing:border-box; font-size: 16px;">
+            <div id="login-error">⚠ 授權碼錯誤或連線逾時</div>
+            <button class="btn" style="margin-top:15px;" onclick="checkAuth()">連線驗證登入</button>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <header>🟢 [連線正常] M-Security 雲端同步中</header>
+        <div class="m-header">M-Security數據終端</div>
+        <nav>
+            <div class="nav-item active" onclick="switchTab('general', this)">車牌查驗</div>
+            <div class="nav-item" onclick="switchTab('vip', this)">VIP 管制</div>
+            <div class="nav-item" onclick="switchTab('visitor', this)">廠內訪客</div>
+            <div class="nav-item" onclick="switchTab('handover', this)">勤務通報</div>
+        </nav>
+        <div class="container">
+            <div id="general" class="content-section active">
+                <div class="search-box-container">
+                    <input type="text" id="qInput" placeholder="請輸入 車牌 / 工號 / 姓名">
+                    <span class="clear-icon" onclick="clearSearch()">✖</span>
+                </div>
+                <button class="btn" onclick="search()">執 行 查 詢</button>
+                <button class="btn btn-clear" onclick="clearResults()">清 除 結 果</button>
+                <div id="resDiv" style="margin-top: 15px;"></div>
+            </div>
+            
+            <div id="vip" class="content-section">
+                <div style="color:#e67e22; font-weight:bold; margin-bottom:10px; border-bottom: 2px solid #e67e22; padding-bottom: 5px;">🌟 董事及 VIP 車輛預警清單</div>
                 <div id="vipList">資料連線載入中...</div>
             </div>
             
