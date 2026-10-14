@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>火警警報狀況通報登記</title>
+    <!-- 引入 Tesseract.js 用於拍照 OCR 辨識 -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         :root {
             --danger-color: #d35400; /* 警報橘紅色 */
@@ -19,14 +21,20 @@
         h2 { color: var(--danger-color); font-size: 1.25rem; letter-spacing: 1px; }
         .sub-title { font-size: 0.85rem; color: #7f8c8d; margin-top: 4px; }
         
-        /* 表單卡片（符合手機大按鈕與窄螢幕） */
+        /* 拍照 OCR 專區樣式 */
+        .ocr-card { background: #fef9e7; border: 2px dashed #f39c12; border-radius: 8px; padding: 12px; margin-bottom: 15px; text-align: center; }
+        .btn-ocr { background-color: #d68910; color: white; width: 100%; padding: 12px; border: none; border-radius: 5px; font-size: 1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-ocr:active { background-color: #b9770e; }
+        #ocrProgress { margin-top: 8px; font-size: 0.85rem; color: #b9770e; font-weight: bold; display: none; }
+
+        /* 表單卡片 */
         .card { background: var(--card-bg); border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; border-top: 4px solid var(--danger-color); }
         .form-group { margin-bottom: 10px; }
         .form-group label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 0.85rem; color: #555; }
         .form-control { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 0.95rem; -webkit-appearance: none; }
         .form-control:focus { border-color: var(--danger-color); outline: none; background: #fffdfb; }
         
-        /* 快速輸入按紐群（消防最需要這個，手打太慢） */
+        /* 快速輸入按紐群 */
         .quick-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
         .tag { background: #eaeded; color: #5d6d7e; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-weight: bold; border: 1px solid #d5dbdb; }
         .tag:active { background: #d5dbdb; }
@@ -38,7 +46,7 @@
         .btn-export { background-color: #2980b9; }
         .btn-clear { background: #7f8c8d; width: 100%; margin-top: 15px; padding: 8px; font-size: 0.8rem; color: white; border: none; border-radius: 4px; }
         
-        /* 歷史明細流（直式卡片，絕不爆版） */
+        /* 歷史明細流 */
         .history-section { margin-top: 15px; }
         .section-title { font-size: 1rem; font-weight: bold; color: var(--primary-color); margin-bottom: 8px; padding-left: 4px; }
         .log-list { display: flex; flex-direction: column; gap: 10px; }
@@ -58,6 +66,15 @@
     <div class="header">
         <h2>火警警報狀況通報登記</h2>
         <div class="sub-title">台灣精銳(股)公司 - 守衛室專用系統</div>
+    </div>
+
+    <!-- 📷 拍照 / 上傳 OCR 快速辨識區 -->
+    <div class="ocr-card">
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleImageOCR(event)">
+        <button class="btn-ocr" onclick="document.getElementById('cameraInput').click()">
+            📷 拍攝紙本或主機畫面 (自動辨識填寫)
+        </button>
+        <div id="ocrProgress">⏳ 正在辨識影像文字中，請稍候...</div>
     </div>
 
     <div class="card">
@@ -133,6 +150,72 @@
         function setStatus(val) { document.getElementById('checkStatus').value = val; }
         function setResult(val) { document.getElementById('reportResult').value = val; }
 
+        // 📷 拍照 OCR 辨識核心邏輯
+        async function handleImageOCR(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const progressDiv = document.getElementById('ocrProgress');
+            progressDiv.style.display = 'block';
+            progressDiv.innerText = '⏳ 正在讀取並解析相片文字...';
+
+            try {
+                // 使用 Tesseract 進行中英文辨識
+                const result = await Tesseract.recognize(
+                    file,
+                    'eng+chi_tra',
+                    { 
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                const percent = Math.round(m.progress * 100);
+                                progressDiv.innerText = `⏳ 正在辨識影像文字... ${percent}%`;
+                            }
+                        }
+                    }
+                );
+
+                const text = result.data.text;
+                console.log("OCR 辨識結果：", text);
+
+                // 智慧擷取地點關鍵字
+                let detectedLoc = '';
+                const lines = text.split('\n');
+                for (let line of lines) {
+                    if (line.includes('1F') || line.includes('2F') || line.includes('3F') || line.includes('B1') || line.includes('迴路') || line.includes('走廊') || line.includes('偵煙')) {
+                        detectedLoc = line.trim();
+                        break;
+                    }
+                }
+                if (!detectedLoc && lines.length > 0) {
+                    detectedLoc = lines[0].trim(); // 若沒抓到特定樓層，預設抓第一行
+                }
+                if (detectedLoc) {
+                    document.getElementById('alarmLocation').value = detectedLoc;
+                }
+
+                // 智慧辨識處置結果
+                if (text.includes('誤報') || text.includes('假報')) {
+                    document.getElementById('reportResult').value = '誤報';
+                } else if (text.includes('復歸') || text.includes('正常')) {
+                    document.getElementById('reportResult').value = '誤動作復歸';
+                } else if (text.includes('保養') || text.includes('測試')) {
+                    document.getElementById('checkStatus').value = '設備保養測試';
+                    document.getElementById('reportResult').value = '正常';
+                }
+
+                progressDiv.innerText = '✅ 拍照辨識完成！已自動填入欄位。';
+                setTimeout(() => { progressDiv.style.display = 'none'; }, 4000);
+
+            } catch (error) {
+                console.error(error);
+                progressDiv.innerText = '❌ 辨識失敗，請重新拍照或手動輸入。';
+                setTimeout(() => { progressDiv.style.display = 'none'; }, 4000);
+            }
+
+            // 清空 file input 讓同張照片可以重複點擊上傳
+            event.target.value = '';
+        }
+
         // 渲染直式卡片
         function renderAlarmLogs() {
             const container = document.getElementById('logContainer');
@@ -143,13 +226,11 @@
                 return;
             }
 
-            // 最新時間的排在最上面
             alarmLogs.slice().reverse().forEach((log, index) => {
                 const actualIndex = alarmLogs.length - 1 - index;
                 const card = document.createElement('div');
                 card.className = 'log-card';
                 
-                // 處理日期格式顯示 (2026-05-31 T 21:40 -> 05/31 21:40)
                 const tParts = log.dateTime.split('T');
                 const dParts = tParts[0].split('-');
                 const displayTime = `${dParts[1]}/${dParts[2]} ${tParts[1]}`;
@@ -187,13 +268,12 @@
             localStorage.setItem('taiwan_apex_fire_logs', JSON.stringify(alarmLogs));
             renderAlarmLogs();
             
-            // 清空輸入框並重設時間
             document.getElementById('alarmLocation').value = '';
             document.getElementById('contactPerson').value = '';
             document.getElementById('checkStatus').value = '警報發生';
             document.getElementById('reportResult').value = '誤報';
             setNowTime();
-        </div>
+        }
 
         function deleteAlarmLog(index) {
             if (confirm('確定要刪除這筆火警通報紀錄嗎？')) {
@@ -237,7 +317,6 @@
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
-        // 初始載入
         renderAlarmLogs();
     </script>
 </body>
